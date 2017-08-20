@@ -41,3 +41,8 @@ Choose between FT80x/FT81x by enabling/disabling the FT8_81X_ENABLE define.
 Select the TFT attached by enabling one of the pre-defined setups.
 
 When compiling for AVR you need to provide the clock it is running at in order to make the delay() calls used to initialise the TFT work with the intended timing. Next you provide ports and pins for the TFTs chip-select and power-down pins.
+
+
+Originally the project went public in the Geman mikrocontroller.net forum, the thread contains some insight: https://www.mikrocontroller.net/topic/395608
+
+Feel free to add to the discussion with questions or remarks.
