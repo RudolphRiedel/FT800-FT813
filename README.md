@@ -31,3 +31,6 @@ FT811CB-HY50HD  http://www.hotmcu.com/5-graphical-lcd-capacitive-touch-screen-80
 
 RVT70UQFNWC0x https://riverdi.com/product/rvt70uqfnwc0x/
 
+
+The examples in the "example_projects" drawer are for use with AtmelStudio7. For Arduino I am using the plugin from www.visualmicro.com .
+
