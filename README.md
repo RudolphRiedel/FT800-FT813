@@ -34,3 +34,10 @@ RVT70UQFNWC0x https://riverdi.com/product/rvt70uqfnwc0x/
 
 The examples in the "example_projects" drawer are for use with AtmelStudio7. For Arduino I am using the plugin from www.visualmicro.com .
 
+The platform the code is compiled for is automatically detected thru compiler flags in FT8_config.c / FT8_config.h. These are the only files that should need editing to customize the library to your needs.
+
+Choose between FT80x/FT81x by enabling/disabling the FT8_81X_ENABLE define.
+
+Select the TFT attached by enabling one of the pre-defined setups.
+
+When compiling for AVR you need to provide the clock it is running at in order to make the delay() calls used to initialise the TFT work with the intended timing. Next you provide ports and pins for the TFTs chip-select and power-down pins.
