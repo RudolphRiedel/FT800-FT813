@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Atmel Studio Solution File, Format Version 11.00
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{E66E83B9-2572-4076-B26E-6BE79FF3018A}") = "sketch_esp8266", "sketch_esp8266.cppproj", "{F9D6D66E-3EBF-419F-8C1E-026D0B56EE80}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|AVR = Debug|AVR
+		Release|AVR = Release|AVR
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F9D6D66E-3EBF-419F-8C1E-026D0B56EE80}.Debug|AVR.ActiveCfg = Debug|AVR
+		{F9D6D66E-3EBF-419F-8C1E-026D0B56EE80}.Debug|AVR.Build.0 = Debug|AVR
+		{F9D6D66E-3EBF-419F-8C1E-026D0B56EE80}.Release|AVR.ActiveCfg = Release|AVR
+		{F9D6D66E-3EBF-419F-8C1E-026D0B56EE80}.Release|AVR.Build.0 = Release|AVR
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
