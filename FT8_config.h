@@ -1,8 +1,8 @@
 /*
 @file    FT8_config.h
 @brief   configuration information for some TFTs and some pre-defined colors
-@version 3.1
-@date    2017-04-25
+@version 3.2
+@date    2017-05-02
 @author  Rudolph Riedel
 
 @section History
@@ -31,8 +31,10 @@
 - changed ft800_ prefixes to FT8_
 
 3.1
-
 - added "#if defined (__ESP8266__)" for the Arduino side, now empty
+
+3.2
+- added config for FT811CB_HY50HD
 
 */
 
@@ -49,6 +51,7 @@
 	#define FT8_VM800B43A
 	#define FT8_VM800B50A
 	#define FT8_FT810CB_HY50HD
+	#define FT8_FT811CB_HY50HD
 	#define FT8_ET07
 	#define FT8_RVT70AQ
 #endif
@@ -117,6 +120,7 @@
 	#endif
 
 #endif
+
 
 void FT8_pdn_set(void);
 void FT8_pdn_clear(void);
@@ -200,6 +204,25 @@ uint8_t fetch_flash_byte(const uint8_t *data);
 #define FT8_SWIZZLE 	(0L)
 #define FT8_PCLK		(2L)
 #define FT8_TOUCH_RZTHRESH (2000L)	/* touch-sensitivity */
+#define FT8_HAS_CRYSTAL 1
+#endif
+
+/* FT811CB-HY50HD: FT811 800x480 5" HAOYU */
+#ifdef FT8_FT811CB_HY50HD
+#define FT8_VSYNC0	(0L)
+#define FT8_VSYNC1	(2L)
+#define FT8_VOFFSET	(13L)
+#define FT8_VCYCLE	(525L)
+#define FT8_VSIZE	(480L)
+#define FT8_HSYNC0	(0L)
+#define FT8_HSYNC1	(20L)
+#define FT8_HOFFSET 	(64L)
+#define FT8_HCYCLE 	(952L)
+#define FT8_HSIZE	(800L)
+#define FT8_PCLKPOL 	(1L)
+#define FT8_SWIZZLE 	(0L)
+#define FT8_PCLK		(2L)
+#define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
 #define FT8_HAS_CRYSTAL 1
 #endif
 
