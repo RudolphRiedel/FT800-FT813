@@ -1,8 +1,8 @@
 /*
 @file    FT8_commands.c
 @brief   Contains Functions for using the FT8xx
-@version 3.5
-@date    2017-07-05
+@version 3.6
+@date    2017-12-19
 @author  Rudolph Riedel
 
 This file needs to be renamed to FT8_command.cpp for use with Arduino. 
@@ -76,6 +76,9 @@ This file needs to be renamed to FT8_command.cpp for use with Arduino.
 
 3.5
 - Bugifx: FT8_cmd_setbase() was incrementing the command-offset by 12 instead of 4
+
+3.6
+- Bugifix: FT8_cmd_getptr() was using CMD_MEMCRC instead of CMD_GETPTR
 
 */
 
@@ -1582,7 +1585,7 @@ uint16_t FT8_cmd_getptr(void)
 {
 	uint16_t offset;
 
-	FT8_start_cmd(CMD_MEMCRC);
+	FT8_start_cmd(CMD_GETPTR);
 
 	spi_transmit(0);
 	spi_transmit(0);
