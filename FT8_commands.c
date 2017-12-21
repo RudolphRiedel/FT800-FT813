@@ -80,6 +80,10 @@ This file needs to be renamed to FT8_command.cpp for use with Arduino.
 3.6
 - Bugifix: FT8_cmd_getptr() was using CMD_MEMCRC instead of CMD_GETPTR
 
+3.7
+- Added FT8_cmd_start(), a non-blocking variant of FT8_cmd_execute() to be used at the end of a display-list update.
+	Thanks for pointing out that oversight to user "Peter" of Mikrocontroller.net!
+
 */
 
 #include "FT8.h"
