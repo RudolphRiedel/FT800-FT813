@@ -237,8 +237,8 @@ uint32_t FT8_get_touch_tag(void)
 }
 
 
-/* order the command co-prozessor to start processing its FIFO que */
-void FT8_cmd_execute(void)
+/* order the command co-prozessor to start processing its FIFO que and do not wait for completion */
+void FT8_cmd_start(void)
 {
 	uint32_t ftAddress;
 
@@ -251,6 +251,13 @@ void FT8_cmd_execute(void)
 	spi_transmit((uint8_t)(cmdOffset));			/* send data low byte */
 	spi_transmit((uint8_t)(cmdOffset >> 8));	/* send data high byte */
 	FT8_cs_clear();
+}
+
+
+/* order the command co-prozessor to start processing its FIFO que and wait for completion */
+void FT8_cmd_execute(void)
+{
+	FT8_cmd_start();
 	while (FT8_busy());
 }
 

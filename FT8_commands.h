@@ -45,6 +45,9 @@
 3.4
 - added protoypes for FT8_start_cmd_burst() and FT8_end_cmd_burst()
 
+3.5
+- added prototype fpr FT8_cmd_start()
+
 */
 
 #ifndef FT8_COMMANDS_H_
@@ -66,6 +69,7 @@ void FT8_cmd_dl(uint32_t command);
 
 void FT8_get_cmdoffset(void);
 uint32_t FT8_get_touch_tag(void);
+void FT8_cmd_start(void);
 void FT8_cmd_execute(void);
 
 void FT8_start_cmd_burst(void);
