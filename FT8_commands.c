@@ -1,8 +1,8 @@
 /*
 @file    FT8_commands.c
 @brief   Contains Functions for using the FT8xx
-@version 3.6
-@date    2017-12-19
+@version 3.8
+@date    2018-03-04
 @author  Rudolph Riedel
 
 This file needs to be renamed to FT8_command.cpp for use with Arduino. 
@@ -83,6 +83,9 @@ This file needs to be renamed to FT8_command.cpp for use with Arduino.
 3.7
 - Added FT8_cmd_start(), a non-blocking variant of FT8_cmd_execute() to be used at the end of a display-list update.
 	Thanks for pointing out that oversight to user "Peter" of Mikrocontroller.net!
+
+3.8
+- Added setting of REG_CSPRED to FT8_init() as new parameter, some Matrix Orbital modules use '0' instead of the reset-default '1'.
 
 */
 
@@ -1853,6 +1856,8 @@ uint8_t FT8_init(void)
 	FT8_memWrite16(REG_VSYNC1,  FT8_VSYNC1);	/* end of vertical sync pulse */
 	FT8_memWrite8(REG_SWIZZLE,  FT8_SWIZZLE);	/* FT8xx output to LCD - pin order */
 	FT8_memWrite8(REG_PCLK_POL, FT8_PCLKPOL);	/* LCD data is clocked in on this PCLK edge */
+	FT8_memWrite8(REG_CSPREAD,	FT8_CSPREAD);	/* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
+	
 	/* Don't set PCLK yet - wait for just after the first display list */
 
 	/* Configure Touch */

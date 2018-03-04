@@ -1,8 +1,8 @@
 /*
 @file    FT8_config.h
 @brief   configuration information for some TFTs and some pre-defined colors
-@version 3.2
-@date    2017-05-02
+@version 3.3
+@date    2018-03-04
 @author  Rudolph Riedel
 
 @section History
@@ -36,6 +36,11 @@
 3.2
 - added config for FT811CB_HY50HD
 
+3.3
+- switched to inline definitions for all those one-line support-functions -> faster and FT8_config.c is no longer needed
+- added timing parameters for Matrix Orbital EVE2 displays, derived from their sample code, untested
+- added FT8_CSPREAD values to all display settings
+
 */
 
 #ifndef FT8_CONFIG_H_
@@ -54,9 +59,15 @@
 	#define FT8_FT811CB_HY50HD
 	#define FT8_ET07
 	#define FT8_RVT70AQ
+	#define FT8_EVE2_29
+	#define FT8_EVE2_35
+	#define FT8_EVE2_38
+	#define FT8_EVE2_43
+	#define FT8_EVE2_50
+	#define FT8_EVE2_70
 #endif
 
-#define FT8_RVT70AQ
+#define FT8_FT811CB_HY50HD
 
 
 /* some pre-definded colors */
@@ -83,11 +94,50 @@
 			#define DELAY_MS(ms) _delay_ms(ms)
 
 			#define FT8_CS_PORT	PORTB
-			#define FT8_CS 		(1<<PB5)
+			#define FT8_CS 		(1<<PB4)
 			#define FT8_PDN_PORT	PORTB
-			#define FT8_PDN		(1<<PB4)
+			#define FT8_PDN		(1<<PB5)
 
-		#endif
+
+			static inline void FT8_pdn_set(void)
+			{
+				FT8_PDN_PORT &= ~FT8_PDN;	/* Power-Down low */
+			}
+
+			static inline void FT8_pdn_clear(void)
+			{
+				FT8_PDN_PORT |= FT8_PDN;	/* Power-Down high */
+			}
+
+			static inline void FT8_cs_set(void)
+			{
+				FT8_CS_PORT &= ~FT8_CS;	/* cs low */
+			}
+
+			static inline void FT8_cs_clear(void)
+			{
+				FT8_CS_PORT |= FT8_CS;	/* cs high */
+			}
+
+			static inline void spi_transmit(uint8_t data)
+			{
+				SPDR = data; /* Start transmission */
+				while(!(SPSR & (1<<SPIF))); /* Wait for transmission to complete - 1?s @ 8MHz SPI-Clock */
+			}
+			
+			static inline uint8_t spi_receive(uint8_t data)
+			{
+				SPDR = data; /* Start transmission */
+				while(!(SPSR & (1<<SPIF))); /* Wait for transmission to complete - 1?s @ 8MHz SPI-CLock */
+				return SPDR;
+			}
+
+			static inline uint8_t fetch_flash_byte(const uint8_t *data)
+			{
+				return(pgm_read_byte_far(data));
+			}
+
+		#endif /* AVR */
 
 		#if defined (__v851__)
 
@@ -97,7 +147,47 @@
 
 			#define DELAY_MS(ms)	OS_Wait(ms * 1000)	
 
-		#endif
+			static inline void FT8_pdn_set(void)
+			{
+				P0 &= ~(1u<<6);
+			}
+
+			static inline void FT8_pdn_clear(void)
+			{
+				P0 |= (1u<<6);
+			}
+
+			static inline void FT8_cs_set(void)
+			{
+				P8 &= ~(1u<<2); /* manually set chip-select to low */
+			}
+
+			static inline void FT8_cs_clear(void)
+			{
+				P8 |= (1u<<2);  /* manually set chip-select to high */
+			}
+
+			static inline void spi_transmit(uint8_t data)
+			{
+				CSIH0CTL0 = 0xC1; /* CSIH2PWR = 1;  CSIH2TXE=1; CSIH2RXE = 0; direct access mode  */
+				CSIH0TX0H = data;	/* Start transmission */
+				while(CSIH0STR0 & 0x00080);	/* Wait for transmission to complete - 800ns @ 10MHz SPI-Clock */
+			}
+
+			static inline uint8_t spi_receive(uint8_t data)
+			{
+				CSIH0CTL0 = 0xE1; /* CSIH2PWR = 1;  CSIH2TXE=1; CSIH2RXE = 1; direct access mode  */
+				CSIH0TX0H = data;	/* Start transmission */
+				while(CSIH0STR0 & 0x00080);	/* Wait for transmission to complete - 800ns @ 10MHz SPI-Clock */
+				return (uint8_t) CSIH0RX0H;
+			}
+
+			static inline uint8_t fetch_flash_byte(const uint8_t *data)
+			{
+				return *data;
+			}
+
+		#endif /* RH850 */
 
 	#endif
 #endif
@@ -119,16 +209,44 @@
 		#include <avr/pgmspace.h>
 	#endif
 
-#endif
 
+	static inline void FT8_pdn_set(void)
+	{
+		digitalWrite(FT8_PDN, LOW);	/* Power-Down low */
+	}
 
-void FT8_pdn_set(void);
-void FT8_pdn_clear(void);
-void FT8_cs_set(void);
-void FT8_cs_clear(void);
-void spi_transmit(uint8_t data);
-uint8_t spi_receive(uint8_t data);
-uint8_t fetch_flash_byte(const uint8_t *data);
+	static inline void FT8_pdn_clear(void)
+	{
+		digitalWrite(FT8_PDN, HIGH);	/* Power-Down high */
+	}
+
+	static inline void FT8_cs_set(void)
+	{
+		SPI.setDataMode(SPI_MODE0);
+		digitalWrite(FT8_CS, LOW);
+	}
+
+	static inline void FT8_cs_clear(void)
+	{
+		digitalWrite(FT8_CS, HIGH);
+	}
+
+	static inline void spi_transmit(uint8_t data)
+	{
+		SPI.write(data);
+	}
+
+	static inline uint8_t spi_receive(uint8_t data)
+	{
+		return SPI.transfer(data);
+	}
+
+	static inline uint8_t fetch_flash_byte(const uint8_t *data)
+	{
+		return(pgm_read_byte_near(data));
+	}
+
+#endif /* Arduino */
 
 
 /* VM800B35A: FT800 320x240 3.5" FTDI */
@@ -140,15 +258,17 @@ uint8_t fetch_flash_byte(const uint8_t *data);
 #define FT8_VSIZE	(240L)	/* Tvd Number of visible lines (in lines) - display height */
 #define FT8_HSYNC0	(0L)	/* Thf Horizontal Front Porch */
 #define FT8_HSYNC1	(10L)	/* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
-#define FT8_HOFFSET 	(70L)	/* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
+#define FT8_HOFFSET	(70L)	/* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
 #define FT8_HCYCLE 	(408L)	/* Th Total length of line (visible and non-visible) (in PCLKs) */
 #define FT8_HSIZE	(320L)	/* Thd Length of visible part of line (in PCLKs) - display width */
-#define FT8_PCLKPOL 	(0L)	/* PCLK polarity (0 = rising edge, 1 = falling edge) */
-#define FT8_SWIZZLE 	(2L)	/* Defines the arrangement of the RGB pins of the FT800 */
-#define FT8_PCLK		(8L)	/* 48MHz / REG_PCLK = PCLK frequency */
+#define FT8_PCLKPOL	(0L)	/* PCLK polarity (0 = rising edge, 1 = falling edge) */
+#define FT8_SWIZZLE	(2L)	/* Defines the arrangement of the RGB pins of the FT800 */
+#define FT8_PCLK	(8L)	/* 48MHz / REG_PCLK = PCLK frequency */
+#define FT8_CSPREAD	(1L)	/* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
 #define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
 #define FT8_HAS_CRYSTAL 1	/* use external crystal or internal oscillator? */
 #endif
+
 
 /* VM800B43A: FT800 480x272 4.3" FTDI */
 #ifdef FT8_VM800B43A
@@ -159,15 +279,17 @@ uint8_t fetch_flash_byte(const uint8_t *data);
 #define FT8_VSIZE	(272L)
 #define FT8_HSYNC0	(0L)
 #define FT8_HSYNC1	(41L)
-#define FT8_HOFFSET 	(43L)
+#define FT8_HOFFSET	(43L)
 #define FT8_HCYCLE 	(548L)
 #define FT8_HSIZE	(480L)
-#define FT8_PCLKPOL 	(1L)
-#define FT8_SWIZZLE 	(0L)
-#define FT8_PCLK		(5L)
+#define FT8_PCLKPOL	(1L)
+#define FT8_SWIZZLE	(0L)
+#define FT8_PCLK	(5L)
+#define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_CRYSTAL 1
 #endif
+
 
 /* VM800B50A: FT800 480x272 5.0" FTDI */
 #ifdef FT8_VM800B50A
@@ -178,17 +300,19 @@ uint8_t fetch_flash_byte(const uint8_t *data);
 #define FT8_VSIZE	(272L)
 #define FT8_HSYNC0	(0L)
 #define FT8_HSYNC1	(41L)
-#define FT8_HOFFSET 	(43L)
+#define FT8_HOFFSET	(43L)
 #define FT8_HCYCLE 	(548L)
 #define FT8_HSIZE	(480L)
-#define FT8_PCLKPOL 	(1L)
-#define FT8_SWIZZLE 	(0L)
-#define FT8_PCLK		(5L)
+#define FT8_PCLKPOL	(1L)
+#define FT8_SWIZZLE	(0L)
+#define FT8_PCLK	(5L)
+#define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_CRYSTAL 1
 #endif
 
-/* FT810CB-HY50HD: FT810 800x480 5" HAOYU */
+
+/* FT810CB-HY50HD: FT810 800x480 5.0" HAOYU */
 #ifdef FT8_FT810CB_HY50HD
 #define FT8_VSYNC0	(0L)
 #define FT8_VSYNC1	(2L)
@@ -197,17 +321,19 @@ uint8_t fetch_flash_byte(const uint8_t *data);
 #define FT8_VSIZE	(480L)
 #define FT8_HSYNC0	(0L)
 #define FT8_HSYNC1	(20L)
-#define FT8_HOFFSET 	(64L)
+#define FT8_HOFFSET	(64L)
 #define FT8_HCYCLE 	(952L)
 #define FT8_HSIZE	(800L)
-#define FT8_PCLKPOL 	(1L)
-#define FT8_SWIZZLE 	(0L)
-#define FT8_PCLK		(2L)
+#define FT8_PCLKPOL	(1L)
+#define FT8_SWIZZLE	(0L)
+#define FT8_PCLK	(2L)
+#define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (2000L)	/* touch-sensitivity */
 #define FT8_HAS_CRYSTAL 1
 #endif
 
-/* FT811CB-HY50HD: FT811 800x480 5" HAOYU */
+
+/* FT811CB-HY50HD: FT811 800x480 5.0" HAOYU */
 #ifdef FT8_FT811CB_HY50HD
 #define FT8_VSYNC0	(0L)
 #define FT8_VSYNC1	(2L)
@@ -216,36 +342,40 @@ uint8_t fetch_flash_byte(const uint8_t *data);
 #define FT8_VSIZE	(480L)
 #define FT8_HSYNC0	(0L)
 #define FT8_HSYNC1	(20L)
-#define FT8_HOFFSET 	(64L)
+#define FT8_HOFFSET	(64L)
 #define FT8_HCYCLE 	(952L)
 #define FT8_HSIZE	(800L)
-#define FT8_PCLKPOL 	(1L)
-#define FT8_SWIZZLE 	(0L)
-#define FT8_PCLK		(2L)
+#define FT8_PCLKPOL	(1L)
+#define FT8_SWIZZLE	(0L)
+#define FT8_PCLK	(2L)
+#define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
 #define FT8_HAS_CRYSTAL 1
 #endif
+
 
 /* some test setup */
 #ifdef FT8_800x480x
-#define FT8_VSYNC0	(0L) /* Tvf Vertical Front Porch */
-#define FT8_VSYNC1	(10L) /* Tvf + Tvp Vertical Front Porch plus Vsync Pulse width */
-#define FT8_VOFFSET	(35L) /* Tvf + Tvp + Tvb Number of non-visible lines (in lines) */
+#define FT8_VSYNC0	(0L)	/* Tvf Vertical Front Porch */
+#define FT8_VSYNC1	(10L)	/* Tvf + Tvp Vertical Front Porch plus Vsync Pulse width */
+#define FT8_VOFFSET	(35L)	/* Tvf + Tvp + Tvb Number of non-visible lines (in lines) */
 #define FT8_VCYCLE	(516L)	/* Tv Total number of lines (visible and non-visible) (in lines) */
 #define FT8_VSIZE	(480L)	/* Tvd Number of visible lines (in lines) - display height */
-#define FT8_HSYNC0	(0L) /* (40L)	// Thf Horizontal Front Porch */
+#define FT8_HSYNC0	(0L)	 /* (40L)	// Thf Horizontal Front Porch */
 #define FT8_HSYNC1	(88L)	/* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
-#define FT8_HOFFSET 	(169L) /* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
-#define FT8_HCYCLE 	(969L) /* Th Total length of line (visible and non-visible) (in PCLKs) */
+#define FT8_HOFFSET	(169L)	/* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
+#define FT8_HCYCLE 	(969L)	/* Th Total length of line (visible and non-visible) (in PCLKs) */
 #define FT8_HSIZE	(800L)	/* Thd Length of visible part of line (in PCLKs) - display width */
-#define FT8_PCLKPOL 	(1L)	/* PCLK polarity (0 = rising edge, 1 = falling edge) */
-#define FT8_SWIZZLE 	(0L)	/* Defines the arrangement of the RGB pins of the FT800 */
-#define FT8_PCLK		(2L)	/* 60MHz / REG_PCLK = PCLK frequency	30 MHz */
+#define FT8_PCLKPOL	(1L)	/* PCLK polarity (0 = rising edge, 1 = falling edge) */
+#define FT8_SWIZZLE	(0L)	/* Defines the arrangement of the RGB pins of the FT800 */
+#define FT8_PCLK	(2L)	/* 60MHz / REG_PCLK = PCLK frequency	30 MHz */
+#define FT8_CSPREAD	(1L)	/* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
 #define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
 #define FT8_HAS_CRYSTAL 1
 #endif
 
-/* G-ET0700G0DM6 800x480 7" Glyn, untested */
+
+/* G-ET0700G0DM6 800x480 7.0" Glyn, untested */
 #ifdef FT8_ET07
 #define FT8_VSYNC0	(0L)
 #define FT8_VSYNC1	(2L)
@@ -254,17 +384,19 @@ uint8_t fetch_flash_byte(const uint8_t *data);
 #define FT8_VSIZE	(480L)
 #define FT8_HSYNC0	(0L)
 #define FT8_HSYNC1	(128L)
-#define FT8_HOFFSET 	(203L)
+#define FT8_HOFFSET (203L)
 #define FT8_HCYCLE 	(1056L)
 #define FT8_HSIZE	(800L)
-#define FT8_PCLKPOL 	(1L)
-#define FT8_SWIZZLE 	(0L)
-#define FT8_PCLK		(2L)
+#define FT8_PCLKPOL (1L)
+#define FT8_SWIZZLE (0L)
+#define FT8_PCLK	(2L)
+#define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_CRYSTAL 0	/* no idea if these come with a crystal populated or not */
 #endif
 
-/* RVT70AQxxxxxx 800x480 7" Riverdi, various options, FT812/FT813, tested with RVT70UQFNWC0x */
+
+/* RVT70AQxxxxxx 800x480 7.0" Riverdi, various options, FT812/FT813, tested with RVT70UQFNWC0x */
 #ifdef FT8_RVT70AQ
 #define FT8_VSYNC0	(0L)	/* Tvf Vertical Front Porch */
 #define FT8_VSYNC1	(10L)	/* Tvf + Tvp Vertical Front Porch plus Vsync Pulse width */
@@ -273,14 +405,142 @@ uint8_t fetch_flash_byte(const uint8_t *data);
 #define FT8_VSIZE	(480L)	/* Tvd Number of visible lines (in lines) - display height */
 #define FT8_HSYNC0	(0L)	/* Thf Horizontal Front Porch */
 #define FT8_HSYNC1	(10L)	/* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
-#define FT8_HOFFSET 	(46L)	/* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
+#define FT8_HOFFSET (46L)	/* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
 #define FT8_HCYCLE 	(1056L)	/* Th Total length of line (visible and non-visible) (in PCLKs) */
 #define FT8_HSIZE	(800L)	/* Thd Length of visible part of line (in PCLKs) - display width */
-#define FT8_PCLKPOL 	(1L)	/* PCLK polarity (0 = rising edge, 1 = falling edge) */
-#define FT8_SWIZZLE 	(0L)	/* Defines the arrangement of the RGB pins of the FT800 */
-#define FT8_PCLK		(2L)	/* 60MHz / REG_PCLK = PCLK frequency 30 MHz */
+#define FT8_PCLKPOL (1L)	/* PCLK polarity (0 = rising edge, 1 = falling edge) */
+#define FT8_SWIZZLE (0L)	/* Defines the arrangement of the RGB pins of the FT800 */
+#define FT8_PCLK	(2L)	/* 60MHz / REG_PCLK = PCLK frequency 30 MHz */
+#define FT8_CSPREAD	(1L)	/* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
 #define FT8_TOUCH_RZTHRESH (1800L)	/* touch-sensitivity */
 #define FT8_HAS_CRYSTAL 0
 #endif
+
+
+/* EVE2-29A 320x102 2.9" 1U Matrix Orbital, no touch, FT81x */
+#ifdef FT8_EVE2_29
+#define FT8_VSYNC0	(0L)
+#define FT8_VSYNC1	(2L)
+#define FT8_VOFFSET	(156L)
+#define FT8_VCYCLE	(262L)
+#define FT8_VSIZE	(102L)
+#define FT8_HSYNC0	(0L)
+#define FT8_HSYNC1	(10L)
+#define FT8_HOFFSET	(70L)
+#define FT8_HCYCLE 	(408L)
+#define FT8_HSIZE	(320L)
+#define FT8_PCLKPOL	(0L)
+#define FT8_SWIZZLE	(0L)
+#define FT8_PCLK	(8L)
+#define FT8_CSPREAD	(1L)
+#define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
+#define FT8_HAS_CRYSTAL 1
+#endif
+
+
+/* EVE2-35A 320x240 3.5" Matrix Orbital, resistive, capacitive or no touch, FT81x */
+#ifdef FT8_EVE2_35
+#define FT8_VSYNC0	(0L)
+#define FT8_VSYNC1	(2L)
+#define FT8_VOFFSET	(18L)
+#define FT8_VCYCLE	(262L)
+#define FT8_VSIZE	(240L)
+#define FT8_HSYNC0	(0L)
+#define FT8_HSYNC1	(10L)
+#define FT8_HOFFSET	(70L)
+#define FT8_HCYCLE 	(408L)
+#define FT8_HSIZE	(320L)
+#define FT8_PCLKPOL	(0L)
+#define FT8_SWIZZLE	(0L)
+#define FT8_PCLK	(8L)
+#define FT8_CSPREAD	(1L)
+#define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
+#define FT8_HAS_CRYSTAL 1
+#endif
+
+
+/* EVE2-38A 480x116 3.8" 1U Matrix Orbital, resisitive or capacitive touch, FT81x */
+#ifdef FT8_EVE2_38
+#define FT8_VSYNC0	(0L)
+#define FT8_VSYNC1	(10L)
+#define FT8_VOFFSET	(12L)
+#define FT8_VCYCLE	(292L)
+#define FT8_VSIZE	(272L)
+#define FT8_HSYNC0	(0L)
+#define FT8_HSYNC1	(41L)
+#define FT8_HOFFSET	(43L)
+#define FT8_HCYCLE 	(548L)
+#define FT8_HSIZE	(480L)
+#define FT8_PCLKPOL	(1L)
+#define FT8_SWIZZLE	(0L)
+#define FT8_PCLK	(5L)
+#define FT8_CSPREAD	(1L)
+#define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
+#define FT8_HAS_CRYSTAL 1
+#endif
+
+
+/* EVE2-43A 480x272 4.3" Matrix Orbital, resistive, capacitive or no touch, FT81x */
+#ifdef FT8_EVE2_43
+#define FT8_VSYNC0	(0L)
+#define FT8_VSYNC1	(10L)
+#define FT8_VOFFSET	(12L)
+#define FT8_VCYCLE	(292L)
+#define FT8_VSIZE	(272L)
+#define FT8_HSYNC0	(0L)
+#define FT8_HSYNC1	(41L)
+#define FT8_HOFFSET	(43L)
+#define FT8_HCYCLE 	(548L)
+#define FT8_HSIZE	(480L)
+#define FT8_PCLKPOL	(1L)
+#define FT8_SWIZZLE	(0L)
+#define FT8_PCLK	(5L)
+#define FT8_CSPREAD	(1L)
+#define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
+#define FT8_HAS_CRYSTAL 1
+#endif
+
+
+/* EVE2-50A 800x480 5.0" Matrix Orbital, resistive, capacitive or no touch, FT81x */
+#ifdef FT8_EVE2_50
+#define FT8_VSYNC0	(0L)
+#define FT8_VSYNC1	(3L)
+#define FT8_VOFFSET	(32L)
+#define FT8_VCYCLE	(525L)
+#define FT8_VSIZE	(480L)
+#define FT8_HSYNC0	(0L)
+#define FT8_HSYNC1	(48L)
+#define FT8_HOFFSET	(88L)
+#define FT8_HCYCLE 	(928L)
+#define FT8_HSIZE	(800L)
+#define FT8_PCLKPOL	(1L)
+#define FT8_SWIZZLE	(0L)
+#define FT8_PCLK	(2L)
+#define FT8_CSPREAD	(0L)
+#define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
+#define FT8_HAS_CRYSTAL 1
+#endif
+
+
+/* EVE2-70A 800x480 7.0" Matrix Orbital, resistive, capacitive or no touch, FT81x */
+#ifdef FT8_EVE2_70
+#define FT8_VSYNC0	(0L)
+#define FT8_VSYNC1	(3L)
+#define FT8_VOFFSET	(32L)
+#define FT8_VCYCLE	(525L)
+#define FT8_VSIZE	(480L)
+#define FT8_HSYNC0	(0L)
+#define FT8_HSYNC1	(48L)
+#define FT8_HOFFSET	(88L)
+#define FT8_HCYCLE 	(928L)
+#define FT8_HSIZE	(800L)
+#define FT8_PCLKPOL	(1L)
+#define FT8_SWIZZLE	(0L)
+#define FT8_PCLK	(2L)
+#define FT8_CSPREAD	(0L)
+#define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
+#define FT8_HAS_CRYSTAL 1
+#endif
+
 
 #endif /* FT8_CONFIG_H */
