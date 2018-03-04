@@ -34,11 +34,13 @@
         <documentation help="" />
         <offline-documentation help="" />
         <dependencies>
-          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.25.0" />
+          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.26.0" />
         </dependencies>
       </framework-data>
     </AsfFrameworkConfig>
     <preserveEEPROM>true</preserveEEPROM>
+    <ResetRule>0</ResetRule>
+    <EraseKey />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <ToolchainSettings>
@@ -54,13 +56,14 @@
     <ListValues>
       <Value>__ESP8266_ESp8266__</Value>
       <Value>__ESP8266_ESP8266__</Value>
-      <Value>ARDUINO=10802</Value>
+      <Value>_VMDEBUG=1</Value>
+      <Value>ARDUINO=10805</Value>
       <Value>ARDUINO_MAIN</Value>
-      <Value>F_CPU=80000000L</Value>
       <Value>printf=iprintf</Value>
       <Value>__ESP8266__</Value>
       <Value>__ets__</Value>
       <Value>ICACHE_FLASH</Value>
+      <Value>F_CPU={build.f_cpu}</Value>
       <Value>LWIP_OPEN_SRC</Value>
       <Value>ARDUINO_ESP8266_NODEMCU</Value>
       <Value>ARDUINO_ARCH_ESP8266</Value>
@@ -68,25 +71,23 @@
   </avrgcc.compiler.symbols.DefSymbols>
   <avrgcc.compiler.directories.IncludePaths>
     <ListValues>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/lib/gcc/xtensa-lx106-elf/4.8.2/include</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2/xtensa-lx106-elf</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2</Value>
-      <Value>C:/Users/grriedel/AppData/Local/Temp/VMicroBuilds/sketch_esp8266/esp8266_nodemcuv2/core</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/lwip/include</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/include</Value>
-      <Value>../../sketch_esp8266</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/variants/nodemcu</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/umm_malloc</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/spiffs</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/libb64</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266</Value>
-      <Value>C:/Users/grriedel/Documents/Arduino/libraries</Value>
-      <Value>C:/Program Files (x86)/Atmel/Studio/7.0/Extensions/1pi031ys.rqf/Micro Platforms/default/debuggers</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries</Value>
-      <Value>D:/Arduino/arduino-1.8.2/libraries</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries/SPI/utility</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries/SPI</Value>
+      <Value>../../../FT8xx_Test_Arduino_ESP8266_FT813_RVT70UQFNWC0x</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/libraries/SPI</Value>
+      <Value>D:/Arduino/arduino-1.8.5/libraries</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/libraries</Value>
+      <Value>C:/Users/Ich/Documents/Arduino/libraries</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266/libb64</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266/spiffs</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266/umm_malloc</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/variants/nodemcu</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/include</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/lwip2/include</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/libc/xtensa-lx106-elf/include</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2/xtensa-lx106-elf</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/lib/gcc/xtensa-lx106-elf/4.8.2/include</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
@@ -100,13 +101,14 @@
     <ListValues>
       <Value>__ESP8266_ESp8266__</Value>
       <Value>__ESP8266_ESP8266__</Value>
-      <Value>ARDUINO=10802</Value>
+      <Value>_VMDEBUG=1</Value>
+      <Value>ARDUINO=10805</Value>
       <Value>ARDUINO_MAIN</Value>
-      <Value>F_CPU=80000000L</Value>
       <Value>printf=iprintf</Value>
       <Value>__ESP8266__</Value>
       <Value>__ets__</Value>
       <Value>ICACHE_FLASH</Value>
+      <Value>F_CPU={build.f_cpu}</Value>
       <Value>LWIP_OPEN_SRC</Value>
       <Value>ARDUINO_ESP8266_NODEMCU</Value>
       <Value>ARDUINO_ARCH_ESP8266</Value>
@@ -114,25 +116,23 @@
   </avrgcccpp.compiler.symbols.DefSymbols>
   <avrgcccpp.compiler.directories.IncludePaths>
     <ListValues>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/lib/gcc/xtensa-lx106-elf/4.8.2/include</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2/xtensa-lx106-elf</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2</Value>
-      <Value>C:/Users/grriedel/AppData/Local/Temp/VMicroBuilds/sketch_esp8266/esp8266_nodemcuv2/core</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/lwip/include</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/include</Value>
-      <Value>../../sketch_esp8266</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/variants/nodemcu</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/umm_malloc</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/spiffs</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/libb64</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266</Value>
-      <Value>C:/Users/grriedel/Documents/Arduino/libraries</Value>
-      <Value>C:/Program Files (x86)/Atmel/Studio/7.0/Extensions/1pi031ys.rqf/Micro Platforms/default/debuggers</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries</Value>
-      <Value>D:/Arduino/arduino-1.8.2/libraries</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries/SPI/utility</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries/SPI</Value>
+      <Value>../../../FT8xx_Test_Arduino_ESP8266_FT813_RVT70UQFNWC0x</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/libraries/SPI</Value>
+      <Value>D:/Arduino/arduino-1.8.5/libraries</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/libraries</Value>
+      <Value>C:/Users/Ich/Documents/Arduino/libraries</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266/libb64</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266/spiffs</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266/umm_malloc</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/variants/nodemcu</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/include</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/lwip2/include</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/libc/xtensa-lx106-elf/include</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2/xtensa-lx106-elf</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/lib/gcc/xtensa-lx106-elf/4.8.2/include</Value>
     </ListValues>
   </avrgcccpp.compiler.directories.IncludePaths>
   <avrgcccpp.compiler.optimization.level>Optimize (-O1)</avrgcccpp.compiler.optimization.level>
@@ -143,7 +143,7 @@
   <avrgcccpp.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcccpp.assembler.debugging.DebugLevel>
 </AvrGccCpp>
     </ToolchainSettings>
-    <VMSETTING_IncludePaths>D:/Arduino/arduino-1.0.6/libraries;D:/Arduino/arduino-1.0.6/hardware/arduino/libraries;C:/Users/Ich/Documents/Arduino/libraries;D:/Arduino/arduino-1.0.6/hardware/arduino/cores/arduino;D:/Arduino/arduino-1.0.6/hardware/arduino/cores/arduino/avr-libc;D:/Arduino/arduino-1.0.6/hardware/arduino/variants/standard;../../../sketch_esp8266;d:/arduino/arduino-1.0.6/hardware/tools/avr/avr/include/;d:/arduino/arduino-1.0.6/hardware/tools/avr/avr/include/avr/;d:/arduino/arduino-1.0.6/hardware/tools/avr/avr/;d:/arduino/arduino-1.0.6/hardware/tools/avr/lib/gcc/avr/4.3.2/include/;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/libraries;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/cores/maple;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/cores/maple/avr;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/cores/maple/libmaple;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/cores/maple/stm32f1;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/variants/generic_GD32f103c;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple/include;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple/stm32f1/include;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple/usb/stm32f1;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple/usb/usb_lib;C:/Program Files (x86)/Atmel/Studio/7.0/Extensions/4rr5oxr0.lux/Micro Platforms/visualmicro/ide-atmel/libraries;c:/program files (x86)/atmel/studio/7.0/extensions/4rr5oxr0.lux/micro platforms/visualmicro/ide-atmel/hardware/tools/avr/avr/include/;c:/program files (x86)/atmel/studio/7.0/extensions/4rr5oxr0.lux/micro platforms/visualmicro/ide-atmel/hardware/tools/avr/avr/include/avr/;c:/program files (x86)/atmel/studio/7.0/extensions/4rr5oxr0.lux/micro platforms/visualmicro/ide-atmel/hardware/tools/avr/avr/;D:/Arduino/arduino-1.8.2/libraries;d:/arduino/arduino-1.8.2/hardware/tools/avr/avr/include/;d:/arduino/arduino-1.8.2/hardware/tools/avr/avr/include/avr/;d:/arduino/arduino-1.8.2/hardware/tools/avr/avr/;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/libb64;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/spiffs;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/umm_malloc;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/variants/nodemcu;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/include;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/lwip/include;C:/Users/Ich/AppData/Local/Temp/VMBuilds/sketch_esp8266/_STM32_genericGD32F103C/Debug/core;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2/xtensa-lx106-elf;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/lib/gcc/xtensa-lx106-elf/4.8.2/include;D:/Arduino/arduino-1.8.1/libraries;D:/Arduino/arduino-1.8.1/hardware/arduino/avr/libraries;C:/Program Files (x86)/Atmel/Studio/7.0/Extensions/1pi031ys.rqf/Micro Platforms/default/debuggers;D:/libraries;D:/Arduino/arduino-1.8.1/hardware/arduino/avr/cores/arduino;D:/Arduino/arduino-1.8.1/hardware/arduino/avr/variants/standard;../../sketch_esp8266;{runtime.tools.avr-gcc.path}/avr/include/;{runtime.tools.avr-gcc.path}//avr/include/avr/;{runtime.tools.avr-gcc.path}/lib/gcc/avr/4.8.1/include;D:/Arduino/arduino-1.8.2/hardware/arduino/avr/libraries;C:/Users/grriedel/Documents/Arduino/libraries;D:/Arduino/arduino-1.8.2/hardware/arduino/avr/cores/arduino;D:/Arduino/arduino-1.8.2/hardware/arduino/avr/variants/standard;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/libb64;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/spiffs;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/umm_malloc;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/variants/nodemcu;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/include;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/lwip/include;C:/Users/grriedel/AppData/Local/Temp/VMicroBuilds/sketch_esp8266/esp8266_nodemcuv2/core;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2/xtensa-lx106-elf;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/lib/gcc/xtensa-lx106-elf/4.8.2/include;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries/SPI;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries/SPI/utility;</VMSETTING_IncludePaths>
+    <VMSETTING_IncludePaths>D:/Arduino/arduino-1.0.6/libraries;D:/Arduino/arduino-1.0.6/hardware/arduino/libraries;C:/Users/Ich/Documents/Arduino/libraries;D:/Arduino/arduino-1.0.6/hardware/arduino/cores/arduino;D:/Arduino/arduino-1.0.6/hardware/arduino/cores/arduino/avr-libc;D:/Arduino/arduino-1.0.6/hardware/arduino/variants/standard;../../../sketch_esp8266;d:/arduino/arduino-1.0.6/hardware/tools/avr/avr/include/;d:/arduino/arduino-1.0.6/hardware/tools/avr/avr/include/avr/;d:/arduino/arduino-1.0.6/hardware/tools/avr/avr/;d:/arduino/arduino-1.0.6/hardware/tools/avr/lib/gcc/avr/4.3.2/include/;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/libraries;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/cores/maple;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/cores/maple/avr;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/cores/maple/libmaple;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/cores/maple/stm32f1;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/variants/generic_GD32f103c;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple/include;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple/stm32f1/include;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple/usb/stm32f1;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple/usb/usb_lib;C:/Program Files (x86)/Atmel/Studio/7.0/Extensions/4rr5oxr0.lux/Micro Platforms/visualmicro/ide-atmel/libraries;c:/program files (x86)/atmel/studio/7.0/extensions/4rr5oxr0.lux/micro platforms/visualmicro/ide-atmel/hardware/tools/avr/avr/include/;c:/program files (x86)/atmel/studio/7.0/extensions/4rr5oxr0.lux/micro platforms/visualmicro/ide-atmel/hardware/tools/avr/avr/include/avr/;c:/program files (x86)/atmel/studio/7.0/extensions/4rr5oxr0.lux/micro platforms/visualmicro/ide-atmel/hardware/tools/avr/avr/;D:/Arduino/arduino-1.8.2/libraries;d:/arduino/arduino-1.8.2/hardware/tools/avr/avr/include/;d:/arduino/arduino-1.8.2/hardware/tools/avr/avr/include/avr/;d:/arduino/arduino-1.8.2/hardware/tools/avr/avr/;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/libb64;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/spiffs;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/umm_malloc;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/variants/nodemcu;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/include;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/lwip/include;C:/Users/Ich/AppData/Local/Temp/VMBuilds/sketch_esp8266/_STM32_genericGD32F103C/Debug/core;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2/xtensa-lx106-elf;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/lib/gcc/xtensa-lx106-elf/4.8.2/include;D:/Arduino/arduino-1.8.1/libraries;D:/Arduino/arduino-1.8.1/hardware/arduino/avr/libraries;C:/Program Files (x86)/Atmel/Studio/7.0/Extensions/1pi031ys.rqf/Micro Platforms/default/debuggers;D:/libraries;D:/Arduino/arduino-1.8.1/hardware/arduino/avr/cores/arduino;D:/Arduino/arduino-1.8.1/hardware/arduino/avr/variants/standard;../../sketch_esp8266;{runtime.tools.avr-gcc.path}/avr/include/;{runtime.tools.avr-gcc.path}//avr/include/avr/;{runtime.tools.avr-gcc.path}/lib/gcc/avr/4.8.1/include;D:/Arduino/arduino-1.8.2/hardware/arduino/avr/libraries;C:/Users/grriedel/Documents/Arduino/libraries;D:/Arduino/arduino-1.8.2/hardware/arduino/avr/cores/arduino;D:/Arduino/arduino-1.8.2/hardware/arduino/avr/variants/standard;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/libb64;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/spiffs;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/umm_malloc;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/variants/nodemcu;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/include;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/lwip/include;C:/Users/grriedel/AppData/Local/Temp/VMicroBuilds/sketch_esp8266/esp8266_nodemcuv2/core;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2/xtensa-lx106-elf;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/lib/gcc/xtensa-lx106-elf/4.8.2/include;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries/SPI;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries/SPI/utility;../../../FT8xx_Test_Arduino_ESP8266_FT813_RVT70UQFNWC0x;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/libraries/SPI;D:/Arduino/arduino-1.8.5/libraries;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/libraries;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266/libb64;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266/spiffs;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266/umm_malloc;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/variants/nodemcu;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/include;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/lwip/include;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/libc/xtensa-lx106-elf/include;{build.path}/core;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/lwip2/include;</VMSETTING_IncludePaths>
     <VisualMicroSettings>
       <VisualMicroSettings>
         <arduino.board.name>esp8266_nodemcuv2</arduino.board.name>
@@ -376,13 +376,14 @@ build.arch=ESP8266
     <ListValues>
       <Value>__ESP8266_ESp8266__</Value>
       <Value>__ESP8266_ESP8266__</Value>
-      <Value>ARDUINO=10802</Value>
+      <Value>_VMDEBUG=1</Value>
+      <Value>ARDUINO=10805</Value>
       <Value>ARDUINO_MAIN</Value>
-      <Value>F_CPU=80000000L</Value>
       <Value>printf=iprintf</Value>
       <Value>__ESP8266__</Value>
       <Value>__ets__</Value>
       <Value>ICACHE_FLASH</Value>
+      <Value>F_CPU={build.f_cpu}</Value>
       <Value>LWIP_OPEN_SRC</Value>
       <Value>ARDUINO_ESP8266_NODEMCU</Value>
       <Value>ARDUINO_ARCH_ESP8266</Value>
@@ -390,25 +391,23 @@ build.arch=ESP8266
   </avrgcc.compiler.symbols.DefSymbols>
   <avrgcc.compiler.directories.IncludePaths>
     <ListValues>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/lib/gcc/xtensa-lx106-elf/4.8.2/include</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2/xtensa-lx106-elf</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2</Value>
-      <Value>C:/Users/grriedel/AppData/Local/Temp/VMicroBuilds/sketch_esp8266/esp8266_nodemcuv2/core</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/lwip/include</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/include</Value>
-      <Value>../../sketch_esp8266</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/variants/nodemcu</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/umm_malloc</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/spiffs</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/libb64</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266</Value>
-      <Value>C:/Users/grriedel/Documents/Arduino/libraries</Value>
-      <Value>C:/Program Files (x86)/Atmel/Studio/7.0/Extensions/1pi031ys.rqf/Micro Platforms/default/debuggers</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries</Value>
-      <Value>D:/Arduino/arduino-1.8.2/libraries</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries/SPI/utility</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries/SPI</Value>
+      <Value>../../../FT8xx_Test_Arduino_ESP8266_FT813_RVT70UQFNWC0x</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/libraries/SPI</Value>
+      <Value>D:/Arduino/arduino-1.8.5/libraries</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/libraries</Value>
+      <Value>C:/Users/Ich/Documents/Arduino/libraries</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266/libb64</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266/spiffs</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266/umm_malloc</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/variants/nodemcu</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/include</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/lwip2/include</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/libc/xtensa-lx106-elf/include</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2/xtensa-lx106-elf</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/lib/gcc/xtensa-lx106-elf/4.8.2/include</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
@@ -422,13 +421,14 @@ build.arch=ESP8266
     <ListValues>
       <Value>__ESP8266_ESp8266__</Value>
       <Value>__ESP8266_ESP8266__</Value>
-      <Value>ARDUINO=10802</Value>
+      <Value>_VMDEBUG=1</Value>
+      <Value>ARDUINO=10805</Value>
       <Value>ARDUINO_MAIN</Value>
-      <Value>F_CPU=80000000L</Value>
       <Value>printf=iprintf</Value>
       <Value>__ESP8266__</Value>
       <Value>__ets__</Value>
       <Value>ICACHE_FLASH</Value>
+      <Value>F_CPU={build.f_cpu}</Value>
       <Value>LWIP_OPEN_SRC</Value>
       <Value>ARDUINO_ESP8266_NODEMCU</Value>
       <Value>ARDUINO_ARCH_ESP8266</Value>
@@ -436,25 +436,23 @@ build.arch=ESP8266
   </avrgcccpp.compiler.symbols.DefSymbols>
   <avrgcccpp.compiler.directories.IncludePaths>
     <ListValues>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/lib/gcc/xtensa-lx106-elf/4.8.2/include</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2/xtensa-lx106-elf</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2</Value>
-      <Value>C:/Users/grriedel/AppData/Local/Temp/VMicroBuilds/sketch_esp8266/esp8266_nodemcuv2/core</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/lwip/include</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/include</Value>
-      <Value>../../sketch_esp8266</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/variants/nodemcu</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/umm_malloc</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/spiffs</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/libb64</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266</Value>
-      <Value>C:/Users/grriedel/Documents/Arduino/libraries</Value>
-      <Value>C:/Program Files (x86)/Atmel/Studio/7.0/Extensions/1pi031ys.rqf/Micro Platforms/default/debuggers</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries</Value>
-      <Value>D:/Arduino/arduino-1.8.2/libraries</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries/SPI/utility</Value>
-      <Value>C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries/SPI</Value>
+      <Value>../../../FT8xx_Test_Arduino_ESP8266_FT813_RVT70UQFNWC0x</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/libraries/SPI</Value>
+      <Value>D:/Arduino/arduino-1.8.5/libraries</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/libraries</Value>
+      <Value>C:/Users/Ich/Documents/Arduino/libraries</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266/libb64</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266/spiffs</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266/umm_malloc</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/variants/nodemcu</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/include</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/lwip2/include</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/libc/xtensa-lx106-elf/include</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2/xtensa-lx106-elf</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include</Value>
+      <Value>C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/lib/gcc/xtensa-lx106-elf/4.8.2/include</Value>
     </ListValues>
   </avrgcccpp.compiler.directories.IncludePaths>
   <avrgcccpp.compiler.optimization.level>Optimize (-O1)</avrgcccpp.compiler.optimization.level>
@@ -465,7 +463,7 @@ build.arch=ESP8266
   <avrgcccpp.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcccpp.assembler.debugging.DebugLevel>
 </AvrGccCpp>
     </ToolchainSettings>
-    <VMSETTING_IncludePaths>D:/Arduino/arduino-1.0.6/libraries;D:/Arduino/arduino-1.0.6/hardware/arduino/libraries;C:/Users/Ich/Documents/Arduino/libraries;D:/Arduino/arduino-1.0.6/hardware/arduino/cores/arduino;D:/Arduino/arduino-1.0.6/hardware/arduino/cores/arduino/avr-libc;D:/Arduino/arduino-1.0.6/hardware/arduino/variants/standard;../../../sketch_esp8266;d:/arduino/arduino-1.0.6/hardware/tools/avr/avr/include/;d:/arduino/arduino-1.0.6/hardware/tools/avr/avr/include/avr/;d:/arduino/arduino-1.0.6/hardware/tools/avr/avr/;d:/arduino/arduino-1.0.6/hardware/tools/avr/lib/gcc/avr/4.3.2/include/;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/libraries;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/cores/maple;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/cores/maple/avr;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/cores/maple/libmaple;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/cores/maple/stm32f1;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/variants/generic_GD32f103c;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple/include;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple/stm32f1/include;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple/usb/stm32f1;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple/usb/usb_lib;C:/Program Files (x86)/Atmel/Studio/7.0/Extensions/4rr5oxr0.lux/Micro Platforms/visualmicro/ide-atmel/libraries;c:/program files (x86)/atmel/studio/7.0/extensions/4rr5oxr0.lux/micro platforms/visualmicro/ide-atmel/hardware/tools/avr/avr/include/;c:/program files (x86)/atmel/studio/7.0/extensions/4rr5oxr0.lux/micro platforms/visualmicro/ide-atmel/hardware/tools/avr/avr/include/avr/;c:/program files (x86)/atmel/studio/7.0/extensions/4rr5oxr0.lux/micro platforms/visualmicro/ide-atmel/hardware/tools/avr/avr/;D:/Arduino/arduino-1.8.2/libraries;d:/arduino/arduino-1.8.2/hardware/tools/avr/avr/include/;d:/arduino/arduino-1.8.2/hardware/tools/avr/avr/include/avr/;d:/arduino/arduino-1.8.2/hardware/tools/avr/avr/;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/libb64;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/spiffs;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/umm_malloc;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/variants/nodemcu;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/include;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/lwip/include;C:/Users/Ich/AppData/Local/Temp/VMBuilds/sketch_esp8266/_STM32_genericGD32F103C/Debug/core;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2/xtensa-lx106-elf;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/lib/gcc/xtensa-lx106-elf/4.8.2/include;D:/Arduino/arduino-1.8.1/libraries;D:/Arduino/arduino-1.8.1/hardware/arduino/avr/libraries;C:/Program Files (x86)/Atmel/Studio/7.0/Extensions/1pi031ys.rqf/Micro Platforms/default/debuggers;D:/libraries;D:/Arduino/arduino-1.8.1/hardware/arduino/avr/cores/arduino;D:/Arduino/arduino-1.8.1/hardware/arduino/avr/variants/standard;../../sketch_esp8266;{runtime.tools.avr-gcc.path}/avr/include/;{runtime.tools.avr-gcc.path}//avr/include/avr/;{runtime.tools.avr-gcc.path}/lib/gcc/avr/4.8.1/include;D:/Arduino/arduino-1.8.2/hardware/arduino/avr/libraries;C:/Users/grriedel/Documents/Arduino/libraries;D:/Arduino/arduino-1.8.2/hardware/arduino/avr/cores/arduino;D:/Arduino/arduino-1.8.2/hardware/arduino/avr/variants/standard;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/libb64;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/spiffs;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/umm_malloc;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/variants/nodemcu;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/include;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/lwip/include;C:/Users/grriedel/AppData/Local/Temp/VMicroBuilds/sketch_esp8266/esp8266_nodemcuv2/core;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2/xtensa-lx106-elf;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/lib/gcc/xtensa-lx106-elf/4.8.2/include;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries/SPI;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries/SPI/utility;</VMSETTING_IncludePaths>
+    <VMSETTING_IncludePaths>D:/Arduino/arduino-1.0.6/libraries;D:/Arduino/arduino-1.0.6/hardware/arduino/libraries;C:/Users/Ich/Documents/Arduino/libraries;D:/Arduino/arduino-1.0.6/hardware/arduino/cores/arduino;D:/Arduino/arduino-1.0.6/hardware/arduino/cores/arduino/avr-libc;D:/Arduino/arduino-1.0.6/hardware/arduino/variants/standard;../../../sketch_esp8266;d:/arduino/arduino-1.0.6/hardware/tools/avr/avr/include/;d:/arduino/arduino-1.0.6/hardware/tools/avr/avr/include/avr/;d:/arduino/arduino-1.0.6/hardware/tools/avr/avr/;d:/arduino/arduino-1.0.6/hardware/tools/avr/lib/gcc/avr/4.3.2/include/;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/libraries;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/cores/maple;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/cores/maple/avr;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/cores/maple/libmaple;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/cores/maple/stm32f1;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/variants/generic_GD32f103c;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple/include;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple/stm32f1/include;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple/usb/stm32f1;C:/Users/Ich/Documents/Arduino/hardware/_STM32/GD32F1/system/libmaple/usb/usb_lib;C:/Program Files (x86)/Atmel/Studio/7.0/Extensions/4rr5oxr0.lux/Micro Platforms/visualmicro/ide-atmel/libraries;c:/program files (x86)/atmel/studio/7.0/extensions/4rr5oxr0.lux/micro platforms/visualmicro/ide-atmel/hardware/tools/avr/avr/include/;c:/program files (x86)/atmel/studio/7.0/extensions/4rr5oxr0.lux/micro platforms/visualmicro/ide-atmel/hardware/tools/avr/avr/include/avr/;c:/program files (x86)/atmel/studio/7.0/extensions/4rr5oxr0.lux/micro platforms/visualmicro/ide-atmel/hardware/tools/avr/avr/;D:/Arduino/arduino-1.8.2/libraries;d:/arduino/arduino-1.8.2/hardware/tools/avr/avr/include/;d:/arduino/arduino-1.8.2/hardware/tools/avr/avr/include/avr/;d:/arduino/arduino-1.8.2/hardware/tools/avr/avr/;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/libb64;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/spiffs;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/umm_malloc;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/variants/nodemcu;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/include;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/lwip/include;C:/Users/Ich/AppData/Local/Temp/VMBuilds/sketch_esp8266/_STM32_genericGD32F103C/Debug/core;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2/xtensa-lx106-elf;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/lib/gcc/xtensa-lx106-elf/4.8.2/include;D:/Arduino/arduino-1.8.1/libraries;D:/Arduino/arduino-1.8.1/hardware/arduino/avr/libraries;C:/Program Files (x86)/Atmel/Studio/7.0/Extensions/1pi031ys.rqf/Micro Platforms/default/debuggers;D:/libraries;D:/Arduino/arduino-1.8.1/hardware/arduino/avr/cores/arduino;D:/Arduino/arduino-1.8.1/hardware/arduino/avr/variants/standard;../../sketch_esp8266;{runtime.tools.avr-gcc.path}/avr/include/;{runtime.tools.avr-gcc.path}//avr/include/avr/;{runtime.tools.avr-gcc.path}/lib/gcc/avr/4.8.1/include;D:/Arduino/arduino-1.8.2/hardware/arduino/avr/libraries;C:/Users/grriedel/Documents/Arduino/libraries;D:/Arduino/arduino-1.8.2/hardware/arduino/avr/cores/arduino;D:/Arduino/arduino-1.8.2/hardware/arduino/avr/variants/standard;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/libb64;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/spiffs;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/cores/esp8266/umm_malloc;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/variants/nodemcu;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/include;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/tools/sdk/lwip/include;C:/Users/grriedel/AppData/Local/Temp/VMicroBuilds/sketch_esp8266/esp8266_nodemcuv2/core;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include/c++/4.8.2/xtensa-lx106-elf;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/xtensa-lx106-elf/include;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/tools/xtensa-lx106-elf-gcc/1.20.0-26-gb404fb9-2/lib/gcc/xtensa-lx106-elf/4.8.2/include;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries/SPI;C:/Users/grriedel/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.3.0/libraries/SPI/utility;../../../FT8xx_Test_Arduino_ESP8266_FT813_RVT70UQFNWC0x;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/libraries/SPI;D:/Arduino/arduino-1.8.5/libraries;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/libraries;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266/libb64;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266/spiffs;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/cores/esp8266/umm_malloc;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/variants/nodemcu;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/include;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/lwip/include;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/libc/xtensa-lx106-elf/include;{build.path}/core;C:/Users/Ich/AppData/Local/arduino15/packages/esp8266/hardware/esp8266/2.4.0/tools/sdk/lwip2/include;</VMSETTING_IncludePaths>
     <VisualMicroSettings>
       <VisualMicroSettings>
         <arduino.board.name>esp8266_nodemcuv2</arduino.board.name>
@@ -702,9 +700,6 @@ build.arch=ESP8266
     <Compile Include="FT8_commands.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="FT8_config.cpp">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="FT8_config.h">
       <SubType>compile</SubType>
     </Compile>
@@ -718,6 +713,9 @@ build.arch=ESP8266
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="tft_data.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="__vm\.FT8xx_Test_Arduino_ESP8266_FT813_RVT70UQFNWC0x.vsarduino.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="__vm\.sketch_esp8266.vsarduino.h">

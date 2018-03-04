@@ -1,8 +1,8 @@
 /*
 @file    FT8_commands.h
 @brief   Contains FT8xx Function Prototypes
-@version 3.3
-@date    2017-04-08
+@version 3.4
+@date    2017-04-30
 @author  Rudolph Riedel
 
 @section History
@@ -40,7 +40,13 @@
 - added prototype for FT8_cmd_setscratch()
 
 3.3
-- implemented FT8_cmd_memcrc(), FT8_cmd_getptr(), FT8_cmd_regread(), FT8_cmd_getprops()
+- added prototypes for FT8_cmd_memcrc(), FT8_cmd_getptr(), FT8_cmd_regread() and FT8_cmd_getprops()
+
+3.4
+- added protoypes for FT8_start_cmd_burst() and FT8_end_cmd_burst()
+
+3.5
+- added prototype fpr FT8_cmd_start()
 
 */
 
@@ -63,8 +69,11 @@ void FT8_cmd_dl(uint32_t command);
 
 void FT8_get_cmdoffset(void);
 uint32_t FT8_get_touch_tag(void);
+void FT8_cmd_start(void);
 void FT8_cmd_execute(void);
 
+void FT8_start_cmd_burst(void);
+void FT8_end_cmd_burst(void);
 
 /* commands to draw graphics objects: */
 void FT8_cmd_text(int16_t x0, int16_t y0, int16_t font, uint16_t options, const char* text);

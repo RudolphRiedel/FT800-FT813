@@ -1,8 +1,8 @@
 /*
 @file    FT8_commands.c
 @brief   Contains Functions for using the FT8xx
-@version 3.3
-@date    2017-04-08
+@version 3.8
+@date    2018-03-04
 @author  Rudolph Riedel
 
 This file needs to be renamed to FT8_command.cpp for use with Arduino. 
@@ -71,6 +71,22 @@ This file needs to be renamed to FT8_command.cpp for use with Arduino.
 3.3
 - implemented FT8_cmd_memcrc(), FT8_cmd_getptr(), FT8_cmd_regread(), FT8_cmd_getprops()
 
+3.4
+- implemented functions FT8_start_cmd_burst() and FT8_end_cmd_burst()
+
+3.5
+- Bugifx: FT8_cmd_setbase() was incrementing the command-offset by 12 instead of 4
+
+3.6
+- Bugifix: FT8_cmd_getptr() was using CMD_MEMCRC instead of CMD_GETPTR
+
+3.7
+- Added FT8_cmd_start(), a non-blocking variant of FT8_cmd_execute() to be used at the end of a display-list update.
+	Thanks for pointing out that oversight to user "Peter" of Mikrocontroller.net!
+
+3.8
+- Added setting of REG_CSPRED to FT8_init() as new parameter, some Matrix Orbital modules use '0' instead of the reset-default '1'.
+
 */
 
 #include "FT8.h"
@@ -82,6 +98,8 @@ This file needs to be renamed to FT8_command.cpp for use with Arduino.
 #define MEM_READ	0x00	/* FT8xx Host Memory Read */
 
 volatile uint16_t cmdOffset = 0x0000;	/* used to navigate command ring buffer */
+
+volatile uint8_t cmd_burst = 0; /* flag to indicate cmd-burst is active */
 
 
 void FT8_cmdWrite(uint8_t data)
@@ -226,8 +244,8 @@ uint32_t FT8_get_touch_tag(void)
 }
 
 
-/* order the command co-prozessor to start processing its FIFO que */
-void FT8_cmd_execute(void)
+/* order the command co-prozessor to start processing its FIFO que and do not wait for completion */
+void FT8_cmd_start(void)
 {
 	uint32_t ftAddress;
 
@@ -240,6 +258,13 @@ void FT8_cmd_execute(void)
 	spi_transmit((uint8_t)(cmdOffset));			/* send data low byte */
 	spi_transmit((uint8_t)(cmdOffset >> 8));	/* send data high byte */
 	FT8_cs_clear();
+}
+
+
+/* order the command co-prozessor to start processing its FIFO que and wait for completion */
+void FT8_cmd_execute(void)
+{
+	FT8_cmd_start();
 	while (FT8_busy());
 }
 
@@ -257,16 +282,46 @@ void FT8_inc_cmdoffset(uint16_t increment)
 }
 
 
+/*
+These eliminate the overhead of transmitting the command-fifo address with every single command, just wrap a sequence of commands
+with these and the address is only transmitted once at the start of the block.
+Be careful to not use any functions in the sequence that do not address the command-fifo as for example any FT8_mem...() function.
+*/
+void FT8_start_cmd_burst(void)
+{
+	uint32_t ftAddress;
+	
+	cmd_burst = 42;
+	ftAddress = FT8_RAM_CMD + cmdOffset;
+	FT8_cs_set();
+
+	spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
+	spi_transmit((uint8_t)(ftAddress >> 8));	/* send middle address byte */
+	spi_transmit((uint8_t)(ftAddress));		/* send low address byte */
+}
+
+void FT8_end_cmd_burst(void)
+{
+	cmd_burst = 0;
+	FT8_cs_clear();
+}
+/* ---------------------- */
+
+
 /* Beginn a co-prozessor command */
 void FT8_start_cmd(uint32_t command)
 {
 	uint32_t ftAddress;
+	
+	if(cmd_burst == 0)
+	{
+		ftAddress = FT8_RAM_CMD + cmdOffset;
+		FT8_cs_set();
+		spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
+		spi_transmit((uint8_t)(ftAddress >> 8));	/* send middle address byte */
+		spi_transmit((uint8_t)(ftAddress));		/* send low address byte */
+	}
 
-	ftAddress = FT8_RAM_CMD + cmdOffset;
-	FT8_cs_set();
-	spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
-	spi_transmit((uint8_t)(ftAddress >> 8));	/* send middle address byte */
-	spi_transmit((uint8_t)(ftAddress));		/* send low address byte */
 	spi_transmit((uint8_t)(command));		/* send data low byte */
 	spi_transmit((uint8_t)(command >> 8));
 	spi_transmit((uint8_t)(command >> 16));
@@ -288,7 +343,10 @@ void FT8_start_cmd(uint32_t command)
 void FT8_cmd_dl(uint32_t command)
 {
 	FT8_start_cmd(command);
-	FT8_cs_clear();
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -338,7 +396,10 @@ void FT8_cmd_text(int16_t x0, int16_t y0, int16_t font, uint16_t options, const 
 	FT8_inc_cmdoffset(8);
 	FT8_write_string(text);
 
-	FT8_cs_clear();
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -366,7 +427,11 @@ void FT8_cmd_button(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t font
 
 	FT8_inc_cmdoffset(12);
 	FT8_write_string(text);
-	FT8_cs_clear();
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -399,8 +464,12 @@ void FT8_cmd_clock(int16_t x0, int16_t y0, int16_t r0, uint16_t options, uint16_
 	spi_transmit((uint8_t)(millisecs));
 	spi_transmit((uint8_t)(millisecs >> 8));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(16);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -413,8 +482,12 @@ void FT8_cmd_bgcolor(uint32_t color)
 	spi_transmit((uint8_t)(color >> 16));
 	spi_transmit(0x00);
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(4);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -427,8 +500,12 @@ void FT8_cmd_fgcolor(uint32_t color)
 	spi_transmit((uint8_t)(color >> 16));
 	spi_transmit(0x00);
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(4);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -441,8 +518,12 @@ void FT8_cmd_gradcolor(uint32_t color)
 	spi_transmit((uint8_t)(color >> 16));
 	spi_transmit(0x00);
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(4);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -474,8 +555,12 @@ void FT8_cmd_gauge(int16_t x0, int16_t y0, int16_t r0, uint16_t options, uint16_
 	spi_transmit((uint8_t)(range));
 	spi_transmit((uint8_t)(range >> 8));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(16);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -505,8 +590,12 @@ void FT8_cmd_gradient(int16_t x0, int16_t y0, uint32_t rgb0, int16_t x1, int16_t
 	spi_transmit((uint8_t)(rgb1 >> 16));
 	spi_transmit(0x00);
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(16);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -534,7 +623,11 @@ void FT8_cmd_keys(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t font, 
 
 	FT8_inc_cmdoffset(12);
 	FT8_write_string(text);
-	FT8_cs_clear();
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -566,8 +659,12 @@ void FT8_cmd_progress(int16_t x0, int16_t y0, int16_t w0, int16_t h0, uint16_t o
 	spi_transmit(0x00);	/* dummy byte for 4-byte alignment */
 	spi_transmit(0x00); /* dummy byte for 4-byte alignment */
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(16);	/* update the command-ram pointer */
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -599,8 +696,12 @@ void FT8_cmd_scrollbar(int16_t x0, int16_t y0, int16_t w0, int16_t h0, uint16_t 
 	spi_transmit((uint8_t)(range));
 	spi_transmit((uint8_t)(range >> 8));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(16);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -632,8 +733,12 @@ void FT8_cmd_slider(int16_t x1, int16_t y1, int16_t w1, int16_t h1, uint16_t opt
 	spi_transmit(0x00); /* dummy byte for 4-byte alignment */
 	spi_transmit(0x00); /* dummy byte for 4-byte alignment */
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(16);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -659,8 +764,12 @@ void FT8_cmd_dial(int16_t x0, int16_t y0, int16_t r0, uint16_t options, uint16_t
 	spi_transmit(0);
 	spi_transmit(0);
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(12);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -688,7 +797,11 @@ void FT8_cmd_toggle(int16_t x0, int16_t y0, int16_t w0, int16_t font, uint16_t o
 
 	FT8_inc_cmdoffset(12);
 	FT8_write_string(text);
-	FT8_cs_clear();
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -702,9 +815,12 @@ void FT8_cmd_setbase(uint32_t base)
 	spi_transmit((uint8_t)(base >> 16));
 	spi_transmit((uint8_t)(base >> 24));	/* send data high byte */
 
-	FT8_cs_clear();
+	FT8_inc_cmdoffset(4);	/* update the command-ram pointer */	
 
-	FT8_inc_cmdoffset(12);	/* update the command-ram pointer */	
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 #endif
 
@@ -730,8 +846,12 @@ void FT8_cmd_setbitmap(uint32_t addr, uint16_t fmt, uint16_t width, uint16_t hei
 	spi_transmit(0);
 	spi_transmit(0);	
 	
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(12);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 #endif
 
@@ -757,9 +877,12 @@ void FT8_cmd_number(int16_t x0, int16_t y0, int16_t font, uint16_t options, int3
 	spi_transmit((uint8_t)(number >> 16));
 	spi_transmit((uint8_t)(number >> 24));
 
-	FT8_cs_clear();
-
 	FT8_inc_cmdoffset(12);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -779,8 +902,12 @@ void FT8_cmd_memzero(uint32_t ptr, uint32_t num)
 	spi_transmit((uint8_t)(num >> 16));
 	spi_transmit((uint8_t)(num >> 24));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(8);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -803,8 +930,12 @@ void FT8_cmd_memset(uint32_t ptr, uint8_t value, uint32_t num)
 	spi_transmit((uint8_t)(num >> 16));
 	spi_transmit((uint8_t)(num >> 24));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(12);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -830,8 +961,12 @@ void FT8_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *data)
 		spi_transmit(pgm_read_byte_far(data+count));
 	}
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(8+len);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 */
 
@@ -855,8 +990,12 @@ void FT8_cmd_memcpy(uint32_t dest, uint32_t src, uint32_t num)
 	spi_transmit((uint8_t)(num >> 16));
 	spi_transmit((uint8_t)(num >> 24));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(12);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -874,8 +1013,12 @@ void FT8_cmd_append(uint32_t ptr, uint32_t num)
 	spi_transmit((uint8_t)(num >> 16));
 	spi_transmit((uint8_t)(num >> 24));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(8);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -909,10 +1052,13 @@ void FT8_cmd_inflate(uint32_t ptr, const uint8_t *data, uint16_t len)
 
 	spi_flash_write(data,len);
 
-	FT8_cs_clear();
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion */
+/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void FT8_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *data, uint16_t len)
 {
 	uint16_t bytes_left;
@@ -959,6 +1105,7 @@ void FT8_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *data, uint
 
 
 #ifdef FT8_81X_ENABLE
+/* this is meant to be called outside display-list building, does not support cmd-burst */
 void FT8_cmd_mediafifo(uint32_t ptr, uint32_t size)
 {
 	FT8_start_cmd(CMD_MEDIAFIFO);
@@ -995,8 +1142,12 @@ void FT8_cmd_translate(int32_t tx, int32_t ty)
 	spi_transmit((uint8_t)(ty >> 16));
 	spi_transmit((uint8_t)(ty >> 24));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(8);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -1014,8 +1165,12 @@ void FT8_cmd_scale(int32_t sx, int32_t sy)
 	spi_transmit((uint8_t)(sy >> 16));
 	spi_transmit((uint8_t)(sy >> 24));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(8);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -1028,8 +1183,12 @@ void FT8_cmd_rotate(int32_t ang)
 	spi_transmit((uint8_t)(ang >> 16));
 	spi_transmit((uint8_t)(ang >> 24));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(4);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -1073,8 +1232,12 @@ void FT8_cmd_getmatrix(int32_t a, int32_t b, int32_t c, int32_t d, int32_t e, in
 	spi_transmit((uint8_t)(f >> 16));
 	spi_transmit((uint8_t)(f >> 24));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(24);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -1089,8 +1252,12 @@ void FT8_cmd_calibrate(void)
 	spi_transmit(0);
 	spi_transmit(0);
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(4);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -1103,8 +1270,12 @@ void FT8_cmd_interrupt(uint32_t ms)
 	spi_transmit((uint8_t)(ms >> 16));
 	spi_transmit((uint8_t)(ms >> 24));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(4);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -1124,7 +1295,11 @@ void FT8_cmd_romfont(uint32_t font, uint32_t romslot)
 	spi_transmit(0x00);	
 	
 	FT8_inc_cmdoffset(8);
-	FT8_cs_clear();
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 #endif
 
@@ -1143,8 +1318,12 @@ void FT8_cmd_setfont(uint32_t font, uint32_t ptr)
 	spi_transmit((uint8_t)(ptr >> 16));
 	spi_transmit((uint8_t)(ptr >> 24));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(8);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -1168,8 +1347,12 @@ void FT8_cmd_setfont2(uint32_t font, uint32_t ptr, uint32_t firstchar)
 	spi_transmit((uint8_t)(firstchar >> 16));
 	spi_transmit((uint8_t)(firstchar >> 24));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(12);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 #endif
 
@@ -1184,8 +1367,12 @@ void FT8_cmd_setrotate(uint32_t r)
 	spi_transmit((uint8_t)(r >> 16));
 	spi_transmit((uint8_t)(r >> 24));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(4);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 #endif
 
@@ -1200,8 +1387,12 @@ void FT8_cmd_setscratch(uint32_t handle)
 	spi_transmit((uint8_t)(handle >> 16));
 	spi_transmit((uint8_t)(handle >> 24));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(4);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 #endif
 
@@ -1233,8 +1424,12 @@ void FT8_cmd_sketch(int16_t x0, int16_t y0, uint16_t w0, uint16_t h0, uint32_t p
 	spi_transmit(0);
 	spi_transmit(0);
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(16);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -1247,8 +1442,12 @@ void FT8_cmd_snapshot(uint32_t ptr)
 	spi_transmit((uint8_t)(ptr >> 16));
 	spi_transmit((uint8_t)(ptr >> 24));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(4);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -1278,8 +1477,13 @@ void FT8_cmd_snapshot2(uint32_t fmt, uint32_t ptr, int16_t x0, int16_t y0, int16
 
 	spi_transmit((uint8_t)(h0));
 	spi_transmit((uint8_t)(h0 >> 8));
-	FT8_cs_clear();
+
 	FT8_inc_cmdoffset(16);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 #endif
 
@@ -1300,8 +1504,12 @@ void FT8_cmd_spinner(int16_t x0, int16_t y0, uint16_t style, uint16_t scale)
 	spi_transmit((uint8_t)(scale));
 	spi_transmit((uint8_t)(scale >> 8));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(8);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -1327,8 +1535,12 @@ void FT8_cmd_track(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t tag)
 	spi_transmit(0);
 	spi_transmit(0);
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(12);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -1370,10 +1582,15 @@ uint16_t FT8_cmd_memcrc(uint32_t ptr, uint32_t num)
 	spi_transmit(0);
 	spi_transmit(0);
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(8);
 	offset = cmdOffset;
 	FT8_inc_cmdoffset(4);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
+
 	return offset;
 }
 
@@ -1382,16 +1599,21 @@ uint16_t FT8_cmd_getptr(void)
 {
 	uint16_t offset;
 
-	FT8_start_cmd(CMD_MEMCRC);
+	FT8_start_cmd(CMD_GETPTR);
 
 	spi_transmit(0);
 	spi_transmit(0);
 	spi_transmit(0);
 	spi_transmit(0);
 
-	FT8_cs_clear();
 	offset = cmdOffset;
 	FT8_inc_cmdoffset(4);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
+
 	return offset;
 }
 
@@ -1412,10 +1634,15 @@ uint16_t FT8_cmd_regread(uint32_t ptr)
 	spi_transmit(0);
 	spi_transmit(0);
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(4);
 	offset = cmdOffset;
 	FT8_inc_cmdoffset(4);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
+
 	return offset;
 }
 
@@ -1452,10 +1679,15 @@ uint16_t FT8_cmd_getprops(uint32_t ptr)
 	spi_transmit(0);
 	spi_transmit(0);
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(4);
 	offset = cmdOffset;
 	FT8_inc_cmdoffset(4);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
+
 	return offset;
 }
 
@@ -1485,8 +1717,12 @@ void FT8_cmd_point(int16_t x0, int16_t y0, uint16_t size)
 	spi_transmit((uint8_t)(DL_END >> 16));
 	spi_transmit((uint8_t)(DL_END >> 24));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(12);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -1519,8 +1755,12 @@ void FT8_cmd_line(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t width
 	spi_transmit((uint8_t)(DL_END >> 16));
 	spi_transmit((uint8_t)(DL_END >> 24));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(16);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -1553,8 +1793,12 @@ void FT8_cmd_rect(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t corne
 	spi_transmit((uint8_t)(DL_END >> 16));
 	spi_transmit((uint8_t)(DL_END >> 24));
 
-	FT8_cs_clear();
 	FT8_inc_cmdoffset(16);
+
+	if(cmd_burst == 0)
+	{
+		FT8_cs_clear();
+	}
 }
 
 
@@ -1612,6 +1856,8 @@ uint8_t FT8_init(void)
 	FT8_memWrite16(REG_VSYNC1,  FT8_VSYNC1);	/* end of vertical sync pulse */
 	FT8_memWrite8(REG_SWIZZLE,  FT8_SWIZZLE);	/* FT8xx output to LCD - pin order */
 	FT8_memWrite8(REG_PCLK_POL, FT8_PCLKPOL);	/* LCD data is clocked in on this PCLK edge */
+	FT8_memWrite8(REG_CSPREAD,	FT8_CSPREAD);	/* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
+	
 	/* Don't set PCLK yet - wait for just after the first display list */
 
 	/* Configure Touch */
