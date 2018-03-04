@@ -33,7 +33,8 @@ RVT70UQFNWC0x https://riverdi.com/product/rvt70uqfnwc0x/
 
 The examples in the "example_projects" drawer are for use with AtmelStudio7. For Arduino I am using the plugin from www.visualmicro.com .
 
-The platform the code is compiled for is automatically detected thru compiler flags in FT8_config.h. This is the only files that should need editing to customize the library to your needs.
+The platform the code is compiled for is automatically detected thru compiler flags in FT8_config.h. This is the only file that should need editing to customize the library to your needs.
+
 Note: there also used to be a file FT8_config.c but it is obsolete now.
 
 Choose between FT80x/FT81x by enabling/disabling the FT8_81X_ENABLE define.
