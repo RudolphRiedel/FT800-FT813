@@ -1,14 +1,18 @@
 /*
 @file    main.c
 @brief   main file for FT8xx_Test project, version for AVR controller
-@version 1.0
-@date    2016-12-16
+@version 1.1
+@date    2017-04-29
 @author  Rudolph Riedel
 
 @section History
 
 1.0
 - initial release
+
+1.1
+- added simple profiling
+
  */ 
 
 #include <avr/io.h>
@@ -36,6 +40,15 @@ void init_timer1(void)
 	OCR1A = 4999;	/* TOP - timer counts to TOP and generates IRQ */
 	TIMSK1 |= (1<<OCIE1A);
 	TCCR1B = (1<<WGM12) | (1<<CS11);	/* mode = CTC, prescaler = 8 -> 2 MHz */
+}
+
+
+void init_timer3(void)
+{
+	/* Timer3 - just running for profiling */
+	TCCR3B = 0x00;	/* stop */
+	TCCR3A = 0x00; /* mode: normal */
+	TCCR1C = 0x00;
 }
 
 
@@ -74,10 +87,13 @@ void init_spi(void)
 int main(void)
 {
 	uint8_t triplock;
+	uint16_t counter_val;
+	uint8_t toggle = 0;
 
 	cli();
 	init_ports();
 	init_timer1();
+	init_timer3();
 	init_spi();
 	sei();
 
@@ -91,7 +107,24 @@ int main(void)
 
 		if(roundtrip == 0) /* executed every 10 ms */
 		{
+			TCNT3 = 0;
+			TCCR3B = (1<<CS1); /* start timer, prescaler = 8 -> 500ns per tick */
 			TFT_loop();
+			TCCR3B = 0; /* stop timer */
+			
+			counter_val = TCNT3;
+			counter_val /= 2; /* 1µs */
+			
+			if(toggle == 0)
+			{
+				num_profile_a = counter_val;
+				toggle++;
+			}
+			else
+			{
+				num_profile_b = counter_val;
+				toggle = 0;
+			}
 		}
 
 		if(roundtrip == 1)
