@@ -1,8 +1,8 @@
 /*
 @file    FT8_config.h
 @brief   configuration information for some TFTs and some pre-defined colors
-@version 3.3
-@date    2018-03-04
+@version 3.4
+@date    2018-03-08
 @author  Rudolph Riedel
 
 @section History
@@ -40,6 +40,10 @@
 - switched to inline definitions for all those one-line support-functions -> faster and FT8_config.c is no longer needed
 - added timing parameters for Matrix Orbital EVE2 displays, derived from their sample code, untested
 - added FT8_CSPREAD values to all display settings
+
+3.4
+- forgot that I switched to SPI.write() for Arduino/ESP8266 and that the standard Arduino only has SPI.transfer()
+- added auto-detection for AVR over 64kB FLASH 
 
 */
 
@@ -134,7 +138,11 @@
 
 			static inline uint8_t fetch_flash_byte(const uint8_t *data)
 			{
-				return(pgm_read_byte_far(data));
+				#if defined(RAMPZ) /* we have an AVR with more than 64kB FLASH memory */
+					return(pgm_read_byte_far(data));
+				#else
+					return(pgm_read_byte_near(data));
+				#endif
 			}
 
 		#endif /* AVR */
@@ -196,17 +204,18 @@
 	#include <stdio.h>
 	#include <SPI.h>
 
-	#define FT8_CS 		D8
-	#define FT8_PDN		D2
+	#define FT8_CS 		8
+	#define FT8_PDN		2
 
 	#define DELAY_MS(ms) delay(ms)
 
-	#if defined (__ESP8266__)
-	
+	#ifdef ESP8266
+
 	#endif
 	
 	#if	defined (__AVR__)
 		#include <avr/pgmspace.h>
+
 	#endif
 
 
@@ -231,10 +240,17 @@
 		digitalWrite(FT8_CS, HIGH);
 	}
 
-	static inline void spi_transmit(uint8_t data)
-	{
-		SPI.write(data);
-	}
+	#ifdef ESP8266
+		static inline void spi_transmit(uint8_t data)
+		{
+			SPI.write(data);
+		}
+	#else
+		static inline void spi_transmit(uint8_t data)
+		{
+			return SPI.transfer(data);
+		}
+	#endif
 
 	static inline uint8_t spi_receive(uint8_t data)
 	{
@@ -243,7 +259,11 @@
 
 	static inline uint8_t fetch_flash_byte(const uint8_t *data)
 	{
-		return(pgm_read_byte_near(data));
+		#if defined(RAMPZ)
+			return(pgm_read_byte_far(data));
+		#else
+			return(pgm_read_byte_near(data));
+		#endif
 	}
 
 #endif /* Arduino */
