@@ -1,8 +1,8 @@
 /*
 @file    tft.c
 @brief   TFT handling functions for FT8xx_Test project, the layout is for 800x480 displays
-@version 1.3
-@date    2017-04-02
+@version 1.4
+@date    2018-03-04
 @author  Rudolph Riedel
 
 @section History
@@ -24,6 +24,11 @@
 - adapted to release 3 of Ft8xx library with FT8_ and ft_ prefixes changed to FT8_
 - removed "while (FT8_busy());" lines after FT8_cmd_execute() since it does that by itself now
 - removed "FT8_cmd_execute();" line after FT8_cmd_loadimage(MEM_PIC1, FT8_OPT_NODL, pngpic, pngpic_size); as FT8_cmd_loadimage() executes itself now
+
+1.4
+- added num_profile_a and num_profile_b for simple profiling
+- utilised FT8_cmd_start()
+- some general cleanup and house-keeping to make it fit for release
 
  */ 
 
@@ -60,6 +65,8 @@ uint8_t scope_data[64] =
 	0x80, 0x99, 0xa4, 0xad, 0xb1, 0xb1, 0xad, 0xa4, 0x99, 0x8e, 0x85, 0x81, 0x81, 0x85, 0x8e, 0x80,
 };
 
+
+uint16_t num_profile_a, num_profile_b;
 
 #define LAYOUT_W 266
 #define LAYOUT_X1 0
@@ -99,15 +106,9 @@ void initStaticBackground()
 	FT8_cmd_dl(VERTEX2F((LAYOUT_X1+30),(LAYOUT_Y1+40)));
 	FT8_cmd_dl(VERTEX2F((LAYOUT_X1+30+130),(LAYOUT_Y1+40+70)));
 
-	FT8_cmd_dl(VERTEX2F((LAYOUT_X1+30),(LAYOUT_Y1+275)));
-	FT8_cmd_dl(VERTEX2F((LAYOUT_X1+30+130),(LAYOUT_Y1+275+70)));
-
 	FT8_cmd_dl(DL_COLOR_RGB | WHITE);
 	FT8_cmd_dl(VERTEX2F((LAYOUT_X1+30+5),(LAYOUT_Y1+45)));
 	FT8_cmd_dl(VERTEX2F((LAYOUT_X1+30+130-5),(LAYOUT_Y1+45+60)));
-
-	FT8_cmd_dl(VERTEX2F((LAYOUT_X1+30+5),(LAYOUT_Y1+280)));
-	FT8_cmd_dl(VERTEX2F((LAYOUT_X1+30+130-5),(LAYOUT_Y1+280+60)));
 
 	FT8_cmd_dl(DL_END);
 
@@ -119,7 +120,7 @@ void initStaticBackground()
 
 	FT8_cmd_dl(DL_BEGIN | FT8_BITMAPS);
 	FT8_cmd_setbitmap(MEM_PIC1, FT8_RGB565, 100, 100);
-	FT8_cmd_dl(VERTEX2F((LAYOUT_X3 + 150) , (LAYOUT_Y1 + 50) ));
+	FT8_cmd_dl(VERTEX2F((LAYOUT_X2 + 150) , (LAYOUT_Y1 + 50) ));
 	FT8_cmd_dl(DL_END);
 
 	FT8_cmd_text(LAYOUT_X2 + (LAYOUT_W / 2), 40, 29, FT8_OPT_CENTERX, "FT81x Test");
@@ -152,8 +153,8 @@ void initStaticBackground()
 	FT8_cmd_dl(POINT_SIZE(25*16));
 	FT8_cmd_dl(TAG(11));
 	FT8_cmd_dl(VERTEX2F((LAYOUT_X1+(LAYOUT_W/2)),(LAYOUT_Y1+40+150)));
-	FT8_cmd_dl(DL_COLOR_RGB | 0x00af00);
-	FT8_cmd_dl(POINT_SIZE(20*16));
+	FT8_cmd_dl(DL_COLOR_RGB | 0xaf0000);
+	FT8_cmd_dl(POINT_SIZE(18*16));
 	FT8_cmd_dl(VERTEX2F((LAYOUT_X1+(LAYOUT_W/2)),(LAYOUT_Y1+40+150)));
 	FT8_cmd_dl(DL_END);
 
@@ -180,41 +181,38 @@ void initStaticBackground()
 	FT8_cmd_text(LAYOUT_X1+40+11+1+20+1, LAYOUT_Y1+45+30, 27, 0, "=");
 	FT8_cmd_text(LAYOUT_X1+40+11+1+20+1+9+1+50+1, LAYOUT_Y1+45+30, 27, 0, "A");
 
-	FT8_cmd_text(LAYOUT_X1+40, LAYOUT_Y1+280, 27, 0, "U");
-	FT8_cmd_text(LAYOUT_X1+40+11+1, LAYOUT_Y1+280+10, 26, 0, "X2");
-	FT8_cmd_text(LAYOUT_X1+40+11+1+20+1, LAYOUT_Y1+280, 27, 0, "=");
-	FT8_cmd_text(LAYOUT_X1+40+11+1+20+1+9+1+50+1, LAYOUT_Y1+280, 27, 0, "V");
+	FT8_cmd_text(LAYOUT_X1+10, LAYOUT_Y1+280, 28, 0, "Bytes:");
+	FT8_cmd_text(LAYOUT_X1+10, LAYOUT_Y1+305, 28, 0, "Time1:");
+	FT8_cmd_text(LAYOUT_X1+10, LAYOUT_Y1+330, 28, 0, "Time2:");
 
-	FT8_cmd_text(LAYOUT_X1+40, LAYOUT_Y1+280+30, 27, 0, "I");
-	FT8_cmd_text(LAYOUT_X1+40+11+1, LAYOUT_Y1+280+30+10, 26, 0, "X2");
-	FT8_cmd_text(LAYOUT_X1+40+11+1+20+1, LAYOUT_Y1+280+30, 27, 0, "=");
-	FT8_cmd_text(LAYOUT_X1+40+11+1+20+1+9+1+50+1, LAYOUT_Y1+280+30, 27, 0, "A");
+	FT8_cmd_text(LAYOUT_X1+145, LAYOUT_Y1+305, 28, 0, "us");
+	FT8_cmd_text(LAYOUT_X1+145, LAYOUT_Y1+330, 28, 0, "us");
 
 
 	FT8_cmd_dl(DL_COLOR_RGB | BLACK);
 
-	FT8_cmd_text(LAYOUT_X3+150,LAYOUT_Y1+20, 16, 0, "Font 16");
-	FT8_cmd_text(LAYOUT_X3+150,LAYOUT_Y1+30, 18, 0, "Font 18");
-	FT8_cmd_text(LAYOUT_X3+20,LAYOUT_Y1+20, 20, 0, "Font 20");
-	FT8_cmd_text(LAYOUT_X3+20,LAYOUT_Y1+30, 21, 0, "Font 21");
-	FT8_cmd_text(LAYOUT_X3+20,LAYOUT_Y1+45, 22, 0, "Font 22");
-	FT8_cmd_text(LAYOUT_X3+20,LAYOUT_Y1+60, 23, 0, "Font 23");
-	FT8_cmd_text(LAYOUT_X3+20,LAYOUT_Y1+80, 24, 0, "Font 24");
-	FT8_cmd_text(LAYOUT_X3+20,LAYOUT_Y1+100, 25, 0, "Font 25");
-	FT8_cmd_text(LAYOUT_X3+20,LAYOUT_Y1+136, 26, 0, "Font 26");
-	FT8_cmd_text(LAYOUT_X3+20,LAYOUT_Y1+150, 27, 0, "Font 27");
-	FT8_cmd_text(LAYOUT_X3+20,LAYOUT_Y1+165, 28, 0, "Font 28");
-	FT8_cmd_text(LAYOUT_X3+20,LAYOUT_Y1+185, 29, 0, "Font 29");
-	FT8_cmd_text(LAYOUT_X3+20,LAYOUT_Y1+205, 30, 0, "Font 30");
-	FT8_cmd_text(LAYOUT_X3+20,LAYOUT_Y1+230, 31, 0, "Font 31");
+	FT8_cmd_text(LAYOUT_X2+150,LAYOUT_Y1+20, 16, 0, "Font 16");
+	FT8_cmd_text(LAYOUT_X2+150,LAYOUT_Y1+30, 18, 0, "Font 18");
+	FT8_cmd_text(LAYOUT_X2+20,LAYOUT_Y1+20, 20, 0, "Font 20");
+	FT8_cmd_text(LAYOUT_X2+20,LAYOUT_Y1+30, 21, 0, "Font 21");
+	FT8_cmd_text(LAYOUT_X2+20,LAYOUT_Y1+45, 22, 0, "Font 22");
+	FT8_cmd_text(LAYOUT_X2+20,LAYOUT_Y1+60, 23, 0, "Font 23");
+	FT8_cmd_text(LAYOUT_X2+20,LAYOUT_Y1+80, 24, 0, "Font 24");
+	FT8_cmd_text(LAYOUT_X2+20,LAYOUT_Y1+100, 25, 0, "Font 25");
+	FT8_cmd_text(LAYOUT_X2+20,LAYOUT_Y1+136, 26, 0, "Font 26");
+	FT8_cmd_text(LAYOUT_X2+20,LAYOUT_Y1+150, 27, 0, "Font 27");
+	FT8_cmd_text(LAYOUT_X2+20,LAYOUT_Y1+165, 28, 0, "Font 28");
+	FT8_cmd_text(LAYOUT_X2+20,LAYOUT_Y1+185, 29, 0, "Font 29");
+	FT8_cmd_text(LAYOUT_X2+20,LAYOUT_Y1+205, 30, 0, "Font 30");
+	FT8_cmd_text(LAYOUT_X2+20,LAYOUT_Y1+230, 31, 0, "Font 31");
 
 #ifdef FT8_81X_ENABLE
 	FT8_cmd_romfont(1,32);
-	FT8_cmd_text(LAYOUT_X3+20,LAYOUT_Y1+260, 1, 0, "Font 32");
+	FT8_cmd_text(LAYOUT_X2+20,LAYOUT_Y1+260, 1, 0, "Font 32");
 	FT8_cmd_romfont(1,33);
-	FT8_cmd_text(LAYOUT_X3+20,LAYOUT_Y1+300, 1, 0, "Font 33");
+	FT8_cmd_text(LAYOUT_X2+20,LAYOUT_Y1+300, 1, 0, "Font 33");
 	FT8_cmd_romfont(1,34);
-	FT8_cmd_text(LAYOUT_X3+150,LAYOUT_Y1+140, 1, 0, "34");
+	FT8_cmd_text(LAYOUT_X2+150,LAYOUT_Y1+140, 1, 0, "34");
 #endif
 
 
@@ -232,14 +230,16 @@ void TFT_init(void)
 	if(FT8_init() != 0)
 	{
 		tft_active = 1;
+		
+		FT8_memWrite8(REG_PWM_DUTY, 40);	/* reduce the current necessary for the backlight -> weak psu.. */
 
-		/* send pre-recorded touch calibration values, RVT70 */
-		FT8_memWrite32(REG_TOUCH_TRANSFORM_A, 0x000074df);
-		FT8_memWrite32(REG_TOUCH_TRANSFORM_B, 0x000000e6);
-		FT8_memWrite32(REG_TOUCH_TRANSFORM_C, 0xfffd5474);
-		FT8_memWrite32(REG_TOUCH_TRANSFORM_D, 0x000001af);
-		FT8_memWrite32(REG_TOUCH_TRANSFORM_E, 0x00007e79);
-		FT8_memWrite32(REG_TOUCH_TRANSFORM_F, 0xffe9a63c);
+		/* send pre-recorded touch calibration values, HY50HD */
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_A, 66353);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_B, 712);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_C, 4293876677);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_D, 4294966157);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_E, 67516);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_F, 418276);
 
 #if 0
  		/* calibrate touch and displays values to screen */
@@ -274,7 +274,7 @@ void TFT_init(void)
 		FT8_cmd_text(5, 130, 28, 0, "TOUCH_TRANSFORM_F:");
 
 #ifdef FT8_81X_ENABLE
-		FT8_cmd_setbase(16L); /* FT81x only */
+//		FT8_cmd_setbase(16L); /* FT81x only */
 #endif
 		FT8_cmd_number(250, 30, 28, 0, touch_a);
 		FT8_cmd_number(250, 50, 28, 0, touch_b);
@@ -286,6 +286,8 @@ void TFT_init(void)
 		FT8_cmd_dl(DL_DISPLAY);	/* instruct the graphics processor to show the list */
 		FT8_cmd_dl(CMD_SWAP); /* make this list active */
 		FT8_cmd_execute();
+		
+		while(1);
 #endif
 
 		FT8_cmd_inflate(MEM_LOGO, logo, logo_size); /* load logo into gfx-memory and de-compress it */
@@ -306,7 +308,8 @@ void TFT_init(void)
 */
 void TFT_loop(void)
 {
-    static uint8_t delay;
+    static uint8_t touch_or_list = 0;
+
     static uint8_t tag = 0;
     static uint16_t toggle_state = 0;
     static uint8_t toggle_lock = 0;
@@ -324,12 +327,17 @@ void TFT_loop(void)
 	uint8_t counter;
 	static uint8_t strip_offset = 0;
 	static uint8_t strip_delay = 0;
+	
+	uint16_t old_offset, new_offset;
 
 	if(tft_active != 0)
 	{
-	  	switch(delay)
+	  	switch(touch_or_list)
 		{
-			case 0:
+			case 0: /* handling of touch-events */
+			
+				touch_or_list = 1; /* build display-list with next call */
+			
 				if(FT8_busy() == 0) /* is the FT8xx executing the display list?  note: may be working as intended - or not all to indicate the FT8xx is still up and running */
 				{
 					alive_counter++;
@@ -400,7 +408,14 @@ void TFT_loop(void)
 
 				break;
 
-			case 1:
+			case 1: /* building a new display-list and sending it */
+			
+				touch_or_list = 0; /* handle touch-events with next call */
+
+				old_offset = cmdOffset; /* used to calculate the amount of cmd-fifo bytes necessary */
+			
+				FT8_start_cmd_burst(); /* start writing to the cmd-fifo as one stream of bytes, only sending the address once */				
+			
 				FT8_cmd_dl(CMD_DLSTART); /* start the display list */
 				FT8_cmd_dl(DL_CLEAR_RGB | WHITE); /* set the default clear color to white */
 				FT8_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG); /* clear the screen - this and the previous prevent artifacts between lists, Attributes are the color, stencil and tag buffers */
@@ -408,12 +423,12 @@ void TFT_loop(void)
 
 				FT8_cmd_append(MEM_DL_STATIC, num_dl_static); /* insert static part of display-list from copy in gfx-mem */
 
+
 				/* unit 1*/
+		
 				FT8_cmd_number(LAYOUT_X1+175+20+1+32,LAYOUT_Y1+6, 26, FT8_OPT_RIGHTX, u_unit1); /* DC/DC Leistung */
 				FT8_cmd_number(LAYOUT_X1+40+11+1+20+1+9+1+40, LAYOUT_Y1+45, 27, FT8_OPT_RIGHTX, 43); /* U_X1 */
 				FT8_cmd_number(LAYOUT_X1+40+11+1+20+1+9+1+40, LAYOUT_Y1+45+30, 27, FT8_OPT_RIGHTX, 12); /* I_X1 */
-				FT8_cmd_number(LAYOUT_X1+40+11+1+20+1+9+1+40, LAYOUT_Y1+280, 27, FT8_OPT_RIGHTX, 18); /* U_X2 */
-				FT8_cmd_number(LAYOUT_X1+40+11+1+20+1+9+1+40, LAYOUT_Y1+280+30, 27, FT8_OPT_RIGHTX, 7); /* I_X2 */
 
 				FT8_cmd_dl(TAG(8));
 				FT8_cmd_toggle(50, 45, 90, 29, 0, toggle_state, "off" "\xff" "on");
@@ -423,12 +438,14 @@ void TFT_loop(void)
 				FT8_cmd_dl(TAG(10));
 				FT8_cmd_slider(LAYOUT_X1+(5*(LAYOUT_W/6))-20,LAYOUT_Y1+40,20,300,0,slider10_val,60);
 
-				/* unit 2*/
+
+				/* unit 3*/
+
+				/* scope-like display from fixed data-set but calculated for every single frame */
+
 				FT8_cmd_dl(DL_COLOR_RGB | BLACK);
 				FT8_cmd_dl(LINE_WIDTH(1 * 16));
-	
 				FT8_cmd_dl(DL_BEGIN | FT8_LINE_STRIP);
-
 
 				if(toggle_state != 0) /* only execute when master-switch is set to on */
 				{
@@ -441,33 +458,50 @@ void TFT_loop(void)
 					}
 				}
 
+				calc = VERTEX2F(LAYOUT_X3+11,0); /* pre-calculate x-cordinate for VERTEX2F and make sure it is an even value so lsb is 0 */
+
 				for(counter=0;counter<63;counter++)
 				{
-					FT8_cmd_dl(VERTEX2F( (LAYOUT_X2 + 12 + (counter * 4)) , (LAYOUT_Y1 + 20 + scope_data[(counter+strip_offset) & 0x3f]) )); /* x/y are in 1/16 pixel */
+					FT8_cmd_dl(calc | (LAYOUT_Y1 + 20 + scope_data[(counter+strip_offset) & 0x3f]));
+					calc+=0x20000; /* add 4 to x-position */
 				}
 
 				FT8_cmd_dl(DL_END);
 
+
+				/* bar style display from fixed data-set but calculated for every single frame */
 				FT8_cmd_dl(DL_COLOR_RGB | 0x00aaaaaa);
 
 				FT8_cmd_dl(DL_BEGIN | FT8_RECTS);
 
 				for(counter=0;counter<15;counter++)
 				{
-					FT8_cmd_dl(VERTEX2F( (LAYOUT_X2 + 10 + (counter*16) ), ((400 + (scope_data[(counter+strip_offset) & 0x3f] & 0x3f)) )));
-					FT8_cmd_dl(VERTEX2F( (LAYOUT_X2 + 10 + (counter*16) +16) ,480) );
+					FT8_cmd_dl(VERTEX2F( (LAYOUT_X3 + 11 + (counter*16) ), ((400 + (scope_data[(counter+strip_offset) & 0x3f] & 0x3f)) )));
+					FT8_cmd_dl(VERTEX2F( (LAYOUT_X3 + 11 + (counter*16) +16) ,480) );
 				}
 				
 				FT8_cmd_dl(DL_END);
 
+
+				/* print profiling values */
+				FT8_cmd_number(LAYOUT_X1+140, LAYOUT_Y1+305, 28, FT8_OPT_RIGHTX, num_profile_a); /* duration in µs of TFT_loop() for the touch-even part */
+				FT8_cmd_number(LAYOUT_X1+140, LAYOUT_Y1+330, 28, FT8_OPT_RIGHTX, num_profile_b); /* duration in µs of TFT_loop() for the display-list part */
+
+				new_offset = cmdOffset;
+				if(old_offset > new_offset)
+				{
+					new_offset+=4096;
+				}
+				calc = new_offset-old_offset;
+				calc += 24;
+				FT8_cmd_number(LAYOUT_X1+140, LAYOUT_Y1+280, 28, FT8_OPT_RIGHTX, calc); /* number of bytes written to the cmd-fifo over the spi without adressing overhead */
+
 				FT8_cmd_dl(DL_DISPLAY);	/* instruct the graphics processor to show the list */
 				FT8_cmd_dl(CMD_SWAP); /* make this list active */
 
-				FT8_cmd_execute();
+				FT8_end_cmd_burst(); /* stop writing to the cmd-fifo */
+				FT8_cmd_start();
 				break;
 		}
-
-		delay++;
-		delay &= 0x01; /* -> delay toggles between 0 and 1 */
 	}
 }
