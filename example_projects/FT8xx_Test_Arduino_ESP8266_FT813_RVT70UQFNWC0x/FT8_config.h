@@ -1,8 +1,8 @@
 /*
 @file    FT8_config.h
 @brief   configuration information for some TFTs and some pre-defined colors
-@version 3.4
-@date    2018-03-08
+@version 3.5
+@date    2018-03-10
 @author  Rudolph Riedel
 
 @section History
@@ -45,6 +45,9 @@
 - forgot that I switched to SPI.write() for Arduino/ESP8266 and that the standard Arduino only has SPI.transfer()
 - added auto-detection for AVR over 64kB FLASH 
 
+3.5
+- switched from "#if defined (RAMPZ)" to "#if defined (__AVR_HAVE_ELPM__)" as it turned out there are AVR that have the RAMPZ register but less than 64k FLASH
+
 */
 
 #ifndef FT8_CONFIG_H_
@@ -71,7 +74,7 @@
 	#define FT8_EVE2_70
 #endif
 
-#define FT8_RVT70AQ
+#define FT8_FT811CB_HY50HD
 
 
 /* some pre-definded colors */
@@ -138,7 +141,7 @@
 
 			static inline uint8_t fetch_flash_byte(const uint8_t *data)
 			{
-				#if defined(RAMPZ) /* we have an AVR with more than 64kB FLASH memory */
+				#if defined (__AVR_HAVE_ELPM__)	/* we have an AVR with more than 64kB FLASH memory */
 					return(pgm_read_byte_far(data));
 				#else
 					return(pgm_read_byte_near(data));
