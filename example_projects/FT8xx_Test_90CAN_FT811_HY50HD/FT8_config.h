@@ -1,8 +1,8 @@
 /*
 @file    FT8_config.h
 @brief   configuration information for some TFTs and some pre-defined colors
-@version 3.5
-@date    2018-03-10
+@version 3.6
+@date    2018-03-16
 @author  Rudolph Riedel
 
 @section History
@@ -47,6 +47,9 @@
 
 3.5
 - switched from "#if defined (RAMPZ)" to "#if defined (__AVR_HAVE_ELPM__)" as it turned out there are AVR that have the RAMPZ register but less than 64k FLASH
+
+3.6
+- changed the FT8_HAS_CRYSTAL for the Matrix Orbital modules from '1' to '0' as it turned out these are not using a crystal
 
 */
 
@@ -457,7 +460,7 @@
 #define FT8_PCLK	(8L)
 #define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
-#define FT8_HAS_CRYSTAL 1
+#define FT8_HAS_CRYSTAL 0
 #endif
 
 
@@ -478,7 +481,7 @@
 #define FT8_PCLK	(8L)
 #define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
-#define FT8_HAS_CRYSTAL 1
+#define FT8_HAS_CRYSTAL 0
 #endif
 
 
@@ -499,7 +502,7 @@
 #define FT8_PCLK	(5L)
 #define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
-#define FT8_HAS_CRYSTAL 1
+#define FT8_HAS_CRYSTAL 0
 #endif
 
 
@@ -520,7 +523,7 @@
 #define FT8_PCLK	(5L)
 #define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
-#define FT8_HAS_CRYSTAL 1
+#define FT8_HAS_CRYSTAL 0
 #endif
 
 
@@ -541,7 +544,7 @@
 #define FT8_PCLK	(2L)
 #define FT8_CSPREAD	(0L)
 #define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
-#define FT8_HAS_CRYSTAL 1
+#define FT8_HAS_CRYSTAL 0
 #endif
 
 
@@ -562,7 +565,7 @@
 #define FT8_PCLK	(2L)
 #define FT8_CSPREAD	(0L)
 #define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
-#define FT8_HAS_CRYSTAL 1
+#define FT8_HAS_CRYSTAL 0
 #endif
 
 
