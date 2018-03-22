@@ -720,8 +720,8 @@
 
 
 /* FT81x graphics engine specific macros useful for static display list generation */
-#define BITMAP_LAYOUT_H(linestride,height) ((40UL<<24)|(((linestride)&3UL)<<2)|(((height)&3UL)<<0))
-#define BITMAP_SIZE_H(width,height) ((41UL<<24)|(((width)&3UL)<<2)|(((height)&3UL)<<0))
+#define BITMAP_LAYOUT_H(linestride,height) ((40UL<<24)|((((linestride&0xC00)>>10)&3UL)<<2)|((((height&0x600)>>9)&3UL)<<0))
+#define BITMAP_SIZE_H(width,height) ((41UL<<24)|((((width&0x600)>>9)&3UL)<<2)|((((height&0x600)>>9)&3UL)<<0))
 #define BITMAP_SOURCE(addr) ((1UL<<24)|(((addr)&4194303UL)<<0))
 #define NOP() ((45UL<<24))
 #define PALETTE_SOURCE(addr) ((42UL<<24)|(((addr)&4194303UL)<<0))
