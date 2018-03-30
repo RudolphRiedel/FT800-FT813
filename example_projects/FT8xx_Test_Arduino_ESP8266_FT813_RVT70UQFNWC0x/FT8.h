@@ -1,8 +1,8 @@
 /*
 @file    FT8.h
 @brief   Contains FT80x/FT81x API definitions
-@version 3.2
-@date    2017-04-08
+@version 3.3
+@date    2018-03-30
 @author  Rudolph Riedel
 
 @section History
@@ -26,6 +26,18 @@
 
 3.2
 - moved CMD_CRC to the block of undocumented commands as well
+
+3.3
+- changed macros BITMAP_LAYOUT_H and BITMAP_SIZE_H as submitted to github by "jventerprises"
+	These macros provide the extended bits for bitmaps bigger than 511 pixels, FTDIs original implementation that I used and never touched takes the arguments
+	as already processed and not the original values.
+	Note the one example in "FT81x Series Programmers Guide" Version 1.1 for displaying a 800x480 sized bitmap:
+	dl(BITMAP_SIZE_H(1, 0));
+	dl(BITMAP_SIZE(NEAREST, BORDER, BORDER, 288, 480));
+	Now you can use it like this:
+	FT8_cmd_dl(BITMAP_SIZE_H(800, 480));
+	FT8_cmd_dl(BITMAP_SIZE(NEAREST, BORDER, BORDER, 800, 480));
+
 */
 
 #include "FT8_config.h"
@@ -720,8 +732,11 @@
 
 
 /* FT81x graphics engine specific macros useful for static display list generation */
-#define BITMAP_LAYOUT_H(linestride,height) ((40UL<<24)|(((linestride)&3UL)<<2)|(((height)&3UL)<<0))
-#define BITMAP_SIZE_H(width,height) ((41UL<<24)|(((width)&3UL)<<2)|(((height)&3UL)<<0))
+
+/* beware, these are different to FTDIs implementation as these take the original values as parameters and not only the upper bits */
+#define BITMAP_LAYOUT_H(linestride,height) ((40UL<<24)|((((linestride&0xC00)>>10)&3UL)<<2)|((((height&0x600)>>9)&3UL)<<0))
+#define BITMAP_SIZE_H(width,height) ((41UL<<24)|((((width&0x600)>>9)&3UL)<<2)|((((height&0x600)>>9)&3UL)<<0))
+
 #define BITMAP_SOURCE(addr) ((1UL<<24)|(((addr)&4194303UL)<<0))
 #define NOP() ((45UL<<24))
 #define PALETTE_SOURCE(addr) ((42UL<<24)|(((addr)&4194303UL)<<0))
