@@ -1,8 +1,8 @@
 /*
 @file    FT8_config.h
 @brief   configuration information for some TFTs and some pre-defined colors
-@version 3.6
-@date    2018-03-16
+@version 3.7
+@date    2018-03-30
 @author  Rudolph Riedel
 
 @section History
@@ -51,6 +51,8 @@
 3.6
 - changed the FT8_HAS_CRYSTAL for the Matrix Orbital modules from '1' to '0' as it turned out these are not using a crystal
 
+3.7
+- added timing parameters for Newhaven EVE2 displays, derived from their datasheets, untested
 */
 
 #ifndef FT8_CONFIG_H_
@@ -75,6 +77,10 @@
 	#define FT8_EVE2_43
 	#define FT8_EVE2_50
 	#define FT8_EVE2_70
+	#define FT8_NHD_35
+	#define FT8_NHD_43
+	#define FT8_NHD_50
+	#define FT8_NHD_70
 #endif
 
 #define FT8_FT811CB_HY50HD
@@ -104,9 +110,9 @@
 			#define DELAY_MS(ms) _delay_ms(ms)
 
 			#define FT8_CS_PORT	PORTB
-			#define FT8_CS 		(1<<PB5)
+			#define FT8_CS 		(1<<PB4)
 			#define FT8_PDN_PORT	PORTB
-			#define FT8_PDN		(1<<PB4)
+			#define FT8_PDN		(1<<PB5)
 
 
 			static inline void FT8_pdn_set(void)
@@ -274,7 +280,6 @@
 
 #endif /* Arduino */
 
-
 /* VM800B35A: FT800 320x240 3.5" FTDI */
 #ifdef FT8_VM800B35A
 #define FT8_VSYNC0	(0L)	/* Tvf Vertical Front Porch */
@@ -294,7 +299,6 @@
 #define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
 #define FT8_HAS_CRYSTAL 1	/* use external crystal or internal oscillator? */
 #endif
-
 
 /* VM800B43A: FT800 480x272 4.3" FTDI */
 #ifdef FT8_VM800B43A
@@ -316,7 +320,6 @@
 #define FT8_HAS_CRYSTAL 1
 #endif
 
-
 /* VM800B50A: FT800 480x272 5.0" FTDI */
 #ifdef FT8_VM800B50A
 #define FT8_VSYNC0	(0L)
@@ -336,7 +339,6 @@
 #define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_CRYSTAL 1
 #endif
-
 
 /* FT810CB-HY50HD: FT810 800x480 5.0" HAOYU */
 #ifdef FT8_FT810CB_HY50HD
@@ -358,7 +360,6 @@
 #define FT8_HAS_CRYSTAL 1
 #endif
 
-
 /* FT811CB-HY50HD: FT811 800x480 5.0" HAOYU */
 #ifdef FT8_FT811CB_HY50HD
 #define FT8_VSYNC0	(0L)
@@ -378,7 +379,6 @@
 #define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
 #define FT8_HAS_CRYSTAL 1
 #endif
-
 
 /* some test setup */
 #ifdef FT8_800x480x
@@ -400,7 +400,6 @@
 #define FT8_HAS_CRYSTAL 1
 #endif
 
-
 /* G-ET0700G0DM6 800x480 7.0" Glyn, untested */
 #ifdef FT8_ET07
 #define FT8_VSYNC0	(0L)
@@ -420,7 +419,6 @@
 #define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_CRYSTAL 0	/* no idea if these come with a crystal populated or not */
 #endif
-
 
 /* RVT70AQxxxxxx 800x480 7.0" Riverdi, various options, FT812/FT813, tested with RVT70UQFNWC0x */
 #ifdef FT8_RVT70AQ
@@ -442,7 +440,7 @@
 #define FT8_HAS_CRYSTAL 0
 #endif
 
-
+/* untested */
 /* EVE2-29A 320x102 2.9" 1U Matrix Orbital, no touch, FT81x */
 #ifdef FT8_EVE2_29
 #define FT8_VSYNC0	(0L)
@@ -459,11 +457,11 @@
 #define FT8_SWIZZLE	(0L)
 #define FT8_PCLK	(8L)
 #define FT8_CSPREAD	(1L)
-#define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
+#define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_CRYSTAL 0
 #endif
 
-
+/* untested */
 /* EVE2-35A 320x240 3.5" Matrix Orbital, resistive, capacitive or no touch, FT81x */
 #ifdef FT8_EVE2_35
 #define FT8_VSYNC0	(0L)
@@ -480,11 +478,11 @@
 #define FT8_SWIZZLE	(0L)
 #define FT8_PCLK	(8L)
 #define FT8_CSPREAD	(1L)
-#define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
+#define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_CRYSTAL 0
 #endif
 
-
+/* untested */
 /* EVE2-38A 480x116 3.8" 1U Matrix Orbital, resisitive or capacitive touch, FT81x */
 #ifdef FT8_EVE2_38
 #define FT8_VSYNC0	(0L)
@@ -501,11 +499,11 @@
 #define FT8_SWIZZLE	(0L)
 #define FT8_PCLK	(5L)
 #define FT8_CSPREAD	(1L)
-#define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
+#define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_CRYSTAL 0
 #endif
 
-
+/* untested */
 /* EVE2-43A 480x272 4.3" Matrix Orbital, resistive, capacitive or no touch, FT81x */
 #ifdef FT8_EVE2_43
 #define FT8_VSYNC0	(0L)
@@ -522,11 +520,11 @@
 #define FT8_SWIZZLE	(0L)
 #define FT8_PCLK	(5L)
 #define FT8_CSPREAD	(1L)
-#define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
+#define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_CRYSTAL 0
 #endif
 
-
+/* untested */
 /* EVE2-50A 800x480 5.0" Matrix Orbital, resistive, capacitive or no touch, FT81x */
 #ifdef FT8_EVE2_50
 #define FT8_VSYNC0	(0L)
@@ -543,11 +541,11 @@
 #define FT8_SWIZZLE	(0L)
 #define FT8_PCLK	(2L)
 #define FT8_CSPREAD	(0L)
-#define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
+#define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_CRYSTAL 0
 #endif
 
-
+/* untested */
 /* EVE2-70A 800x480 7.0" Matrix Orbital, resistive, capacitive or no touch, FT81x */
 #ifdef FT8_EVE2_70
 #define FT8_VSYNC0	(0L)
@@ -564,9 +562,92 @@
 #define FT8_SWIZZLE	(0L)
 #define FT8_PCLK	(2L)
 #define FT8_CSPREAD	(0L)
-#define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
+#define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_CRYSTAL 0
 #endif
 
+/* untested */
+/* NHD-3.5-320240FT-CxXx-xxx 320x240 3.5" Newhaven, resistive or capacitive, FT81x */
+#ifdef FT8_NHD_35
+#define FT8_VSYNC0	(0L)
+#define FT8_VSYNC1	(2L)
+#define FT8_VOFFSET	(13L)
+#define FT8_VCYCLE	(263L)
+#define FT8_VSIZE	(240L)
+#define FT8_HSYNC0	(0L)
+#define FT8_HSYNC1	(10L)
+#define FT8_HOFFSET	(70L)
+#define FT8_HCYCLE 	(408L)
+#define FT8_HSIZE	(320L)
+#define FT8_PCLKPOL	(1L)
+#define FT8_SWIZZLE	(2L)
+#define FT8_PCLK	(6L)
+#define FT8_CSPREAD	(0L)
+#define FT8_TOUCH_RZTHRESH (1200L)
+#define FT8_HAS_CRYSTAL 1
+#endif
+
+/* untested */
+/* NHD-4.3-480272FT-CxXx-xxx 480x272 4.3" Newhaven, resistive or capacitive, FT81x */
+#ifdef FT8_NHD_43
+#define FT8_VSYNC0	(0L)
+#define FT8_VSYNC1	(10L)
+#define FT8_VOFFSET	(12L)
+#define FT8_VCYCLE	(292L)
+#define FT8_VSIZE	(272L)
+#define FT8_HSYNC0	(0L)
+#define FT8_HSYNC1	(41L)
+#define FT8_HOFFSET	(43L)
+#define FT8_HCYCLE 	(548L)
+#define FT8_HSIZE	(480L)
+#define FT8_PCLKPOL	(1L)
+#define FT8_SWIZZLE	(0L)
+#define FT8_PCLK	(5L)
+#define FT8_CSPREAD	(1L)
+#define FT8_TOUCH_RZTHRESH (1200L)
+#define FT8_HAS_CRYSTAL 1
+#endif
+
+/* untested */
+/* NHD-5.0-800480FT-CxXx-xxx 800x480 5.0" Newhaven, resistive or capacitive, FT81x */
+#ifdef FT8_NHD_50
+#define FT8_VSYNC0	(0L)
+#define FT8_VSYNC1	(3L)
+#define FT8_VOFFSET	(32L)
+#define FT8_VCYCLE	(525L)
+#define FT8_VSIZE	(480L)
+#define FT8_HSYNC0	(0L)
+#define FT8_HSYNC1	(48L)
+#define FT8_HOFFSET	(88L)
+#define FT8_HCYCLE 	(928L)
+#define FT8_HSIZE	(800L)
+#define FT8_PCLKPOL	(0L)
+#define FT8_SWIZZLE	(0L)
+#define FT8_PCLK	(2L)
+#define FT8_CSPREAD	(1L)
+#define FT8_TOUCH_RZTHRESH (1200L)
+#define FT8_HAS_CRYSTAL 1
+#endif
+
+/* untested */
+/* NHD-7.0-800480FT-CxXx-xxx 800x480 7.0" Newhaven, resistive or capacitive, FT81x */
+#ifdef FT8_NHD_70
+#define FT8_VSYNC0	(0L)
+#define FT8_VSYNC1	(3L)
+#define FT8_VOFFSET	(32L)
+#define FT8_VCYCLE	(525L)
+#define FT8_VSIZE	(480L)
+#define FT8_HSYNC0	(0L)
+#define FT8_HSYNC1	(48L)
+#define FT8_HOFFSET	(88L)
+#define FT8_HCYCLE 	(928L)
+#define FT8_HSIZE	(800L)
+#define FT8_PCLKPOL	(1L)
+#define FT8_SWIZZLE	(0L)
+#define FT8_PCLK	(2L)
+#define FT8_CSPREAD	(1L)
+#define FT8_TOUCH_RZTHRESH (1200L)
+#define FT8_HAS_CRYSTAL 1
+#endif
 
 #endif /* FT8_CONFIG_H */
