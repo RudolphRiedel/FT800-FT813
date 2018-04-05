@@ -1,8 +1,8 @@
 /*
 @file    FT8_config.h
 @brief   configuration information for some TFTs and some pre-defined colors
-@version 3.7
-@date    2018-03-30
+@version 3.8
+@date    2018-04-05
 @author  Rudolph Riedel
 
 @section History
@@ -53,6 +53,11 @@
 
 3.7
 - added timing parameters for Newhaven EVE2 displays, derived from their datasheets, untested
+
+3.8
+- added timing parameters for Glyn ADAM101-LCP-SWVGA-NEW 10.1" TFT with 1024x600
+- fixed a copy-paste error with my latest changes to the Arduino code that killed the SPI 
+
 */
 
 #ifndef FT8_CONFIG_H_
@@ -81,9 +86,10 @@
 	#define FT8_NHD_43
 	#define FT8_NHD_50
 	#define FT8_NHD_70
+	#define ADAM101
 #endif
 
-#define FT8_FT811CB_HY50HD
+#define ADAM101
 
 
 /* some pre-definded colors */
@@ -216,8 +222,8 @@
 	#include <stdio.h>
 	#include <SPI.h>
 
-	#define FT8_CS 		8
-	#define FT8_PDN		2
+	#define FT8_CS 		9
+	#define FT8_PDN		8
 
 	#define DELAY_MS(ms) delay(ms)
 
@@ -260,7 +266,7 @@
 	#else
 		static inline void spi_transmit(uint8_t data)
 		{
-			return SPI.transfer(data);
+			SPI.transfer(data);
 		}
 	#endif
 
@@ -279,6 +285,7 @@
 	}
 
 #endif /* Arduino */
+
 
 /* VM800B35A: FT800 320x240 3.5" FTDI */
 #ifdef FT8_VM800B35A
@@ -642,6 +649,26 @@
 #define FT8_HOFFSET	(88L)
 #define FT8_HCYCLE 	(928L)
 #define FT8_HSIZE	(800L)
+#define FT8_PCLKPOL	(1L)
+#define FT8_SWIZZLE	(0L)
+#define FT8_PCLK	(2L)
+#define FT8_CSPREAD	(1L)
+#define FT8_TOUCH_RZTHRESH (1200L)
+#define FT8_HAS_CRYSTAL 1
+#endif
+
+/* ADAM101-LCP-SWVGA-NEW 1024x600 10.1" Glyn, capacitive, FT813 */
+#ifdef ADAM101
+#define FT8_VSYNC0	(0L)
+#define FT8_VSYNC1	(1L)
+#define FT8_VOFFSET	(1L)
+#define FT8_VCYCLE	(720L)
+#define FT8_VSIZE	(600L)
+#define FT8_HSYNC0	(0L)
+#define FT8_HSYNC1	(1L)
+#define FT8_HOFFSET	(1L)
+#define FT8_HCYCLE 	(1100L)
+#define FT8_HSIZE	(1024L)
 #define FT8_PCLKPOL	(1L)
 #define FT8_SWIZZLE	(0L)
 #define FT8_PCLK	(2L)
