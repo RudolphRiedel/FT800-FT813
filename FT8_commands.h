@@ -1,8 +1,8 @@
 /*
 @file    FT8_commands.h
 @brief   Contains FT8xx Function Prototypes
-@version 3.4
-@date    2017-04-30
+@version 3.6
+@date    2018-04-14
 @author  Rudolph Riedel
 
 @section History
@@ -46,14 +46,17 @@
 - added protoypes for FT8_start_cmd_burst() and FT8_end_cmd_burst()
 
 3.5
-- added prototype fpr FT8_cmd_start()
+- added prototype for FT8_cmd_start()
+
+3.6
+- added prototype for FT8_report_cmdoffset()
+- removed exporting var cmdOffset
 
 */
 
 #ifndef FT8_COMMANDS_H_
 #define FT8_COMMANDS_H_
 
-extern uint16_t cmdOffset;
 
 void FT8_cmdWrite(uint8_t data);
 
@@ -68,6 +71,7 @@ uint8_t FT8_busy(void);
 void FT8_cmd_dl(uint32_t command);
 
 void FT8_get_cmdoffset(void);
+uint16_t FT8_report_cmdoffset(void);
 uint32_t FT8_get_touch_tag(void);
 void FT8_cmd_start(void);
 void FT8_cmd_execute(void);
