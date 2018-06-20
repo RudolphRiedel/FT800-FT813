@@ -1,8 +1,8 @@
 /*
 @file    FT8_commands.c
 @brief   Contains Functions for using the FT8xx
-@version 3.9
-@date    2018-04-14
+@version 3.10
+@date    2018-06-20
 @author  Rudolph Riedel
 
 This file needs to be renamed to FT8_command.cpp for use with Arduino. 
@@ -91,6 +91,9 @@ This file needs to be renamed to FT8_command.cpp for use with Arduino.
 - Added patching of the touch-interface for GT911 to FT8_init() if required by the module attached
 - simplified FT8_init() a bit
 - some house-keeping, fixing typos in comments left and right
+
+3.10
+- FT8_cmd_inflate() supports binaries >4k now and does not need to be executed anymore
 
 */
 
@@ -1052,6 +1055,32 @@ void spi_flash_write(const uint8_t *data, uint16_t len)
 }
 
 
+void block_transfer(const uint8_t *data, uint16_t len)
+{
+	uint16_t bytes_left;
+	uint16_t block_len;
+	uint32_t ftAddress;	
+
+	bytes_left = len;
+	while(bytes_left > 0)
+	{
+		block_len = bytes_left>4000 ? 4000:bytes_left;
+
+		ftAddress = FT8_RAM_CMD + cmdOffset;
+		FT8_cs_set();
+		spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
+		spi_transmit((uint8_t)(ftAddress >> 8));	/* send middle address byte */
+		spi_transmit((uint8_t)(ftAddress));		/* send low address byte */
+		spi_flash_write(data,block_len);
+		FT8_cs_clear();
+		data += block_len;
+		bytes_left -= block_len;
+		FT8_cmd_execute();
+	}	
+}
+
+
+/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void FT8_cmd_inflate(uint32_t ptr, const uint8_t *data, uint16_t len)
 {
 	FT8_start_cmd(CMD_INFLATE);
@@ -1062,22 +1091,15 @@ void FT8_cmd_inflate(uint32_t ptr, const uint8_t *data, uint16_t len)
 	spi_transmit((uint8_t)(ptr >> 24));
 
 	FT8_inc_cmdoffset(4);
-
-	spi_flash_write(data,len);
-
-	if(cmd_burst == 0)
-	{
-		FT8_cs_clear();
-	}
+	FT8_cs_clear();
+	
+	block_transfer(data, len);
 }
+
 
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void FT8_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *data, uint16_t len)
 {
-	uint16_t bytes_left;
-	uint16_t block_len;
-	uint32_t ftAddress;
-	
 	FT8_start_cmd(CMD_LOADIMAGE);
 
 	spi_transmit((uint8_t)(ptr));
@@ -1097,22 +1119,7 @@ void FT8_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *data, uint
 	if((options & FT8_OPT_MEDIAFIFO) == 0) /* data is not transmitted thru the Media-FIFO */
 #endif
 	{
-		bytes_left = len;
-		while(bytes_left > 0)
-		{
-			block_len = bytes_left>4000 ? 4000:bytes_left;
-
-			ftAddress = FT8_RAM_CMD + cmdOffset;
-			FT8_cs_set();
-			spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
-			spi_transmit((uint8_t)(ftAddress >> 8));	/* send middle address byte */
-			spi_transmit((uint8_t)(ftAddress));		/* send low address byte */
-			spi_flash_write(data,block_len);
-			FT8_cs_clear();
-			data += block_len;
-			bytes_left -= block_len;
-			FT8_cmd_execute();
-		}
+		block_transfer(data, len);
 	}
 }
 
@@ -1205,7 +1212,7 @@ void FT8_cmd_rotate(int32_t ang)
 }
 
 
-/*	the description in the programmers guide is strange for this funtion
+/*	the description in the programmers guide is strange for this function
 	while it is named *get*matrix, parameters 'a' to 'f' are supplied to
 	the function and described as "output parameter"
 	best guess is that this one allows to setup the matrix coefficients manually
@@ -1956,7 +1963,7 @@ uint8_t FT8_init(void)
 	/* nothing is being displayed yet... the pixel clock is still 0x00 */
 	FT8_memWrite8(REG_GPIO, 0x80); /* enable the DISP signal to the LCD panel, it is set to output in REG_GPIO_DIR by default */
 	FT8_memWrite8(REG_PCLK, FT8_PCLK); /* now start clocking data to the LCD panel */
-	FT8_memWrite8(REG_PWM_DUTY, 70); /* turn on backlight to some value that needs to be adjusted or not... */
+	FT8_memWrite8(REG_PWM_DUTY, 10); /* turn on backlight to some value that needs to be adjusted or not... */
 
 	DELAY_MS(2); /* just to be safe */
 	while(FT8_busy() == 1); /* just to be safe, should return immediately */
