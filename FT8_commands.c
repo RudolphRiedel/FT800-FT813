@@ -1,8 +1,8 @@
 /*
 @file    FT8_commands.c
 @brief   Contains Functions for using the FT8xx
-@version 3.10
-@date    2018-06-20
+@version 3.11
+@date    2018-06-22
 @author  Rudolph Riedel
 
 This file needs to be renamed to FT8_command.cpp for use with Arduino. 
@@ -94,6 +94,9 @@ This file needs to be renamed to FT8_command.cpp for use with Arduino.
 
 3.10
 - FT8_cmd_inflate() supports binaries >4k now and does not need to be executed anymore
+
+3.11
+- added fault-detection and co-processor reset to  FT8_busy(), this allows the FT8xx to continue to work even after beeing supplied with bad image data for example
 
 */
 
@@ -231,6 +234,15 @@ uint8_t FT8_busy(void)
 	uint16_t cmdBufferRead;
 
 	cmdBufferRead = FT8_memRead16(REG_CMD_READ);	/* read the graphics processor read pointer */
+
+	if(cmdBufferRead == 0xFFF)
+	{
+		FT8_memWrite8(REG_CPURESET, 1);		/* hold co-processor engine in the reset condition */
+		FT8_memWrite16(REG_CMD_READ, 0);	/* set REG_CMD_READ to 0 */
+		FT8_memWrite16(REG_CMD_WRITE, 0);	/* set REG_CMD_WRITE to 0 */
+		cmdOffset = 0;						/* reset cmdOffset */
+		FT8_memWrite8(REG_CPURESET, 0);		/* set REG_CMD_WRITE to 0 to restart the co-processor engine*/
+	}
 
 	if(cmdOffset != cmdBufferRead)
 	{
