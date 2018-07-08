@@ -1,8 +1,8 @@
 /*
 @file    tft.c
 @brief   TFT handling functions for FT8xx_Test project, the layout is for 800x480 displays
-@version 1.5
-@date    2018-14-04
+@version 1.6
+@date    2018-07-08
 @author  Rudolph Riedel
 
 @section History
@@ -33,6 +33,9 @@
 1.5
 - simplified the example layout a lot and made it to scale with all display-sizes
 
+1.6
+- a bit of house-keeping after trying a couple of things
+
  */ 
 
 
@@ -44,7 +47,8 @@
 
 /* memory-map defines */
 #define MEM_LOGO 0x00000000 /* start-address of logo, needs 2242 bytes of memory */
-#define MEM_PIC1 0x00000900 /* start of 100x100 pixel test image, needs 20000 bytes of memory */ 
+#define MEM_PIC1 0x00000900 /* start of 100x100 pixel test image, ARGB565, needs 20000 bytes of memory */ 
+
 #define MEM_DL_STATIC 0x000ff000 /* start-address of the static part of the display-list, upper 4k of gfx-mem */
 
 uint32_t num_dl_static; /* amount of bytes in the static part of our display-list */
@@ -73,7 +77,6 @@ void initStaticBackground()
 	FT8_cmd_dl(VERTEX2F(FT8_HSIZE,LAYOUT_Y1-2));
 	FT8_cmd_dl(DL_END);
 
-
 	/* display the logo */
 	FT8_cmd_dl(DL_COLOR_RGB | WHITE);
 	FT8_cmd_dl(DL_BEGIN | FT8_BITMAPS);
@@ -81,15 +84,13 @@ void initStaticBackground()
 	FT8_cmd_dl(VERTEX2F(FT8_HSIZE - 50, 5));
 	FT8_cmd_dl(DL_END);
 
-
-	/* draw a black line to seperate things */
+	/* draw a black line to separate things */
 	FT8_cmd_dl(DL_COLOR_RGB | BLACK);
 	FT8_cmd_dl(DL_BEGIN | FT8_LINES);
 	FT8_cmd_dl(VERTEX2F(0,LAYOUT_Y1-2));
 	FT8_cmd_dl(VERTEX2F(FT8_HSIZE,LAYOUT_Y1-2));
 	FT8_cmd_dl(DL_END);
 
-	
 	/* add the static text to the list */
 	FT8_cmd_text(10, FT8_VSIZE - 65, 27, 0, "Bytes:");
 	FT8_cmd_text(10, FT8_VSIZE - 45, 27, 0, "Time1:");
@@ -113,12 +114,22 @@ void TFT_init(void)
 	{
 		tft_active = 1;
 		
-		FT8_memWrite8(REG_PWM_DUTY, 0x10);	/* reduce the current necessary for the backlight -> weak psu.. */
+//		FT8_memWrite8(REG_PWM_DUTY, 0x20);	/* reduce the current necessary for the backlight -> weak psu.. */
 
 		/* send pre-recorded touch calibration values, depending on the display the code is compiled for */
-		/* just to make things easier for this example code across several TFT-modules... */
+
+#if defined (FT8_EVE2_38)
+// no values yet, calibration does not work with it
+//	FT8_memWrite32(REG_TOUCH_TRANSFORM_A, 0x0000a1ff);
+//	FT8_memWrite32(REG_TOUCH_TRANSFORM_B, 0x00000680);
+//	FT8_memWrite32(REG_TOUCH_TRANSFORM_C, 0xffe54cc2);
+//	FT8_memWrite32(REG_TOUCH_TRANSFORM_D, 0xffffff53);
+//	FT8_memWrite32(REG_TOUCH_TRANSFORM_E, 0x0000912c);
+//	FT8_memWrite32(REG_TOUCH_TRANSFORM_F, 0xfffe628d);
+#endif
+
 		
-#ifdef FT8_EVE2_35G
+#if defined (FT8_EVE2_35G)
 		FT8_memWrite32(REG_TOUCH_TRANSFORM_A, 0x000109E4);
 		FT8_memWrite32(REG_TOUCH_TRANSFORM_B, 0x000007A6);
 		FT8_memWrite32(REG_TOUCH_TRANSFORM_C, 0xFFEC1EBA);
@@ -127,7 +138,36 @@ void TFT_init(void)
 		FT8_memWrite32(REG_TOUCH_TRANSFORM_F, 0xFFF469CF);
 #endif
 
-#ifdef FT8_RVT70AQ
+
+#if defined (FT8_EVE2_43G)
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_A, 0x0000a1ff);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_B, 0x00000680);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_C, 0xffe54cc2);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_D, 0xffffff53);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_E, 0x0000912c);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_F, 0xfffe628d);
+#endif
+
+
+#if defined (FT8_EVE2_50G)
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_A, 0x000109E4);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_B, 0x000007A6);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_C, 0xFFEC1EBA);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_D, 0x0000072C);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_E, 0x0001096A);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_F, 0xFFF469CF);
+#endif
+
+#if defined (FT8_NHD_35)
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_A, 0x0000f78b);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_B, 0x00000427);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_C, 0xfffcedf8);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_D, 0xfffffba4);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_E, 0x0000f756);
+		FT8_memWrite32(REG_TOUCH_TRANSFORM_F, 0x0009279e);
+#endif
+
+#if defined (FT8_RVT70AQ)
 		FT8_memWrite32(REG_TOUCH_TRANSFORM_A, 0x000074df);
 		FT8_memWrite32(REG_TOUCH_TRANSFORM_B, 0x000000e6);
 		FT8_memWrite32(REG_TOUCH_TRANSFORM_C, 0xfffd5474);
@@ -136,7 +176,7 @@ void TFT_init(void)
 		FT8_memWrite32(REG_TOUCH_TRANSFORM_F, 0xffe9a63c);
 #endif
 
-#ifdef FT8_FT811CB_HY50HD
+#if defined (FT8_FT811CB_HY50HD)
 		FT8_memWrite32(REG_TOUCH_TRANSFORM_A, 66353);
 		FT8_memWrite32(REG_TOUCH_TRANSFORM_B, 712);
 		FT8_memWrite32(REG_TOUCH_TRANSFORM_C, 4293876677);
@@ -145,7 +185,7 @@ void TFT_init(void)
 		FT8_memWrite32(REG_TOUCH_TRANSFORM_F, 418276);
 #endif
 
-#ifdef ADAM101
+#if defined (FT8_ADAM101)
 		FT8_memWrite32(REG_TOUCH_TRANSFORM_A, 0x000101E3);
 		FT8_memWrite32(REG_TOUCH_TRANSFORM_B, 0x00000114);
 		FT8_memWrite32(REG_TOUCH_TRANSFORM_C, 0xFFF5EEBA);
@@ -160,7 +200,7 @@ void TFT_init(void)
 		FT8_cmd_dl(CMD_DLSTART);
 		FT8_cmd_dl(DL_CLEAR_RGB | BLACK);
 		FT8_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
-		FT8_cmd_text((FT8_HSIZE/2), (FT8_VSIZE/2), 27, FT8_OPT_CENTER, "Please tap on the dot.");
+		FT8_cmd_text((FT8_HSIZE/2), 50, 26, FT8_OPT_CENTER, "Please tap on the dot.");
 		FT8_cmd_calibrate();
 		FT8_cmd_dl(DL_DISPLAY);
 		FT8_cmd_dl(CMD_SWAP);
@@ -180,28 +220,28 @@ void TFT_init(void)
 		FT8_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
 		FT8_cmd_dl(TAG(0));
 
-		FT8_cmd_text(5, 30, 27, 0, "TOUCH_TRANSFORM_A:");
-		FT8_cmd_text(5, 50, 27, 0, "TOUCH_TRANSFORM_B:");
-		FT8_cmd_text(5, 70, 27, 0, "TOUCH_TRANSFORM_C:");
-		FT8_cmd_text(5, 90, 27, 0, "TOUCH_TRANSFORM_D:");
-		FT8_cmd_text(5, 110, 27, 0, "TOUCH_TRANSFORM_E:");
-		FT8_cmd_text(5, 130, 27, 0, "TOUCH_TRANSFORM_F:");
+		FT8_cmd_text(5, 15, 26, 0, "TOUCH_TRANSFORM_A:");
+		FT8_cmd_text(5, 30, 26, 0, "TOUCH_TRANSFORM_B:");
+		FT8_cmd_text(5, 45, 26, 0, "TOUCH_TRANSFORM_C:");
+		FT8_cmd_text(5, 60, 26, 0, "TOUCH_TRANSFORM_D:");
+		FT8_cmd_text(5, 75, 26, 0, "TOUCH_TRANSFORM_E:");
+		FT8_cmd_text(5, 90, 26, 0, "TOUCH_TRANSFORM_F:");
 
 #ifdef FT8_81X_ENABLE
 		FT8_cmd_setbase(16L); /* FT81x only */
-		FT8_cmd_number(310, 30, 27, FT8_OPT_RIGHTX|8, touch_a);
-		FT8_cmd_number(310, 50, 27, FT8_OPT_RIGHTX|8, touch_b);
-		FT8_cmd_number(310, 70, 27, FT8_OPT_RIGHTX|8, touch_c);
-		FT8_cmd_number(310, 90, 27, FT8_OPT_RIGHTX|8, touch_d);
-		FT8_cmd_number(310, 110, 27, FT8_OPT_RIGHTX|8, touch_e);
-		FT8_cmd_number(310, 130, 27, FT8_OPT_RIGHTX|8, touch_f);
+		FT8_cmd_number(310, 15, 26, FT8_OPT_RIGHTX|8, touch_a);
+		FT8_cmd_number(310, 30, 26, FT8_OPT_RIGHTX|8, touch_b);
+		FT8_cmd_number(310, 45, 26, FT8_OPT_RIGHTX|8, touch_c);
+		FT8_cmd_number(310, 60, 26, FT8_OPT_RIGHTX|8, touch_d);
+		FT8_cmd_number(310, 75, 26, FT8_OPT_RIGHTX|8, touch_e);
+		FT8_cmd_number(310, 90, 26, FT8_OPT_RIGHTX|8, touch_f);
 #else
-		FT8_cmd_number(310, 30, 27, FT8_OPT_RIGHTX, touch_a);
-		FT8_cmd_number(310, 50, 27, FT8_OPT_RIGHTX, touch_b);
-		FT8_cmd_number(310, 70, 27, FT8_OPT_RIGHTX, touch_c);
-		FT8_cmd_number(310, 90, 27, FT8_OPT_RIGHTX, touch_d);
-		FT8_cmd_number(310, 110, 27, FT8_OPT_RIGHTX, touch_e);
-		FT8_cmd_number(310, 130, 27, FT8_OPT_RIGHTX, touch_f);
+		FT8_cmd_number(310, 15, 26, FT8_OPT_RIGHTX, touch_a);
+		FT8_cmd_number(310, 30, 26, FT8_OPT_RIGHTX, touch_b);
+		FT8_cmd_number(310, 45, 26, FT8_OPT_RIGHTX, touch_c);
+		FT8_cmd_number(310, 60, 26, FT8_OPT_RIGHTX, touch_d);
+		FT8_cmd_number(310, 75, 26, FT8_OPT_RIGHTX, touch_e);
+		FT8_cmd_number(310, 90, 26, FT8_OPT_RIGHTX, touch_f);
 #endif
 
 		FT8_cmd_dl(DL_DISPLAY);	/* instruct the graphics processor to show the list */
@@ -212,10 +252,8 @@ void TFT_init(void)
 #endif
 
 
-		FT8_cmd_inflate(MEM_LOGO, logo, logo_size); /* load logo into gfx-memory and de-compress it */
-		FT8_cmd_execute();
-
-		FT8_cmd_loadimage(MEM_PIC1, FT8_OPT_NODL, pngpic, pngpic_size);
+		FT8_cmd_inflate(MEM_LOGO, logo, sizeof(logo)); /* load logo into gfx-memory and de-compress it */
+		FT8_cmd_loadimage(MEM_PIC1, FT8_OPT_NODL, pic, sizeof(pic));
 
 		initStaticBackground();
 	}
@@ -223,7 +261,7 @@ void TFT_init(void)
 
 
 /*
-	dynamic portion of display-handling, meant to be called every 10ms
+	dynamic portion of display-handling, meant to be called every 10ms or more
 	divided into two sections:
 		- handling of touch-events and variables
 		- sending a new display-list to the FT8xx
@@ -301,7 +339,6 @@ void TFT_loop(void)
 				FT8_cmd_button(20,20,80,30, 28, toggle_state,"Touch!");
 				FT8_cmd_dl(TAG(0));
 
-
 				/* display a picture and rotate it when the button on top is activated */
 				FT8_cmd_dl(DL_COLOR_RGB | WHITE);
 				FT8_cmd_setbitmap(MEM_PIC1, FT8_RGB565, 100, 100);
@@ -324,7 +361,6 @@ void TFT_loop(void)
 				/* reset the transformation matrix to default values */
 				FT8_cmd_getmatrix(BITMAP_TRANSFORM_A(256),BITMAP_TRANSFORM_B(0),BITMAP_TRANSFORM_C(0),BITMAP_TRANSFORM_D(0),BITMAP_TRANSFORM_E(256),BITMAP_TRANSFORM_F(0));
 
-
 				/* print profiling values */
 				FT8_cmd_dl(DL_COLOR_RGB | BLACK);
 
@@ -344,7 +380,7 @@ void TFT_loop(void)
 				FT8_cmd_dl(CMD_SWAP); /* make this list active */
 
 				FT8_end_cmd_burst(); /* stop writing to the cmd-fifo */
-				FT8_cmd_start();
+				FT8_cmd_start(); /* order the command co-processor to start processing its FIFO queue but do not wait for completion */
 				break;
 		}
 	}

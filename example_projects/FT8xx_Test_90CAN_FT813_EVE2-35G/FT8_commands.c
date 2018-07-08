@@ -1,8 +1,8 @@
 /*
 @file    FT8_commands.c
 @brief   Contains Functions for using the FT8xx
-@version 3.9
-@date    2018-04-14
+@version 3.12
+@date    2018-07-08
 @author  Rudolph Riedel
 
 This file needs to be renamed to FT8_command.cpp for use with Arduino. 
@@ -91,6 +91,17 @@ This file needs to be renamed to FT8_command.cpp for use with Arduino.
 - Added patching of the touch-interface for GT911 to FT8_init() if required by the module attached
 - simplified FT8_init() a bit
 - some house-keeping, fixing typos in comments left and right
+
+3.10
+- FT8_cmd_inflate() supports binaries >4k now and does not need to be executed anymore
+
+3.11
+- added fault-detection and co-processor reset to  FT8_busy(), this allows the FT8xx to continue to work even after beeing supplied with bad image data for example
+
+3.12
+- changed the way FT8_HAS_CRYSTAL works
+- added special treatment for switching on and off the backlight in FT8_init() for ADAM101 modules.
+- default backlight value after FT8_init() is 25% now
 
 */
 
@@ -228,6 +239,15 @@ uint8_t FT8_busy(void)
 	uint16_t cmdBufferRead;
 
 	cmdBufferRead = FT8_memRead16(REG_CMD_READ);	/* read the graphics processor read pointer */
+
+	if(cmdBufferRead == 0xFFF)
+	{
+		FT8_memWrite8(REG_CPURESET, 1);		/* hold co-processor engine in the reset condition */
+		FT8_memWrite16(REG_CMD_READ, 0);	/* set REG_CMD_READ to 0 */
+		FT8_memWrite16(REG_CMD_WRITE, 0);	/* set REG_CMD_WRITE to 0 */
+		cmdOffset = 0;						/* reset cmdOffset */
+		FT8_memWrite8(REG_CPURESET, 0);		/* set REG_CMD_WRITE to 0 to restart the co-processor engine*/
+	}
 
 	if(cmdOffset != cmdBufferRead)
 	{
@@ -1052,6 +1072,32 @@ void spi_flash_write(const uint8_t *data, uint16_t len)
 }
 
 
+void block_transfer(const uint8_t *data, uint16_t len)
+{
+	uint16_t bytes_left;
+	uint16_t block_len;
+	uint32_t ftAddress;	
+
+	bytes_left = len;
+	while(bytes_left > 0)
+	{
+		block_len = bytes_left>4000 ? 4000:bytes_left;
+
+		ftAddress = FT8_RAM_CMD + cmdOffset;
+		FT8_cs_set();
+		spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
+		spi_transmit((uint8_t)(ftAddress >> 8));	/* send middle address byte */
+		spi_transmit((uint8_t)(ftAddress));		/* send low address byte */
+		spi_flash_write(data,block_len);
+		FT8_cs_clear();
+		data += block_len;
+		bytes_left -= block_len;
+		FT8_cmd_execute();
+	}	
+}
+
+
+/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void FT8_cmd_inflate(uint32_t ptr, const uint8_t *data, uint16_t len)
 {
 	FT8_start_cmd(CMD_INFLATE);
@@ -1062,22 +1108,15 @@ void FT8_cmd_inflate(uint32_t ptr, const uint8_t *data, uint16_t len)
 	spi_transmit((uint8_t)(ptr >> 24));
 
 	FT8_inc_cmdoffset(4);
-
-	spi_flash_write(data,len);
-
-	if(cmd_burst == 0)
-	{
-		FT8_cs_clear();
-	}
+	FT8_cs_clear();
+	
+	block_transfer(data, len);
 }
+
 
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void FT8_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *data, uint16_t len)
 {
-	uint16_t bytes_left;
-	uint16_t block_len;
-	uint32_t ftAddress;
-	
 	FT8_start_cmd(CMD_LOADIMAGE);
 
 	spi_transmit((uint8_t)(ptr));
@@ -1097,22 +1136,7 @@ void FT8_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *data, uint
 	if((options & FT8_OPT_MEDIAFIFO) == 0) /* data is not transmitted thru the Media-FIFO */
 #endif
 	{
-		bytes_left = len;
-		while(bytes_left > 0)
-		{
-			block_len = bytes_left>4000 ? 4000:bytes_left;
-
-			ftAddress = FT8_RAM_CMD + cmdOffset;
-			FT8_cs_set();
-			spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
-			spi_transmit((uint8_t)(ftAddress >> 8));	/* send middle address byte */
-			spi_transmit((uint8_t)(ftAddress));		/* send low address byte */
-			spi_flash_write(data,block_len);
-			FT8_cs_clear();
-			data += block_len;
-			bytes_left -= block_len;
-			FT8_cmd_execute();
-		}
+		block_transfer(data, len);
 	}
 }
 
@@ -1205,7 +1229,7 @@ void FT8_cmd_rotate(int32_t ang)
 }
 
 
-/*	the description in the programmers guide is strange for this funtion
+/*	the description in the programmers guide is strange for this function
 	while it is named *get*matrix, parameters 'a' to 'f' are supplied to
 	the function and described as "output parameter"
 	best guess is that this one allows to setup the matrix coefficients manually
@@ -1869,14 +1893,11 @@ uint8_t FT8_init(void)
 	
 /*	FT8_cmdWrite(FT8_CORERST);*/ /* reset, only required for warmstart if PowerDown line is not used */
 
-	if(FT8_HAS_CRYSTAL != 0)
-	{
-		FT8_cmdWrite(FT8_CLKEXT);	/* setup FT8xx for external clock */
-	}
-	else
-	{
-		FT8_cmdWrite(FT8_CLKINT);	/* setup FT8xx for internal clock */
-	}
+#if defined (FT8_HAS_CRYSTAL)
+	FT8_cmdWrite(FT8_CLKEXT);	/* setup FT8xx for external clock */
+#else
+	FT8_cmdWrite(FT8_CLKINT);	/* setup FT8xx for internal clock */
+#endif
 
 	FT8_cmdWrite(FT8_ACTIVE);	/* start FT8xx */
 
@@ -1893,7 +1914,7 @@ uint8_t FT8_init(void)
 	}
 
 /* we have a display with a Goodix GT911 / GT9271 touch-controller on it, so we patch our FT811 or FT813 according to AN_336 */
-#ifdef FT8_HAS_GT911
+#if defined (FT8_HAS_GT911)
 	uint32_t ftAddress;
 
 	FT8_get_cmdoffset();
@@ -1919,7 +1940,12 @@ uint8_t FT8_init(void)
 #endif
 
 /*	FT8_memWrite8(REG_PCLK, 0x00);	*/	/* set PCLK to zero - don't clock the LCD until later, line disabled because zero is reset-default and we just did a reset */
-	FT8_memWrite8(REG_PWM_DUTY, 10);		/* turn off backlight, well, sort of, at least the modules from Glyn use inverted values */
+
+#if defined (FT8_ADAM101)
+	FT8_memWrite8(REG_PWM_DUTY, 0x80);	/* turn off backlight for Glyn ADAM101 module, it uses inverted values */
+#else
+	FT8_memWrite8(REG_PWM_DUTY, 0);		/* turn off backlight for any other module */
+#endif
 
 	/* Initialize Display */
 	FT8_memWrite16(REG_HSIZE,   FT8_HSIZE);		/* active display width */
@@ -1956,7 +1982,12 @@ uint8_t FT8_init(void)
 	/* nothing is being displayed yet... the pixel clock is still 0x00 */
 	FT8_memWrite8(REG_GPIO, 0x80); /* enable the DISP signal to the LCD panel, it is set to output in REG_GPIO_DIR by default */
 	FT8_memWrite8(REG_PCLK, FT8_PCLK); /* now start clocking data to the LCD panel */
-	FT8_memWrite8(REG_PWM_DUTY, 70); /* turn on backlight to some value that needs to be adjusted or not... */
+
+#if defined (FT8_ADAM101)
+	FT8_memWrite8(REG_PWM_DUTY, 0x60);	/* turn on backlight to 25% for Glyn ADAM101 module, it uses inverted values */
+#else
+	FT8_memWrite8(REG_PWM_DUTY, 0x20);	/* turn on backlight to 25% for any other module */
+#endif
 
 	DELAY_MS(2); /* just to be safe */
 	while(FT8_busy() == 1); /* just to be safe, should return immediately */
