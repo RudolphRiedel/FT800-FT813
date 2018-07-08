@@ -1,8 +1,8 @@
 /*
 @file    FT8_commands.c
 @brief   Contains Functions for using the FT8xx
-@version 3.11
-@date    2018-06-22
+@version 3.12
+@date    2018-07-08
 @author  Rudolph Riedel
 
 This file needs to be renamed to FT8_command.cpp for use with Arduino. 
@@ -97,6 +97,11 @@ This file needs to be renamed to FT8_command.cpp for use with Arduino.
 
 3.11
 - added fault-detection and co-processor reset to  FT8_busy(), this allows the FT8xx to continue to work even after beeing supplied with bad image data for example
+
+3.12
+- changed the way FT8_HAS_CRYSTAL works
+- added special treatment for switching on and off the backlight in FT8_init() for ADAM101 modules.
+- default backlight value after FT8_init() is 25% now
 
 */
 
@@ -1888,14 +1893,11 @@ uint8_t FT8_init(void)
 	
 /*	FT8_cmdWrite(FT8_CORERST);*/ /* reset, only required for warmstart if PowerDown line is not used */
 
-	if(FT8_HAS_CRYSTAL != 0)
-	{
-		FT8_cmdWrite(FT8_CLKEXT);	/* setup FT8xx for external clock */
-	}
-	else
-	{
-		FT8_cmdWrite(FT8_CLKINT);	/* setup FT8xx for internal clock */
-	}
+#if defined (FT8_HAS_CRYSTAL)
+	FT8_cmdWrite(FT8_CLKEXT);	/* setup FT8xx for external clock */
+#else
+	FT8_cmdWrite(FT8_CLKINT);	/* setup FT8xx for internal clock */
+#endif
 
 	FT8_cmdWrite(FT8_ACTIVE);	/* start FT8xx */
 
@@ -1912,7 +1914,7 @@ uint8_t FT8_init(void)
 	}
 
 /* we have a display with a Goodix GT911 / GT9271 touch-controller on it, so we patch our FT811 or FT813 according to AN_336 */
-#ifdef FT8_HAS_GT911
+#if defined (FT8_HAS_GT911)
 	uint32_t ftAddress;
 
 	FT8_get_cmdoffset();
@@ -1938,7 +1940,12 @@ uint8_t FT8_init(void)
 #endif
 
 /*	FT8_memWrite8(REG_PCLK, 0x00);	*/	/* set PCLK to zero - don't clock the LCD until later, line disabled because zero is reset-default and we just did a reset */
-	FT8_memWrite8(REG_PWM_DUTY, 10);		/* turn off backlight, well, sort of, at least the modules from Glyn use inverted values */
+
+#if defined (FT8_ADAM101)
+	FT8_memWrite8(REG_PWM_DUTY, 0x80);	/* turn off backlight for Glyn ADAM101 module, it uses inverted values */
+#else
+	FT8_memWrite8(REG_PWM_DUTY, 0);		/* turn off backlight for any other module */
+#endif
 
 	/* Initialize Display */
 	FT8_memWrite16(REG_HSIZE,   FT8_HSIZE);		/* active display width */
@@ -1975,7 +1982,12 @@ uint8_t FT8_init(void)
 	/* nothing is being displayed yet... the pixel clock is still 0x00 */
 	FT8_memWrite8(REG_GPIO, 0x80); /* enable the DISP signal to the LCD panel, it is set to output in REG_GPIO_DIR by default */
 	FT8_memWrite8(REG_PCLK, FT8_PCLK); /* now start clocking data to the LCD panel */
-	FT8_memWrite8(REG_PWM_DUTY, 10); /* turn on backlight to some value that needs to be adjusted or not... */
+
+#if defined (FT8_ADAM101)
+	FT8_memWrite8(REG_PWM_DUTY, 0x60);	/* turn on backlight to 25% for Glyn ADAM101 module, it uses inverted values */
+#else
+	FT8_memWrite8(REG_PWM_DUTY, 0x20);	/* turn on backlight to 25% for any other module */
+#endif
 
 	DELAY_MS(2); /* just to be safe */
 	while(FT8_busy() == 1); /* just to be safe, should return immediately */
