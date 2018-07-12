@@ -1,8 +1,8 @@
 /*
 @file    tft.c
 @brief   TFT handling functions for FT8xx_Test project, the layout is for 800x480 displays
-@version 1.6
-@date    2018-07-08
+@version 1.7
+@date    2018-07-12
 @author  Rudolph Riedel
 
 @section History
@@ -35,6 +35,9 @@
 
 1.6
 - a bit of house-keeping after trying a couple of things
+
+1.7
+- added a display for the amount of bytes generated in the display-list by the command co-pro
 
  */ 
 
@@ -92,12 +95,13 @@ void initStaticBackground()
 	FT8_cmd_dl(DL_END);
 
 	/* add the static text to the list */
-	FT8_cmd_text(10, FT8_VSIZE - 65, 27, 0, "Bytes:");
-	FT8_cmd_text(10, FT8_VSIZE - 45, 27, 0, "Time1:");
-	FT8_cmd_text(10, FT8_VSIZE - 25, 27, 0, "Time2:");
+	FT8_cmd_text(10, FT8_VSIZE - 65, 26, 0, "DL-size:");
+	FT8_cmd_text(10, FT8_VSIZE - 50, 26, 0, "Bytes:");
+	FT8_cmd_text(10, FT8_VSIZE - 35, 26, 0, "Time1:");
+	FT8_cmd_text(10, FT8_VSIZE - 20, 26, 0, "Time2:");
 
-	FT8_cmd_text(125, FT8_VSIZE - 45, 27, 0, "us");
-	FT8_cmd_text(125, FT8_VSIZE - 25, 27, 0, "us");
+	FT8_cmd_text(125, FT8_VSIZE - 35, 26, 0, "us");
+	FT8_cmd_text(125, FT8_VSIZE - 20, 26, 0, "us");
 
 	FT8_cmd_execute();
 	
@@ -278,6 +282,8 @@ void TFT_loop(void)
     uint32_t calc;
 	uint16_t old_offset, new_offset;
 	static int32_t rotate = 0;
+	
+	uint16_t display_list_size = 0;
 
 	if(tft_active != 0)
 	{
@@ -322,6 +328,7 @@ void TFT_loop(void)
 
 				touch_or_list = 0; /* handle touch-events with next call */
 				old_offset =  FT8_report_cmdoffset(); /* used to calculate the amount of cmd-fifo bytes necessary */
+				display_list_size = FT8_memRead16(REG_CMD_DL);
 			
 				FT8_start_cmd_burst(); /* start writing to the cmd-fifo as one stream of bytes, only sending the address once */				
 			
@@ -340,7 +347,7 @@ void TFT_loop(void)
 				FT8_cmd_dl(TAG(0));
 
 				/* display a picture and rotate it when the button on top is activated */
-				FT8_cmd_dl(DL_COLOR_RGB | WHITE);
+//				FT8_cmd_dl(DL_COLOR_RGB | WHITE);
 				FT8_cmd_setbitmap(MEM_PIC1, FT8_RGB565, 100, 100);
 				
 				FT8_cmd_dl(CMD_LOADIDENTITY);
@@ -364,8 +371,9 @@ void TFT_loop(void)
 				/* print profiling values */
 				FT8_cmd_dl(DL_COLOR_RGB | BLACK);
 
-				FT8_cmd_number(120, FT8_VSIZE - 45, 27, FT8_OPT_RIGHTX|5, num_profile_a); /* duration in 탎 of TFT_loop() for the touch-even part */
-				FT8_cmd_number(120, FT8_VSIZE - 25, 27, FT8_OPT_RIGHTX|5, num_profile_b); /* duration in 탎 of TFT_loop() for the display-list part */
+				FT8_cmd_number(120, FT8_VSIZE - 65, 26, FT8_OPT_RIGHTX, display_list_size); /* number of bytes written to the display-list by the command co-pro */
+				FT8_cmd_number(120, FT8_VSIZE - 35, 26, FT8_OPT_RIGHTX|5, num_profile_a); /* duration in 탎 of TFT_loop() for the touch-event part */
+				FT8_cmd_number(120, FT8_VSIZE - 20, 26, FT8_OPT_RIGHTX|5, num_profile_b); /* duration in 탎 of TFT_loop() for the display-list part */
 
 				new_offset =  FT8_report_cmdoffset();
 				if(old_offset > new_offset)
@@ -374,7 +382,7 @@ void TFT_loop(void)
 				}
 				calc = new_offset-old_offset;
 				calc += 24; /* adjust for the commands that follow before the end */
-				FT8_cmd_number(120, FT8_VSIZE - 65, 27, FT8_OPT_RIGHTX, calc); /* number of bytes written to the cmd-fifo over the spi without adressing overhead */
+				FT8_cmd_number(120, FT8_VSIZE - 50, 26, FT8_OPT_RIGHTX, calc); /* number of bytes written to the cmd-fifo over the spi without adressing overhead */
 
 				FT8_cmd_dl(DL_DISPLAY);	/* instruct the graphics processor to show the list */
 				FT8_cmd_dl(CMD_SWAP); /* make this list active */
