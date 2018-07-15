@@ -1,8 +1,8 @@
 /*
 @file    tft.c
 @brief   TFT handling functions for FT8xx_Test project, the layout is for 800x480 displays
-@version 1.7
-@date    2018-07-12
+@version 1.8
+@date    2018-07-15
 @author  Rudolph Riedel
 
 @section History
@@ -11,7 +11,7 @@
 - initial release
 
 1.1
-- added a simple .png image that is drawn beneath the clock just as example of how it could be done 
+- added a simple .png image that is drawn beneath the clock just as example of how it could be done
 
 1.2
 - replaced the clock with a scrolling line-strip
@@ -39,18 +39,33 @@
 1.7
 - added a display for the amount of bytes generated in the display-list by the command co-pro
 
- */ 
+1.8
+- moved the color settings from FT8_config.h to here
+
+ */
 
 
 #include "FT8.h"
 #include "FT8_commands.h"
 #include "tft_data.h"
 
+
+/* some pre-definded colors */
+#define RED		0xff0000UL
+#define ORANGE	0xffa500UL
+#define GREEN	0x00ff00UL
+#define BLUE	0x0000ffUL
 #define BLUE_1	0x5dade2L
+#define YELLOW	0xffff00UL
+#define PINK	0xff00ffUL
+#define PURPLE	0x800080UL
+#define WHITE	0xffffffUL
+#define BLACK	0x000000UL
+
 
 /* memory-map defines */
 #define MEM_LOGO 0x00000000 /* start-address of logo, needs 2242 bytes of memory */
-#define MEM_PIC1 0x00000900 /* start of 100x100 pixel test image, ARGB565, needs 20000 bytes of memory */ 
+#define MEM_PIC1 0x00000900 /* start of 100x100 pixel test image, ARGB565, needs 20000 bytes of memory */
 
 #define MEM_DL_STATIC 0x000ff000 /* start-address of the static part of the display-list, upper 4k of gfx-mem */
 
@@ -68,10 +83,10 @@ void initStaticBackground()
 	FT8_cmd_dl(TAG(0)); /* none that follows is an object for touch-detection */
 
 	FT8_cmd_bgcolor(0x00c0c0c0); /* light grey */
-	
+
 	FT8_cmd_dl(VERTEX_FORMAT(0)); /* reduce precision for VERTEX2F to 1 pixel instead of 1/16 pixel default */
 
-	/* draw a rectangle on top */				
+	/* draw a rectangle on top */
 	FT8_cmd_dl(DL_BEGIN | FT8_RECTS);
 	FT8_cmd_dl(LINE_WIDTH(1*16)); /* size is in 1/16 pixel */
 
@@ -104,7 +119,7 @@ void initStaticBackground()
 	FT8_cmd_text(125, FT8_VSIZE - 20, 26, 0, "us");
 
 	FT8_cmd_execute();
-	
+
 	num_dl_static = FT8_memRead16(REG_CMD_DL);
 
 	FT8_cmd_memcpy(MEM_DL_STATIC, FT8_RAM_DL, num_dl_static);
@@ -117,7 +132,7 @@ void TFT_init(void)
 	if(FT8_init() != 0)
 	{
 		tft_active = 1;
-		
+
 //		FT8_memWrite8(REG_PWM_DUTY, 0x20);	/* reduce the current necessary for the backlight -> weak psu.. */
 
 		/* send pre-recorded touch calibration values, depending on the display the code is compiled for */
@@ -132,7 +147,7 @@ void TFT_init(void)
 //	FT8_memWrite32(REG_TOUCH_TRANSFORM_F, 0xfffe628d);
 #endif
 
-		
+
 #if defined (FT8_EVE2_35G)
 		FT8_memWrite32(REG_TOUCH_TRANSFORM_A, 0x000109E4);
 		FT8_memWrite32(REG_TOUCH_TRANSFORM_B, 0x000007A6);
@@ -251,7 +266,7 @@ void TFT_init(void)
 		FT8_cmd_dl(DL_DISPLAY);	/* instruct the graphics processor to show the list */
 		FT8_cmd_dl(CMD_SWAP); /* make this list active */
 		FT8_cmd_execute();
-		
+
 		while(1);
 #endif
 
@@ -282,7 +297,7 @@ void TFT_loop(void)
     uint32_t calc;
 	uint16_t old_offset, new_offset;
 	static int32_t rotate = 0;
-	
+
 	uint16_t display_list_size = 0;
 
 	if(tft_active != 0)
@@ -290,9 +305,9 @@ void TFT_loop(void)
 	  	switch(touch_or_list)
 		{
 			case 0: /* handling of touch-events */
-			
+
 				touch_or_list = 1; /* build display-list with next call */
-			
+
 				if(FT8_busy() == 0) /* is the FT8xx executing the display list?  note: may be working as intended - or not all to indicate the FT8xx is still up and running */
 				{
 					alive_counter++;
@@ -329,9 +344,9 @@ void TFT_loop(void)
 				touch_or_list = 0; /* handle touch-events with next call */
 				old_offset =  FT8_report_cmdoffset(); /* used to calculate the amount of cmd-fifo bytes necessary */
 				display_list_size = FT8_memRead16(REG_CMD_DL);
-			
-				FT8_start_cmd_burst(); /* start writing to the cmd-fifo as one stream of bytes, only sending the address once */				
-			
+
+				FT8_start_cmd_burst(); /* start writing to the cmd-fifo as one stream of bytes, only sending the address once */
+
 				FT8_cmd_dl(CMD_DLSTART); /* start the display list */
 				FT8_cmd_dl(DL_CLEAR_RGB | WHITE); /* set the default clear color to white */
 				FT8_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG); /* clear the screen - this and the previous prevent artifacts between lists, Attributes are the color, stencil and tag buffers */
@@ -349,7 +364,7 @@ void TFT_loop(void)
 				/* display a picture and rotate it when the button on top is activated */
 //				FT8_cmd_dl(DL_COLOR_RGB | WHITE);
 				FT8_cmd_setbitmap(MEM_PIC1, FT8_RGB565, 100, 100);
-				
+
 				FT8_cmd_dl(CMD_LOADIDENTITY);
 				FT8_cmd_translate(65536 * 70, 65536 * 50); /* shift off-center */
 				FT8_cmd_rotate(rotate);
@@ -364,7 +379,7 @@ void TFT_loop(void)
 				FT8_cmd_dl(DL_BEGIN | FT8_BITMAPS);
 				FT8_cmd_dl(VERTEX2F(FT8_HSIZE - 105, (LAYOUT_Y1)));
 				FT8_cmd_dl(DL_END);
-				
+
 				/* reset the transformation matrix to default values */
 				FT8_cmd_getmatrix(BITMAP_TRANSFORM_A(256),BITMAP_TRANSFORM_B(0),BITMAP_TRANSFORM_C(0),BITMAP_TRANSFORM_D(0),BITMAP_TRANSFORM_E(256),BITMAP_TRANSFORM_F(0));
 

@@ -1,8 +1,8 @@
 /*
 @file    FT8_config.h
 @brief   configuration information for some TFTs and some pre-defined colors
-@version 3.10
-@date    2018-07-08
+@version 3.11
+@date    2018-07-15
 @author  Rudolph Riedel
 
 @section History
@@ -43,7 +43,7 @@
 
 3.4
 - forgot that I switched to SPI.write() for Arduino/ESP8266 and that the standard Arduino only has SPI.transfer()
-- added auto-detection for AVR over 64kB FLASH 
+- added auto-detection for AVR over 64kB FLASH
 
 3.5
 - switched from "#if defined (RAMPZ)" to "#if defined (__AVR_HAVE_ELPM__)" as it turned out there are AVR that have the RAMPZ register but less than 64k FLASH
@@ -56,7 +56,7 @@
 
 3.8
 - added timing parameters for Glyn ADAM101-LCP-SWVGA-NEW 10.1" TFT with 1024x600
-- fixed a copy-paste error with my latest changes to the Arduino code that killed the SPI 
+- fixed a copy-paste error with my latest changes to the Arduino code that killed the SPI
 
 3.9
 - changed the timing parameters for EVE2-38A to match those listed in the 1.3 manual from Matrix Orbital
@@ -70,15 +70,22 @@
 - moved HSIZE and VSIZE to the top of the parameter list
 - merged some settings with identical parameters like FT8_EVE2_50G end FT8_EVE2_70G
 - changed a few timing parameters for the Matrix Orbital EVE2 modules to match the values in the EVE_2_Module_Manual_Rev_1.4.pdf
-- modified the timings for the EVE2-38 and EVE2-38G modules to match these in the Matrix Orbital EVE2-Library plus increased FT8_HCYCLE to 548 
+- modified the timings for the EVE2-38 and EVE2-38G modules to match these in the Matrix Orbital EVE2-Library plus increased FT8_HCYCLE to 548
+
+3.11
+- changed FT8_RVT70AQ to FT8_RVT70 as the timing parameters apply to all 7" EVE modules from Riverdi
+- added FT8_RVT50 timings, not sure if correct, Riverdi uses the same timings for their RVT50 modules as for their RVT70 modules but their datasheets show different timings - took the timings from the datasheets
+- added FT8_RVT43 timings, following the sample code from Riverdi instead of the datasheets since it matches other 480x272 panels
+- added FT8_RVT35 timings, following the sample code from Riverdi, the datasheets have not enough timing information to work with
+- added FT8_RVT28 timings, following the sample code from Riverdi, the datasheets mostly appear to be the same
+- changed the way FT8_81X_ENABLE works by adding it to the configs of the modules with FT81x for automatic selection
+- added the lines for a TRICORE target, probably useless by itself, much like the RH80 target, but may still serve as an example for other targets
+- removed the color settings
 
 */
 
 #ifndef FT8_CONFIG_H_
 #define FT8_CONFIG_H_
-
-/* switch over to FT81x */
-#define FT8_81X_ENABLE
 
 
 /* select the settings for the TFT attached */
@@ -92,7 +99,11 @@
 	#define FT8_FT810CB_HY50HD
 	#define FT8_FT811CB_HY50HD
 	#define FT8_ET07
-	#define FT8_RVT70AQ
+	#define FT8_RVT28
+	#define FT8_RVT35
+	#define FT8_RVT43
+	#define FT8_RVT50
+	#define FT8_RVT70
 	#define FT8_EVE2_29
 	#define FT8_EVE2_35
 	#define FT8_EVE2_35G
@@ -114,18 +125,6 @@
 #define FT8_EVE2_35G
 
 
-/* some pre-definded colors */
-#define RED		0xff0000UL
-#define ORANGE	0xffa500UL
-#define GREEN	0x00ff00UL
-#define BLUE	0x0000ffUL
-#define YELLOW	0xffff00UL
-/*#define PINK	0xff00ffUL*/
-#define PURPLE	0x800080UL
-#define WHITE	0xffffffUL
-#define BLACK	0x000000UL
-
-
 /* While the following lines make things a lot easier like automatically compiling the code for the platform you are compiling for, */
 /* a few things are expected to be taken care of beforehand. */
 /* - setting the Chip-Select and Power-Down pins to Output, Chip-Select = 1 and Power-Down = 0 */
@@ -142,7 +141,7 @@
   this is wasteful for any 32 bit controller even at higher SPI speeds.
   However, 32 bit controllers are not my main target (yet) and the amount of data sent over the SPI is really small with the FT8xx.
   This will be met with a DMA friendly approach in a future release.
-*/	    
+*/
 
 #ifndef ARDUINO
 	#if defined (__GNUC__)
@@ -185,7 +184,7 @@
 				SPDR = data; /* start transmission */
 				while(!(SPSR & (1<<SPIF))); /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
 			}
-			
+
 			static inline uint8_t spi_receive(uint8_t data)
 			{
 				SPDR = data; /* start transmission */
@@ -195,14 +194,11 @@
 
 			static inline uint8_t fetch_flash_byte(const uint8_t *data)
 			{
-//				return *data;
-#if 1				
 				#if defined (__AVR_HAVE_ELPM__)	/* we have an AVR with more than 64kB FLASH memory */
 					return(pgm_read_byte_far(data));
 				#else
 					return(pgm_read_byte_near(data));
 				#endif
-#endif
 			}
 
 		#endif /* AVR */
@@ -213,7 +209,7 @@
 			#include "rh850_regs.h"
 			#include "os.h"
 
-			#define DELAY_MS(ms)	OS_Wait(ms * 1000)	
+			#define DELAY_MS(ms)	OS_Wait(ms * 1000)
 
 			static inline void FT8_pdn_set(void)
 			{
@@ -257,6 +253,52 @@
 
 		#endif /* RH850 */
 
+		#if defined (__TRICORE__)
+
+			#include "types.h"
+			#include "os.h"
+			#include "dio.h"
+			#include "spi.h"
+
+			#define DELAY_MS(ms) OS_Wait(ms * 1000)
+
+			static inline void FT8_pdn_set(void)
+			{
+				HW_DIO_SetSync(IO_DIO_DIGOUT_PD_TFT, 0);/* Power-Down low */
+			}
+
+			static inline void FT8_pdn_clear(void)
+			{
+				HW_DIO_SetSync(IO_DIO_DIGOUT_PD_TFT, 1);/* Power-Down high */
+			}
+
+			static inline void FT8_cs_set(void)
+			{
+				HW_DIO_SetSync(IO_DIO_DIGOUT_CS_TFT, 0); /* manually set chip-select to low */
+			}
+
+			static inline void FT8_cs_clear(void)
+			{
+				HW_DIO_SetSync(IO_DIO_DIGOUT_CS_TFT, 1);  /* manually set chip-select to high */
+			}
+
+			static inline void spi_transmit(uint8_t data)
+			{
+				SPI_ReceiveByte(data);
+			}
+
+			static inline uint8_t spi_receive(uint8_t data)
+			{
+				return SPI_ReceiveByte(data);
+			}
+
+			static inline uint8_t fetch_flash_byte(const uint8_t *data)
+			{
+				return *data;
+			}
+
+		#endif /* __TRICORE__ */
+
 	#endif
 #endif
 
@@ -272,7 +314,7 @@
 	#ifdef ESP8266
 
 	#endif
-	
+
 	#if	defined (__AVR__)
 		#include <avr/pgmspace.h>
 
@@ -350,10 +392,11 @@
 #define FT8_CSPREAD	(1L)	/* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
 #define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
 #define FT8_HAS_CRYSTAL
+#define FT8_81X_ENABLE
 #endif
 
 
-/* VM800B35A: FT800 320x240 3.5" FTDI */
+/* VM800B35A: FT800 320x240 3.5" FTDI FT800 */
 #if defined (FT8_VM800B35A)
 #define FT8_HSIZE	(320L)	/* Thd Length of visible part of line (in PCLKs) - display width */
 #define FT8_VSIZE	(240L)	/* Tvd Number of visible lines (in lines) - display height */
@@ -417,6 +460,7 @@
 #define FT8_CSPREAD	(0L)
 #define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_CRYSTAL
+#define FT8_81X_ENABLE
 #endif
 
 
@@ -439,6 +483,7 @@
 #define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (2000L)	/* touch-sensitivity */
 #define FT8_HAS_CRYSTAL
+#define FT8_81X_ENABLE
 #endif
 
 
@@ -461,6 +506,7 @@
 #define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
 #define FT8_HAS_CRYSTAL
+#define FT8_81X_ENABLE
 #endif
 
 
@@ -483,12 +529,101 @@
 #define FT8_PCLK	(2L)
 #define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)
-#define FT8_HAS_CRYSTAL 0	/* no idea if these come with a crystal populated or not */
+#define FT8_81X_ENABLE
 #endif
 
 
-/* RVT70AQxxxxxx 800x480 7.0" Riverdi, various options, FT812/FT813, tested with RVT70UQFNWC0x */
-#if defined (FT8_RVT70AQ)
+/* untested */
+/* RVT28 240x320 2.8" Riverdi, various options, FT800/FT801 */
+#if defined (FT8_RVT28)
+#define FT8_HSIZE	(320L)
+#define FT8_VSIZE	(240L)
+
+#define FT8_VSYNC0	(0L)
+#define FT8_VSYNC1	(2L)
+#define FT8_VOFFSET	(2L)
+#define FT8_VCYCLE	(326L)
+#define FT8_HSYNC0	(0L)
+#define FT8_HSYNC1	(10L)
+#define FT8_HOFFSET	(20L)
+#define FT8_HCYCLE 	(270L)
+#define FT8_PCLKPOL	(0L)
+#define FT8_SWIZZLE	(4L)
+#define FT8_PCLK	(5L)
+#define FT8_CSPREAD	(1L)
+#define FT8_TOUCH_RZTHRESH (1200L)
+#endif
+
+
+/* untested */
+/* RVT3.5 320x240 3.5" Riverdi, various options, FT800/FT801 */
+#if defined (FT8_RVT35)
+#define FT8_HSIZE	(320L)
+#define FT8_VSIZE	(240L)
+
+#define FT8_VSYNC0	(0L)
+#define FT8_VSYNC1	(2L)
+#define FT8_VOFFSET	(13L)
+#define FT8_VCYCLE	(263L)
+#define FT8_HSYNC0	(0L)
+#define FT8_HSYNC1	(10L)
+#define FT8_HOFFSET	(70L)
+#define FT8_HCYCLE 	(408L)
+#define FT8_PCLKPOL	(1L)
+#define FT8_SWIZZLE	(2L)
+#define FT8_PCLK	(6L)
+#define FT8_CSPREAD	(1L)
+#define FT8_TOUCH_RZTHRESH (1200L)
+#endif
+
+
+/* untested */
+/* RVT43 / RVT4.3 480x272 4.3" Riverdi, various options, FT800/FT801 */
+#if defined (FT8_RVT43)
+#define FT8_HSIZE	(480L)
+#define FT8_VSIZE	(272L)
+
+#define FT8_VSYNC0	(0L)
+#define FT8_VSYNC1	(10L)
+#define FT8_VOFFSET	(12L)
+#define FT8_VCYCLE	(292L)
+#define FT8_HSYNC0	(0L)
+#define FT8_HSYNC1	(41L)
+#define FT8_HOFFSET	(43L)
+#define FT8_HCYCLE 	(548L)
+#define FT8_PCLKPOL	(1L)
+#define FT8_SWIZZLE	(0L)
+#define FT8_PCLK	(5L)
+#define FT8_CSPREAD	(1L)
+#define FT8_TOUCH_RZTHRESH (1200L)
+#endif
+
+
+/* untested */
+/* RVT50xQFxxxxx 800x480 5.0" Riverdi, various options, FT812/FT813 */
+#if defined (FT8_RVT50)
+#define FT8_HSIZE	(800L)
+#define FT8_VSIZE	(480L)
+
+#define FT8_VSYNC0	(0L)
+#define FT8_VSYNC1	(3L)
+#define FT8_VOFFSET	(32L)
+#define FT8_VCYCLE	(525L)
+#define FT8_HSYNC0	(0L)
+#define FT8_HSYNC1	(48L)
+#define FT8_HOFFSET (88L)
+#define FT8_HCYCLE 	(928L)
+#define FT8_PCLKPOL (1L)
+#define FT8_SWIZZLE (0L)
+#define FT8_PCLK	(2L)
+#define FT8_CSPREAD	(1L)
+#define FT8_TOUCH_RZTHRESH (1200L)
+#define FT8_81X_ENABLE
+#endif
+
+
+/* RVT70xQFxxxxx 800x480 7.0" Riverdi, various options, FT812/FT813, tested with RVT70UQFNWC0x */
+#if defined (FT8_RVT70)
 #define FT8_HSIZE	(800L)	/* Thd Length of visible part of line (in PCLKs) - display width */
 #define FT8_VSIZE	(480L)	/* Tvd Number of visible lines (in lines) - display height */
 
@@ -505,6 +640,7 @@
 #define FT8_PCLK	(2L)	/* 60MHz / REG_PCLK = PCLK frequency 30 MHz */
 #define FT8_CSPREAD	(1L)	/* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
 #define FT8_TOUCH_RZTHRESH (1800L)	/* touch-sensitivity */
+#define FT8_81X_ENABLE
 #endif
 
 
@@ -527,6 +663,7 @@
 #define FT8_PCLK	(8L)
 #define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)
+#define FT8_81X_ENABLE
 #endif
 
 
@@ -548,6 +685,7 @@
 #define FT8_PCLK	(8L)
 #define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)
+#define FT8_81X_ENABLE
 #endif
 
 
@@ -570,6 +708,7 @@
 #define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_GT911	/* special treatment required for out-of-spec touch-controller */
+#define FT8_81X_ENABLE
 #endif
 
 
@@ -591,6 +730,7 @@
 #define FT8_PCLK	(5L)
 #define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)
+#define FT8_81X_ENABLE
 #endif
 
 
@@ -613,6 +753,7 @@
 #define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_GT911	/* special treatment required for out-of-spec touch-controller */
+#define FT8_81X_ENABLE
 #endif
 
 
@@ -635,6 +776,7 @@
 #define FT8_PCLK	(5L)
 #define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)
+#define FT8_81X_ENABLE
 #endif
 
 
@@ -657,6 +799,7 @@
 #define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_GT911	/* special treatment required for out-of-spec touch-controller */
+#define FT8_81X_ENABLE
 #endif
 
 
@@ -679,6 +822,7 @@
 #define FT8_PCLK	(2L)
 #define FT8_CSPREAD	(0L)
 #define FT8_TOUCH_RZTHRESH (1200L)
+#define FT8_81X_ENABLE
 #endif
 
 
@@ -701,6 +845,7 @@
 #define FT8_CSPREAD	(0L)
 #define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_GT911	/* special treatment required for out-of-spec touch-controller */
+#define FT8_81X_ENABLE
 #endif
 
 
@@ -723,6 +868,7 @@
 #define FT8_CSPREAD	(0L)
 #define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_CRYSTAL
+#define FT8_81X_ENABLE
 #endif
 
 
@@ -746,6 +892,7 @@
 #define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_CRYSTAL
+#define FT8_81X_ENABLE
 #endif
 
 
@@ -769,6 +916,7 @@
 #define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_CRYSTAL
+#define FT8_81X_ENABLE
 #endif
 
 
@@ -792,6 +940,7 @@
 #define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_CRYSTAL
+#define FT8_81X_ENABLE
 #endif
 
 
@@ -814,6 +963,7 @@
 #define FT8_CSPREAD	(1L)
 #define FT8_TOUCH_RZTHRESH (1200L)
 #define FT8_HAS_CRYSTAL
+#define FT8_81X_ENABLE
 #endif
 
 
