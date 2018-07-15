@@ -49,9 +49,8 @@ The platform the code is compiled for is automatically detected thru compiler fl
 
 Note: there also used to be a file FT8_config.c but it is obsolete now.
 
-- Choose between FT80x/FT81x by enabling/disabling the FT8_81X_ENABLE define.
 - Select the TFT attached by enabling one of the pre-defined setups.
-- Provide the pins used for Chip-Select and Power-Down
+- Provide the pins used for Chip-Select and Power-Down in the target configuration you are using
 
 When compiling for AVR you need to provide the clock it is running at in order to make the _delay_ms() calls used to initialise the TFT work with the intended timing.
 For other plattforms you need to provide a delay(ms) function that works between 1ms and 56ms at least and is at least not performing these delays shorter than requested.
