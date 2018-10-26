@@ -17,11 +17,11 @@ I have used it so far with:
 - Arduino, Uno, mini-pro, ESP8266
 - Renesas F1L RH850
 - Infineon Aurix TC222
+- SANC21E18A
 
 I have reports of successfully using it with:
 
 - SAMV70
-- SAMC21
 - SAMD20
 - SAME4
 - STM32
