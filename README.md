@@ -17,13 +17,13 @@ I have used it so far with:
 - Arduino, Uno, mini-pro, ESP8266
 - Renesas F1L RH850
 - Infineon Aurix TC222
-- SANC21E18A
+- ATSAMC21E18A
 
 I have reports of successfully using it with:
 
-- SAMV70
-- SAMD20
-- SAME4
+- ATSAMV70
+- ATSAMD20
+- ATSAME4
 - STM32
 - some PICs
 
@@ -56,7 +56,7 @@ When compiling for AVR you need to provide the clock it is running at in order t
 For other plattforms you need to provide a delay(ms) function that works between 1ms and 56ms at least and is at least not performing these delays shorter than requested.
 The delay(ms) is only used during initialisation of the FT8xx.
 
-In Addition need to initialise the pins used for Chip-Select and PowerDown in your hardware correctly to output.
+In Addition you need to initialise the pins used for Chip-Select and PowerDown in your hardware correctly to output.
 Plus setup the SPI accordingly, mode-0, 8-bit, MSB-first, not more than 11MHz for the init (if the display can handle it).
 
 Originally the project went public in the German mikrocontroller.net forum, the thread contains some insight: https://www.mikrocontroller.net/topic/395608
