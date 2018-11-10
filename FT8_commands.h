@@ -1,8 +1,8 @@
 /*
 @file    FT8_commands.h
 @brief   Contains FT8xx Function Prototypes
-@version 3.6
-@date    2018-04-14
+@version 3.7
+@date    2018-11-10
 @author  Rudolph Riedel
 
 @section History
@@ -52,6 +52,10 @@
 - added prototype for FT8_report_cmdoffset()
 - removed exporting var cmdOffset
 
+3.7
+- sorted functions
+- changed #ifdef to #if defined for consistency
+
 */
 
 #ifndef FT8_COMMANDS_H_
@@ -68,16 +72,36 @@ void FT8_memWrite16(uint32_t ftAddress, uint16_t ftData16);
 void FT8_memWrite32(uint32_t ftAddress, uint32_t ftData32);
 void FT8_memWrite_flash_buffer(uint32_t ftAddress, const uint8_t *data, uint16_t len);
 uint8_t FT8_busy(void);
-void FT8_cmd_dl(uint32_t command);
-
 void FT8_get_cmdoffset(void);
 uint16_t FT8_report_cmdoffset(void);
 uint32_t FT8_get_touch_tag(void);
+
+
+/* commands to operate on memory: */
+void FT8_cmd_memzero(uint32_t ptr, uint32_t num);
+void FT8_cmd_memset(uint32_t ptr, uint8_t value, uint32_t num);
+/*(void FT8_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *data); */
+void FT8_cmd_memcpy(uint32_t dest, uint32_t src, uint32_t num);
+
+
+
+/* commands for loading image data into FT8xx memory: */
+void FT8_cmd_inflate(uint32_t ptr, const uint8_t *data, uint16_t len);
+void FT8_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *data, uint16_t len);
+#if defined (FT8_81X_ENABLE)
+void FT8_cmd_mediafifo(uint32_t ptr, uint32_t size);
+#endif
+
+
+
 void FT8_cmd_start(void);
 void FT8_cmd_execute(void);
 
 void FT8_start_cmd_burst(void);
 void FT8_end_cmd_burst(void);
+
+void FT8_cmd_dl(uint32_t command);
+
 
 /* commands to draw graphics objects: */
 void FT8_cmd_text(int16_t x0, int16_t y0, int16_t font, uint16_t options, const char* text);
@@ -96,25 +120,14 @@ void FT8_cmd_dial(int16_t x0, int16_t y0, int16_t r0, uint16_t options, uint16_t
 void FT8_cmd_toggle(int16_t x0, int16_t y0, int16_t w0, int16_t font, uint16_t options, uint16_t state, const char* text);
 void FT8_cmd_number(int16_t x0, int16_t y0, int16_t font, uint16_t options, int32_t number);
 
-#ifdef FT8_81X_ENABLE
+#if defined (FT8_81X_ENABLE)
 void FT8_cmd_setbase(uint32_t base);
 void FT8_cmd_setbitmap(uint32_t addr, uint16_t fmt, uint16_t width, uint16_t height);
 #endif
 
-/* commands to operate on memory: */
-void FT8_cmd_memzero(uint32_t ptr, uint32_t num);
-void FT8_cmd_memset(uint32_t ptr, uint8_t value, uint32_t num);
-/*(void FT8_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *data); */
-void FT8_cmd_memcpy(uint32_t dest, uint32_t src, uint32_t num);
+
 void FT8_cmd_append(uint32_t ptr, uint32_t num);
 
-
-/* commands for loading image data into FT8xx memory: */
-void FT8_cmd_inflate(uint32_t ptr, const uint8_t *data, uint16_t len);
-void FT8_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *data, uint16_t len);
-#ifdef FT8_81X_ENABLE
-void FT8_cmd_mediafifo(uint32_t ptr, uint32_t size);
-#endif
 
 /* commands for setting the bitmap transform matrix: */
 void FT8_cmd_translate(int32_t tx, int32_t ty);
@@ -127,7 +140,7 @@ void FT8_cmd_getmatrix(int32_t a, int32_t b, int32_t c, int32_t d, int32_t e, in
 void FT8_cmd_calibrate(void);
 void FT8_cmd_interrupt(uint32_t ms);
 void FT8_cmd_setfont(uint32_t font, uint32_t ptr);
-#ifdef FT8_81X_ENABLE
+#if defined (FT8_81X_ENABLE)
 void FT8_cmd_romfont(uint32_t font, uint32_t romslot);
 void FT8_cmd_setfont2(uint32_t font, uint32_t ptr, uint32_t firstchar);
 void FT8_cmd_setrotate(uint32_t r);
@@ -135,7 +148,7 @@ void FT8_cmd_setscratch(uint32_t handle);
 #endif
 void FT8_cmd_sketch(int16_t x0, int16_t y0, uint16_t w0, uint16_t h0, uint32_t ptr, uint16_t format);
 void FT8_cmd_snapshot(uint32_t ptr);
-#ifdef FT8_81X_ENABLE
+#if defined (FT8_81X_ENABLE)
 void FT8_cmd_snapshot2(uint32_t fmt, uint32_t ptr, int16_t x0, int16_t y0, int16_t w0, int16_t h0);
 #endif
 void FT8_cmd_spinner(int16_t x0, int16_t y0, uint16_t style, uint16_t scale);
