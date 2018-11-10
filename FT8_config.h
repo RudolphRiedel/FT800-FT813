@@ -1,8 +1,8 @@
 /*
 @file    FT8_config.h
 @brief   configuration information for some TFTs and some pre-defined colors
-@version 3.11
-@date    2018-07-15
+@version 3.12
+@date    2018-11-10
 @author  Rudolph Riedel
 
 @section History
@@ -82,6 +82,12 @@
 - added the lines for a TRICORE target, probably useless by itself, much like the RH80 target, but may still serve as an example for other targets
 - removed the color settings
 
+3.12
+- added spi_transmit_async() functions, for now identical to spi_transmit()
+- added software-spi functionality
+- changed #ifdef to #if defined for consistency
+- added a block for the SAMC21E18A, bare-metall but using software-spi for now
+
 */
 
 #ifndef FT8_CONFIG_H_
@@ -154,10 +160,10 @@
 
 			#define DELAY_MS(ms) _delay_ms(ms)
 
-			#define FT8_CS_PORT	PORTB
-			#define FT8_CS 		(1<<PB5)
-			#define FT8_PDN_PORT	PORTB
-			#define FT8_PDN		(1<<PB4)
+			#define FT8_CS_PORT	PORTA
+			#define FT8_CS 		(1<<PA3)
+			#define FT8_PDN_PORT	PORTD
+			#define FT8_PDN		(1<<PD3)
 
 			static inline void FT8_pdn_set(void)
 			{
@@ -179,17 +185,100 @@
 				FT8_CS_PORT |= FT8_CS;	/* cs high */
 			}
 
-			static inline void spi_transmit(uint8_t data)
+			static inline void spi_transmit_async(uint8_t data)
 			{
+#if 0
 				SPDR = data; /* start transmission */
 				while(!(SPSR & (1<<SPIF))); /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
+#endif
+
+#if 1
+				uint8_t spiIndex  = 0x80;
+				uint8_t k;
+
+				for(k = 0; k <8; k++) {         // Output each bit of spiOutByte
+					if(data & spiIndex) {   // Output MOSI Bit
+						PORTC |= (1<<PORTC1);
+					}
+					else {
+						PORTC &= ~(1<<PORTC1);
+					}
+
+					PORTA |= (1<<PORTA1); // toggle SCK
+					PORTA &= ~(1<<PORTA1);
+
+					spiIndex >>= 1;
+				}
+#endif
+			}
+
+			static inline void spi_transmit(uint8_t data)
+			{
+#if 0
+				SPDR = data; /* start transmission */
+				while(!(SPSR & (1<<SPIF))); /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
+#endif
+
+#if 1
+				uint8_t spiIndex  = 0x80;
+				uint8_t k;
+
+				for(k = 0; k <8; k++) // Output each bit of spiOutByte
+				{
+					if(data & spiIndex) // Output MOSI Bit
+					{
+						PORTC |= (1<<PORTC1);
+					}
+					else
+					{
+						PORTC &= ~(1<<PORTC1);
+					}
+
+					PORTA |= (1<<PORTA1); // toggle SCK
+					PORTA &= ~(1<<PORTA1);
+
+					spiIndex >>= 1;
+				}
+#endif
 			}
 
 			static inline uint8_t spi_receive(uint8_t data)
 			{
+#if 0				
 				SPDR = data; /* start transmission */
 				while(!(SPSR & (1<<SPIF))); /* wait for transmission to complete - 1us @ 8MHz SPI-CLock */
 				return SPDR;
+#endif
+
+#if 1
+				uint8_t spiIndex  = 0x80;
+				uint8_t spiInByte = 0;
+				uint8_t k;
+
+				for(k = 0; k <8; k++) // Output each bit of spiOutByte
+				{
+					if(data & spiIndex) // Output MOSI Bit
+					{
+						PORTC |= (1<<PORTC1);
+					}
+					else
+					{
+						PORTC &= ~(1<<PORTC1);
+					}
+
+					PORTA |= (1<<PORTA1); // toggle SCK
+					PORTA &= ~(1<<PORTA1);
+
+					if(PINC & (1<<PORTC0))
+					{
+						spiInByte |= spiIndex;
+					}
+
+					spiIndex >>= 1;
+				}
+				return spiInByte;
+#endif
+
 			}
 
 			static inline uint8_t fetch_flash_byte(const uint8_t *data)
@@ -229,6 +318,13 @@
 			static inline void FT8_cs_clear(void)
 			{
 				P8 |= (1u<<2);  /* manually set chip-select to high */
+			}
+
+			static inline void spi_transmit_async(uint8_t data)
+			{
+				CSIH0CTL0 = 0xC1; /* CSIH2PWR = 1;  CSIH2TXE=1; CSIH2RXE = 0; direct access mode  */
+				CSIH0TX0H = data;	/* start transmission */
+				while(CSIH0STR0 & 0x00080);	/* wait for transmission to complete - 800ns @ 10MHz SPI-Clock */
 			}
 
 			static inline void spi_transmit(uint8_t data)
@@ -282,6 +378,11 @@
 				HW_DIO_SetSync(IO_DIO_DIGOUT_CS_TFT, 1);  /* manually set chip-select to high */
 			}
 
+			static inline void spi_transmit_async(uint8_t data)
+			{
+				SPI_ReceiveByte(data);
+			}
+
 			static inline void spi_transmit(uint8_t data)
 			{
 				SPI_ReceiveByte(data);
@@ -299,10 +400,134 @@
 
 		#endif /* __TRICORE__ */
 
+		#if defined (__SAMC21E18A__)
+
+		#include "sam.h"
+		
+		static inline void DELAY_MS(uint16_t val)
+		{
+			uint16_t counter;
+
+			while(val > 0)
+			{
+				for(counter=0; counter < 8000;counter++) // ~1ms at 48MHz Core-Clock
+				{
+					asm volatile ("nop");
+				}
+				val--;
+			}
+		}
+
+		static inline void FT8_pdn_set(void)
+		{
+			REG_PORT_OUTCLR0 = PORT_PA03;
+		}
+
+		static inline void FT8_pdn_clear(void)
+		{
+			REG_PORT_OUTSET0 = PORT_PA03;
+		}
+
+		static inline void FT8_cs_set(void)
+		{
+			REG_PORT_OUTCLR0 = PORT_PA05;
+		}
+
+		static inline void FT8_cs_clear(void)
+		{
+			REG_PORT_OUTSET0 = PORT_PA05;
+		}
+
+		static inline void spi_transmit_async(uint8_t data)
+		{
+			uint8_t spiIndex  = 0x80;
+			uint8_t k;
+
+			for(k = 0; k <8; k++)	// Output each bit of spiOutByte
+			{
+				if(data & spiIndex)	   // Output MOSI Bit
+				{
+					REG_PORT_OUTSET0 = PORT_PA06;
+				}
+				else
+				{
+					REG_PORT_OUTCLR0 = PORT_PA06;
+				}
+				
+				REG_PORT_OUTSET0 = PORT_PA07; // toggle SCK
+				//					asm volatile ("nop");
+				REG_PORT_OUTCLR0 = PORT_PA07;
+
+				spiIndex >>= 1;
+			}
+		}
+
+		static inline void spi_transmit(uint8_t data)
+		{
+			uint8_t spiIndex  = 0x80;
+			uint8_t k;
+
+			for(k = 0; k <8; k++)	// Output each bit of spiOutByte
+			{
+				if(data & spiIndex)	   // Output MOSI Bit
+				{
+					REG_PORT_OUTSET0 = PORT_PA06;
+				}
+				else
+				{
+					REG_PORT_OUTCLR0 = PORT_PA06;
+				}
+				
+				REG_PORT_OUTSET0 = PORT_PA07; // toggle SCK
+				//					asm volatile ("nop");
+				REG_PORT_OUTCLR0 = PORT_PA07;
+
+				spiIndex >>= 1;
+			}
+		}
+
+		static inline uint8_t spi_receive(uint8_t data)
+		{
+			uint8_t spiIndex  = 0x80;
+			uint8_t spiInByte = 0;
+			uint8_t k;
+
+			for(k = 0; k <8; k++)	// Output each bit of spiOutByte
+			{
+				if(data & spiIndex)	// Output MOSI Bit
+				{
+					REG_PORT_OUTSET0 = PORT_PA06;
+				}
+				else
+				{
+					REG_PORT_OUTCLR0 = PORT_PA06;
+				}
+
+				REG_PORT_OUTSET0 = PORT_PA07; // toggle SCK
+				//					asm volatile ("nop");
+				REG_PORT_OUTCLR0 = PORT_PA07;
+				
+				if(REG_PORT_IN0 & PORT_PA04)
+				{
+					spiInByte |= spiIndex;
+				}
+
+				spiIndex >>= 1;
+			}
+			return spiInByte;
+		}
+
+		static inline uint8_t fetch_flash_byte(const uint8_t *data)
+		{
+			return *data;
+		}
+		
+		#endif /* __SAMC21E18A__ */
+
 	#endif
 #endif
 
-#ifdef ARDUINO
+#if defined (ARDUINO)
 	#include <stdio.h>
 	#include <SPI.h>
 
@@ -311,13 +536,12 @@
 
 	#define DELAY_MS(ms) delay(ms)
 
-	#ifdef ESP8266
+	#if defined (ESP8266)
 
 	#endif
 
 	#if	defined (__AVR__)
 		#include <avr/pgmspace.h>
-
 	#endif
 
 
@@ -342,12 +566,22 @@
 		digitalWrite(FT8_CS, HIGH);
 	}
 
-	#ifdef ESP8266
+	#if defined (ESP8266)
+		static inline void spi_transmit_async(uint8_t data)
+		{
+			SPI.write(data);
+		}
+
 		static inline void spi_transmit(uint8_t data)
 		{
 			SPI.write(data);
 		}
 	#else
+		static inline void spi_transmit_async(uint8_t data)
+		{
+			SPI.transfer(data);
+		}
+
 		static inline void spi_transmit(uint8_t data)
 		{
 			SPI.transfer(data);
