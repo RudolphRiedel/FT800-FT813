@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs and some pre-defined colors
 @version 4.0
-@date    2018-11-10
+@date    2018-11-11
 @author  Rudolph Riedel
 
 @section History
@@ -91,6 +91,7 @@
 4.0
 - renamed from EVE_config.h to EVE_config.h
 - renamed EVE_81X_ENABLE to FT81X_ENABLE
+- added a fictitious BT81x entry under the made-up name EVE_EVE3_70G, just to see the project compile with additional BT81x includes and functions
 
 */
 
@@ -132,7 +133,7 @@
 	#define EVE_ADAM101
 #endif
 
-#define EVE_EVE2_35G
+#define EVE_EVE3_70G
 
 
 /* While the following lines make things a lot easier like automatically compiling the code for the platform you are compiling for, */
@@ -610,6 +611,14 @@
 
 
 /* display timing parameters below */
+
+
+/* test-entry with a made-up name, I have no knowledge if such a named product is even planned, just feels logical */
+#if defined (EVE_EVE3_70G)
+#define EVE_EVE2_70G	/* trigger including the setup for the EVE2_70G, assuming the same panel is used and that FT81x is a subset of BT81x */
+#define BT81X_ENABLE
+#endif
+
 
 /* some test setup */
 #if defined (EVE_800x480x)

@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 4.0
-@date    2018-03-30
+@date    2018-11-11
 @author  Rudolph Riedel
 
 @section History
@@ -42,6 +42,8 @@
 - renamed from FT8.h to EVE.h
 - renamed EVE_81X_ENABLE to FT81X_ENABLE
 - changed FT8_ prefixes to EVE_
+- rearranged things a bit with FT80x specific includes moved to the end and a "#if defined (BT81X_ENABLE)" block on top of the chip-specific includes
+- started to add specific BT81x defines
 
 */
 
@@ -330,64 +332,64 @@
 #define EVE_DISPLAY_180		1	/* 180 degrees rotation */
 
 
-/* Coprocessor related commands */
-#define CMD_APPEND				0xFFFFFF1EUL
-#define CMD_BGCOLOR				0xFFFFFF09UL
-#define CMD_BUTTON				0xFFFFFF0DUL
-#define CMD_CALIBRATE			0xFFFFFF15UL
-#define CMD_CLOCK				0xFFFFFF14UL
-#define CMD_COLDSTART			0xFFFFFF32UL
-#define CMD_DIAL				0xFFFFFF2DUL
-#define CMD_DLSTART				0xFFFFFF00UL
-#define CMD_FGCOLOR				0xFFFFFF0AUL
-#define CMD_GAUGE				0xFFFFFF13UL
-#define CMD_GETMATRIX			0xFFFFFF33UL
-#define CMD_GETPROPS			0xFFFFFF25UL
-#define CMD_GETPTR				0xFFFFFF23UL
-#define CMD_GRADCOLOR			0xFFFFFF34UL
-#define CMD_GRADIENT			0xFFFFFF0BUL
-#define CMD_INFLATE				0xFFFFFF22UL
-#define CMD_INTERRUPT			0xFFFFFF02UL
-#define CMD_KEYS				0xFFFFFF0EUL
-#define CMD_LOADIDENTITY		0xFFFFFF26UL
-#define CMD_LOADIMAGE			0xFFFFFF24UL
-#define CMD_LOGO				0xFFFFFF31UL
-#define CMD_MEMCPY				0xFFFFFF1DUL
-#define CMD_MEMCRC				0xFFFFFF18UL
-#define CMD_MEMSET				0xFFFFFF1BUL
-#define CMD_MEMWRITE			0xFFFFFF1AUL
-#define CMD_MEMZERO				0xFFFFFF1CUL
-#define CMD_NUMBER				0xFFFFFF2EUL
-#define CMD_PROGRESS			0xFFFFFF0FUL
-#define CMD_REGREAD				0xFFFFFF19UL
-#define CMD_ROTATE				0xFFFFFF29UL
-#define CMD_SCALE				0xFFFFFF28UL
-#define CMD_SCREENSAVER			0xFFFFFF2FUL
-#define CMD_SCROLLBAR			0xFFFFFF11UL
-#define CMD_SETFONT				0xFFFFFF2BUL
-#define CMD_SETMATRIX			0xFFFFFF2AUL
-#define CMD_SKETCH				0xFFFFFF30UL
-#define CMD_SLIDER				0xFFFFFF10UL
-#define CMD_SNAPSHOT			0xFFFFFF1FUL
-#define CMD_SPINNER				0xFFFFFF16UL
-#define CMD_STOP				0xFFFFFF17UL
-#define CMD_SWAP				0xFFFFFF01UL
-#define CMD_TEXT				0xFFFFFF0CUL
-#define CMD_TOGGLE				0xFFFFFF12UL
-#define CMD_TRACK				0xFFFFFF2CUL
-#define CMD_TRANSLATE			0xFFFFFF27UL
+/* commands common to EVE/EVE2/EVE3 */
+#define CMD_APPEND				0xFFFFFF1E
+#define CMD_BGCOLOR				0xFFFFFF09
+#define CMD_BUTTON				0xFFFFFF0D
+#define CMD_CALIBRATE			0xFFFFFF15
+#define CMD_CLOCK				0xFFFFFF14
+#define CMD_COLDSTART			0xFFFFFF32
+#define CMD_DIAL				0xFFFFFF2D
+#define CMD_DLSTART				0xFFFFFF00
+#define CMD_FGCOLOR				0xFFFFFF0A
+#define CMD_GAUGE				0xFFFFFF13
+#define CMD_GETMATRIX			0xFFFFFF33
+#define CMD_GETPROPS			0xFFFFFF25
+#define CMD_GETPTR				0xFFFFFF23
+#define CMD_GRADCOLOR			0xFFFFFF34
+#define CMD_GRADIENT			0xFFFFFF0B
+#define CMD_INFLATE				0xFFFFFF22
+#define CMD_INTERRUPT			0xFFFFFF02
+#define CMD_KEYS				0xFFFFFF0E
+#define CMD_LOADIDENTITY		0xFFFFFF26
+#define CMD_LOADIMAGE			0xFFFFFF24
+#define CMD_LOGO				0xFFFFFF31
+#define CMD_MEMCPY				0xFFFFFF1D
+#define CMD_MEMCRC				0xFFFFFF18
+#define CMD_MEMSET				0xFFFFFF1B
+#define CMD_MEMWRITE			0xFFFFFF1A
+#define CMD_MEMZERO				0xFFFFFF1C
+#define CMD_NUMBER				0xFFFFFF2E
+#define CMD_PROGRESS			0xFFFFFF0F
+#define CMD_REGREAD				0xFFFFFF19
+#define CMD_ROTATE				0xFFFFFF29
+#define CMD_SCALE				0xFFFFFF28
+#define CMD_SCREENSAVER			0xFFFFFF2F
+#define CMD_SCROLLBAR			0xFFFFFF11
+#define CMD_SETFONT				0xFFFFFF2B
+#define CMD_SETMATRIX			0xFFFFFF2A
+#define CMD_SKETCH				0xFFFFFF30
+#define CMD_SLIDER				0xFFFFFF10
+#define CMD_SNAPSHOT			0xFFFFFF1F
+#define CMD_SPINNER				0xFFFFFF16
+#define CMD_STOP				0xFFFFFF17
+#define CMD_SWAP				0xFFFFFF01
+#define CMD_TEXT				0xFFFFFF0C
+#define CMD_TOGGLE				0xFFFFFF12
+#define CMD_TRACK				0xFFFFFF2C
+#define CMD_TRANSLATE			0xFFFFFF27
 
 
 /* the following are undocumented commands that therefore should not be used */
 #if 0
-#define CMD_CRC					0xFFFFFF03UL
-#define CMD_HAMMERAUX			0xFFFFFF04UL
-#define CMD_MARCH				0xFFFFFF05UL
-#define CMD_IDCT				0xFFFFFF06UL
-#define CMD_EXECUTE				0xFFFFFF07UL
-#define CMD_GETPOINT			0xFFFFFF08UL
-#define CMD_TOUCH_TRANSFORM		0xFFFFFF20UL
-#define CMD_BITMAP_TRANSFORM	0xFFFFFF21UL
+#define CMD_CRC					0xFFFFFF03
+#define CMD_HAMMERAUX			0xFFFFFF04
+#define CMD_MARCH				0xFFFFFF05
+#define CMD_IDCT				0xFFFFFF06
+#define CMD_EXECUTE				0xFFFFFF07
+#define CMD_GETPOINT			0xFFFFFF08
+#define CMD_TOUCH_TRANSFORM		0xFFFFFF20
+#define CMD_BITMAP_TRANSFORM	0xFFFFFF21
 #endif
 
 
@@ -432,133 +434,81 @@
 #define VERTEX2II(x,y,handle,cell) ((2UL<<30)|(((x)&511UL)<<21)|(((y)&511UL)<<12)|(((handle)&31UL)<<7)|(((cell)&127UL)<<0))
 
 
-/* specific for FT80x */
-#ifndef FT81X_ENABLE
+#if defined (BT81X_ENABLE)
 
-#define EVE_CHIPID		0x00010008UL
-
-/* Coprocessor reset related */
-#define EVE_RESET_HOLD_COPROCESSOR		1
-#define EVE_RESET_RELEASE_COPROCESSOR	0
-
-/* Maximum display display resolution supported by graphics engine */
-#define EVE_MAX_DISPLAYWIDTH	(512L)
-#define EVE_MAX_DISPLAYHEIGHT	(512L)
-
-/* Defines for sound play and stop */
-#define EVE_SOUND_PLAY	1
-#define EVE_AUDIO_PLAY	1
-
-/* Defines for audio playback parameters */
-#define EVE_AUDIO_SAMPLINGFREQ_MIN	8*1000L
-#define EVE_AUDIO_SAMPLINGFREQ_MAX	48*1000L
-
-/* coprocessor error */
-#define EVE_COPRO_ERROR			0xfffUL
-
-/* Memory definitions */
-#define EVE_RAM_G		0x000000UL
-#define EVE_ROM_CHIPID	0x0C0000UL
-#define EVE_ROM_FONT		0x0BB23CUL
-#define EVE_ROM_FONT_ADDR	0x0FFFFCUL
-#define EVE_RAM_DL		0x100000UL
-#define EVE_RAM_PAL		0x102000UL
-#define EVE_RAM_CMD		0x108000UL
-#define EVE_RAM_SCREENSHOT	0x1C2000UL
-
-/* Memory buffer sizes */
-#define EVE_RAM_G_SIZE		256*1024L
-#define EVE_CMDFIFO_SIZE		4*1024L
-#define EVE_RAM_DL_SIZE		8*1024L
-#define EVE_RAM_PAL_SIZE		1*1024L
-
-/* Register definitions */
-#define REG_ID					0x102400UL
-#define REG_FRAMES				0x102404UL
-#define REG_CLOCK				0x102408UL
-#define REG_FREQUENCY			0x10240CUL
-#define REG_SCREENSHOT_EN		0x102410UL
-#define REG_SCREENSHOT_Y		0x102414UL
-#define REG_SCREENSHOT_START	0x102418UL
-#define REG_CPURESET 			0x10241CUL
-#define REG_TAP_CRC 			0x102420UL
-#define REG_TAP_MASK 			0x102424UL
-#define REG_HCYCLE 				0x102428UL
-#define REG_HOFFSET 			0x10242CUL
-#define REG_HSIZE 				0x102430UL
-#define REG_HSYNC0 				0x102434UL
-#define REG_HSYNC1 				0x102438UL
-#define REG_VCYCLE 				0x10243CUL
-#define REG_VOFFSET 			0x102440UL
-#define REG_VSIZE 				0x102444UL
-#define REG_VSYNC0 				0x102448UL
-#define REG_VSYNC1 				0x10244CUL
-#define REG_DLSWAP 				0x102450UL
-#define REG_ROTATE 				0x102454UL
-#define REG_OUTBITS 			0x102458UL
-#define REG_DITHER 				0x10245CUL
-#define REG_SWIZZLE 			0x102460UL
-#define REG_CSPREAD 			0x102464UL
-#define REG_PCLK_POL 			0x102468UL
-#define REG_PCLK 				0x10246CUL
-#define REG_TAG_X 				0x102470UL
-#define REG_TAG_Y 				0x102474UL
-#define REG_TAG 				0x102478UL
-#define REG_VOL_PB 				0x10247CUL
-#define REG_VOL_SOUND 			0x102480UL
-#define REG_SOUND 				0x102484UL
-#define REG_PLAY 				0x102488UL
-#define REG_GPIO_DIR 			0x10248CUL
-#define REG_GPIO 				0x102490UL
-#define REG_INT_FLAGS       	0x102498UL
-#define REG_INT_EN          	0x10249CUL
-#define REG_INT_MASK        	0x1024A0UL
-#define REG_PLAYBACK_START  	0x1024A4UL
-#define REG_PLAYBACK_LENGTH  	0x1024A8UL
-#define REG_PLAYBACK_READPTR 	0x1024ACUL
-#define REG_PLAYBACK_FREQ    	0x1024B0UL
-#define REG_PLAYBACK_FORMAT  	0x1024B4UL
-#define REG_PLAYBACK_LOOP    	0x1024B8UL
-#define REG_PLAYBACK_PLAY   	0x1024BCUL
-#define REG_PWM_HZ          	0x1024C0UL
-#define REG_PWM_DUTY        	0x1024C4UL
-#define REG_MACRO_0         	0x1024C8UL
-#define REG_MACRO_1         	0x1024CCUL
-#define REG_SCREENSHOT_BUSY		0x1024D8UL
-#define REG_CMD_READ         	0x1024E4UL
-#define REG_CMD_WRITE        	0x1024E8UL
-#define REG_CMD_DL           	0x1024ECUL
-#define REG_TOUCH_MODE       	0x1024F0UL
-#define REG_TOUCH_ADC_MODE   	0x1024F4UL
-#define REG_TOUCH_CHARGE     	0x1024F8UL
-#define REG_TOUCH_SETTLE     	0x1024FCUL
-#define REG_TOUCH_OVERSAMPLE 	0x102500UL
-#define REG_TOUCH_RZTHRESH   	0x102504UL
-#define REG_TOUCH_RAW_XY     	0x102508UL
-#define REG_TOUCH_RZ         	0x10250CUL
-#define REG_TOUCH_SCREEN_XY  	0x102510UL
-#define REG_TOUCH_TAG_XY     	0x102514UL
-#define REG_TOUCH_TAG        	0x102518UL
-#define REG_TOUCH_TRANSFORM_A	0x10251CUL
-#define REG_TOUCH_TRANSFORM_B	0x102520UL
-#define REG_TOUCH_TRANSFORM_C	0x102524UL
-#define REG_TOUCH_TRANSFORM_D	0x102528UL
-#define REG_TOUCH_TRANSFORM_E	0x10252CUL
-#define REG_TOUCH_TRANSFORM_F	0x102530UL
-#define REG_SCREENSHOT_READ		0x102554UL
-#define REG_TRIM				0x10256CUL
-#define REG_TOUCH_DIRECT_XY 	0x102574UL
-#define REG_TOUCH_DIRECT_Z1Z2	0x102578UL
-#define REG_TRACKER				0x109000UL
-
-/* FT80x graphics engine specific macros useful for static display list generation */
-#define BITMAP_SOURCE(addr) ((1UL<<24)|(((addr)&1048575UL)<<0))
-#define SCISSOR_SIZE(width,height) ((28UL<<24)|(((width)&1023UL)<<10)|(((height)&1023UL)<<0))
-#define SCISSOR_XY(x,y) ((27UL<<24)|(((x)&511UL)<<9)|(((y)&511UL)<<0))
+/* used with BITMAP_LAYOUT to indicate bitmap-format is specified by BITMAP_EXT_FORMAT */
+#define EVE_GLFORMAT 31UL
 
 
-/* FT81x */
-#else
+#define DL_BITMAP_EXT_FORMAT	0x2E000000 /* requires OR'd arguments */
+
+/* extended Bitmap formats */
+#define EVE_COMPRESSED_RGBA_ASTC_4x4_KHR   37808UL
+#define EVE_COMPRESSED_RGBA_ASTC_5x4_KHR   37809UL
+#define EVE_COMPRESSED_RGBA_ASTC_5x5_KHR   37810UL
+#define EVE_COMPRESSED_RGBA_ASTC_6x5_KHR   37811UL
+#define EVE_COMPRESSED_RGBA_ASTC_6x6_KHR   37812UL
+#define EVE_COMPRESSED_RGBA_ASTC_8x5_KHR   37813UL
+#define EVE_COMPRESSED_RGBA_ASTC_8x6_KHR   37814UL
+#define EVE_COMPRESSED_RGBA_ASTC_8x8_KHR   37815UL
+#define EVE_COMPRESSED_RGBA_ASTC_10x5_KHR  37816UL
+#define EVE_COMPRESSED_RGBA_ASTC_10x6_KHR  37817UL
+#define EVE_COMPRESSED_RGBA_ASTC_10x8_KHR  37818UL
+#define EVE_COMPRESSED_RGBA_ASTC_10x10_KHR 37819UL
+#define EVE_COMPRESSED_RGBA_ASTC_12x10_KHR 37820UL
+#define EVE_COMPRESSED_RGBA_ASTC_12x12_KHR 37821UL
+
+
+
+#define EVE_RAM_ERR_REPORT           0x309800UL // max 128 bytes null terminated string
+#define EVE_RAM_FLASH                0x800000UL
+#define EVE_RAM_FLASH_POSTBLOB       0x801000UL
+
+#define OPT_FLASH  64UL
+#define OPT_FORMAT 4096UL
+
+
+/* additional commands for BT81x */
+#define CMD_SYNC             0xFFFFFF42
+#define CMD_FLASHERASE       0xFFFFFF44
+#define CMD_FLASHWRITE       0xFFFFFF45
+#define CMD_FLASHREAD        0xFFFFFF46
+#define CMD_FLASHUPDATE      0xFFFFFF47
+#define CMD_FLASHDETACH      0xFFFFFF48
+#define CMD_FLASHATTACH      0xFFFFFF49
+#define CMD_FLASHFAST        0xFFFFFF4A
+#define CMD_FLASHSPIDESEL    0xFFFFFF4B
+#define CMD_FLASHSPITX       0xFFFFFF4C
+#define CMD_FLASHSPIRX       0xFFFFFF4D
+#define CMD_FLASHSOURCE      0xFFFFFF4E
+#define CMD_CLEARCACHE       0xFFFFFF4F
+#define CMD_INFLATE2         0xFFFFFF50
+#define CMD_ROTATEAROUND     0xFFFFFF51
+#define CMD_RESETFONTS       0xFFFFFF52
+#define CMD_ANIMSTART        0xFFFFFF53
+#define CMD_ANIMSTOP         0xFFFFFF54
+#define CMD_ANIMXY           0xFFFFFF55
+#define CMD_ANIMDRAW         0xFFFFFF56
+#define CMD_GRADIENTA        0xFFFFFF57
+#define CMD_FILLWIDTH        0xFFFFFF58
+#define CMD_APPENDF          0xFFFFFF59
+#define CMD_ANIMFRAME        0xFFFFFF5A
+#define CMD_VIDEOSTARTF      0xFFFFFF5F
+
+
+/* additional registers for BT81x */
+#define REG_ADAPTIVE_FRAMERATE 0x30257cUL
+#define REG_PLAYBACK_PAUSE     0x3025ecUL
+#define REG_FLASH_STATUS       0x3025f0UL
+#define REG_FLASH_SIZE         0x309024UL
+#define REG_PLAY_CONTROL       0x30914eUL
+#define REG_COPRO_PATCH_DTR    0x309162UL
+
+
+#endif
+
+
+#if defined (FT81X_ENABLE)
 
 #define LOW_FREQ_BOUND  58800000L /* 98% of 60Mhz */
 
@@ -590,32 +540,32 @@
 #define EVE_OPT_NOTEAR           4UL
 #define EVE_OPT_SOUND            32UL
 
-#define EVE_PALETTED4444         15UL
 #define EVE_PALETTED565          14UL
+#define EVE_PALETTED4444         15UL
 #define EVE_PALETTED8            16UL
 #define EVE_L2                   17UL
 
 
 /* additional commands for FT81x */
-#define CMD_MEDIAFIFO			0xFFFFFF39UL
-#define CMD_PLAYVIDEO			0xFFFFFF3AUL
-#define CMD_ROMFONT				0xFFFFFF3FU
-#define CMD_SETBASE				0xFFFFFF38UL
-#define CMD_SETBITMAP			0xFFFFFF43UL
-#define CMD_SETFONT2			0xFFFFFF3BUL
-#define CMD_SETROTATE			0xFFFFFF36UL
-#define CMD_SETSCRATCH			0xFFFFFF3CUL
-#define CMD_SNAPSHOT2			0xFFFFFF37UL
-#define CMD_VIDEOFRAME			0xFFFFFF41UL
-#define CMD_VIDEOSTART			0xFFFFFF40UL
+#define CMD_MEDIAFIFO			0xFFFFFF39
+#define CMD_PLAYVIDEO			0xFFFFFF3A
+#define CMD_ROMFONT				0xFFFFFF3F
+#define CMD_SETBASE				0xFFFFFF38
+#define CMD_SETBITMAP			0xFFFFFF43
+#define CMD_SETFONT2			0xFFFFFF3B
+#define CMD_SETROTATE			0xFFFFFF36
+#define CMD_SETSCRATCH			0xFFFFFF3C
+#define CMD_SNAPSHOT2			0xFFFFFF37
+#define CMD_VIDEOFRAME			0xFFFFFF41
+#define CMD_VIDEOSTART			0xFFFFFF40
 
 
 /* the following are undocumented commands that therefore should not be used */
 #if 0
-#define CMD_CSKETCH				0xFFFFFF35UL
-#define CMD_INT_RAMSHARED		0xFFFFFF3DUL
-#define CMD_INT_SWLOADIMAGE		0xFFFFFF3EUL
-#define CMD_SYNC				0xFFFFFF42UL
+#define CMD_CSKETCH				0xFFFFFF35
+#define CMD_INT_RAMSHARED		0xFFFFFF3D
+#define CMD_INT_SWLOADIMAGE		0xFFFFFF3E
+#define CMD_SYNC				0xFFFFFF42
 #endif
 
 
@@ -750,6 +700,132 @@
 #define VERTEX_FORMAT(frac) ((39UL<<24)|(((frac)&7UL)<<0))
 #define VERTEX_TRANSLATE_X(x) ((43UL<<24)|(((x)&131071UL)<<0))
 #define VERTEX_TRANSLATE_Y(y) ((44UL<<24)|(((y)&131071UL)<<0))
+
+
+
+/* specific for FT80x */
+#else
+
+#define EVE_CHIPID		0x00010008UL
+
+/* Coprocessor reset related */
+#define EVE_RESET_HOLD_COPROCESSOR		1
+#define EVE_RESET_RELEASE_COPROCESSOR	0
+
+/* Maximum display display resolution supported by graphics engine */
+#define EVE_MAX_DISPLAYWIDTH	(512L)
+#define EVE_MAX_DISPLAYHEIGHT	(512L)
+
+/* Defines for sound play and stop */
+#define EVE_SOUND_PLAY	1
+#define EVE_AUDIO_PLAY	1
+
+/* Defines for audio playback parameters */
+#define EVE_AUDIO_SAMPLINGFREQ_MIN	8*1000L
+#define EVE_AUDIO_SAMPLINGFREQ_MAX	48*1000L
+
+/* coprocessor error */
+#define EVE_COPRO_ERROR			0xfffUL
+
+/* Memory definitions */
+#define EVE_RAM_G		0x000000UL
+#define EVE_ROM_CHIPID	0x0C0000UL
+#define EVE_ROM_FONT		0x0BB23CUL
+#define EVE_ROM_FONT_ADDR	0x0FFFFCUL
+#define EVE_RAM_DL		0x100000UL
+#define EVE_RAM_PAL		0x102000UL
+#define EVE_RAM_CMD		0x108000UL
+#define EVE_RAM_SCREENSHOT	0x1C2000UL
+
+/* Memory buffer sizes */
+#define EVE_RAM_G_SIZE		256*1024L
+#define EVE_CMDFIFO_SIZE		4*1024L
+#define EVE_RAM_DL_SIZE		8*1024L
+#define EVE_RAM_PAL_SIZE		1*1024L
+
+/* Register definitions */
+#define REG_ID					0x102400UL
+#define REG_FRAMES				0x102404UL
+#define REG_CLOCK				0x102408UL
+#define REG_FREQUENCY			0x10240CUL
+#define REG_SCREENSHOT_EN		0x102410UL
+#define REG_SCREENSHOT_Y		0x102414UL
+#define REG_SCREENSHOT_START	0x102418UL
+#define REG_CPURESET 			0x10241CUL
+#define REG_TAP_CRC 			0x102420UL
+#define REG_TAP_MASK 			0x102424UL
+#define REG_HCYCLE 				0x102428UL
+#define REG_HOFFSET 			0x10242CUL
+#define REG_HSIZE 				0x102430UL
+#define REG_HSYNC0 				0x102434UL
+#define REG_HSYNC1 				0x102438UL
+#define REG_VCYCLE 				0x10243CUL
+#define REG_VOFFSET 			0x102440UL
+#define REG_VSIZE 				0x102444UL
+#define REG_VSYNC0 				0x102448UL
+#define REG_VSYNC1 				0x10244CUL
+#define REG_DLSWAP 				0x102450UL
+#define REG_ROTATE 				0x102454UL
+#define REG_OUTBITS 			0x102458UL
+#define REG_DITHER 				0x10245CUL
+#define REG_SWIZZLE 			0x102460UL
+#define REG_CSPREAD 			0x102464UL
+#define REG_PCLK_POL 			0x102468UL
+#define REG_PCLK 				0x10246CUL
+#define REG_TAG_X 				0x102470UL
+#define REG_TAG_Y 				0x102474UL
+#define REG_TAG 				0x102478UL
+#define REG_VOL_PB 				0x10247CUL
+#define REG_VOL_SOUND 			0x102480UL
+#define REG_SOUND 				0x102484UL
+#define REG_PLAY 				0x102488UL
+#define REG_GPIO_DIR 			0x10248CUL
+#define REG_GPIO 				0x102490UL
+#define REG_INT_FLAGS       	0x102498UL
+#define REG_INT_EN          	0x10249CUL
+#define REG_INT_MASK        	0x1024A0UL
+#define REG_PLAYBACK_START  	0x1024A4UL
+#define REG_PLAYBACK_LENGTH  	0x1024A8UL
+#define REG_PLAYBACK_READPTR 	0x1024ACUL
+#define REG_PLAYBACK_FREQ    	0x1024B0UL
+#define REG_PLAYBACK_FORMAT  	0x1024B4UL
+#define REG_PLAYBACK_LOOP    	0x1024B8UL
+#define REG_PLAYBACK_PLAY   	0x1024BCUL
+#define REG_PWM_HZ          	0x1024C0UL
+#define REG_PWM_DUTY        	0x1024C4UL
+#define REG_MACRO_0         	0x1024C8UL
+#define REG_MACRO_1         	0x1024CCUL
+#define REG_SCREENSHOT_BUSY		0x1024D8UL
+#define REG_CMD_READ         	0x1024E4UL
+#define REG_CMD_WRITE        	0x1024E8UL
+#define REG_CMD_DL           	0x1024ECUL
+#define REG_TOUCH_MODE       	0x1024F0UL
+#define REG_TOUCH_ADC_MODE   	0x1024F4UL
+#define REG_TOUCH_CHARGE     	0x1024F8UL
+#define REG_TOUCH_SETTLE     	0x1024FCUL
+#define REG_TOUCH_OVERSAMPLE 	0x102500UL
+#define REG_TOUCH_RZTHRESH   	0x102504UL
+#define REG_TOUCH_RAW_XY     	0x102508UL
+#define REG_TOUCH_RZ         	0x10250CUL
+#define REG_TOUCH_SCREEN_XY  	0x102510UL
+#define REG_TOUCH_TAG_XY     	0x102514UL
+#define REG_TOUCH_TAG        	0x102518UL
+#define REG_TOUCH_TRANSFORM_A	0x10251CUL
+#define REG_TOUCH_TRANSFORM_B	0x102520UL
+#define REG_TOUCH_TRANSFORM_C	0x102524UL
+#define REG_TOUCH_TRANSFORM_D	0x102528UL
+#define REG_TOUCH_TRANSFORM_E	0x10252CUL
+#define REG_TOUCH_TRANSFORM_F	0x102530UL
+#define REG_SCREENSHOT_READ		0x102554UL
+#define REG_TRIM				0x10256CUL
+#define REG_TOUCH_DIRECT_XY 	0x102574UL
+#define REG_TOUCH_DIRECT_Z1Z2	0x102578UL
+#define REG_TRACKER				0x109000UL
+
+/* FT80x graphics engine specific macros useful for static display list generation */
+#define BITMAP_SOURCE(addr) ((1UL<<24)|(((addr)&1048575UL)<<0))
+#define SCISSOR_SIZE(width,height) ((28UL<<24)|(((width)&1023UL)<<10)|(((height)&1023UL)<<0))
+#define SCISSOR_XY(x,y) ((27UL<<24)|(((x)&511UL)<<9)|(((y)&511UL)<<0))
 
 #endif
 

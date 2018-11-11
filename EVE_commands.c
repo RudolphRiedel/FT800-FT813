@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   Contains Functions for using the FT8xx
 @version 4.0
-@date    2018-11-10
+@date    2018-11-11
 @author  Rudolph Riedel
 
 This file needs to be renamed to EVE_command.cpp for use with Arduino.
@@ -111,6 +111,7 @@ This file needs to be renamed to EVE_command.cpp for use with Arduino.
 4.0
 - renamed from EVE_commands.c to EVE_commands.c
 - changed FT8_ prefixes to EVE_
+- apparently BT815 supports Goodix touch-controller directly, so changed EVE_init() accordingly
 
 */
 
@@ -934,31 +935,37 @@ uint8_t EVE_init(void)
 		}
 	}
 
-	/* we have a display with a Goodix GT911 / GT9271 touch-controller on it, so we patch our FT811 or FT813 according to AN_336 */
+	/* we have a display with a Goodix GT911 / GT9271 touch-controller on it, so we patch our FT811 or FT813 according to AN_336 or setup a BT815 accordingly */
 	#if defined (EVE_HAS_GT911)
-	uint32_t ftAddress;
 
-	EVE_get_cmdoffset();
-	ftAddress = EVE_RAM_CMD + cmdOffset;
+	#if defined (BT81X_ENABLE)
+		EVE_memWrite32(REG_TOUCH_CONFIG, 0x000005d1); /* switch to Goodix touch controller */
+	#else
+		uint32_t ftAddress;
 
-	EVE_cs_set();
-	spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
-	spi_transmit((uint8_t)(ftAddress >> 8)); /* send middle address byte */
-	spi_transmit((uint8_t)(ftAddress)); /* send low address byte */
-	spi_flash_write(EVE_GT911_data, EVE_GT911_len);
-	EVE_cs_clear();
-	EVE_cmd_execute();
+		EVE_get_cmdoffset();
+		ftAddress = EVE_RAM_CMD + cmdOffset;
 
-	EVE_memWrite8(REG_TOUCH_OVERSAMPLE, 0x0f); /* setup oversample to 0x0f as "hidden" in binary-blob for AN_336 */
-	EVE_memWrite16(REG_TOUCH_CONFIG, 0x05D0); /* write magic cookie as requested by AN_336 */
+		EVE_cs_set();
+		spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
+		spi_transmit((uint8_t)(ftAddress >> 8)); /* send middle address byte */
+		spi_transmit((uint8_t)(ftAddress)); /* send low address byte */
+		spi_flash_write(EVE_GT911_data, EVE_GT911_len);
+		EVE_cs_clear();
+		EVE_cmd_execute();
 
-	/* specific to the EVE2 modules from Matrix-Orbital we have to use GPIO3 to reset GT911 */
-	EVE_memWrite16(REG_GPIOX_DIR,0x8008); /* Reset-Value is 0x8000, adding 0x08 sets GPIO3 to output, default-value for REG_GPIOX is 0x8000 -> Low output on GPIO3 */
-	DELAY_MS(1); /* wait more than 100µs */
-	EVE_memWrite8(REG_CPURESET, 0x00); /* clear all resets */
-	DELAY_MS(56); /* wait more than 55ms */
-	EVE_memWrite16(REG_GPIOX_DIR,0x8000); /* setting GPIO3 back to input */
+		EVE_memWrite8(REG_TOUCH_OVERSAMPLE, 0x0f); /* setup oversample to 0x0f as "hidden" in binary-blob for AN_336 */
+		EVE_memWrite16(REG_TOUCH_CONFIG, 0x05D0); /* write magic cookie as requested by AN_336 */
+
+		/* specific to the EVE2 modules from Matrix-Orbital we have to use GPIO3 to reset GT911 */
+		EVE_memWrite16(REG_GPIOX_DIR,0x8008); /* Reset-Value is 0x8000, adding 0x08 sets GPIO3 to output, default-value for REG_GPIOX is 0x8000 -> Low output on GPIO3 */
+		DELAY_MS(1); /* wait more than 100µs */
+		EVE_memWrite8(REG_CPURESET, 0x00); /* clear all resets */
+		DELAY_MS(56); /* wait more than 55ms */
+		EVE_memWrite16(REG_GPIOX_DIR,0x8000); /* setting GPIO3 back to input */
 	#endif
+	#endif
+
 
 	/*	EVE_memWrite8(REG_PCLK, 0x00);	*/	/* set PCLK to zero - don't clock the LCD until later, line disabled because zero is reset-default and we just did a reset */
 
