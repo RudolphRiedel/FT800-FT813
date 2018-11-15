@@ -1,5 +1,5 @@
 # FT810-FT813
-This is a code library for EVE/EVE2 graphics controller ICs from FTDI/Bridgetek:
+This is a code library for EVE/EVE2/EVE3 graphics controller ICs from FTDI/Bridgetek:
 
 http://www.ftdichip.com/EVE.htm
 
@@ -8,6 +8,8 @@ http://brtchip.com/eve/
 http://brtchip.com/ft80x/
 
 http://brtchip.com/ft81x/
+
+https://brtchip.com/bt81x/
 
 It contains code for and has been used with various mikro-controllers and displays.
 
