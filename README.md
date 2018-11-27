@@ -39,10 +39,11 @@ The TFTs I have tested myself so far:
 - RVT70UQFNWC0x https://riverdi.com/product/rvt70uqfnwc0x/
 - RVT50
 - ADAM101-LCP-SWVGA-NEW from Glyn, 10.1" 1024x600 cap-touch
-- EVE2-38A https://www.matrixorbital.com/ftdi-eve/EVE%20FT812/eve2-38a
-- EVE2-35G https://www.matrixorbital.com/ftdi-eve/EVE%20FT812/eve2-35g
-- EVE2-43G https://www.matrixorbital.com/ftdi-eve/EVE%20FT812/eve2-43g
-- EVE2-50G https://www.matrixorbital.com/ftdi-eve/EVE%20FT812/eve2-50g
+- EVE2-38A https://www.matrixorbital.com/ftdi-eve/eve-ft812/eve2-38a
+- EVE2-35G https://www.matrixorbital.com/ftdi-eve/eve-ft812/eve2-35g
+- EVE2-43G https://www.matrixorbital.com/ftdi-eve/eve-ft812/eve2-43g
+- EVE2-50G https://www.matrixorbital.com/ftdi-eve/eve-ft812/eve2-50g
+- EVE2-70G https://www.matrixorbital.com/ftdi-eve/eve-ft812/eve2-70g
 - NHD-3.5-320240FT-CSXV-CTP
 
 The examples in the "example_projects" drawer are for use with AtmelStudio7. For Arduino I am using the plugin from www.visualmicro.com .
