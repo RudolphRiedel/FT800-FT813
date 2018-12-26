@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   Contains Functions for using the FT8xx
 @version 4.0
-@date    2018-11-11
+@date    2018-12-26
 @author  Rudolph Riedel
 
 This file needs to be renamed to EVE_command.cpp for use with Arduino.
@@ -112,6 +112,7 @@ This file needs to be renamed to EVE_command.cpp for use with Arduino.
 - renamed from EVE_commands.c to EVE_commands.c
 - changed FT8_ prefixes to EVE_
 - apparently BT815 supports Goodix touch-controller directly, so changed EVE_init() accordingly
+- added EVE_cmd_flashsource()
 
 */
 
@@ -1127,6 +1128,32 @@ void EVE_write_string(const char *text)
 
 	EVE_inc_cmdoffset(textindex);
 }
+
+
+
+/* EVE3 commands */
+#if defined (BT81X_ENABLE)
+
+/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+void EVE_cmd_flashsource(uint32_t ptr)
+{
+	EVE_begin_cmd(CMD_FLASHSOURCE);
+
+	spi_transmit((uint8_t)(ptr));
+	spi_transmit((uint8_t)(ptr >> 8));
+	spi_transmit((uint8_t)(ptr >> 16));
+	spi_transmit((uint8_t)(ptr >> 24));
+
+	EVE_inc_cmdoffset(4);
+	EVE_cs_clear();
+	EVE_cmd_execute();
+}
+
+
+#endif
+
+
+
 
 
 /* commands to draw graphics objects: */

@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs and some pre-defined colors
 @version 4.0
-@date    2018-11-11
+@date    2018-12-26
 @author  Rudolph Riedel
 
 @section History
@@ -92,6 +92,8 @@
 - renamed from EVE_config.h to EVE_config.h
 - renamed EVE_81X_ENABLE to FT81X_ENABLE
 - added a fictitious BT81x entry under the made-up name EVE_EVE3_70G, just to see the project compile with additional BT81x includes and functions
+- still 4.0 for EVE itself, switched to hardware-SPI on SAMC21
+- minor maintenance
 
 */
 
@@ -133,7 +135,7 @@
 	#define EVE_ADAM101
 #endif
 
-#define EVE_EVE3_70G
+#define EVE_EVE2_35G
 
 
 /* While the following lines make things a lot easier like automatically compiling the code for the platform you are compiling for, */
@@ -154,7 +156,7 @@
   This will be met with a DMA friendly approach in a future release.
 */
 
-#ifndef ARDUINO
+#if !defined (ARDUINO)
 	#if defined (__GNUC__)
 		#if	defined (__AVR__)
 
@@ -192,12 +194,12 @@
 
 			static inline void spi_transmit_async(uint8_t data)
 			{
-#if 0
+#if 1
 				SPDR = data; /* start transmission */
 				while(!(SPSR & (1<<SPIF))); /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
 #endif
 
-#if 1
+#if 0
 				uint8_t spiIndex  = 0x80;
 				uint8_t k;
 
@@ -219,12 +221,12 @@
 
 			static inline void spi_transmit(uint8_t data)
 			{
-#if 0
+#if 1
 				SPDR = data; /* start transmission */
 				while(!(SPSR & (1<<SPIF))); /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
 #endif
 
-#if 1
+#if 0
 				uint8_t spiIndex  = 0x80;
 				uint8_t k;
 
@@ -249,13 +251,13 @@
 
 			static inline uint8_t spi_receive(uint8_t data)
 			{
-#if 0
+#if 1
 				SPDR = data; /* start transmission */
 				while(!(SPSR & (1<<SPIF))); /* wait for transmission to complete - 1us @ 8MHz SPI-CLock */
 				return SPDR;
 #endif
 
-#if 1
+#if 0
 				uint8_t spiIndex  = 0x80;
 				uint8_t spiInByte = 0;
 				uint8_t k;
@@ -445,81 +447,29 @@
 
 		static inline void spi_transmit_async(uint8_t data)
 		{
-			uint8_t spiIndex  = 0x80;
-			uint8_t k;
-
-			for(k = 0; k <8; k++)	// Output each bit of spiOutByte
-			{
-				if(data & spiIndex)	   // Output MOSI Bit
-				{
-					REG_PORT_OUTSET0 = PORT_PA06;
-				}
-				else
-				{
-					REG_PORT_OUTCLR0 = PORT_PA06;
-				}
-
-				REG_PORT_OUTSET0 = PORT_PA07; // toggle SCK
-				//					asm volatile ("nop");
-				REG_PORT_OUTCLR0 = PORT_PA07;
-
-				spiIndex >>= 1;
-			}
+			uint8_t dummy;
+			
+			REG_SERCOM0_SPI_DATA = data;
+			while((REG_SERCOM0_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
+			dummy = REG_SERCOM0_SPI_DATA;
+			dummy = dummy;
 		}
 
 		static inline void spi_transmit(uint8_t data)
 		{
-			uint8_t spiIndex  = 0x80;
-			uint8_t k;
-
-			for(k = 0; k <8; k++)	// Output each bit of spiOutByte
-			{
-				if(data & spiIndex)	   // Output MOSI Bit
-				{
-					REG_PORT_OUTSET0 = PORT_PA06;
-				}
-				else
-				{
-					REG_PORT_OUTCLR0 = PORT_PA06;
-				}
-
-				REG_PORT_OUTSET0 = PORT_PA07; // toggle SCK
-				//					asm volatile ("nop");
-				REG_PORT_OUTCLR0 = PORT_PA07;
-
-				spiIndex >>= 1;
-			}
+			uint8_t dummy;
+			
+			REG_SERCOM0_SPI_DATA = data;
+			while((REG_SERCOM0_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
+			dummy = REG_SERCOM0_SPI_DATA;
+			dummy = dummy;
 		}
 
 		static inline uint8_t spi_receive(uint8_t data)
 		{
-			uint8_t spiIndex  = 0x80;
-			uint8_t spiInByte = 0;
-			uint8_t k;
-
-			for(k = 0; k <8; k++)	// Output each bit of spiOutByte
-			{
-				if(data & spiIndex)	// Output MOSI Bit
-				{
-					REG_PORT_OUTSET0 = PORT_PA06;
-				}
-				else
-				{
-					REG_PORT_OUTCLR0 = PORT_PA06;
-				}
-
-				REG_PORT_OUTSET0 = PORT_PA07; // toggle SCK
-				//					asm volatile ("nop");
-				REG_PORT_OUTCLR0 = PORT_PA07;
-
-				if(REG_PORT_IN0 & PORT_PA04)
-				{
-					spiInByte |= spiIndex;
-				}
-
-				spiIndex >>= 1;
-			}
-			return spiInByte;
+			REG_SERCOM0_SPI_DATA = data;
+			while((REG_SERCOM0_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
+			return REG_SERCOM0_SPI_DATA;
 		}
 
 		static inline uint8_t fetch_flash_byte(const uint8_t *data)
@@ -600,10 +550,14 @@
 
 	static inline uint8_t fetch_flash_byte(const uint8_t *data)
 	{
-		#if defined(RAMPZ)
-			return(pgm_read_byte_far(data));
-		#else
-			return(pgm_read_byte_near(data));
+		#if	defined (__AVR__)
+			#if defined(RAMPZ)
+				return(pgm_read_byte_far(data));
+			#else
+				return(pgm_read_byte_near(data));
+			#endif
+		#else /* this may fail on your Arduino system that is not AVR and that I am not aware of */
+			return *data;
 		#endif
 	}
 

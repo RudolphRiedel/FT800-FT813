@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   Contains FT8xx Function Prototypes
 @version 4.0
-@date    2018-11-10
+@date    2018-12-26
 @author  Rudolph Riedel
 
 @section History
@@ -58,6 +58,7 @@
 
 4.0
 - changed FT8_ prefixes to EVE_
+- added EVE_cmd_flashsource()
 
 */
 
@@ -104,6 +105,13 @@ void EVE_start_cmd_burst(void);
 void EVE_end_cmd_burst(void);
 
 void EVE_cmd_dl(uint32_t command);
+
+
+/* EVE3 commands */
+#if defined (BT81X_ENABLE)
+void EVE_cmd_flashsource(uint32_t ptr);
+
+#endif
 
 
 /* commands to draw graphics objects: */

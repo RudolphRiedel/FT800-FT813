@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 4.0
-@date    2018-11-11
+@date    2018-12-26
 @author  Rudolph Riedel
 
 @section History
@@ -44,6 +44,7 @@
 - changed FT8_ prefixes to EVE_
 - rearranged things a bit with FT80x specific includes moved to the end and a "#if defined (BT81X_ENABLE)" block on top of the chip-specific includes
 - started to add specific BT81x defines
+- minor maintenance
 
 */
 
@@ -323,7 +324,7 @@
 
 /* GPIO bits */
 #define EVE_GPIO0	0
-#define EVE_GPIO1	1	/* default gpio pin for audio shutdown, 1 - eanble, 0 - disable */
+#define EVE_GPIO1	1	/* default gpio pin for audio shutdown, 1 - enable, 0 - disable */
 #define EVE_GPIO7	7	/* default gpio pin for display enable, 1 - enable, 0 - disable */
 
 
@@ -434,11 +435,10 @@
 #define VERTEX2II(x,y,handle,cell) ((2UL<<30)|(((x)&511UL)<<21)|(((y)&511UL)<<12)|(((handle)&31UL)<<7)|(((cell)&127UL)<<0))
 
 
+/* ----------------- BT81x exclusive definitions -----------------*/
 #if defined (BT81X_ENABLE)
 
-/* used with BITMAP_LAYOUT to indicate bitmap-format is specified by BITMAP_EXT_FORMAT */
-#define EVE_GLFORMAT 31UL
-
+#define EVE_GLFORMAT 31UL	/* used with BITMAP_LAYOUT to indicate bitmap-format is specified by BITMAP_EXT_FORMAT */
 
 #define DL_BITMAP_EXT_FORMAT	0x2E000000 /* requires OR'd arguments */
 
@@ -459,7 +459,6 @@
 #define EVE_COMPRESSED_RGBA_ASTC_12x12_KHR 37821UL
 
 
-
 #define EVE_RAM_ERR_REPORT           0x309800UL // max 128 bytes null terminated string
 #define EVE_RAM_FLASH                0x800000UL
 #define EVE_RAM_FLASH_POSTBLOB       0x801000UL
@@ -469,22 +468,22 @@
 
 
 /* additional commands for BT81x */
-#define CMD_SYNC             0xFFFFFF42
-#define CMD_FLASHERASE       0xFFFFFF44
+#define CMD_SYNC             0xFFFFFF42		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_SYNC) */
+#define CMD_FLASHERASE       0xFFFFFF44		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHERASE) */
 #define CMD_FLASHWRITE       0xFFFFFF45
 #define CMD_FLASHREAD        0xFFFFFF46
 #define CMD_FLASHUPDATE      0xFFFFFF47
-#define CMD_FLASHDETACH      0xFFFFFF48
-#define CMD_FLASHATTACH      0xFFFFFF49
+#define CMD_FLASHDETACH      0xFFFFFF48		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASDETACH) */
+#define CMD_FLASHATTACH      0xFFFFFF49		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASATTACH) */
 #define CMD_FLASHFAST        0xFFFFFF4A
-#define CMD_FLASHSPIDESEL    0xFFFFFF4B
+#define CMD_FLASHSPIDESEL    0xFFFFFF4B		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHSPIDESEL) */
 #define CMD_FLASHSPITX       0xFFFFFF4C
 #define CMD_FLASHSPIRX       0xFFFFFF4D
 #define CMD_FLASHSOURCE      0xFFFFFF4E
-#define CMD_CLEARCACHE       0xFFFFFF4F
+#define CMD_CLEARCACHE       0xFFFFFF4F		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_CLEARCACHE) */
 #define CMD_INFLATE2         0xFFFFFF50
 #define CMD_ROTATEAROUND     0xFFFFFF51
-#define CMD_RESETFONTS       0xFFFFFF52
+#define CMD_RESETFONTS       0xFFFFFF52		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_RESETFONTS) */
 #define CMD_ANIMSTART        0xFFFFFF53
 #define CMD_ANIMSTOP         0xFFFFFF54
 #define CMD_ANIMXY           0xFFFFFF55
@@ -493,7 +492,7 @@
 #define CMD_FILLWIDTH        0xFFFFFF58
 #define CMD_APPENDF          0xFFFFFF59
 #define CMD_ANIMFRAME        0xFFFFFF5A
-#define CMD_VIDEOSTARTF      0xFFFFFF5F
+#define CMD_VIDEOSTARTF      0xFFFFFF5F		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_VIDEOSTARTF) */
 
 
 /* additional registers for BT81x */
@@ -504,10 +503,9 @@
 #define REG_PLAY_CONTROL       0x30914eUL
 #define REG_COPRO_PATCH_DTR    0x309162UL
 
-
 #endif
 
-
+/* ----------------- FT81x / BT81x exclusive definitions -----------------*/
 #if defined (FT81X_ENABLE)
 
 #define LOW_FREQ_BOUND  58800000L /* 98% of 60Mhz */
@@ -703,7 +701,7 @@
 
 
 
-/* specific for FT80x */
+/* ----------------- FT80x exclusive definitions -----------------*/
 #else
 
 #define EVE_CHIPID		0x00010008UL
