@@ -26,6 +26,7 @@ I have reports of successfully using it with:
 - ATSAMV70
 - ATSAMD20
 - ATSAME4
+- ATSAME51J19A
 - STM32
 - some PICs
 - ESP32
