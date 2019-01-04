@@ -138,7 +138,7 @@ void touch_calibrate(void)
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0x0009279e);
 #endif
 
-#if defined (EVE_RVT70AQ)
+#if defined (EVE_RVT70)
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_A, 0x000074df);
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_B, 0x000000e6);
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_C, 0xfffd5474);
