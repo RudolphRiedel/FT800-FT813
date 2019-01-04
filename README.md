@@ -28,6 +28,7 @@ I have reports of successfully using it with:
 - ATSAME4
 - STM32
 - some PICs
+- ESP32
 
 The TFTs I have tested myself so far:
 
@@ -48,9 +49,7 @@ The TFTs I have tested myself so far:
 
 The examples in the "example_projects" drawer are for use with AtmelStudio7. For Arduino I am using the plugin from www.visualmicro.com .
 
-The platform the code is compiled for is automatically detected thru compiler flags in FT8_config.h. This is the only file that should need editing to customize the library to your needs.
-
-Note: there also used to be a file FT8_config.c but it is obsolete now.
+The platform the code is compiled for is automatically detected thru compiler flags in EVE_config.h. This is the only file that should need editing to customize the library to your needs.
 
 - Select the TFT attached by enabling one of the pre-defined setups.
 - Provide the pins used for Chip-Select and Power-Down in the target configuration you are using
