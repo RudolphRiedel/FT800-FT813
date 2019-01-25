@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   Contains FT8xx Function Prototypes
 @version 4.0
-@date    2018-12-26
+@date    2019-01-25
 @author  Rudolph Riedel
 
 @section History
@@ -59,6 +59,8 @@
 4.0
 - changed FT8_ prefixes to EVE_
 - added EVE_cmd_flashsource()
+- added prototype for EVE_init_flash() - not functional yet
+- added protoypes for EVE_cmd_flashwrite(), EVE_cmd_flashread(), EVE_cmd_flashupdate(), EVE_cmd_flashfast(), EVE_cmd_flashspitx() and EVE_cmd_flashspirx()
 
 */
 
@@ -109,8 +111,16 @@ void EVE_cmd_dl(uint32_t command);
 
 /* EVE3 commands */
 #if defined (BT81X_ENABLE)
+
+void EVE_cmd_flashwrite(uint32_t ptr, uint32_t num, const uint8_t *data);
+void EVE_cmd_flashread(uint32_t dest, uint32_t src, uint32_t num);
+void EVE_cmd_flashupdate(uint32_t dest, uint32_t src, uint32_t num);
+uint32_t EVE_cmd_flashfast(void);
+void EVE_cmd_flashspitx(uint32_t num, const uint8_t *data);
+void EVE_cmd_flashspirx(uint32_t dest, uint32_t num);
 void EVE_cmd_flashsource(uint32_t ptr);
 
+uint8_t EVE_init_flash(void);
 #endif
 
 
