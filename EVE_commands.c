@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   Contains Functions for using the FT8xx
 @version 4.0
-@date    2018-12-26
+@date    2019-01-25
 @author  Rudolph Riedel
 
 This file needs to be renamed to EVE_command.cpp for use with Arduino.
@@ -113,7 +113,15 @@ This file needs to be renamed to EVE_command.cpp for use with Arduino.
 - changed FT8_ prefixes to EVE_
 - apparently BT815 supports Goodix touch-controller directly, so changed EVE_init() accordingly
 - added EVE_cmd_flashsource()
+- added EVE_init_flash() - empty for now
+- added EVE_cmd_flashwrite(), EVE_cmd_flashread(), EVE_cmd_flashupdate(), EVE_cmd_flashfast(), EVE_cmd_flashspitx(), EVE_cmd_flashspirx()
+- changed block_transfer() that is used by EVE_cmd_inflate() and EVE_cmd_loadimage() to transfer the data in chunks of
+  a maximum of 3840 bytes instead of 4000 bytes.
+  The new EVE_cmd_flashwrite() uses block_transfer() as well and it needs the data in multiples of 256 bytes.
+  Breaking the data down to any number should be ok, as long as the total is a multiple of 256 - but better safe than sorry...
+- Bugfix, sort of: in order to add padding bytes for 4-byte alignment spi_flash_write() was reading up to 3 bytes past the supplied buffer, now 1, 2 or 3 zero-bytes are send
 
+  
 */
 
 #include "EVE.h"
@@ -454,12 +462,23 @@ void EVE_cmd_memcpy(uint32_t dest, uint32_t src, uint32_t num)
 void spi_flash_write(const uint8_t *data, uint16_t len)
 {
 	uint16_t count;
-
-	len = (len + 3)&(~3);
-
+	uint8_t padding;
+	
+	padding = len & 0x03; /* 0, 1, 2 or 3 */
+	padding = 4-padding; /* 4, 3, 2 or 1 */
+	padding &= 3; /* 3, 2 or 1 */
+	
 	for(count=0;count<len;count++)
 	{
 		spi_transmit(fetch_flash_byte(data+count));
+	}
+	
+	len += padding;
+
+	while(padding > 0)
+	{
+		spi_transmit(0);
+		padding--;
 	}
 
 	EVE_inc_cmdoffset(len);
@@ -475,7 +494,7 @@ void block_transfer(const uint8_t *data, uint16_t len)
 	bytes_left = len;
 	while(bytes_left > 0)
 	{
-		block_len = bytes_left>4000 ? 4000:bytes_left;
+		block_len = bytes_left>3840 ? 3840:bytes_left;
 
 		ftAddress = EVE_RAM_CMD + cmdOffset;
 		EVE_cs_set();
@@ -1025,9 +1044,6 @@ uint8_t EVE_init(void)
 }
 
 
-
-
-
 /*
 These eliminate the overhead of transmitting the command-fifo address with every single command, just wrap a sequence of commands
 with these and the address is only transmitted once at the start of the block.
@@ -1116,23 +1132,172 @@ void EVE_write_string(const char *text)
 		textindex++;
 	}
 
-	padding = textindex % 4;  /* 0, 1, 2 oder 3 */
-	padding = 4-padding; /* 4, 3, 2, 1 */
+	/* we need to transmit at least one 0x00 byte and up to four if the string happens to be 4-byte aligned already */
+	padding = textindex & 3;  /* 0, 1, 2 or 3 */
+	padding = 4-padding; /* 4, 3, 2 or 1 */
+	textindex += padding;
 
 	while(padding > 0)
 	{
 		spi_transmit_async(0);
 		padding--;
-		textindex++;
 	}
 
 	EVE_inc_cmdoffset(textindex);
 }
 
 
-
-/* EVE3 commands */
+/* EVE3 FLASH functions */
 #if defined (BT81X_ENABLE)
+
+
+/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* write "num" bytes from *data to the external flash on a BT81x board at address ptr */
+/* note: ptr must be 256 byte aligned, num must be a multiple of 256 */
+void EVE_cmd_flashwrite(uint32_t ptr, uint32_t num, const uint8_t *data)
+{
+	EVE_begin_cmd(CMD_FLASHWRITE);
+
+	spi_transmit((uint8_t)(ptr));
+	spi_transmit((uint8_t)(ptr >> 8));
+	spi_transmit((uint8_t)(ptr >> 16));
+	spi_transmit((uint8_t)(ptr >> 24));
+
+	spi_transmit((uint8_t)(num));
+	spi_transmit((uint8_t)(num >> 8));
+	spi_transmit((uint8_t)(num >> 16));
+	spi_transmit((uint8_t)(num >> 24));
+
+	EVE_inc_cmdoffset(8);
+	EVE_cs_clear();
+
+	block_transfer(data, num);
+}
+
+
+/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* write "num" bytes from src in the external flash on a BT81x board to dest in RAM_G */
+/* note: src must be 64-byte aligned, dest must be 4-byte aligned, num must be a multiple of 4 */
+void EVE_cmd_flashread(uint32_t dest, uint32_t src, uint32_t num)
+{
+	EVE_begin_cmd(CMD_FLASHREAD);
+
+	spi_transmit((uint8_t)(dest));
+	spi_transmit((uint8_t)(dest >> 8));
+	spi_transmit((uint8_t)(dest >> 16));
+	spi_transmit((uint8_t)(dest >> 24));
+
+	spi_transmit((uint8_t)(src));
+	spi_transmit((uint8_t)(src >> 8));
+	spi_transmit((uint8_t)(src >> 16));
+	spi_transmit((uint8_t)(src >> 24));
+
+	spi_transmit((uint8_t)(num));
+	spi_transmit((uint8_t)(num >> 8));
+	spi_transmit((uint8_t)(num >> 16));
+	spi_transmit((uint8_t)(num >> 24));
+
+	EVE_inc_cmdoffset(12);
+	EVE_cs_clear();
+	EVE_cmd_execute();
+}
+
+
+/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* write "num" bytes from src in RAM_G to to the external flash on a BT81x board at address dest */
+/* note: dest must be 4096-byte aligned, src must be 4-byte aligned, num must be a multiple of 4096 */
+void EVE_cmd_flashupdate(uint32_t dest, uint32_t src, uint32_t num)
+{
+	EVE_begin_cmd(CMD_FLASHUPDATE);
+
+	spi_transmit((uint8_t)(dest));
+	spi_transmit((uint8_t)(dest >> 8));
+	spi_transmit((uint8_t)(dest >> 16));
+	spi_transmit((uint8_t)(dest >> 24));
+
+	spi_transmit((uint8_t)(src));
+	spi_transmit((uint8_t)(src >> 8));
+	spi_transmit((uint8_t)(src >> 16));
+	spi_transmit((uint8_t)(src >> 24));
+
+	spi_transmit((uint8_t)(num));
+	spi_transmit((uint8_t)(num >> 8));
+	spi_transmit((uint8_t)(num >> 16));
+	spi_transmit((uint8_t)(num >> 24));
+
+	EVE_inc_cmdoffset(12);
+	EVE_cs_clear();
+	EVE_cmd_execute();
+}
+
+
+/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+uint32_t EVE_cmd_flashfast(void)
+{
+	uint16_t offset;
+
+	EVE_begin_cmd(CMD_FLASHFAST);
+	spi_transmit(0);
+	spi_transmit(0);
+	spi_transmit(0);
+	spi_transmit(0);
+	offset = cmdOffset;
+	EVE_inc_cmdoffset(4);
+	EVE_cs_clear();
+	EVE_cmd_execute();
+	return EVE_memRead32(EVE_RAM_CMD + offset);
+}
+
+
+/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* write "num" bytes from *data to the BT81x SPI interface */
+/* note: raw direct access, not really useful for anything */
+void EVE_cmd_flashspitx(uint32_t num, const uint8_t *data)
+{
+	EVE_begin_cmd(CMD_FLASHSPITX);
+
+	spi_transmit((uint8_t)(num));
+	spi_transmit((uint8_t)(num >> 8));
+	spi_transmit((uint8_t)(num >> 16));
+	spi_transmit((uint8_t)(num >> 24));
+
+	EVE_inc_cmdoffset(4);
+	EVE_cs_clear();
+
+	block_transfer(data, num);
+}
+
+
+/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* write "num" bytes from the BT81x SPI interface dest in RAM_G */
+/* note: raw direct access, not really useful for anything */
+void EVE_cmd_flashspirx(uint32_t dest, uint32_t num)
+{
+	EVE_begin_cmd(CMD_FLASHREAD);
+
+	spi_transmit((uint8_t)(dest));
+	spi_transmit((uint8_t)(dest >> 8));
+	spi_transmit((uint8_t)(dest >> 16));
+	spi_transmit((uint8_t)(dest >> 24));
+
+	spi_transmit((uint8_t)(num));
+	spi_transmit((uint8_t)(num >> 8));
+	spi_transmit((uint8_t)(num >> 16));
+	spi_transmit((uint8_t)(num >> 24));
+
+	EVE_inc_cmdoffset(8);
+	EVE_cs_clear();
+	EVE_cmd_execute();
+}
+
+#if 0
+#define CMD_FLASHERASE       0xFFFFFF44		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHERASE) */
+#define CMD_FLASHDETACH      0xFFFFFF48		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASDETACH) */
+#define CMD_FLASHATTACH      0xFFFFFF49		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASATTACH) */
+#define CMD_FLASHSPIDESEL    0xFFFFFF4B		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHSPIDESEL) */
+#endif
+
+
 
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void EVE_cmd_flashsource(uint32_t ptr)
@@ -1150,10 +1315,14 @@ void EVE_cmd_flashsource(uint32_t ptr)
 }
 
 
+/* switch the FLASH attached to a BT815/BT816 to full-speed mode, returns 0 for failing to do so */
+uint8_t EVE_init_flash(void)
+{
+	
+	
+	return 0;
+}
 #endif
-
-
-
 
 
 /* commands to draw graphics objects: */

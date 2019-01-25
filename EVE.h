@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 4.0
-@date    2018-12-26
+@date    2019-01-25
 @author  Rudolph Riedel
 
 @section History
@@ -45,6 +45,7 @@
 - rearranged things a bit with FT80x specific includes moved to the end and a "#if defined (BT81X_ENABLE)" block on top of the chip-specific includes
 - started to add specific BT81x defines
 - minor maintenance
+- changed OPT_FLASH to EVE_OPT_FLASH and OPT_FORMAT to EVE_OPT_FORMAT for consistency
 
 */
 
@@ -463,8 +464,8 @@
 #define EVE_RAM_FLASH                0x800000UL
 #define EVE_RAM_FLASH_POSTBLOB       0x801000UL
 
-#define OPT_FLASH  64UL
-#define OPT_FORMAT 4096UL
+#define EVE_OPT_FLASH  64UL
+#define EVE_OPT_FORMAT 4096UL
 
 
 /* additional commands for BT81x */
