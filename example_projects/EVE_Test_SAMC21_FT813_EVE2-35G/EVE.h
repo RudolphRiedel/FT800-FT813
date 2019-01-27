@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 4.0
-@date    2019-01-25
+@date    2019-01-27
 @author  Rudolph Riedel
 
 @section History
@@ -474,8 +474,8 @@
 #define CMD_FLASHWRITE       0xFFFFFF45
 #define CMD_FLASHREAD        0xFFFFFF46
 #define CMD_FLASHUPDATE      0xFFFFFF47
-#define CMD_FLASHDETACH      0xFFFFFF48		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASDETACH) */
-#define CMD_FLASHATTACH      0xFFFFFF49		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASATTACH) */
+#define CMD_FLASHDETACH      0xFFFFFF48		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHDETACH) */
+#define CMD_FLASHATTACH      0xFFFFFF49		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHATTACH) */
 #define CMD_FLASHFAST        0xFFFFFF4A
 #define CMD_FLASHSPIDESEL    0xFFFFFF4B		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHSPIDESEL) */
 #define CMD_FLASHSPITX       0xFFFFFF4C

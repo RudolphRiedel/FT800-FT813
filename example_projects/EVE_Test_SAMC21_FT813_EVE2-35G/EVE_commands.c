@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   Contains Functions for using the FT8xx
 @version 4.0
-@date    2019-01-25
+@date    2019-01-27
 @author  Rudolph Riedel
 
 This file needs to be renamed to EVE_command.cpp for use with Arduino.
@@ -120,8 +120,9 @@ This file needs to be renamed to EVE_command.cpp for use with Arduino.
   The new EVE_cmd_flashwrite() uses block_transfer() as well and it needs the data in multiples of 256 bytes.
   Breaking the data down to any number should be ok, as long as the total is a multiple of 256 - but better safe than sorry...
 - Bugfix, sort of: in order to add padding bytes for 4-byte alignment spi_flash_write() was reading up to 3 bytes past the supplied buffer, now 1, 2 or 3 zero-bytes are send
+- extended the maximum timeout in EVE_init() to 400ms as at least according to the datasheets "The boot-up may take up to 300ms to complete"
+- tried to fill in EVE_init_flash() - nothing to test it with, yet
 
-  
 */
 
 #include "EVE.h"
@@ -463,16 +464,16 @@ void spi_flash_write(const uint8_t *data, uint16_t len)
 {
 	uint16_t count;
 	uint8_t padding;
-	
+
 	padding = len & 0x03; /* 0, 1, 2 or 3 */
 	padding = 4-padding; /* 4, 3, 2 or 1 */
 	padding &= 3; /* 3, 2 or 1 */
-	
+
 	for(count=0;count<len;count++)
 	{
 		spi_transmit(fetch_flash_byte(data+count));
 	}
-	
+
 	len += padding;
 
 	while(padding > 0)
@@ -926,7 +927,7 @@ const uint8_t EVE_GT911_data[1184] PROGMEM =
 uint8_t EVE_init(void)
 {
 	uint8_t chipid;
-	uint8_t timeout = 0;
+	uint16_t timeout = 0;
 
 	EVE_pdn_set();
 	DELAY_MS(6);	/* minimum time for power-down is 5ms */
@@ -949,7 +950,7 @@ uint8_t EVE_init(void)
 		chipid = EVE_memRead8(REG_ID);
 		DELAY_MS(1);
 		timeout++;
-		if(timeout > 200)
+		if(timeout > 400)
 		{
 			return 0;
 		}
@@ -1292,8 +1293,8 @@ void EVE_cmd_flashspirx(uint32_t dest, uint32_t num)
 
 #if 0
 #define CMD_FLASHERASE       0xFFFFFF44		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHERASE) */
-#define CMD_FLASHDETACH      0xFFFFFF48		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASDETACH) */
-#define CMD_FLASHATTACH      0xFFFFFF49		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASATTACH) */
+#define CMD_FLASHDETACH      0xFFFFFF48		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHDETACH) */
+#define CMD_FLASHATTACH      0xFFFFFF49		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHATTACH) */
 #define CMD_FLASHSPIDESEL    0xFFFFFF4B		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHSPIDESEL) */
 #endif
 
@@ -1318,8 +1319,53 @@ void EVE_cmd_flashsource(uint32_t ptr)
 /* switch the FLASH attached to a BT815/BT816 to full-speed mode, returns 0 for failing to do so */
 uint8_t EVE_init_flash(void)
 {
-	
-	
+	uint8_t timeout = 0;
+	uint8_t status;
+	uint32_t result;
+
+	status = EVE_memRead8(REG_FLASH_STATUS); /* should be 0x02 - FLASH_STATUS_BASIC, power-up is done and the attached flash is detected */
+
+	while(status == 0) /* FLASH_STATUS_INIT - we are somehow stll in init, give it a litte more time, this should never happen */
+	{
+		status = EVE_memRead8(REG_FLASH_STATUS);
+		DELAY_MS(1);
+		timeout++;
+		if(timeout > 100) /* 100ms and still in init, lets call quits now and exit with an error */
+		{
+			return 0;
+		}
+	}
+
+	if(status == 1) /* FLASH_STATUS_DETACHED - no flash was found during init, no flash present or the detection failed, but have hope and let the BT81x have annother try */
+	{
+		EVE_cmd_dl(CMD_FLASHATTACH);
+		EVE_cmd_execute();
+		status = EVE_memRead8(REG_FLASH_STATUS);
+		if(status != 2) /* still not in FLASH_STATUS_BASIC, time to give up */
+		{
+			return 0;
+		}
+	}
+
+	if(status == 2) /* FLASH_STATUS_BASIC - flash detected and ready for action, lets move it up to FLASH_STATUS_FULL */
+	{
+		result = EVE_cmd_flashfast();
+
+		if(result == 0) /* cmd_flashfast was succesful */
+		{
+			return 1;
+		}
+		else /* room for improvement, cmd_flashfast provided an error code but there is no way to return it without returning a value that is FALSE all the same */
+		{
+			return 0;
+		}
+	}
+
+	if(status == 3) /* FLASH_STATUS_FULL - we are already there, why has this function been called? */
+	{
+		return 1;
+	}
+
 	return 0;
 }
 #endif
