@@ -1,4 +1,4 @@
-# FT810-FT813
+# FT810-FT813, BT81x
 This is a code library for EVE/EVE2/EVE3 graphics controller ICs from FTDI/Bridgetek:
 
 http://www.ftdichip.com/EVE.htm
@@ -47,6 +47,10 @@ The TFTs I have tested myself so far:
 - EVE2-50G https://www.matrixorbital.com/ftdi-eve/eve-ft812/eve2-50g
 - EVE2-70G https://www.matrixorbital.com/ftdi-eve/eve-ft812/eve2-70g
 - NHD-3.5-320240FT-CSXV-CTP
+
+Currently I am implementing BT81x support using a prototype board populated with a BT816 that Matrix Orbital was so kind to provide me with.
+I have connected the panel of a EVE2-43G to it.
+
 
 The examples in the "example_projects" drawer are for use with AtmelStudio7. For Arduino I am using the plugin from www.visualmicro.com .
 
