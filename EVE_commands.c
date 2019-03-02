@@ -1,8 +1,8 @@
 /*
 @file    EVE_commands.c
-@brief   Contains Functions for using the FT8xx
+@brief   contains functions for using the FT8xx
 @version 4.0
-@date    2019-01-27
+@date    2019-02-13
 @author  Rudolph Riedel
 
 This file needs to be renamed to EVE_command.cpp for use with Arduino.
@@ -122,11 +122,14 @@ This file needs to be renamed to EVE_command.cpp for use with Arduino.
 - Bugfix, sort of: in order to add padding bytes for 4-byte alignment spi_flash_write() was reading up to 3 bytes past the supplied buffer, now 1, 2 or 3 zero-bytes are send
 - extended the maximum timeout in EVE_init() to 400ms as at least according to the datasheets "The boot-up may take up to 300ms to complete"
 - tried to fill in EVE_init_flash() - nothing to test it with, yet
+- added DMA
+- reworked all commands that support burst to use spi_transmit() in non burst mode and spi_transmit_async() when burst is aktive
 
 */
 
 #include "EVE.h"
 #include "EVE_config.h"
+#include "EVE_target.h"
 
 
 /* EVE Memory Commands - used with EVE_memWritexx and EVE_memReadxx */
@@ -257,6 +260,13 @@ void EVE_memWrite_flash_buffer(uint32_t ftAddress, const uint8_t *data, uint16_t
 uint8_t EVE_busy(void)
 {
 	uint16_t cmdBufferRead;
+	
+	#if defined (EVE_DMA)
+	if(EVE_dma_busy)
+	{
+		return 1;
+	}
+	#endif
 
 	cmdBufferRead = EVE_memRead16(REG_CMD_READ);	/* read the graphics processor read pointer */
 
@@ -284,6 +294,13 @@ uint32_t EVE_get_touch_tag(void)
 {
 	uint32_t value;
 
+	#if defined (EVE_DMA)
+	if(EVE_dma_busy)
+	{
+		return 0; /* just do nothing if a dma transfer is in progress */
+	}
+	#endif
+	
 	value = EVE_memRead32(REG_TOUCH_TAG);
 	return value;
 }
@@ -313,6 +330,13 @@ void EVE_inc_cmdoffset(uint16_t increment)
 void EVE_cmd_start(void)
 {
 	uint32_t ftAddress;
+
+	#if defined (EVE_DMA)
+	if(EVE_dma_busy)
+	{
+		return; /* just do nothing if a dma transfer is in progress */
+	}
+	#endif
 
 	ftAddress = REG_CMD_WRITE;
 
@@ -934,7 +958,8 @@ uint8_t EVE_init(void)
 	EVE_pdn_clear();
 	DELAY_MS(21);	/* minimum time to allow from rising PD_N to first access is 20ms */
 
-	/*	EVE_cmdWrite(EVE_CORERST);*/ /* reset, only required for warmstart if PowerDown line is not used */
+#warning "why do we need a reset?"
+	EVE_cmdWrite(EVE_CORERST); /* reset, only required for warmstart if PowerDown line is not used */
 
 	#if defined (EVE_HAS_CRYSTAL)
 	EVE_cmdWrite(EVE_CLKEXT);	/* setup FT8xx for external clock */
@@ -1041,6 +1066,11 @@ uint8_t EVE_init(void)
 	DELAY_MS(2); /* just to be safe */
 	while(EVE_busy() == 1); /* just to be safe, should return immediately */
 	EVE_get_cmdoffset(); /* just to be safe */
+
+	#if defined (EVE_DMA)
+	EVE_init_dma(); /* prepare DMA */
+	#endif
+
 	return 1;
 }
 
@@ -1056,18 +1086,33 @@ void EVE_start_cmd_burst(void)
 
 	cmd_burst = 42;
 	ftAddress = EVE_RAM_CMD + cmdOffset;
+	
+	#if defined (EVE_DMA)
+
+	EVE_dma_buffer[0] = (uint8_t)(ftAddress >> 16) | MEM_WRITE;
+	EVE_dma_buffer[1] = (uint8_t)(ftAddress >> 8);
+	EVE_dma_buffer[2] = (uint8_t)(ftAddress);
+	EVE_dma_buffer_index = 3;
+
+	#else
 	EVE_cs_set();
 
 	spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
 	spi_transmit((uint8_t)(ftAddress >> 8));	/* send middle address byte */
 	spi_transmit((uint8_t)(ftAddress));		/* send low address byte */
+	#endif
 }
 
 
 void EVE_end_cmd_burst(void)
 {
 	cmd_burst = 0;
+	
+	#if defined (EVE_DMA)
+	EVE_start_dma_transfer(); /* begin DMA transfer */
+	#else
 	EVE_cs_clear();
+	#endif
 }
 
 
@@ -1129,7 +1174,14 @@ void EVE_write_string(const char *text)
 
 	while(text[textindex] != 0)
 	{
-		spi_transmit_async(text[textindex]);
+		if(cmd_burst)
+		{
+			spi_transmit_async(text[textindex]);
+		}
+		else
+		{
+			spi_transmit(text[textindex]);
+		}
 		textindex++;
 	}
 
@@ -1140,7 +1192,14 @@ void EVE_write_string(const char *text)
 
 	while(padding > 0)
 	{
-		spi_transmit_async(0);
+		if(cmd_burst)
+		{
+			spi_transmit_async(0);
+		}
+		else
+		{
+			spi_transmit(0);
+		}
 		padding--;
 	}
 
@@ -1376,18 +1435,35 @@ uint8_t EVE_init_flash(void)
 void EVE_cmd_text(int16_t x0, int16_t y0, int16_t font, uint16_t options, const char* text)
 {
 	EVE_start_cmd(CMD_TEXT);
+	
+	if(cmd_burst)
+	{
+		spi_transmit_async((uint8_t)(x0));
+		spi_transmit_async((uint8_t)(x0 >> 8));
 
-	spi_transmit_async((uint8_t)(x0));
-	spi_transmit_async((uint8_t)(x0 >> 8));
+		spi_transmit_async((uint8_t)(y0));
+		spi_transmit_async((uint8_t)(y0 >> 8));
 
-	spi_transmit_async((uint8_t)(y0));
-	spi_transmit_async((uint8_t)(y0 >> 8));
+		spi_transmit_async((uint8_t)(font));
+		spi_transmit_async((uint8_t)(font >> 8));
 
-	spi_transmit_async((uint8_t)(font));
-	spi_transmit_async((uint8_t)(font >> 8));
+		spi_transmit_async((uint8_t)(options));
+		spi_transmit_async((uint8_t)(options >> 8));
+	}
+	else
+	{
+		spi_transmit((uint8_t)(x0));
+		spi_transmit((uint8_t)(x0 >> 8));
 
-	spi_transmit_async((uint8_t)(options));
-	spi_transmit_async((uint8_t)(options >> 8));
+		spi_transmit((uint8_t)(y0));
+		spi_transmit((uint8_t)(y0 >> 8));
+
+		spi_transmit((uint8_t)(font));
+		spi_transmit((uint8_t)(font >> 8));
+
+		spi_transmit((uint8_t)(options));
+		spi_transmit((uint8_t)(options >> 8));
+	}
 
 	EVE_inc_cmdoffset(8);
 	EVE_write_string(text);
@@ -1403,23 +1479,46 @@ void EVE_cmd_button(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t font
 {
 	EVE_start_cmd(CMD_BUTTON);
 
-	spi_transmit_async((uint8_t)(x0));
-	spi_transmit_async((uint8_t)(x0 >> 8));
+	if(cmd_burst)
+	{
+		spi_transmit_async((uint8_t)(x0));
+		spi_transmit_async((uint8_t)(x0 >> 8));
 
-	spi_transmit_async((uint8_t)(y0));
-	spi_transmit_async((uint8_t)(y0 >> 8));
+		spi_transmit_async((uint8_t)(y0));
+		spi_transmit_async((uint8_t)(y0 >> 8));
 
-	spi_transmit_async((uint8_t)(w0));
-	spi_transmit_async((uint8_t)(w0 >> 8));
+		spi_transmit_async((uint8_t)(w0));
+		spi_transmit_async((uint8_t)(w0 >> 8));
 
-	spi_transmit_async((uint8_t)(h0));
-	spi_transmit_async((uint8_t)(h0 >> 8));
+		spi_transmit_async((uint8_t)(h0));
+		spi_transmit_async((uint8_t)(h0 >> 8));
 
-	spi_transmit_async((uint8_t)(font));
-	spi_transmit_async((uint8_t)(font >> 8));
+		spi_transmit_async((uint8_t)(font));
+		spi_transmit_async((uint8_t)(font >> 8));
 
-	spi_transmit_async((uint8_t)(options));
-	spi_transmit_async((uint8_t)(options >> 8));
+		spi_transmit_async((uint8_t)(options));
+		spi_transmit_async((uint8_t)(options >> 8));
+	}
+	else
+	{
+		spi_transmit((uint8_t)(x0));
+		spi_transmit((uint8_t)(x0 >> 8));
+
+		spi_transmit((uint8_t)(y0));
+		spi_transmit((uint8_t)(y0 >> 8));
+
+		spi_transmit((uint8_t)(w0));
+		spi_transmit((uint8_t)(w0 >> 8));
+
+		spi_transmit((uint8_t)(h0));
+		spi_transmit((uint8_t)(h0 >> 8));
+
+		spi_transmit((uint8_t)(font));
+		spi_transmit((uint8_t)(font >> 8));
+
+		spi_transmit((uint8_t)(options));
+		spi_transmit((uint8_t)(options >> 8));
+	}
 
 	EVE_inc_cmdoffset(12);
 	EVE_write_string(text);
@@ -1435,37 +1534,62 @@ void EVE_cmd_button(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t font
 void EVE_cmd_clock(int16_t x0, int16_t y0, int16_t r0, uint16_t options, uint16_t hours, uint16_t minutes, uint16_t seconds, uint16_t millisecs)
 {
 	EVE_start_cmd(CMD_CLOCK);
-
-	spi_transmit_async((uint8_t)(x0));
-	spi_transmit_async((uint8_t)(x0 >> 8));
-
-	spi_transmit_async((uint8_t)(y0));
-	spi_transmit_async((uint8_t)(y0 >> 8));
-
-	spi_transmit_async((uint8_t)(r0));
-	spi_transmit_async((uint8_t)(r0 >> 8));
-
-	spi_transmit_async((uint8_t)(options));
-	spi_transmit_async((uint8_t)(options >> 8));
-
-	spi_transmit_async((uint8_t)(hours));
-	spi_transmit_async((uint8_t)(hours >> 8));
-
-	spi_transmit_async((uint8_t)(minutes));
-	spi_transmit_async((uint8_t)(minutes >> 8));
-
-	spi_transmit_async((uint8_t)(seconds));
-	spi_transmit_async((uint8_t)(seconds >> 8));
-
-	spi_transmit_async((uint8_t)(millisecs));
-	spi_transmit_async((uint8_t)(millisecs >> 8));
-
-	EVE_inc_cmdoffset(16);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(x0));
+		spi_transmit_async((uint8_t)(x0 >> 8));
+
+		spi_transmit_async((uint8_t)(y0));
+		spi_transmit_async((uint8_t)(y0 >> 8));
+
+		spi_transmit_async((uint8_t)(r0));
+		spi_transmit_async((uint8_t)(r0 >> 8));
+
+		spi_transmit_async((uint8_t)(options));
+		spi_transmit_async((uint8_t)(options >> 8));
+
+		spi_transmit_async((uint8_t)(hours));
+		spi_transmit_async((uint8_t)(hours >> 8));
+
+		spi_transmit_async((uint8_t)(minutes));
+		spi_transmit_async((uint8_t)(minutes >> 8));
+
+		spi_transmit_async((uint8_t)(seconds));
+		spi_transmit_async((uint8_t)(seconds >> 8));
+
+		spi_transmit_async((uint8_t)(millisecs));
+		spi_transmit_async((uint8_t)(millisecs >> 8));
+	}
+	else
+	{
+		spi_transmit((uint8_t)(x0));
+		spi_transmit((uint8_t)(x0 >> 8));
+
+		spi_transmit((uint8_t)(y0));
+		spi_transmit((uint8_t)(y0 >> 8));
+
+		spi_transmit((uint8_t)(r0));
+		spi_transmit((uint8_t)(r0 >> 8));
+
+		spi_transmit((uint8_t)(options));
+		spi_transmit((uint8_t)(options >> 8));
+
+		spi_transmit((uint8_t)(hours));
+		spi_transmit((uint8_t)(hours >> 8));
+
+		spi_transmit((uint8_t)(minutes));
+		spi_transmit((uint8_t)(minutes >> 8));
+
+		spi_transmit((uint8_t)(seconds));
+		spi_transmit((uint8_t)(seconds >> 8));
+
+		spi_transmit((uint8_t)(millisecs));
+		spi_transmit((uint8_t)(millisecs >> 8));
 		EVE_cs_clear();
 	}
+
+	EVE_inc_cmdoffset(16);
 }
 
 
@@ -1473,17 +1597,23 @@ void EVE_cmd_bgcolor(uint32_t color)
 {
 	EVE_start_cmd(CMD_BGCOLOR);
 
-	spi_transmit_async((uint8_t)(color));
-	spi_transmit_async((uint8_t)(color >> 8));
-	spi_transmit_async((uint8_t)(color >> 16));
-	spi_transmit_async(0x00);
-
-	EVE_inc_cmdoffset(4);
-
-	if(cmd_burst == 0)
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(color));
+		spi_transmit_async((uint8_t)(color >> 8));
+		spi_transmit_async((uint8_t)(color >> 16));
+		spi_transmit_async(0x00);
+	}
+	else
+	{
+		spi_transmit((uint8_t)(color));
+		spi_transmit((uint8_t)(color >> 8));
+		spi_transmit((uint8_t)(color >> 16));
+		spi_transmit(0x00);
 		EVE_cs_clear();
 	}
+
+	EVE_inc_cmdoffset(4);
 }
 
 
@@ -1491,131 +1621,216 @@ void EVE_cmd_fgcolor(uint32_t color)
 {
 	EVE_start_cmd(CMD_FGCOLOR);
 
-	spi_transmit_async((uint8_t)(color));
-	spi_transmit_async((uint8_t)(color >> 8));
-	spi_transmit_async((uint8_t)(color >> 16));
-	spi_transmit_async(0x00);
-
-	EVE_inc_cmdoffset(4);
-
-	if(cmd_burst == 0)
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(color));
+		spi_transmit_async((uint8_t)(color >> 8));
+		spi_transmit_async((uint8_t)(color >> 16));
+		spi_transmit_async(0x00);
+	}
+	else
+	{
+		spi_transmit((uint8_t)(color));
+		spi_transmit((uint8_t)(color >> 8));
+		spi_transmit((uint8_t)(color >> 16));
+		spi_transmit(0x00);
 		EVE_cs_clear();
 	}
+	
+	EVE_inc_cmdoffset(4);
 }
 
 
 void EVE_cmd_gradcolor(uint32_t color)
 {
 	EVE_start_cmd(CMD_GRADCOLOR);
-
-	spi_transmit_async((uint8_t)(color));
-	spi_transmit_async((uint8_t)(color >> 8));
-	spi_transmit_async((uint8_t)(color >> 16));
-	spi_transmit_async(0x00);
-
-	EVE_inc_cmdoffset(4);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(color));
+		spi_transmit_async((uint8_t)(color >> 8));
+		spi_transmit_async((uint8_t)(color >> 16));
+		spi_transmit_async(0x00);
+	}
+	else
+	{
+		spi_transmit((uint8_t)(color));
+		spi_transmit((uint8_t)(color >> 8));
+		spi_transmit((uint8_t)(color >> 16));
+		spi_transmit(0x00);
 		EVE_cs_clear();
 	}
+
+	EVE_inc_cmdoffset(4);
 }
 
 
 void EVE_cmd_gauge(int16_t x0, int16_t y0, int16_t r0, uint16_t options, uint16_t major, uint16_t minor, uint16_t val, uint16_t range)
 {
 	EVE_start_cmd(CMD_GAUGE);
-
-	spi_transmit_async((uint8_t)(x0));
-	spi_transmit_async((uint8_t)(x0 >> 8));
-
-	spi_transmit_async((uint8_t)(y0));
-	spi_transmit_async((uint8_t)(y0 >> 8));
-
-	spi_transmit_async((uint8_t)(r0));
-	spi_transmit_async((uint8_t)(r0 >> 8));
-
-	spi_transmit_async((uint8_t)(options));
-	spi_transmit_async((uint8_t)(options >> 8));
-
-	spi_transmit_async((uint8_t)(major));
-	spi_transmit_async((uint8_t)(major >> 8));
-
-	spi_transmit_async((uint8_t)(minor));
-	spi_transmit_async((uint8_t)(minor >> 8));
-
-	spi_transmit_async((uint8_t)(val));
-	spi_transmit_async((uint8_t)(val >> 8));
-
-	spi_transmit_async((uint8_t)(range));
-	spi_transmit_async((uint8_t)(range >> 8));
-
-	EVE_inc_cmdoffset(16);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(x0));
+		spi_transmit_async((uint8_t)(x0 >> 8));
+
+		spi_transmit_async((uint8_t)(y0));
+		spi_transmit_async((uint8_t)(y0 >> 8));
+
+		spi_transmit_async((uint8_t)(r0));
+		spi_transmit_async((uint8_t)(r0 >> 8));
+
+		spi_transmit_async((uint8_t)(options));
+		spi_transmit_async((uint8_t)(options >> 8));
+
+		spi_transmit_async((uint8_t)(major));
+		spi_transmit_async((uint8_t)(major >> 8));
+
+		spi_transmit_async((uint8_t)(minor));
+		spi_transmit_async((uint8_t)(minor >> 8));
+
+		spi_transmit_async((uint8_t)(val));
+		spi_transmit_async((uint8_t)(val >> 8));
+
+		spi_transmit_async((uint8_t)(range));
+		spi_transmit_async((uint8_t)(range >> 8));
+	}
+	else
+	{
+		spi_transmit((uint8_t)(x0));
+		spi_transmit((uint8_t)(x0 >> 8));
+
+		spi_transmit((uint8_t)(y0));
+		spi_transmit((uint8_t)(y0 >> 8));
+
+		spi_transmit((uint8_t)(r0));
+		spi_transmit((uint8_t)(r0 >> 8));
+
+		spi_transmit((uint8_t)(options));
+		spi_transmit((uint8_t)(options >> 8));
+
+		spi_transmit((uint8_t)(major));
+		spi_transmit((uint8_t)(major >> 8));
+
+		spi_transmit((uint8_t)(minor));
+		spi_transmit((uint8_t)(minor >> 8));
+
+		spi_transmit((uint8_t)(val));
+		spi_transmit((uint8_t)(val >> 8));
+
+		spi_transmit((uint8_t)(range));
+		spi_transmit((uint8_t)(range >> 8));
+
 		EVE_cs_clear();
 	}
+
+	EVE_inc_cmdoffset(16);
 }
 
 
 void EVE_cmd_gradient(int16_t x0, int16_t y0, uint32_t rgb0, int16_t x1, int16_t y1, uint32_t rgb1)
 {
 	EVE_start_cmd(CMD_GRADIENT);
-
-	spi_transmit_async((uint8_t)(x0));
-	spi_transmit_async((uint8_t)(x0 >> 8));
-
-	spi_transmit_async((uint8_t)(y0));
-	spi_transmit_async((uint8_t)(y0 >> 8));
-
-	spi_transmit_async((uint8_t)(rgb0));
-	spi_transmit_async((uint8_t)(rgb0 >> 8));
-	spi_transmit_async((uint8_t)(rgb0 >> 16));
-	spi_transmit_async(0x00);
-
-	spi_transmit_async((uint8_t)(x1));
-	spi_transmit_async((uint8_t)(x1 >> 8));
-
-	spi_transmit_async((uint8_t)(y1));
-	spi_transmit_async((uint8_t)(y1 >> 8));
-
-	spi_transmit_async((uint8_t)(rgb1));
-	spi_transmit_async((uint8_t)(rgb1 >> 8));
-	spi_transmit_async((uint8_t)(rgb1 >> 16));
-	spi_transmit_async(0x00);
-
-	EVE_inc_cmdoffset(16);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(x0));
+		spi_transmit_async((uint8_t)(x0 >> 8));
+
+		spi_transmit_async((uint8_t)(y0));
+		spi_transmit_async((uint8_t)(y0 >> 8));
+
+		spi_transmit_async((uint8_t)(rgb0));
+		spi_transmit_async((uint8_t)(rgb0 >> 8));
+		spi_transmit_async((uint8_t)(rgb0 >> 16));
+		spi_transmit_async(0x00);
+
+		spi_transmit_async((uint8_t)(x1));
+		spi_transmit_async((uint8_t)(x1 >> 8));
+
+		spi_transmit_async((uint8_t)(y1));
+		spi_transmit_async((uint8_t)(y1 >> 8));
+
+		spi_transmit_async((uint8_t)(rgb1));
+		spi_transmit_async((uint8_t)(rgb1 >> 8));
+		spi_transmit_async((uint8_t)(rgb1 >> 16));
+		spi_transmit_async(0x00);
+	}
+	else
+	{
+		spi_transmit((uint8_t)(x0));
+		spi_transmit((uint8_t)(x0 >> 8));
+
+		spi_transmit((uint8_t)(y0));
+		spi_transmit((uint8_t)(y0 >> 8));
+
+		spi_transmit((uint8_t)(rgb0));
+		spi_transmit((uint8_t)(rgb0 >> 8));
+		spi_transmit((uint8_t)(rgb0 >> 16));
+		spi_transmit(0x00);
+
+		spi_transmit((uint8_t)(x1));
+		spi_transmit((uint8_t)(x1 >> 8));
+
+		spi_transmit((uint8_t)(y1));
+		spi_transmit((uint8_t)(y1 >> 8));
+
+		spi_transmit((uint8_t)(rgb1));
+		spi_transmit((uint8_t)(rgb1 >> 8));
+		spi_transmit((uint8_t)(rgb1 >> 16));
+		spi_transmit(0x00);
+
 		EVE_cs_clear();
 	}
+
+	EVE_inc_cmdoffset(16);
 }
 
 
 void EVE_cmd_keys(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t font, uint16_t options, const char* text)
 {
 	EVE_start_cmd(CMD_KEYS);
+	
+	if(cmd_burst)
+	{
+		spi_transmit_async((uint8_t)(x0));
+		spi_transmit_async((uint8_t)(x0 >> 8));
 
-	spi_transmit_async((uint8_t)(x0));
-	spi_transmit_async((uint8_t)(x0 >> 8));
+		spi_transmit_async((uint8_t)(y0));
+		spi_transmit_async((uint8_t)(y0 >> 8));
 
-	spi_transmit_async((uint8_t)(y0));
-	spi_transmit_async((uint8_t)(y0 >> 8));
+		spi_transmit_async((uint8_t)(w0));
+		spi_transmit_async((uint8_t)(w0 >> 8));
 
-	spi_transmit_async((uint8_t)(w0));
-	spi_transmit_async((uint8_t)(w0 >> 8));
+		spi_transmit_async((uint8_t)(h0));
+		spi_transmit_async((uint8_t)(h0 >> 8));
 
-	spi_transmit_async((uint8_t)(h0));
-	spi_transmit_async((uint8_t)(h0 >> 8));
+		spi_transmit_async((uint8_t)(font));
+		spi_transmit_async((uint8_t)(font >> 8));
 
-	spi_transmit_async((uint8_t)(font));
-	spi_transmit_async((uint8_t)(font >> 8));
+		spi_transmit_async((uint8_t)(options));
+		spi_transmit_async((uint8_t)(options >> 8));
+	}
+	else
+	{
+		spi_transmit((uint8_t)(x0));
+		spi_transmit((uint8_t)(x0 >> 8));
 
-	spi_transmit_async((uint8_t)(options));
-	spi_transmit_async((uint8_t)(options >> 8));
+		spi_transmit((uint8_t)(y0));
+		spi_transmit((uint8_t)(y0 >> 8));
+
+		spi_transmit((uint8_t)(w0));
+		spi_transmit((uint8_t)(w0 >> 8));
+
+		spi_transmit((uint8_t)(h0));
+		spi_transmit((uint8_t)(h0 >> 8));
+
+		spi_transmit((uint8_t)(font));
+		spi_transmit((uint8_t)(font >> 8));
+
+		spi_transmit((uint8_t)(options));
+		spi_transmit((uint8_t)(options >> 8));
+	}
 
 	EVE_inc_cmdoffset(12);
 	EVE_write_string(text);
@@ -1630,37 +1845,63 @@ void EVE_cmd_keys(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t font, 
 void EVE_cmd_progress(int16_t x0, int16_t y0, int16_t w0, int16_t h0, uint16_t options, uint16_t val, uint16_t range)
 {
 	EVE_start_cmd(CMD_PROGRESS);
-
-	spi_transmit_async((uint8_t)(x0));
-	spi_transmit_async((uint8_t)(x0 >> 8));
-
-	spi_transmit_async((uint8_t)(y0));
-	spi_transmit_async((uint8_t)(y0 >> 8));
-
-	spi_transmit_async((uint8_t)(w0));
-	spi_transmit_async((uint8_t)(w0 >> 8));
-
-	spi_transmit_async((uint8_t)(h0));
-	spi_transmit_async((uint8_t)(h0 >> 8));
-
-	spi_transmit_async((uint8_t)(options));
-	spi_transmit_async((uint8_t)(options >> 8));
-
-	spi_transmit_async((uint8_t)(val));
-	spi_transmit_async((uint8_t)(val >> 8));
-
-	spi_transmit_async((uint8_t)(range));
-	spi_transmit_async((uint8_t)(range >> 8));
-
-	spi_transmit_async(0x00);	/* dummy byte for 4-byte alignment */
-	spi_transmit_async(0x00); /* dummy byte for 4-byte alignment */
-
-	EVE_inc_cmdoffset(16);	/* update the command-ram pointer */
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(x0));
+		spi_transmit_async((uint8_t)(x0 >> 8));
+
+		spi_transmit_async((uint8_t)(y0));
+		spi_transmit_async((uint8_t)(y0 >> 8));
+
+		spi_transmit_async((uint8_t)(w0));
+		spi_transmit_async((uint8_t)(w0 >> 8));
+
+		spi_transmit_async((uint8_t)(h0));
+		spi_transmit_async((uint8_t)(h0 >> 8));
+
+		spi_transmit_async((uint8_t)(options));
+		spi_transmit_async((uint8_t)(options >> 8));
+
+		spi_transmit_async((uint8_t)(val));
+		spi_transmit_async((uint8_t)(val >> 8));
+
+		spi_transmit_async((uint8_t)(range));
+		spi_transmit_async((uint8_t)(range >> 8));
+
+		spi_transmit_async(0x00);	/* dummy byte for 4-byte alignment */
+		spi_transmit_async(0x00); /* dummy byte for 4-byte alignment */
+	}
+	else
+	{
+		spi_transmit((uint8_t)(x0));
+		spi_transmit((uint8_t)(x0 >> 8));
+
+		spi_transmit((uint8_t)(y0));
+		spi_transmit((uint8_t)(y0 >> 8));
+
+		spi_transmit((uint8_t)(w0));
+		spi_transmit((uint8_t)(w0 >> 8));
+
+		spi_transmit((uint8_t)(h0));
+		spi_transmit((uint8_t)(h0 >> 8));
+
+		spi_transmit((uint8_t)(options));
+		spi_transmit((uint8_t)(options >> 8));
+
+		spi_transmit((uint8_t)(val));
+		spi_transmit((uint8_t)(val >> 8));
+
+		spi_transmit((uint8_t)(range));
+		spi_transmit((uint8_t)(range >> 8));
+
+		spi_transmit(0x00);	/* dummy byte for 4-byte alignment */
+		spi_transmit(0x00); /* dummy byte for 4-byte alignment */
+
 		EVE_cs_clear();
 	}
+
+	EVE_inc_cmdoffset(16);	/* update the command-ram pointer */
 }
 
 
@@ -1668,128 +1909,223 @@ void EVE_cmd_scrollbar(int16_t x0, int16_t y0, int16_t w0, int16_t h0, uint16_t 
 {
 	EVE_start_cmd(CMD_SCROLLBAR);
 
-	spi_transmit_async((uint8_t)(x0));
-	spi_transmit_async((uint8_t)(x0 >> 8));
-
-	spi_transmit_async((uint8_t)(y0));
-	spi_transmit_async((uint8_t)(y0 >> 8));
-
-	spi_transmit_async((uint8_t)(w0));
-	spi_transmit_async((uint8_t)(w0 >> 8));
-
-	spi_transmit_async((uint8_t)(h0));
-	spi_transmit_async((uint8_t)(h0 >> 8));
-
-	spi_transmit_async((uint8_t)(options));
-	spi_transmit_async((uint8_t)(options >> 8));
-
-	spi_transmit_async((uint8_t)(val));
-	spi_transmit_async((uint8_t)(val >> 8));
-
-	spi_transmit_async((uint8_t)(size));
-	spi_transmit_async((uint8_t)(size >> 8));
-
-	spi_transmit_async((uint8_t)(range));
-	spi_transmit_async((uint8_t)(range >> 8));
-
-	EVE_inc_cmdoffset(16);
-
-	if(cmd_burst == 0)
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(x0));
+		spi_transmit_async((uint8_t)(x0 >> 8));
+
+		spi_transmit_async((uint8_t)(y0));
+		spi_transmit_async((uint8_t)(y0 >> 8));
+
+		spi_transmit_async((uint8_t)(w0));
+		spi_transmit_async((uint8_t)(w0 >> 8));
+
+		spi_transmit_async((uint8_t)(h0));
+		spi_transmit_async((uint8_t)(h0 >> 8));
+
+		spi_transmit_async((uint8_t)(options));
+		spi_transmit_async((uint8_t)(options >> 8));
+
+		spi_transmit_async((uint8_t)(val));
+		spi_transmit_async((uint8_t)(val >> 8));
+
+		spi_transmit_async((uint8_t)(size));
+		spi_transmit_async((uint8_t)(size >> 8));
+
+		spi_transmit_async((uint8_t)(range));
+		spi_transmit_async((uint8_t)(range >> 8));
+	}
+	else
+	{
+		spi_transmit((uint8_t)(x0));
+		spi_transmit((uint8_t)(x0 >> 8));
+
+		spi_transmit((uint8_t)(y0));
+		spi_transmit((uint8_t)(y0 >> 8));
+
+		spi_transmit((uint8_t)(w0));
+		spi_transmit((uint8_t)(w0 >> 8));
+
+		spi_transmit((uint8_t)(h0));
+		spi_transmit((uint8_t)(h0 >> 8));
+
+		spi_transmit((uint8_t)(options));
+		spi_transmit((uint8_t)(options >> 8));
+
+		spi_transmit((uint8_t)(val));
+		spi_transmit((uint8_t)(val >> 8));
+
+		spi_transmit((uint8_t)(size));
+		spi_transmit((uint8_t)(size >> 8));
+
+		spi_transmit((uint8_t)(range));
+		spi_transmit((uint8_t)(range >> 8));
+
 		EVE_cs_clear();
 	}
+
+	EVE_inc_cmdoffset(16);
 }
 
 
 void EVE_cmd_slider(int16_t x1, int16_t y1, int16_t w1, int16_t h1, uint16_t options, uint16_t val, uint16_t range)
 {
 	EVE_start_cmd(CMD_SLIDER);
-
-	spi_transmit_async((uint8_t)(x1));
-	spi_transmit_async((uint8_t)(x1 >> 8));
-
-	spi_transmit_async((uint8_t)(y1));
-	spi_transmit_async((uint8_t)(y1 >> 8));
-
-	spi_transmit_async((uint8_t)(w1));
-	spi_transmit_async((uint8_t)(w1 >> 8));
-
-	spi_transmit_async((uint8_t)(h1));
-	spi_transmit_async((uint8_t)(h1 >> 8));
-
-	spi_transmit_async((uint8_t)(options));
-	spi_transmit_async((uint8_t)(options >> 8));
-
-	spi_transmit_async((uint8_t)(val));
-	spi_transmit_async((uint8_t)(val >> 8));
-
-	spi_transmit_async((uint8_t)(range));
-	spi_transmit_async((uint8_t)(range >> 8));
-
-	spi_transmit_async(0x00); /* dummy byte for 4-byte alignment */
-	spi_transmit_async(0x00); /* dummy byte for 4-byte alignment */
-
-	EVE_inc_cmdoffset(16);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(x1));
+		spi_transmit_async((uint8_t)(x1 >> 8));
+
+		spi_transmit_async((uint8_t)(y1));
+		spi_transmit_async((uint8_t)(y1 >> 8));
+
+		spi_transmit_async((uint8_t)(w1));
+		spi_transmit_async((uint8_t)(w1 >> 8));
+
+		spi_transmit_async((uint8_t)(h1));
+		spi_transmit_async((uint8_t)(h1 >> 8));
+
+		spi_transmit_async((uint8_t)(options));
+		spi_transmit_async((uint8_t)(options >> 8));
+
+		spi_transmit_async((uint8_t)(val));
+		spi_transmit_async((uint8_t)(val >> 8));
+
+		spi_transmit_async((uint8_t)(range));
+		spi_transmit_async((uint8_t)(range >> 8));
+
+		spi_transmit_async(0x00); /* dummy byte for 4-byte alignment */
+		spi_transmit_async(0x00); /* dummy byte for 4-byte alignment */
+	}
+	else
+	{
+		spi_transmit((uint8_t)(x1));
+		spi_transmit((uint8_t)(x1 >> 8));
+
+		spi_transmit((uint8_t)(y1));
+		spi_transmit((uint8_t)(y1 >> 8));
+
+		spi_transmit((uint8_t)(w1));
+		spi_transmit((uint8_t)(w1 >> 8));
+
+		spi_transmit((uint8_t)(h1));
+		spi_transmit((uint8_t)(h1 >> 8));
+
+		spi_transmit((uint8_t)(options));
+		spi_transmit((uint8_t)(options >> 8));
+
+		spi_transmit((uint8_t)(val));
+		spi_transmit((uint8_t)(val >> 8));
+
+		spi_transmit((uint8_t)(range));
+		spi_transmit((uint8_t)(range >> 8));
+
+		spi_transmit(0x00); /* dummy byte for 4-byte alignment */
+		spi_transmit(0x00); /* dummy byte for 4-byte alignment */
+
 		EVE_cs_clear();
 	}
+
+	EVE_inc_cmdoffset(16);
 }
 
 
 void EVE_cmd_dial(int16_t x0, int16_t y0, int16_t r0, uint16_t options, uint16_t val)
 {
 	EVE_start_cmd(CMD_DIAL);
-
-	spi_transmit_async((uint8_t)(x0));
-	spi_transmit_async((uint8_t)(x0 >> 8));
-
-	spi_transmit_async((uint8_t)(y0));
-	spi_transmit_async((uint8_t)(y0 >> 8));
-
-	spi_transmit_async((uint8_t)(r0));
-	spi_transmit_async((uint8_t)(r0 >> 8));
-
-	spi_transmit_async((uint8_t)(options));
-	spi_transmit_async((uint8_t)(options >> 8));
-
-	spi_transmit_async((uint8_t)(val));
-	spi_transmit_async((uint8_t)(val >> 8));
-
-	spi_transmit_async(0);
-	spi_transmit_async(0);
-
-	EVE_inc_cmdoffset(12);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(x0));
+		spi_transmit_async((uint8_t)(x0 >> 8));
+
+		spi_transmit_async((uint8_t)(y0));
+		spi_transmit_async((uint8_t)(y0 >> 8));
+
+		spi_transmit_async((uint8_t)(r0));
+		spi_transmit_async((uint8_t)(r0 >> 8));
+
+		spi_transmit_async((uint8_t)(options));
+		spi_transmit_async((uint8_t)(options >> 8));
+
+		spi_transmit_async((uint8_t)(val));
+		spi_transmit_async((uint8_t)(val >> 8));
+
+		spi_transmit_async(0);
+		spi_transmit_async(0);
+	}
+	else
+	{
+		spi_transmit((uint8_t)(x0));
+		spi_transmit((uint8_t)(x0 >> 8));
+
+		spi_transmit((uint8_t)(y0));
+		spi_transmit((uint8_t)(y0 >> 8));
+
+		spi_transmit((uint8_t)(r0));
+		spi_transmit((uint8_t)(r0 >> 8));
+
+		spi_transmit((uint8_t)(options));
+		spi_transmit((uint8_t)(options >> 8));
+
+		spi_transmit((uint8_t)(val));
+		spi_transmit((uint8_t)(val >> 8));
+
+		spi_transmit(0);
+		spi_transmit(0);
+
 		EVE_cs_clear();
 	}
+	
+	EVE_inc_cmdoffset(12);
 }
 
 
 void EVE_cmd_toggle(int16_t x0, int16_t y0, int16_t w0, int16_t font, uint16_t options, uint16_t state, const char* text)
 {
 	EVE_start_cmd(CMD_TOGGLE);
+	
+	if(cmd_burst)
+	{
+		spi_transmit_async((uint8_t)(x0));
+		spi_transmit_async((uint8_t)(x0 >> 8));
 
-	spi_transmit_async((uint8_t)(x0));
-	spi_transmit_async((uint8_t)(x0 >> 8));
+		spi_transmit_async((uint8_t)(y0));
+		spi_transmit_async((uint8_t)(y0 >> 8));
 
-	spi_transmit_async((uint8_t)(y0));
-	spi_transmit_async((uint8_t)(y0 >> 8));
+		spi_transmit_async((uint8_t)(w0));
+		spi_transmit_async((uint8_t)(w0 >> 8));
 
-	spi_transmit_async((uint8_t)(w0));
-	spi_transmit_async((uint8_t)(w0 >> 8));
+		spi_transmit_async((uint8_t)(font));
+		spi_transmit_async((uint8_t)(font >> 8));
 
-	spi_transmit_async((uint8_t)(font));
-	spi_transmit_async((uint8_t)(font >> 8));
+		spi_transmit_async((uint8_t)(options));
+		spi_transmit_async((uint8_t)(options >> 8));
 
-	spi_transmit_async((uint8_t)(options));
-	spi_transmit_async((uint8_t)(options >> 8));
+		spi_transmit_async((uint8_t)(state));
+		spi_transmit_async((uint8_t)(state >> 8));
+	}
+	else
+	{
+		spi_transmit((uint8_t)(x0));
+		spi_transmit((uint8_t)(x0 >> 8));
 
-	spi_transmit_async((uint8_t)(state));
-	spi_transmit_async((uint8_t)(state >> 8));
+		spi_transmit((uint8_t)(y0));
+		spi_transmit((uint8_t)(y0 >> 8));
+
+		spi_transmit((uint8_t)(w0));
+		spi_transmit((uint8_t)(w0 >> 8));
+
+		spi_transmit((uint8_t)(font));
+		spi_transmit((uint8_t)(font >> 8));
+
+		spi_transmit((uint8_t)(options));
+		spi_transmit((uint8_t)(options >> 8));
+
+		spi_transmit((uint8_t)(state));
+		spi_transmit((uint8_t)(state >> 8));
+	}
 
 	EVE_inc_cmdoffset(12);
 	EVE_write_string(text);
@@ -1805,49 +2141,76 @@ void EVE_cmd_toggle(int16_t x0, int16_t y0, int16_t w0, int16_t font, uint16_t o
 void EVE_cmd_setbase(uint32_t base)
 {
 	EVE_start_cmd(CMD_SETBASE);
-
-	spi_transmit_async((uint8_t)(base));		/* send data low byte */
-	spi_transmit_async((uint8_t)(base >> 8));
-	spi_transmit_async((uint8_t)(base >> 16));
-	spi_transmit_async((uint8_t)(base >> 24));	/* send data high byte */
-
-	EVE_inc_cmdoffset(4);	/* update the command-ram pointer */
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(base));		/* send data low byte */
+		spi_transmit_async((uint8_t)(base >> 8));
+		spi_transmit_async((uint8_t)(base >> 16));
+		spi_transmit_async((uint8_t)(base >> 24));	/* send data high byte */
+	}
+	else
+	{
+		spi_transmit((uint8_t)(base));		/* send data low byte */
+		spi_transmit((uint8_t)(base >> 8));
+		spi_transmit((uint8_t)(base >> 16));
+		spi_transmit((uint8_t)(base >> 24));	/* send data high byte */
+
 		EVE_cs_clear();
 	}
+	
+	EVE_inc_cmdoffset(4);	/* update the command-ram pointer */
 }
 #endif
+
 
 #if defined (FT81X_ENABLE)
 void EVE_cmd_setbitmap(uint32_t addr, uint16_t fmt, uint16_t width, uint16_t height)
 {
 	EVE_start_cmd(CMD_SETBITMAP);
+	
+	if(cmd_burst)
+	{
+		spi_transmit_async((uint8_t)(addr));
+		spi_transmit_async((uint8_t)(addr >> 8));
+		spi_transmit_async((uint8_t)(addr >> 16));
+		spi_transmit_async((uint8_t)(addr >> 24));
 
-	spi_transmit_async((uint8_t)(addr));
-	spi_transmit_async((uint8_t)(addr >> 8));
-	spi_transmit_async((uint8_t)(addr >> 16));
-	spi_transmit_async((uint8_t)(addr >> 24));
+		spi_transmit_async((uint8_t)(fmt));
+		spi_transmit_async((uint8_t)(fmt>> 8));
 
-	spi_transmit_async((uint8_t)(fmt));
-	spi_transmit_async((uint8_t)(fmt>> 8));
+		spi_transmit_async((uint8_t)(width));
+		spi_transmit_async((uint8_t)(width >> 8));
 
-	spi_transmit_async((uint8_t)(width));
-	spi_transmit_async((uint8_t)(width >> 8));
+		spi_transmit_async((uint8_t)(height));
+		spi_transmit_async((uint8_t)(height >> 8));
 
-	spi_transmit_async((uint8_t)(height));
-	spi_transmit_async((uint8_t)(height >> 8));
+		spi_transmit_async(0);
+		spi_transmit_async(0);
+	}
+	else
+	{
+		spi_transmit((uint8_t)(addr));
+		spi_transmit((uint8_t)(addr >> 8));
+		spi_transmit((uint8_t)(addr >> 16));
+		spi_transmit((uint8_t)(addr >> 24));
 
-	spi_transmit_async(0);
-	spi_transmit_async(0);
+		spi_transmit((uint8_t)(fmt));
+		spi_transmit((uint8_t)(fmt>> 8));
+
+		spi_transmit((uint8_t)(width));
+		spi_transmit((uint8_t)(width >> 8));
+
+		spi_transmit((uint8_t)(height));
+		spi_transmit((uint8_t)(height >> 8));
+
+		spi_transmit(0);
+		spi_transmit(0);
+
+		EVE_cs_clear();
+	}	
 
 	EVE_inc_cmdoffset(12);
-
-	if(cmd_burst == 0)
-	{
-		EVE_cs_clear();
-	}
 }
 #endif
 
@@ -1855,53 +2218,85 @@ void EVE_cmd_setbitmap(uint32_t addr, uint16_t fmt, uint16_t width, uint16_t hei
 void EVE_cmd_number(int16_t x0, int16_t y0, int16_t font, uint16_t options, int32_t number)
 {
 	EVE_start_cmd(CMD_NUMBER);
-
-	spi_transmit_async((uint8_t)(x0));
-	spi_transmit_async((uint8_t)(x0 >> 8));
-
-	spi_transmit_async((uint8_t)(y0));
-	spi_transmit_async((uint8_t)(y0 >> 8));
-
-	spi_transmit_async((uint8_t)(font));
-	spi_transmit_async((uint8_t)(font >> 8));
-
-	spi_transmit_async((uint8_t)(options));
-	spi_transmit_async((uint8_t)(options >> 8));
-
-	spi_transmit_async((uint8_t)(number));
-	spi_transmit_async((uint8_t)(number >> 8));
-	spi_transmit_async((uint8_t)(number >> 16));
-	spi_transmit_async((uint8_t)(number >> 24));
-
-	EVE_inc_cmdoffset(12);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(x0));
+		spi_transmit_async((uint8_t)(x0 >> 8));
+
+		spi_transmit_async((uint8_t)(y0));
+		spi_transmit_async((uint8_t)(y0 >> 8));
+
+		spi_transmit_async((uint8_t)(font));
+		spi_transmit_async((uint8_t)(font >> 8));
+
+		spi_transmit_async((uint8_t)(options));
+		spi_transmit_async((uint8_t)(options >> 8));
+
+		spi_transmit_async((uint8_t)(number));
+		spi_transmit_async((uint8_t)(number >> 8));
+		spi_transmit_async((uint8_t)(number >> 16));
+		spi_transmit_async((uint8_t)(number >> 24));
+	}
+	else
+	{
+		spi_transmit((uint8_t)(x0));
+		spi_transmit((uint8_t)(x0 >> 8));
+
+		spi_transmit((uint8_t)(y0));
+		spi_transmit((uint8_t)(y0 >> 8));
+
+		spi_transmit((uint8_t)(font));
+		spi_transmit((uint8_t)(font >> 8));
+
+		spi_transmit((uint8_t)(options));
+		spi_transmit((uint8_t)(options >> 8));
+
+		spi_transmit((uint8_t)(number));
+		spi_transmit((uint8_t)(number >> 8));
+		spi_transmit((uint8_t)(number >> 16));
+		spi_transmit((uint8_t)(number >> 24));
+
 		EVE_cs_clear();
 	}
+	
+
+	EVE_inc_cmdoffset(12);
 }
 
 
 void EVE_cmd_append(uint32_t ptr, uint32_t num)
 {
 	EVE_start_cmd(CMD_APPEND);
-
-	spi_transmit_async((uint8_t)(ptr));
-	spi_transmit_async((uint8_t)(ptr >> 8));
-	spi_transmit_async((uint8_t)(ptr >> 16));
-	spi_transmit_async((uint8_t)(ptr >> 24));
-
-	spi_transmit_async((uint8_t)(num));
-	spi_transmit_async((uint8_t)(num >> 8));
-	spi_transmit_async((uint8_t)(num >> 16));
-	spi_transmit_async((uint8_t)(num >> 24));
-
-	EVE_inc_cmdoffset(8);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(ptr));
+		spi_transmit_async((uint8_t)(ptr >> 8));
+		spi_transmit_async((uint8_t)(ptr >> 16));
+		spi_transmit_async((uint8_t)(ptr >> 24));
+
+		spi_transmit_async((uint8_t)(num));
+		spi_transmit_async((uint8_t)(num >> 8));
+		spi_transmit_async((uint8_t)(num >> 16));
+		spi_transmit_async((uint8_t)(num >> 24));
+	}
+	else
+	{
+		spi_transmit((uint8_t)(ptr));
+		spi_transmit((uint8_t)(ptr >> 8));
+		spi_transmit((uint8_t)(ptr >> 16));
+		spi_transmit((uint8_t)(ptr >> 24));
+
+		spi_transmit((uint8_t)(num));
+		spi_transmit((uint8_t)(num >> 8));
+		spi_transmit((uint8_t)(num >> 16));
+		spi_transmit((uint8_t)(num >> 24));
+
 		EVE_cs_clear();
 	}
+
+	EVE_inc_cmdoffset(8);
 }
 
 
@@ -1910,64 +2305,95 @@ void EVE_cmd_append(uint32_t ptr, uint32_t num)
 void EVE_cmd_translate(int32_t tx, int32_t ty)
 {
 	EVE_start_cmd(CMD_TRANSLATE);
-
-	spi_transmit_async((uint8_t)(tx));
-	spi_transmit_async((uint8_t)(tx >> 8));
-	spi_transmit_async((uint8_t)(tx >> 16));
-	spi_transmit_async((uint8_t)(tx >> 24));
-
-	spi_transmit_async((uint8_t)(ty));
-	spi_transmit_async((uint8_t)(ty >> 8));
-	spi_transmit_async((uint8_t)(ty >> 16));
-	spi_transmit_async((uint8_t)(ty >> 24));
-
-	EVE_inc_cmdoffset(8);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(tx));
+		spi_transmit_async((uint8_t)(tx >> 8));
+		spi_transmit_async((uint8_t)(tx >> 16));
+		spi_transmit_async((uint8_t)(tx >> 24));
+
+		spi_transmit_async((uint8_t)(ty));
+		spi_transmit_async((uint8_t)(ty >> 8));
+		spi_transmit_async((uint8_t)(ty >> 16));
+		spi_transmit_async((uint8_t)(ty >> 24));
+	}
+	else
+	{
+		spi_transmit((uint8_t)(tx));
+		spi_transmit((uint8_t)(tx >> 8));
+		spi_transmit((uint8_t)(tx >> 16));
+		spi_transmit((uint8_t)(tx >> 24));
+
+		spi_transmit((uint8_t)(ty));
+		spi_transmit((uint8_t)(ty >> 8));
+		spi_transmit((uint8_t)(ty >> 16));
+		spi_transmit((uint8_t)(ty >> 24));
+
 		EVE_cs_clear();
 	}
+
+	EVE_inc_cmdoffset(8);
 }
 
 
 void EVE_cmd_scale(int32_t sx, int32_t sy)
 {
 	EVE_start_cmd(CMD_SCALE);
-
-	spi_transmit_async((uint8_t)(sx));
-	spi_transmit_async((uint8_t)(sx >> 8));
-	spi_transmit_async((uint8_t)(sx >> 16));
-	spi_transmit_async((uint8_t)(sx >> 24));
-
-	spi_transmit_async((uint8_t)(sy));
-	spi_transmit_async((uint8_t)(sy >> 8));
-	spi_transmit_async((uint8_t)(sy >> 16));
-	spi_transmit_async((uint8_t)(sy >> 24));
-
-	EVE_inc_cmdoffset(8);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(sx));
+		spi_transmit_async((uint8_t)(sx >> 8));
+		spi_transmit_async((uint8_t)(sx >> 16));
+		spi_transmit_async((uint8_t)(sx >> 24));
+
+		spi_transmit_async((uint8_t)(sy));
+		spi_transmit_async((uint8_t)(sy >> 8));
+		spi_transmit_async((uint8_t)(sy >> 16));
+		spi_transmit_async((uint8_t)(sy >> 24));
+	}
+	else
+	{
+		spi_transmit((uint8_t)(sx));
+		spi_transmit((uint8_t)(sx >> 8));
+		spi_transmit((uint8_t)(sx >> 16));
+		spi_transmit((uint8_t)(sx >> 24));
+
+		spi_transmit((uint8_t)(sy));
+		spi_transmit((uint8_t)(sy >> 8));
+		spi_transmit((uint8_t)(sy >> 16));
+		spi_transmit((uint8_t)(sy >> 24));
+
 		EVE_cs_clear();
 	}
+	
+	EVE_inc_cmdoffset(8);
 }
 
 
 void EVE_cmd_rotate(int32_t ang)
 {
 	EVE_start_cmd(CMD_ROTATE);
-
-	spi_transmit_async((uint8_t)(ang));
-	spi_transmit_async((uint8_t)(ang >> 8));
-	spi_transmit_async((uint8_t)(ang >> 16));
-	spi_transmit_async((uint8_t)(ang >> 24));
-
-	EVE_inc_cmdoffset(4);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(ang));
+		spi_transmit_async((uint8_t)(ang >> 8));
+		spi_transmit_async((uint8_t)(ang >> 16));
+		spi_transmit_async((uint8_t)(ang >> 24));
+	}
+	else
+	{
+		spi_transmit((uint8_t)(ang));
+		spi_transmit((uint8_t)(ang >> 8));
+		spi_transmit((uint8_t)(ang >> 16));
+		spi_transmit((uint8_t)(ang >> 24));
+
 		EVE_cs_clear();
 	}
+	
+	EVE_inc_cmdoffset(4);
 }
 
 
@@ -1980,43 +2406,75 @@ void EVE_cmd_rotate(int32_t ang)
 void EVE_cmd_getmatrix(int32_t a, int32_t b, int32_t c, int32_t d, int32_t e, int32_t f)
 {
 	EVE_start_cmd(CMD_SETMATRIX);
-
-	spi_transmit_async((uint8_t)(a));
-	spi_transmit_async((uint8_t)(a >> 8));
-	spi_transmit_async((uint8_t)(a >> 16));
-	spi_transmit_async((uint8_t)(a >> 24));
-
-	spi_transmit_async((uint8_t)(b));
-	spi_transmit_async((uint8_t)(b >> 8));
-	spi_transmit_async((uint8_t)(b >> 16));
-	spi_transmit_async((uint8_t)(b >> 24));
-
-	spi_transmit_async((uint8_t)(c));
-	spi_transmit_async((uint8_t)(c >> 8));
-	spi_transmit_async((uint8_t)(c >> 16));
-	spi_transmit_async((uint8_t)(c >> 24));
-
-	spi_transmit_async((uint8_t)(d));
-	spi_transmit_async((uint8_t)(d >> 8));
-	spi_transmit_async((uint8_t)(d >> 16));
-	spi_transmit_async((uint8_t)(d >> 24));
-
-	spi_transmit_async((uint8_t)(e));
-	spi_transmit_async((uint8_t)(e >> 8));
-	spi_transmit_async((uint8_t)(e >> 16));
-	spi_transmit_async((uint8_t)(e >> 24));
-
-	spi_transmit_async((uint8_t)(f));
-	spi_transmit_async((uint8_t)(f >> 8));
-	spi_transmit_async((uint8_t)(f >> 16));
-	spi_transmit_async((uint8_t)(f >> 24));
-
-	EVE_inc_cmdoffset(24);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(a));
+		spi_transmit_async((uint8_t)(a >> 8));
+		spi_transmit_async((uint8_t)(a >> 16));
+		spi_transmit_async((uint8_t)(a >> 24));
+
+		spi_transmit_async((uint8_t)(b));
+		spi_transmit_async((uint8_t)(b >> 8));
+		spi_transmit_async((uint8_t)(b >> 16));
+		spi_transmit_async((uint8_t)(b >> 24));
+
+		spi_transmit_async((uint8_t)(c));
+		spi_transmit_async((uint8_t)(c >> 8));
+		spi_transmit_async((uint8_t)(c >> 16));
+		spi_transmit_async((uint8_t)(c >> 24));
+
+		spi_transmit_async((uint8_t)(d));
+		spi_transmit_async((uint8_t)(d >> 8));
+		spi_transmit_async((uint8_t)(d >> 16));
+		spi_transmit_async((uint8_t)(d >> 24));
+
+		spi_transmit_async((uint8_t)(e));
+		spi_transmit_async((uint8_t)(e >> 8));
+		spi_transmit_async((uint8_t)(e >> 16));
+		spi_transmit_async((uint8_t)(e >> 24));
+
+		spi_transmit_async((uint8_t)(f));
+		spi_transmit_async((uint8_t)(f >> 8));
+		spi_transmit_async((uint8_t)(f >> 16));
+		spi_transmit_async((uint8_t)(f >> 24));
+	}
+	else
+	{
+		spi_transmit((uint8_t)(a));
+		spi_transmit((uint8_t)(a >> 8));
+		spi_transmit((uint8_t)(a >> 16));
+		spi_transmit((uint8_t)(a >> 24));
+
+		spi_transmit((uint8_t)(b));
+		spi_transmit((uint8_t)(b >> 8));
+		spi_transmit((uint8_t)(b >> 16));
+		spi_transmit((uint8_t)(b >> 24));
+
+		spi_transmit((uint8_t)(c));
+		spi_transmit((uint8_t)(c >> 8));
+		spi_transmit((uint8_t)(c >> 16));
+		spi_transmit((uint8_t)(c >> 24));
+
+		spi_transmit((uint8_t)(d));
+		spi_transmit((uint8_t)(d >> 8));
+		spi_transmit((uint8_t)(d >> 16));
+		spi_transmit((uint8_t)(d >> 24));
+
+		spi_transmit((uint8_t)(e));
+		spi_transmit((uint8_t)(e >> 8));
+		spi_transmit((uint8_t)(e >> 16));
+		spi_transmit((uint8_t)(e >> 24));
+
+		spi_transmit((uint8_t)(f));
+		spi_transmit((uint8_t)(f >> 8));
+		spi_transmit((uint8_t)(f >> 16));
+		spi_transmit((uint8_t)(f >> 24));
+
 		EVE_cs_clear();
 	}
+	
+	EVE_inc_cmdoffset(24);
 }
 
 
@@ -2025,18 +2483,25 @@ void EVE_cmd_getmatrix(int32_t a, int32_t b, int32_t c, int32_t d, int32_t e, in
 void EVE_cmd_calibrate(void)
 {
 	EVE_start_cmd(CMD_CALIBRATE);
-
-	spi_transmit_async(0);
-	spi_transmit_async(0);
-	spi_transmit_async(0);
-	spi_transmit_async(0);
-
-	EVE_inc_cmdoffset(4);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		spi_transmit_async(0);
+		spi_transmit_async(0);
+		spi_transmit_async(0);
+		spi_transmit_async(0);
+	}
+	else
+	{
+		spi_transmit(0);
+		spi_transmit(0);
+		spi_transmit(0);
+		spi_transmit(0);
+
 		EVE_cs_clear();
 	}
+
+	EVE_inc_cmdoffset(4);
 }
 
 
@@ -2044,23 +2509,35 @@ void EVE_cmd_calibrate(void)
 void EVE_cmd_romfont(uint32_t font, uint32_t romslot)
 {
 	EVE_start_cmd(CMD_ROMFONT);
-
-	spi_transmit_async((uint8_t)(font));
-	spi_transmit_async((uint8_t)(font >> 8));
-	spi_transmit_async(0x00);
-	spi_transmit_async(0x00);
-
-	spi_transmit_async((uint8_t)(romslot));
-	spi_transmit_async((uint8_t)(romslot >> 8));
-	spi_transmit_async(0x00);
-	spi_transmit_async(0x00);
-
-	EVE_inc_cmdoffset(8);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(font));
+		spi_transmit_async((uint8_t)(font >> 8));
+		spi_transmit_async(0x00);
+		spi_transmit_async(0x00);
+
+		spi_transmit_async((uint8_t)(romslot));
+		spi_transmit_async((uint8_t)(romslot >> 8));
+		spi_transmit_async(0x00);
+		spi_transmit_async(0x00);
+	}
+	else
+	{
+		spi_transmit((uint8_t)(font));
+		spi_transmit((uint8_t)(font >> 8));
+		spi_transmit(0x00);
+		spi_transmit(0x00);
+
+		spi_transmit((uint8_t)(romslot));
+		spi_transmit((uint8_t)(romslot >> 8));
+		spi_transmit(0x00);
+		spi_transmit(0x00);
+
 		EVE_cs_clear();
 	}
+
+	EVE_inc_cmdoffset(8);
 }
 #endif
 
@@ -2069,18 +2546,25 @@ void EVE_cmd_romfont(uint32_t font, uint32_t romslot)
 void EVE_cmd_setscratch(uint32_t handle)
 {
 	EVE_start_cmd(CMD_SETSCRATCH);
-
-	spi_transmit_async((uint8_t)(handle));
-	spi_transmit_async((uint8_t)(handle >> 8));
-	spi_transmit_async((uint8_t)(handle >> 16));
-	spi_transmit_async((uint8_t)(handle >> 24));
-
-	EVE_inc_cmdoffset(4);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(handle));
+		spi_transmit_async((uint8_t)(handle >> 8));
+		spi_transmit_async((uint8_t)(handle >> 16));
+		spi_transmit_async((uint8_t)(handle >> 24));
+	}
+	else
+	{
+		spi_transmit((uint8_t)(handle));
+		spi_transmit((uint8_t)(handle >> 8));
+		spi_transmit((uint8_t)(handle >> 16));
+		spi_transmit((uint8_t)(handle >> 24));
+
 		EVE_cs_clear();
 	}
+
+	EVE_inc_cmdoffset(4);
 }
 #endif
 
@@ -2088,61 +2572,100 @@ void EVE_cmd_setscratch(uint32_t handle)
 void EVE_cmd_sketch(int16_t x0, int16_t y0, uint16_t w0, uint16_t h0, uint32_t ptr, uint16_t format)
 {
 	EVE_start_cmd(CMD_SKETCH);
-
-	spi_transmit_async((uint8_t)(x0));
-	spi_transmit_async((uint8_t)(x0 >> 8));
-
-	spi_transmit_async((uint8_t)(y0));
-	spi_transmit_async((uint8_t)(y0 >> 8));
-
-	spi_transmit_async((uint8_t)(w0));
-	spi_transmit_async((uint8_t)(w0 >> 8));
-
-	spi_transmit_async((uint8_t)(h0));
-	spi_transmit_async((uint8_t)(h0 >> 8));
-
-	spi_transmit_async((uint8_t)(ptr));
-	spi_transmit_async((uint8_t)(ptr >> 8));
-	spi_transmit_async((uint8_t)(ptr >> 16));
-	spi_transmit_async((uint8_t)(ptr >> 24));
-
-	spi_transmit_async((uint8_t)(format));
-	spi_transmit_async((uint8_t)(format >> 8));
-
-	spi_transmit_async(0);
-	spi_transmit_async(0);
-
-	EVE_inc_cmdoffset(16);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(x0));
+		spi_transmit_async((uint8_t)(x0 >> 8));
+
+		spi_transmit_async((uint8_t)(y0));
+		spi_transmit_async((uint8_t)(y0 >> 8));
+
+		spi_transmit_async((uint8_t)(w0));
+		spi_transmit_async((uint8_t)(w0 >> 8));
+
+		spi_transmit_async((uint8_t)(h0));
+		spi_transmit_async((uint8_t)(h0 >> 8));
+
+		spi_transmit_async((uint8_t)(ptr));
+		spi_transmit_async((uint8_t)(ptr >> 8));
+		spi_transmit_async((uint8_t)(ptr >> 16));
+		spi_transmit_async((uint8_t)(ptr >> 24));
+
+		spi_transmit_async((uint8_t)(format));
+		spi_transmit_async((uint8_t)(format >> 8));
+
+		spi_transmit_async(0);
+		spi_transmit_async(0);
+	}
+	else
+	{
+		spi_transmit((uint8_t)(x0));
+		spi_transmit((uint8_t)(x0 >> 8));
+
+		spi_transmit((uint8_t)(y0));
+		spi_transmit((uint8_t)(y0 >> 8));
+
+		spi_transmit((uint8_t)(w0));
+		spi_transmit((uint8_t)(w0 >> 8));
+
+		spi_transmit((uint8_t)(h0));
+		spi_transmit((uint8_t)(h0 >> 8));
+
+		spi_transmit((uint8_t)(ptr));
+		spi_transmit((uint8_t)(ptr >> 8));
+		spi_transmit((uint8_t)(ptr >> 16));
+		spi_transmit((uint8_t)(ptr >> 24));
+
+		spi_transmit((uint8_t)(format));
+		spi_transmit((uint8_t)(format >> 8));
+
+		spi_transmit(0);
+		spi_transmit(0);
+
 		EVE_cs_clear();
 	}
+
+	EVE_inc_cmdoffset(16);
 }
 
 
 void EVE_cmd_spinner(int16_t x0, int16_t y0, uint16_t style, uint16_t scale)
 {
 	EVE_start_cmd(CMD_SPINNER);
-
-	spi_transmit_async((uint8_t)(x0));
-	spi_transmit_async((uint8_t)(x0 >> 8));
-
-	spi_transmit_async((uint8_t)(y0));
-	spi_transmit_async((uint8_t)(y0 >> 8));
-
-	spi_transmit_async((uint8_t)(style));
-	spi_transmit_async((uint8_t)(style >> 8));
-
-	spi_transmit_async((uint8_t)(scale));
-	spi_transmit_async((uint8_t)(scale >> 8));
-
-	EVE_inc_cmdoffset(8);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(x0));
+		spi_transmit_async((uint8_t)(x0 >> 8));
+
+		spi_transmit_async((uint8_t)(y0));
+		spi_transmit_async((uint8_t)(y0 >> 8));
+
+		spi_transmit_async((uint8_t)(style));
+		spi_transmit_async((uint8_t)(style >> 8));
+
+		spi_transmit_async((uint8_t)(scale));
+		spi_transmit_async((uint8_t)(scale >> 8));
+	}
+	else
+	{
+		spi_transmit((uint8_t)(x0));
+		spi_transmit((uint8_t)(x0 >> 8));
+
+		spi_transmit((uint8_t)(y0));
+		spi_transmit((uint8_t)(y0 >> 8));
+
+		spi_transmit((uint8_t)(style));
+		spi_transmit((uint8_t)(style >> 8));
+
+		spi_transmit((uint8_t)(scale));
+		spi_transmit((uint8_t)(scale >> 8));
+
 		EVE_cs_clear();
 	}
+
+	EVE_inc_cmdoffset(8);
 }
 
 
@@ -2154,30 +2677,49 @@ void EVE_cmd_point(int16_t x0, int16_t y0, uint16_t size)
 	uint32_t calc;
 
 	EVE_start_cmd((DL_BEGIN | EVE_POINTS));
-
-	calc = POINT_SIZE(size*16);
-	spi_transmit_async((uint8_t)(calc));
-	spi_transmit_async((uint8_t)(calc >> 8));
-	spi_transmit_async((uint8_t)(calc >> 16));
-	spi_transmit_async((uint8_t)(calc >> 24));
-
-	calc = VERTEX2F(x0 * 16, y0 * 16);
-	spi_transmit_async((uint8_t)(calc));
-	spi_transmit_async((uint8_t)(calc >> 8));
-	spi_transmit_async((uint8_t)(calc >> 16));
-	spi_transmit_async((uint8_t)(calc >> 24));
-
-	spi_transmit_async((uint8_t)(DL_END));
-	spi_transmit_async((uint8_t)(DL_END >> 8));
-	spi_transmit_async((uint8_t)(DL_END >> 16));
-	spi_transmit_async((uint8_t)(DL_END >> 24));
-
-	EVE_inc_cmdoffset(12);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		calc = POINT_SIZE(size*16);
+		spi_transmit_async((uint8_t)(calc));
+		spi_transmit_async((uint8_t)(calc >> 8));
+		spi_transmit_async((uint8_t)(calc >> 16));
+		spi_transmit_async((uint8_t)(calc >> 24));
+
+		calc = VERTEX2F(x0 * 16, y0 * 16);
+		spi_transmit_async((uint8_t)(calc));
+		spi_transmit_async((uint8_t)(calc >> 8));
+		spi_transmit_async((uint8_t)(calc >> 16));
+		spi_transmit_async((uint8_t)(calc >> 24));
+
+		spi_transmit_async((uint8_t)(DL_END));
+		spi_transmit_async((uint8_t)(DL_END >> 8));
+		spi_transmit_async((uint8_t)(DL_END >> 16));
+		spi_transmit_async((uint8_t)(DL_END >> 24));
+	}
+	else
+	{
+		calc = POINT_SIZE(size*16);
+		spi_transmit((uint8_t)(calc));
+		spi_transmit((uint8_t)(calc >> 8));
+		spi_transmit((uint8_t)(calc >> 16));
+		spi_transmit((uint8_t)(calc >> 24));
+
+		calc = VERTEX2F(x0 * 16, y0 * 16);
+		spi_transmit((uint8_t)(calc));
+		spi_transmit((uint8_t)(calc >> 8));
+		spi_transmit((uint8_t)(calc >> 16));
+		spi_transmit((uint8_t)(calc >> 24));
+
+		spi_transmit((uint8_t)(DL_END));
+		spi_transmit((uint8_t)(DL_END >> 8));
+		spi_transmit((uint8_t)(DL_END >> 16));
+		spi_transmit((uint8_t)(DL_END >> 24));
+
 		EVE_cs_clear();
 	}
+
+	EVE_inc_cmdoffset(12);
 }
 
 
@@ -2186,36 +2728,61 @@ void EVE_cmd_line(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t width
 	uint32_t calc;
 
 	EVE_start_cmd((DL_BEGIN | EVE_LINES));
-
-	calc = LINE_WIDTH(width * 16);
-	spi_transmit_async((uint8_t)(calc));
-	spi_transmit_async((uint8_t)(calc >> 8));
-	spi_transmit_async((uint8_t)(calc >> 16));
-	spi_transmit_async((uint8_t)(calc >> 24));
-
-	calc = VERTEX2F(x0 * 16, y0 * 16);
-	spi_transmit_async((uint8_t)(calc));
-	spi_transmit_async((uint8_t)(calc >> 8));
-	spi_transmit_async((uint8_t)(calc >> 16));
-	spi_transmit_async((uint8_t)(calc >> 24));
-
-	calc = VERTEX2F(x1 * 16, y1 * 16);
-	spi_transmit_async((uint8_t)(calc));
-	spi_transmit_async((uint8_t)(calc >> 8));
-	spi_transmit_async((uint8_t)(calc >> 16));
-	spi_transmit_async((uint8_t)(calc >> 24));
-
-	spi_transmit_async((uint8_t)(DL_END));
-	spi_transmit_async((uint8_t)(DL_END >> 8));
-	spi_transmit_async((uint8_t)(DL_END >> 16));
-	spi_transmit_async((uint8_t)(DL_END >> 24));
-
-	EVE_inc_cmdoffset(16);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		calc = LINE_WIDTH(width * 16);
+		spi_transmit_async((uint8_t)(calc));
+		spi_transmit_async((uint8_t)(calc >> 8));
+		spi_transmit_async((uint8_t)(calc >> 16));
+		spi_transmit_async((uint8_t)(calc >> 24));
+
+		calc = VERTEX2F(x0 * 16, y0 * 16);
+		spi_transmit_async((uint8_t)(calc));
+		spi_transmit_async((uint8_t)(calc >> 8));
+		spi_transmit_async((uint8_t)(calc >> 16));
+		spi_transmit_async((uint8_t)(calc >> 24));
+
+		calc = VERTEX2F(x1 * 16, y1 * 16);
+		spi_transmit_async((uint8_t)(calc));
+		spi_transmit_async((uint8_t)(calc >> 8));
+		spi_transmit_async((uint8_t)(calc >> 16));
+		spi_transmit_async((uint8_t)(calc >> 24));
+
+		spi_transmit_async((uint8_t)(DL_END));
+		spi_transmit_async((uint8_t)(DL_END >> 8));
+		spi_transmit_async((uint8_t)(DL_END >> 16));
+		spi_transmit_async((uint8_t)(DL_END >> 24));
+	}
+	else
+	{
+		calc = LINE_WIDTH(width * 16);
+		spi_transmit((uint8_t)(calc));
+		spi_transmit((uint8_t)(calc >> 8));
+		spi_transmit((uint8_t)(calc >> 16));
+		spi_transmit((uint8_t)(calc >> 24));
+
+		calc = VERTEX2F(x0 * 16, y0 * 16);
+		spi_transmit((uint8_t)(calc));
+		spi_transmit((uint8_t)(calc >> 8));
+		spi_transmit((uint8_t)(calc >> 16));
+		spi_transmit((uint8_t)(calc >> 24));
+
+		calc = VERTEX2F(x1 * 16, y1 * 16);
+		spi_transmit((uint8_t)(calc));
+		spi_transmit((uint8_t)(calc >> 8));
+		spi_transmit((uint8_t)(calc >> 16));
+		spi_transmit((uint8_t)(calc >> 24));
+
+		spi_transmit((uint8_t)(DL_END));
+		spi_transmit((uint8_t)(DL_END >> 8));
+		spi_transmit((uint8_t)(DL_END >> 16));
+		spi_transmit((uint8_t)(DL_END >> 24));
+
 		EVE_cs_clear();
 	}
+
+	EVE_inc_cmdoffset(16);
 }
 
 
@@ -2224,34 +2791,59 @@ void EVE_cmd_rect(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t corne
 	uint32_t calc;
 
 	EVE_start_cmd((DL_BEGIN | EVE_RECTS));
-
-	calc = LINE_WIDTH(corner * 16);
-	spi_transmit_async((uint8_t)(calc));
-	spi_transmit_async((uint8_t)(calc >> 8));
-	spi_transmit_async((uint8_t)(calc >> 16));
-	spi_transmit_async((uint8_t)(calc >> 24));
-
-	calc = VERTEX2F(x0 * 16, y0 * 16);
-	spi_transmit_async((uint8_t)(calc));
-	spi_transmit_async((uint8_t)(calc >> 8));
-	spi_transmit_async((uint8_t)(calc >> 16));
-	spi_transmit_async((uint8_t)(calc >> 24));
-
-	calc = VERTEX2F(x1 * 16, y1 * 16);
-	spi_transmit_async((uint8_t)(calc));
-	spi_transmit_async((uint8_t)(calc >> 8));
-	spi_transmit_async((uint8_t)(calc >> 16));
-	spi_transmit_async((uint8_t)(calc >> 24));
-
-	spi_transmit_async((uint8_t)(DL_END));
-	spi_transmit_async((uint8_t)(DL_END >> 8));
-	spi_transmit_async((uint8_t)(DL_END >> 16));
-	spi_transmit_async((uint8_t)(DL_END >> 24));
-
-	EVE_inc_cmdoffset(16);
-
-	if(cmd_burst == 0)
+	
+	if(cmd_burst)
 	{
+		calc = LINE_WIDTH(corner * 16);
+		spi_transmit_async((uint8_t)(calc));
+		spi_transmit_async((uint8_t)(calc >> 8));
+		spi_transmit_async((uint8_t)(calc >> 16));
+		spi_transmit_async((uint8_t)(calc >> 24));
+
+		calc = VERTEX2F(x0 * 16, y0 * 16);
+		spi_transmit_async((uint8_t)(calc));
+		spi_transmit_async((uint8_t)(calc >> 8));
+		spi_transmit_async((uint8_t)(calc >> 16));
+		spi_transmit_async((uint8_t)(calc >> 24));
+
+		calc = VERTEX2F(x1 * 16, y1 * 16);
+		spi_transmit_async((uint8_t)(calc));
+		spi_transmit_async((uint8_t)(calc >> 8));
+		spi_transmit_async((uint8_t)(calc >> 16));
+		spi_transmit_async((uint8_t)(calc >> 24));
+
+		spi_transmit_async((uint8_t)(DL_END));
+		spi_transmit_async((uint8_t)(DL_END >> 8));
+		spi_transmit_async((uint8_t)(DL_END >> 16));
+		spi_transmit_async((uint8_t)(DL_END >> 24));
+	}
+	else
+	{
+		calc = LINE_WIDTH(corner * 16);
+		spi_transmit((uint8_t)(calc));
+		spi_transmit((uint8_t)(calc >> 8));
+		spi_transmit((uint8_t)(calc >> 16));
+		spi_transmit((uint8_t)(calc >> 24));
+
+		calc = VERTEX2F(x0 * 16, y0 * 16);
+		spi_transmit((uint8_t)(calc));
+		spi_transmit((uint8_t)(calc >> 8));
+		spi_transmit((uint8_t)(calc >> 16));
+		spi_transmit((uint8_t)(calc >> 24));
+
+		calc = VERTEX2F(x1 * 16, y1 * 16);
+		spi_transmit((uint8_t)(calc));
+		spi_transmit((uint8_t)(calc >> 8));
+		spi_transmit((uint8_t)(calc >> 16));
+		spi_transmit((uint8_t)(calc >> 24));
+
+		spi_transmit((uint8_t)(DL_END));
+		spi_transmit((uint8_t)(DL_END >> 8));
+		spi_transmit((uint8_t)(DL_END >> 16));
+		spi_transmit((uint8_t)(DL_END >> 24));
+
 		EVE_cs_clear();
 	}
+
+	EVE_inc_cmdoffset(16);
 }

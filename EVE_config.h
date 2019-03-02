@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs and some pre-defined colors
 @version 4.0
-@date    2018-12-26
+@date    2019-03-01
 @author  Rudolph Riedel
 
 @section History
@@ -94,6 +94,8 @@
 - added a fictitious BT81x entry under the made-up name EVE_EVE3_70G, just to see the project compile with additional BT81x includes and functions
 - still 4.0 for EVE itself, switched to hardware-SPI on SAMC21
 - minor maintenance
+- added DMA to SAMC21 branch
+- started testing things with a BT816
 
 */
 
@@ -133,9 +135,10 @@
 	#define EVE_NHD_50
 	#define EVE_NHD_70
 	#define EVE_ADAM101
+	#define EVE3_43
 #endif
 
-#define EVE_EVE2_35G
+#define EVE3_43
 
 
 /* While the following lines make things a lot easier like automatically compiling the code for the platform you are compiling for, */
@@ -411,6 +414,12 @@
 
 		#include "sam.h"
 
+		#define EVE_DMA
+
+		#if defined (EVE_DMA)
+		#include "EVE_target.h"
+		#endif
+
 		static inline void DELAY_MS(uint16_t val)
 		{
 			uint16_t counter;
@@ -419,7 +428,7 @@
 			{
 				for(counter=0; counter < 8000;counter++) // ~1ms at 48MHz Core-Clock
 				{
-					asm volatile ("nop");
+					__asm__ volatile ("nop");
 				}
 				val--;
 			}
@@ -447,12 +456,16 @@
 
 		static inline void spi_transmit_async(uint8_t data)
 		{
-			uint8_t dummy;
+			#if defined (EVE_DMA)
+				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+			#else
+				uint8_t dummy;
 			
-			REG_SERCOM0_SPI_DATA = data;
-			while((REG_SERCOM0_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
-			dummy = REG_SERCOM0_SPI_DATA;
-			dummy = dummy;
+				REG_SERCOM0_SPI_DATA = data;
+				while((REG_SERCOM0_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
+				dummy = REG_SERCOM0_SPI_DATA;
+				dummy = dummy;
+			#endif
 		}
 
 		static inline void spi_transmit(uint8_t data)
@@ -572,6 +585,14 @@
 #define EVE_EVE2_70G	/* trigger including the setup for the EVE2_70G, assuming the same panel is used and that FT81x is a subset of BT81x */
 #define BT81X_ENABLE
 #endif
+
+/* just annother test setup */ 
+#if defined (EVE3_43)
+#define EVE_EVE2_43
+#define EVE_HAS_CRYSTAL
+#define BT81X_ENABLE
+#endif
+
 
 
 /* some test setup */
