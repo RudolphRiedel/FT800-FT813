@@ -19,14 +19,14 @@ I have used it so far with:
 - Arduino, Uno, mini-pro, ESP8266
 - Renesas F1L RH850
 - Infineon Aurix TC222
-- ATSAMC21E18A
+- ATSAMC21E18A (DMA)
+- ATSAME51J19A
 
 I have reports of successfully using it with:
 
 - ATSAMV70
 - ATSAMD20
 - ATSAME4
-- ATSAME51J19A
 - STM32
 - some PICs
 - ESP32
