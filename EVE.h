@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 4.0
-@date    2019-01-27
+@date    2019-03-25
 @author  Rudolph Riedel
 
 @section History
@@ -46,7 +46,7 @@
 - started to add specific BT81x defines
 - minor maintenance
 - changed OPT_FLASH to EVE_OPT_FLASH and OPT_FORMAT to EVE_OPT_FORMAT for consistency
-
+- added EVE_OPT_FILL which has been left out of the documentation for the BT81x so far
 */
 
 #include "EVE_config.h"
@@ -391,7 +391,6 @@
 #define CMD_EXECUTE				0xFFFFFF07
 #define CMD_GETPOINT			0xFFFFFF08
 #define CMD_TOUCH_TRANSFORM		0xFFFFFF20
-#define CMD_BITMAP_TRANSFORM	0xFFFFFF21
 #endif
 
 
@@ -460,15 +459,17 @@
 #define EVE_COMPRESSED_RGBA_ASTC_12x12_KHR 37821UL
 
 
-#define EVE_RAM_ERR_REPORT           0x309800UL // max 128 bytes null terminated string
-#define EVE_RAM_FLASH                0x800000UL
-#define EVE_RAM_FLASH_POSTBLOB       0x801000UL
+#define EVE_RAM_ERR_REPORT      0x309800UL /* max 128 bytes null terminated string */
+#define EVE_RAM_FLASH           0x800000UL
+#define EVE_RAM_FLASH_POSTBLOB  0x801000UL
 
 #define EVE_OPT_FLASH  64UL
 #define EVE_OPT_FORMAT 4096UL
+#define EVE_OPT_FILL   8192UL
 
 
 /* additional commands for BT81x */
+#define CMD_BITMAP_TRANSFORM 0xFFFFFF21
 #define CMD_SYNC             0xFFFFFF42		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_SYNC) */
 #define CMD_FLASHERASE       0xFFFFFF44		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHERASE) */
 #define CMD_FLASHWRITE       0xFFFFFF45
@@ -494,6 +495,15 @@
 #define CMD_APPENDF          0xFFFFFF59
 #define CMD_ANIMFRAME        0xFFFFFF5A
 #define CMD_VIDEOSTARTF      0xFFFFFF5F		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_VIDEOSTARTF) */
+
+#if 0
+/* some undocumented commands for BT81x */
+#define CMD_NOP              0xFFFFFF5B
+#define CMD_SHA1             0xFFFFFF5C
+#define CMD_HMAC             0xFFFFFF5D
+#define CMD_LAST_            0xFFFFFF5E
+
+#endif
 
 
 /* additional registers for BT81x */
@@ -564,7 +574,6 @@
 #define CMD_CSKETCH				0xFFFFFF35
 #define CMD_INT_RAMSHARED		0xFFFFFF3D
 #define CMD_INT_SWLOADIMAGE		0xFFFFFF3E
-#define CMD_SYNC				0xFFFFFF42
 #endif
 
 
