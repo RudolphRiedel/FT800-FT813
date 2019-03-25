@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs and some pre-defined colors
 @version 4.0
-@date    2019-03-01
+@date    2019-03-24
 @author  Rudolph Riedel
 
 @section History
@@ -96,6 +96,7 @@
 - minor maintenance
 - added DMA to SAMC21 branch
 - started testing things with a BT816
+- added a block for the SAME51J18A
 
 */
 
@@ -490,7 +491,90 @@
 			return *data;
 		}
 
-		#endif /* __SAMC21E18A__ */
+		#endif /* __SAMC21J18A__ */
+
+		#if defined (__SAME51J19A__)
+
+		#include "sam.h"
+
+//		#define EVE_DMA
+
+		#if defined (EVE_DMA)
+			#include "EVE_target.h"
+		#endif
+
+		static inline void DELAY_MS(uint16_t val)
+		{
+			uint16_t counter;
+
+			while(val > 0)
+			{
+				for(counter=0; counter < 8800;counter++) /* ~1ms at 120MHz Core-Clock, according to my Logic-Analyzer */
+				{
+					__asm__ volatile ("nop");
+				}
+				val--;
+			}
+		}
+
+		static inline void EVE_pdn_set(void)
+		{
+			REG_PORT_OUTCLR1 = PORT_PB31;
+		}
+
+		static inline void EVE_pdn_clear(void)
+		{
+			REG_PORT_OUTSET1 = PORT_PB31;
+		}
+
+		static inline void EVE_cs_set(void)
+		{
+			REG_PORT_OUTCLR1 = PORT_PB01;
+		}
+
+		static inline void EVE_cs_clear(void)
+		{
+			REG_PORT_OUTSET1 = PORT_PB01;
+		}
+
+		static inline void spi_transmit_async(uint8_t data)
+		{
+			#if defined (EVE_DMA)
+				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+			#else
+				uint8_t dummy;
+			
+				REG_SERCOM5_SPI_DATA = data;
+				while((REG_SERCOM5_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
+				dummy = REG_SERCOM5_SPI_DATA;
+				dummy = dummy;
+			#endif
+		}
+
+		static inline void spi_transmit(uint8_t data)
+		{
+			uint8_t dummy;
+			
+			REG_SERCOM5_SPI_DATA = data;
+			while((REG_SERCOM5_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
+			dummy = REG_SERCOM5_SPI_DATA;
+			dummy = dummy;
+		}
+
+		static inline uint8_t spi_receive(uint8_t data)
+		{
+			REG_SERCOM5_SPI_DATA = data;
+			while((REG_SERCOM5_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
+			return REG_SERCOM5_SPI_DATA;
+		}
+
+		static inline uint8_t fetch_flash_byte(const uint8_t *data)
+		{
+			return *data;
+		}
+
+		#endif /* __SAME51J19A__ */
+
 
 	#endif
 #endif

@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   Contains FT8xx Function Prototypes
 @version 4.0
-@date    2019-01-25
+@date    2019-03-25
 @author  Rudolph Riedel
 
 @section History
@@ -61,6 +61,8 @@
 - added EVE_cmd_flashsource()
 - added prototype for EVE_init_flash() - not functional yet
 - added protoypes for EVE_cmd_flashwrite(), EVE_cmd_flashread(), EVE_cmd_flashupdate(), EVE_cmd_flashfast(), EVE_cmd_flashspitx() and EVE_cmd_flashspirx()
+- added prototypes for EVE_cmd_inflate2(), EVE_cmd_rotatearound(), EVE_cmd_animstart(), EVE_cmd_animstop(), EVE_cmd_animxy(),
+	EVE_cmd_animdraw(), EVE_cmd_animframe(), EVE_cmd_gradienta(), EVE_cmd_fillwidth() and EVE_cmd_appendf()
 
 */
 
@@ -90,14 +92,13 @@ void EVE_cmd_memset(uint32_t ptr, uint8_t value, uint32_t num);
 void EVE_cmd_memcpy(uint32_t dest, uint32_t src, uint32_t num);
 
 
-
 /* commands for loading image data into FT8xx memory: */
 void EVE_cmd_inflate(uint32_t ptr, const uint8_t *data, uint16_t len);
 void EVE_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *data, uint16_t len);
+
 #if defined (FT81X_ENABLE)
 void EVE_cmd_mediafifo(uint32_t ptr, uint32_t size);
 #endif
-
 
 
 void EVE_cmd_start(void);
@@ -119,6 +120,17 @@ uint32_t EVE_cmd_flashfast(void);
 void EVE_cmd_flashspitx(uint32_t num, const uint8_t *data);
 void EVE_cmd_flashspirx(uint32_t dest, uint32_t num);
 void EVE_cmd_flashsource(uint32_t ptr);
+
+void EVE_cmd_inflate2(uint32_t ptr, uint32_t options, const uint8_t *data, uint16_t len);
+void EVE_cmd_rotatearound(int32_t x0, int32_t y0, int32_t angle, int32_t scale);
+void EVE_cmd_animstart(int32_t ch, uint32_t aoptr, uint32_t loop);
+void EVE_cmd_animstop(int32_t ch);
+void EVE_cmd_animxy(int32_t ch, int16_t x0, int16_t y0);
+void EVE_cmd_animdraw(int32_t ch);
+void EVE_cmd_animframe(int16_t x0, int16_t y0, uint32_t aoptr, uint32_t frame);
+void EVE_cmd_gradienta(int16_t x0, int16_t y0, uint32_t argb0, int16_t x1, int16_t y1, uint32_t argb1);
+void EVE_cmd_fillwidth(uint32_t s);
+void EVE_cmd_appendf(uint32_t ptr, uint32_t num);
 
 uint8_t EVE_init_flash(void);
 #endif
