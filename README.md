@@ -47,6 +47,7 @@ The TFTs I have tested myself so far:
 - EVE2-50G https://www.matrixorbital.com/ftdi-eve/eve-ft812/eve2-50g
 - EVE2-70G https://www.matrixorbital.com/ftdi-eve/eve-ft812/eve2-70g
 - NHD-3.5-320240FT-CSXV-CTP
+- RVT43ULBNWC00 (RiTFT-43-CAP-UX) https://riverdi.com/product/ritft43capux/
 
 Currently I am implementing BT81x support using a prototype board populated with a BT816 that Matrix Orbital was so kind to provide me with.
 I have connected the panel of a EVE2-43G to it.

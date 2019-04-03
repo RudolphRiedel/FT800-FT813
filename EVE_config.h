@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs and some pre-defined colors
 @version 4.0
-@date    2019-03-24
+@date    2019-04-03
 @author  Rudolph Riedel
 
 @section History
@@ -97,6 +97,7 @@
 - added DMA to SAMC21 branch
 - started testing things with a BT816
 - added a block for the SAME51J18A
+- added profiles for the BT81x 4.3", 5" and 7" modules from Riverdi - the only tested is the 4.3" with a RVT43ULBNWC00
 
 */
 
@@ -120,6 +121,9 @@
 	#define EVE_RVT43
 	#define EVE_RVT50
 	#define EVE_RVT70
+	#define EVE_RiTFT43
+	#define EVE_RiTFT50
+	#define EVE_RiTFT70
 	#define EVE_EVE2_29
 	#define EVE_EVE2_35
 	#define EVE_EVE2_35G
@@ -139,7 +143,7 @@
 	#define EVE3_43
 #endif
 
-#define EVE3_43
+#define EVE_RiTFT43
 
 
 /* While the following lines make things a lot easier like automatically compiling the code for the platform you are compiling for, */
@@ -461,7 +465,7 @@
 				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
 			#else
 				uint8_t dummy;
-			
+
 				REG_SERCOM0_SPI_DATA = data;
 				while((REG_SERCOM0_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
 				dummy = REG_SERCOM0_SPI_DATA;
@@ -472,7 +476,7 @@
 		static inline void spi_transmit(uint8_t data)
 		{
 			uint8_t dummy;
-			
+
 			REG_SERCOM0_SPI_DATA = data;
 			while((REG_SERCOM0_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
 			dummy = REG_SERCOM0_SPI_DATA;
@@ -543,7 +547,7 @@
 				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
 			#else
 				uint8_t dummy;
-			
+
 				REG_SERCOM5_SPI_DATA = data;
 				while((REG_SERCOM5_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
 				dummy = REG_SERCOM5_SPI_DATA;
@@ -554,7 +558,7 @@
 		static inline void spi_transmit(uint8_t data)
 		{
 			uint8_t dummy;
-			
+
 			REG_SERCOM5_SPI_DATA = data;
 			while((REG_SERCOM5_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
 			dummy = REG_SERCOM5_SPI_DATA;
@@ -670,13 +674,32 @@
 #define BT81X_ENABLE
 #endif
 
-/* just annother test setup */ 
+/* just annother test setup */
 #if defined (EVE3_43)
 #define EVE_EVE2_43
 #define EVE_HAS_CRYSTAL
 #define BT81X_ENABLE
 #endif
 
+
+#if defined (EVE_RiTFT43)
+#define EVE_RVT43
+#define EVE_HAS_CRYSTAL
+#define FT81X_ENABLE
+#define BT81X_ENABLE
+#endif
+
+#if defined (EVE_RiTFT50)
+#define EVE_RVT50
+#define EVE_HAS_CRYSTAL
+#define BT81X_ENABLE
+#endif
+
+#if defined (EVE_RiTFT70)
+#define EVE_RVT70
+#define EVE_HAS_CRYSTAL
+#define BT81X_ENABLE
+#endif
 
 
 /* some test setup */
