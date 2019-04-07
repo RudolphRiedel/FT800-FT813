@@ -1,8 +1,8 @@
 /*
 @file    EVE_commands.h
-@brief   Contains FT8xx Function Prototypes
+@brief   contains FT8xx / BT8xx function prototypes
 @version 4.0
-@date    2019-03-25
+@date    2019-04-07
 @author  Rudolph Riedel
 
 @section History
@@ -63,6 +63,7 @@
 - added protoypes for EVE_cmd_flashwrite(), EVE_cmd_flashread(), EVE_cmd_flashupdate(), EVE_cmd_flashfast(), EVE_cmd_flashspitx() and EVE_cmd_flashspirx()
 - added prototypes for EVE_cmd_inflate2(), EVE_cmd_rotatearound(), EVE_cmd_animstart(), EVE_cmd_animstop(), EVE_cmd_animxy(),
 	EVE_cmd_animdraw(), EVE_cmd_animframe(), EVE_cmd_gradienta(), EVE_cmd_fillwidth() and EVE_cmd_appendf()
+- added a paramter to EVE_get_touch_tag() to allow multi-touch
 
 */
 
@@ -82,7 +83,7 @@ void EVE_memWrite_flash_buffer(uint32_t ftAddress, const uint8_t *data, uint16_t
 uint8_t EVE_busy(void);
 void EVE_get_cmdoffset(void);
 uint16_t EVE_report_cmdoffset(void);
-uint32_t EVE_get_touch_tag(void);
+uint32_t EVE_get_touch_tag(uint8_t num);
 
 
 /* commands to operate on memory: */

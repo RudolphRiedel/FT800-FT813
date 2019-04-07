@@ -1,8 +1,8 @@
 /*
 @file    EVE_commands.c
-@brief   contains functions for using the FT8xx
+@brief   contains FT8xx / BT8xx functions
 @version 4.0
-@date    2019-03-25
+@date    2019-04-07
 @author  Rudolph Riedel
 
 This file needs to be renamed to EVE_command.cpp for use with Arduino.
@@ -129,6 +129,7 @@ This file needs to be renamed to EVE_command.cpp for use with Arduino.
 - made EVE_cmd_loadimage() aware of EVE_OPT_FLASH when compiled for BT81x
 - implemented EVE_cmd_rotatearound(), EVE_cmd_animstart(), EVE_cmd_animstop(), EVE_cmd_animxy(), EVE_cmd_animdraw(),
 	EVE_cmd_animframe(), EVE_cmd_gradienta(), EVE_cmd_fillwidth() and EVE_cmd_appendf()
+- upgraded EVE_get_touch_tag() to multi-touch
 
 */
 
@@ -295,7 +296,7 @@ uint8_t EVE_busy(void)
 }
 
 
-uint32_t EVE_get_touch_tag(void)
+uint32_t EVE_get_touch_tag(uint8_t num)
 {
 	uint32_t value;
 
@@ -306,7 +307,28 @@ uint32_t EVE_get_touch_tag(void)
 	}
 	#endif
 
-	value = EVE_memRead32(REG_TOUCH_TAG);
+	switch(num)
+	{
+		case 1:
+			value = EVE_memRead32(REG_TOUCH_TAG); /* read the value for the first touch point */
+			break;
+		case 2:
+			value = EVE_memRead32(REG_TOUCH_TAG1);
+			break;
+		case 3:
+			value = EVE_memRead32(REG_TOUCH_TAG2);
+			break;
+		case 4:
+			value = EVE_memRead32(REG_TOUCH_TAG3);
+			break;
+		case 5:
+			value = EVE_memRead32(REG_TOUCH_TAG4);
+			break;
+		default:
+			value = EVE_memRead32(REG_TOUCH_TAG);
+			break;
+	}
+
 	return value;
 }
 
