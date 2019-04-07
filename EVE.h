@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 4.0
-@date    2019-03-25
+@date    2019-04-07
 @author  Rudolph Riedel
 
 @section History
@@ -47,6 +47,7 @@
 - minor maintenance
 - changed OPT_FLASH to EVE_OPT_FLASH and OPT_FORMAT to EVE_OPT_FORMAT for consistency
 - added EVE_OPT_FILL which has been left out of the documentation for the BT81x so far
+- added a few BT81x specific macros
 */
 
 #include "EVE_config.h"
@@ -513,6 +514,28 @@
 #define REG_FLASH_SIZE         0x309024UL
 #define REG_PLAY_CONTROL       0x30914eUL
 #define REG_COPRO_PATCH_DTR    0x309162UL
+
+
+/* BT81x graphics engine specific macros */
+#define BITMAP_EXT_FORMAT(format) ((46UL<<24)|(((format)&65535UL)<<0))
+#define BITMAP_SWIZZLE(r,g,b,a) ((47UL<<24)|(((r)&7UL)<<9)|(((g)&7UL)<<6)|(((b)&7UL)<<3)|(((a)&7UL)<<0))
+#define BITMAP_SOURCE2(flash_or_ram, addr) ((1UL<<24)|((flash_or_ram) << 23)|(((addr)&8388607UL)<<0))
+#define INT_FRR() ((48UL<<24))
+
+#undef BITMAP_TRANSFORM_A
+#undef BITMAP_TRANSFORM_B
+#undef BITMAP_TRANSFORM_D
+#undef BITMAP_TRANSFORM_E
+
+#define BITMAP_TRANSFORM_A_EXT(p,v) ((21UL<<24)|(((p)&1UL)<<17)|(((v)&131071UL)<<0))
+#define BITMAP_TRANSFORM_B_EXT(p,v) ((22UL<<24)|(((p)&1UL)<<17)|(((v)&131071UL)<<0))
+#define BITMAP_TRANSFORM_D_EXT(p,v) ((24UL<<24)|(((p)&1UL)<<17)|(((v)&131071UL)<<0))
+#define BITMAP_TRANSFORM_E_EXT(p,v) ((25UL<<24)|(((p)&1UL)<<17)|(((v)&131071UL)<<0))
+
+#define BITMAP_TRANSFORM_A(a) BITMAP_TRANSFORM_A_EXT(0,a)
+#define BITMAP_TRANSFORM_B(b) BITMAP_TRANSFORM_B_EXT(0,b)
+#define BITMAP_TRANSFORM_D(d) BITMAP_TRANSFORM_D_EXT(0,d)
+#define BITMAP_TRANSFORM_E(e) BITMAP_TRANSFORM_E_EXT(0,e)
 
 #endif
 
