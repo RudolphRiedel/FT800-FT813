@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 4.0
-@date    2019-04-07
+@date    2019-04-19
 @author  Rudolph Riedel
 
 This file needs to be renamed to EVE_command.cpp for use with Arduino.
@@ -130,7 +130,9 @@ This file needs to be renamed to EVE_command.cpp for use with Arduino.
 - implemented EVE_cmd_rotatearound(), EVE_cmd_animstart(), EVE_cmd_animstop(), EVE_cmd_animxy(), EVE_cmd_animdraw(),
 	EVE_cmd_animframe(), EVE_cmd_gradienta(), EVE_cmd_fillwidth() and EVE_cmd_appendf()
 - upgraded EVE_get_touch_tag() to multi-touch
-
+- made a few changes to EVE_write_string(), the char * is cast into a uint8_t pointer now since regardless what the string is encoded like
+  it needs to be send over SPI as a sequence of bytes
+  also it will leave the loop now after 249 bytes without detecting a zero to terminate the string
 */
 
 #include "EVE.h"
@@ -1230,18 +1232,23 @@ void EVE_write_string(const char *text)
 {
 	uint8_t textindex = 0;
 	uint8_t padding = 0;
+	uint8_t *bytes = (uint8_t *) text; /* need to handle the array as bunch of bytes */
 
-	while(text[textindex] != 0)
+	while(bytes[textindex] != 0)
 	{
 		if(cmd_burst)
 		{
-			spi_transmit_async(text[textindex]);
+			spi_transmit_async(bytes[textindex]);
 		}
 		else
 		{
-			spi_transmit(text[textindex]);
+			spi_transmit(bytes[textindex]);
 		}
 		textindex++;
+		if(textindex > 249) /* there appears to be no end for the "string", so leave */
+		{
+			break;
+		}		
 	}
 
 	/* we need to transmit at least one 0x00 byte and up to four if the string happens to be 4-byte aligned already */
