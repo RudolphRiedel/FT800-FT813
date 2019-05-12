@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs and some pre-defined colors
 @version 4.0
-@date    2019-05-11
+@date    2019-05-12
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -115,6 +115,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - started testing things with a BT816
 - added a block for the SAME51J18A
 - added profiles for the BT81x 4.3", 5" and 7" modules from Riverdi - the only tested is the 4.3" with a RVT43ULBNWC00
+- started to add support for Imagecraft AVR
 
 */
 
@@ -160,7 +161,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE3_43
 #endif
 
-#define EVE_RiTFT43
+#define EVE_EVE2_35G
 
 
 /* While the following lines make things a lot easier like automatically compiling the code for the platform you are compiling for, */
@@ -182,6 +183,77 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 */
 
 #if !defined (ARDUINO)
+	#if defined (__IMAGECRAFT__)
+		#if defined (_AVR)
+			#include <iccioavr.h>
+
+			static inline void DELAY_MS(uint16_t val)
+			{
+				uint16_t counter;
+
+				while(val > 0)
+				{
+					for(counter=0; counter < 2000;counter++) // maybe ~1ms at 16MHz clock
+					{
+						__asm__ volatile ("nop");
+					}
+					val--;
+				}
+			}
+
+			#define EVE_CS_PORT	PORTB
+			#define EVE_CS 		(1<<PB5)
+			#define EVE_PDN_PORT	PORTB
+			#define EVE_PDN		(1<<PB4)
+
+			static inline void EVE_pdn_set(void)
+			{
+				EVE_PDN_PORT &= ~EVE_PDN;	/* Power-Down low */
+			}
+
+			static inline void EVE_pdn_clear(void)
+			{
+				EVE_PDN_PORT |= EVE_PDN;	/* Power-Down high */
+			}
+
+			static inline void EVE_cs_set(void)
+			{
+				EVE_CS_PORT &= ~EVE_CS;	/* cs low */
+			}
+
+			static inline void EVE_cs_clear(void)
+			{
+				EVE_CS_PORT |= EVE_CS;	/* cs high */
+			}
+
+			static inline void spi_transmit_async(uint8_t data)
+			{
+				SPDR = data; /* start transmission */
+				while(!(SPSR & (1<<SPIF))); /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
+			}
+
+			static inline void spi_transmit(uint8_t data)
+			{
+				SPDR = data; /* start transmission */
+				while(!(SPSR & (1<<SPIF))); /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
+			}
+
+			static inline uint8_t spi_receive(uint8_t data)
+			{
+				SPDR = data; /* start transmission */
+				while(!(SPSR & (1<<SPIF))); /* wait for transmission to complete - 1us @ 8MHz SPI-CLock */
+				return SPDR;
+			}
+
+			static inline uint8_t fetch_flash_byte(const uint8_t *data)
+			{
+				return *data;
+			}
+
+
+		#endif
+	#endif
+
 	#if defined (__GNUC__)
 		#if	defined (__AVR__)
 
@@ -192,10 +264,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 			#define DELAY_MS(ms) _delay_ms(ms)
 
-			#define EVE_CS_PORT	PORTA
-			#define EVE_CS 		(1<<PA3)
-			#define EVE_PDN_PORT	PORTD
-			#define EVE_PDN		(1<<PD3)
+			#define EVE_CS_PORT	PORTB
+			#define EVE_CS 		(1<<PB5)
+			#define EVE_PDN_PORT	PORTB
+			#define EVE_PDN		(1<<PB4)
 
 			static inline void EVE_pdn_set(void)
 			{
