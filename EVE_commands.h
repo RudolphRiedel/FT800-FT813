@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 4.0
-@date    2019-05-11
+@date    2019-06-01
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -81,14 +81,14 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added prototypes for EVE_cmd_inflate2(), EVE_cmd_rotatearound(), EVE_cmd_animstart(), EVE_cmd_animstop(), EVE_cmd_animxy(),
 	EVE_cmd_animdraw(), EVE_cmd_animframe(), EVE_cmd_gradienta(), EVE_cmd_fillwidth() and EVE_cmd_appendf()
 - added a paramter to EVE_get_touch_tag() to allow multi-touch
-
+- expanded EVE_cmdWrite() from command only to command+parameter
 */
 
 #ifndef EVE_COMMANDS_H_
 #define EVE_COMMANDS_H_
 
 
-void EVE_cmdWrite(uint8_t data);
+void EVE_cmdWrite(uint8_t command, uint8_t parameter);
 
 uint8_t EVE_memRead8(uint32_t ftAddress);
 uint16_t EVE_memRead16(uint32_t ftAddress);

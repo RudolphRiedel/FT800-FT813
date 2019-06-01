@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 4.0
-@date    2019-05-11
+@date    2019-06-01
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -65,6 +65,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - changed OPT_FLASH to EVE_OPT_FLASH and OPT_FORMAT to EVE_OPT_FORMAT for consistency
 - added EVE_OPT_FILL which has been left out of the documentation for the BT81x so far
 - added a few BT81x specific macros
+- added a few FT81x/BT81x specific host commands
 */
 
 #include "EVE_config.h"
@@ -96,6 +97,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_CORERST	0x68  /* reset core - all registers default and processors reset */
 #define EVE_CLK48M	0x62  /* select 48MHz PLL output */
 #define EVE_CLK36M	0x61  /* select 36MHz PLL output */
+#if defined (FT81X_ENABLE)
+#define EVE_CLKSEL			0x61 /* configure system clock */
+#define EVE_RST_PULSE		0x68 /* reset core - all registers default and processors reset */
+#define EVE_PINDRIVE		0x70 /* setup drive strength for various pins */ 
+#define EVE_PIN_PD_STATE	0x71 /* setup how pins behave during power down */
+#endif
 
 
 /* defines used for graphics commands */

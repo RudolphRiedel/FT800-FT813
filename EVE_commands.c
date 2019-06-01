@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 4.0
-@date    2019-05-11
+@date    2019-06-01
 @author  Rudolph Riedel
 
 This file needs to be renamed to EVE_command.cpp for use with Arduino.
@@ -150,6 +150,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - made a few changes to EVE_write_string(), the char * is cast into a uint8_t pointer now since regardless what the string is encoded like
   it needs to be send over SPI as a sequence of bytes
   also it will leave the loop now after 249 bytes without detecting a zero to terminate the string
+- sped up EVE_write_string() at the cost of a few bytes more code by moving the if(cmd_burst) out of the loops
+- broke up a potentially endless loop at the end of EVE_init() - it had close to zero chance to fail this far through the init and I never saw it fail
+- expanded EVE_cmdWrite() from command only to command+parameter
+- EVE_init() sets BT81x to 72MHz now
 */
 
 #include "EVE.h"
@@ -166,11 +170,11 @@ volatile uint16_t cmdOffset = 0x0000;	/* used to navigate command ring buffer */
 volatile uint8_t cmd_burst = 0; /* flag to indicate cmd-burst is active */
 
 
-void EVE_cmdWrite(uint8_t data)
+void EVE_cmdWrite(uint8_t command, uint8_t parameter)
 {
 	EVE_cs_set();
-	spi_transmit(data);
-	spi_transmit(0x00);
+	spi_transmit(command);
+	spi_transmit(parameter);
 	spi_transmit(0x00);
 	EVE_cs_clear();
 }
@@ -1034,18 +1038,22 @@ uint8_t EVE_init(void)
 	DELAY_MS(21);	/* minimum time to allow from rising PD_N to first access is 20ms */
 
 	#if defined (EVE3_43)
-		EVE_cmdWrite(EVE_CORERST); /* test-setup needs a reset at warmstart, probably an issue with the PCB */
+	EVE_cmdWrite(EVE_CORERST,0); /* test-setup needs a reset at warmstart, probably an issue with the PCB */
 	#endif
 
-//	EVE_cmdWrite(EVE_CORERST); /* reset, only required for warmstart if PowerDown line is not used */
+//	EVE_cmdWrite(EVE_CORERST,0); /* reset, only required for warmstart if PowerDown line is not used */
 
 	#if defined (EVE_HAS_CRYSTAL)
-		EVE_cmdWrite(EVE_CLKEXT);	/* setup FT8xx for external clock */
+	EVE_cmdWrite(EVE_CLKEXT,0);	/* setup FT8xx for external clock */
 	#else
-		EVE_cmdWrite(EVE_CLKINT);	/* setup FT8xx for internal clock */
+	EVE_cmdWrite(EVE_CLKINT,0);	/* setup FT8xx for internal clock */
 	#endif
 
-	EVE_cmdWrite(EVE_ACTIVE);	/* start FT8xx */
+	#if defined (BT81X_ENABLE)
+	EVE_cmdWrite(EVE_CLKSEL,0x46); /* set clock to 72 MHz */	
+	#endif
+
+	EVE_cmdWrite(EVE_ACTIVE,0);	/* start FT8xx */
 
 	chipid = EVE_memRead8(REG_ID);	/* Read ID register */
 	while(chipid != 0x7C)	/* if chipid is not 0x7c, continue to read it until it is, FT81x may need a moment for it's power on selftest */
@@ -1099,6 +1107,10 @@ uint8_t EVE_init(void)
 	EVE_memWrite8(REG_PWM_DUTY, 0);		/* turn off backlight for any other module */
 	#endif
 
+	#if defined (BT81X_ENABLE)
+	EVE_memWrite32(REG_FREQUENCY,0x44aa200); /* set frequency used to 72 MHz */
+	#endif
+
 	/* Initialize Display */
 	EVE_memWrite16(REG_HSIZE,   EVE_HSIZE);		/* active display width */
 	EVE_memWrite16(REG_HCYCLE,  EVE_HCYCLE);	/* total number of clocks per line, incl front/back porch */
@@ -1141,8 +1153,17 @@ uint8_t EVE_init(void)
 	EVE_memWrite8(REG_PWM_DUTY, 0x20);	/* turn on backlight to 25% for any other module */
 	#endif
 
-	DELAY_MS(2); /* just to be safe */
-	while(EVE_busy() == 1); /* just to be safe, should return immediately */
+	timeout = 0;
+	while(EVE_busy() == 1) /* just to be safe, should not even enter the loop */
+	{
+		DELAY_MS(1);
+		timeout++;
+		if(timeout > 4)
+		{
+			break; /* something is wrong here, but since we made it this far through the init, just leave the loop */
+		}
+	}
+
 	EVE_get_cmdoffset(); /* just to be safe */
 
 	#if defined (EVE_DMA)
@@ -1250,40 +1271,52 @@ void EVE_write_string(const char *text)
 	uint8_t textindex = 0;
 	uint8_t padding = 0;
 	uint8_t *bytes = (uint8_t *) text; /* need to handle the array as bunch of bytes */
-
-	while(bytes[textindex] != 0)
+	
+	if(cmd_burst)
 	{
-		if(cmd_burst)
+		while(bytes[textindex] != 0)
 		{
 			spi_transmit_async(bytes[textindex]);
+			textindex++;
+			if(textindex > 249) /* there appears to be no end for the "string", so leave */
+			{
+				break;
+			}
 		}
-		else
-		{
-			spi_transmit(bytes[textindex]);
-		}
-		textindex++;
-		if(textindex > 249) /* there appears to be no end for the "string", so leave */
-		{
-			break;
-		}
-	}
 
-	/* we need to transmit at least one 0x00 byte and up to four if the string happens to be 4-byte aligned already */
-	padding = textindex & 3;  /* 0, 1, 2 or 3 */
-	padding = 4-padding; /* 4, 3, 2 or 1 */
-	textindex += padding;
+		/* we need to transmit at least one 0x00 byte and up to four if the string happens to be 4-byte aligned already */
+		padding = textindex & 3;  /* 0, 1, 2 or 3 */
+		padding = 4-padding; /* 4, 3, 2 or 1 */
+		textindex += padding;
 
-	while(padding > 0)
-	{
-		if(cmd_burst)
+		while(padding > 0)
 		{
 			spi_transmit_async(0);
+			padding--;
 		}
-		else
+	}
+	else
+	{
+		while(bytes[textindex] != 0)
+		{
+			spi_transmit(bytes[textindex]);
+			textindex++;
+			if(textindex > 249) /* there appears to be no end for the "string", so leave */
+			{
+				break;
+			}
+		}
+
+		/* we need to transmit at least one 0x00 byte and up to four if the string happens to be 4-byte aligned already */
+		padding = textindex & 3;  /* 0, 1, 2 or 3 */
+		padding = 4-padding; /* 4, 3, 2 or 1 */
+		textindex += padding;
+
+		while(padding > 0)
 		{
 			spi_transmit(0);
+			padding--;
 		}
-		padding--;
 	}
 
 	EVE_inc_cmdoffset(textindex);
