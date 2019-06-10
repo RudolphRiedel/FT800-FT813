@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 4.0
-@date    2019-06-01
+@date    2019-06-10
 @author  Rudolph Riedel
 
 This file needs to be renamed to EVE_command.cpp for use with Arduino.
@@ -154,12 +154,14 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - broke up a potentially endless loop at the end of EVE_init() - it had close to zero chance to fail this far through the init and I never saw it fail
 - expanded EVE_cmdWrite() from command only to command+parameter
 - EVE_init() sets BT81x to 72MHz now
+- sped up EVE_cmd_dl() for burst operations by avoiding a call to EVE_start_cmd()
+- sped up EVE_cmd_text() and EVE_cmd_number() for burst operations a little by avoiding a call to EVE_start_cmd()
+- removed a redundant #include "EVE_config.h", EVE.h already includes it
+
 */
 
 #include "EVE.h"
-#include "EVE_config.h"
 #include "EVE_target.h"
-
 
 /* EVE Memory Commands - used with EVE_memWritexx and EVE_memReadxx */
 #define MEM_WRITE	0x80	/* EVE Host Memory Write */
@@ -1257,9 +1259,17 @@ void EVE_start_cmd(uint32_t command)
 */
 void EVE_cmd_dl(uint32_t command)
 {
-	EVE_start_cmd(command);
-	if(cmd_burst == 0)
+	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(command));	/* send data low byte */
+		spi_transmit_async((uint8_t)(command >> 8));
+		spi_transmit_async((uint8_t)(command >> 16));
+		spi_transmit_async((uint8_t)(command >> 24));	/* Send data high byte */
+		EVE_inc_cmdoffset(4);	/* update the command-ram pointer */
+	}
+	else
+	{
+		EVE_start_cmd(command);
 		EVE_cs_clear();
 	}
 }
@@ -1541,10 +1551,13 @@ uint8_t EVE_init_flash(void)
 
 void EVE_cmd_text(int16_t x0, int16_t y0, int16_t font, uint16_t options, const char* text)
 {
-	EVE_start_cmd(CMD_TEXT);
-
 	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(CMD_TEXT));	/* send data low byte */
+		spi_transmit_async((uint8_t)(CMD_TEXT >> 8));
+		spi_transmit_async((uint8_t)(CMD_TEXT >> 16));
+		spi_transmit_async((uint8_t)(CMD_TEXT >> 24));	/* Send data high byte */
+
 		spi_transmit_async((uint8_t)(x0));
 		spi_transmit_async((uint8_t)(x0 >> 8));
 
@@ -1556,9 +1569,13 @@ void EVE_cmd_text(int16_t x0, int16_t y0, int16_t font, uint16_t options, const 
 
 		spi_transmit_async((uint8_t)(options));
 		spi_transmit_async((uint8_t)(options >> 8));
+
+		EVE_inc_cmdoffset(12);
 	}
 	else
 	{
+		EVE_start_cmd(CMD_TEXT);
+
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
 
@@ -1570,9 +1587,10 @@ void EVE_cmd_text(int16_t x0, int16_t y0, int16_t font, uint16_t options, const 
 
 		spi_transmit((uint8_t)(options));
 		spi_transmit((uint8_t)(options >> 8));
+
+		EVE_inc_cmdoffset(8);
 	}
 
-	EVE_inc_cmdoffset(8);
 	EVE_write_string(text);
 
 	if(cmd_burst == 0)
@@ -2324,10 +2342,13 @@ void EVE_cmd_setbitmap(uint32_t addr, uint16_t fmt, uint16_t width, uint16_t hei
 
 void EVE_cmd_number(int16_t x0, int16_t y0, int16_t font, uint16_t options, int32_t number)
 {
-	EVE_start_cmd(CMD_NUMBER);
-
 	if(cmd_burst)
 	{
+		spi_transmit_async((uint8_t)(CMD_NUMBER));	/* send data low byte */
+		spi_transmit_async((uint8_t)(CMD_NUMBER >> 8));
+		spi_transmit_async((uint8_t)(CMD_NUMBER >> 16));
+		spi_transmit_async((uint8_t)(CMD_NUMBER >> 24));	/* Send data high byte */
+
 		spi_transmit_async((uint8_t)(x0));
 		spi_transmit_async((uint8_t)(x0 >> 8));
 
@@ -2344,9 +2365,13 @@ void EVE_cmd_number(int16_t x0, int16_t y0, int16_t font, uint16_t options, int3
 		spi_transmit_async((uint8_t)(number >> 8));
 		spi_transmit_async((uint8_t)(number >> 16));
 		spi_transmit_async((uint8_t)(number >> 24));
+
+		EVE_inc_cmdoffset(16);
 	}
 	else
 	{
+		EVE_start_cmd(CMD_NUMBER);
+
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
 
@@ -2364,11 +2389,10 @@ void EVE_cmd_number(int16_t x0, int16_t y0, int16_t font, uint16_t options, int3
 		spi_transmit((uint8_t)(number >> 16));
 		spi_transmit((uint8_t)(number >> 24));
 
+		EVE_inc_cmdoffset(12);
+
 		EVE_cs_clear();
 	}
-
-
-	EVE_inc_cmdoffset(12);
 }
 
 

@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions
 @version 4.0
-@date    2019-05-11
+@date    2019-06-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -24,13 +24,13 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
  */
 
-#include "EVE_config.h"
+#include "EVE_target.h"
 #include "EVE_commands.h"
 
 #if !defined (ARDUINO)
 	#if defined (__GNUC__)
 		#if defined (__SAMC21E18A__)
-
+		
 		#if defined (EVE_DMA)
 
 			static DmacDescriptor dmadescriptor __attribute__((aligned(16))) SECTION_DMAC_DESCRIPTOR;
