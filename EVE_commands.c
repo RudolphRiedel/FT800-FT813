@@ -157,11 +157,21 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - sped up EVE_cmd_dl() for burst operations by avoiding a call to EVE_start_cmd()
 - sped up EVE_cmd_text() and EVE_cmd_number() for burst operations a little by avoiding a call to EVE_start_cmd()
 - removed a redundant #include "EVE_config.h", EVE.h already includes it
+- changed EVE_cmd_getptr(), it includes execution now and directly returns the end memory address of data inflated by EVE_cmd_inflate()
+- changed EVE_cmd_memcrc(), it includes execution now and directly returns the calculated crc32.
+- changed EVE_cmd_regread(), it includes execution now and directly returns the 32 bit value.
+- rewrote EVE_cmd_getprops(), it returns a struct now with pointer, width and height.
+- rewrote EVE_cmd_getmatrix(), it returns a struct now with matrix coefficent a...f.
+- added EVE_cmd_text_var() after struggeling with varargs, this function adds a single paramter for string conversion if EVE_OPT_FORMAT is given
 
 */
 
 #include "EVE.h"
 #include "EVE_target.h"
+
+#if defined (BT81X_ENABLE)
+#include <stdarg.h>
+#endif
 
 /* EVE Memory Commands - used with EVE_memWritexx and EVE_memReadxx */
 #define MEM_WRITE	0x80	/* EVE Host Memory Write */
@@ -847,24 +857,13 @@ void EVE_cmd_track(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t tag)
 
 
 /* commands that return values by writing to the command-fifo */
-/* this is handled by having this functions return the offset address on the command-fifo from
-   which the results can be fetched after execution: EVE_memRead32(EVE_RAM_CMD + offset) */
 /* note: yes, these are different than the functions in the Programmers Guide from FTDI,
 	this is because I have no idea why anyone would want to pass "result" as an actual argument to these functions
-	when this only marks the offset the command-processor is writing to, it may even be okay to not transfer anything at all,
-	just advance the offset by 4 bytes */
+	when this only marks the offset the command-processor is writing to */
 
-/*
-example of using EVE_cmd_memcrc:
-
- offset = EVE_cmd_memcrc(my_ptr_to_some_memory_region, some_amount_of_bytes);
- EVE_cmd_execute();
- crc32 = EVE_memRead32(EVE_RAM_CMD + offset);
-
-*/
-
-/* this is meant to be called outside display-list building, does not support cmd-burst */
-uint16_t EVE_cmd_memcrc(uint32_t ptr, uint32_t num)
+/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* crc32 = EVE_cmd_memcrc(my_ptr_to_some_memory_region, some_amount_of_bytes); */
+uint32_t EVE_cmd_memcrc(uint32_t ptr, uint32_t num)
 {
 	uint16_t offset;
 
@@ -891,33 +890,32 @@ uint16_t EVE_cmd_memcrc(uint32_t ptr, uint32_t num)
 
 	EVE_cs_clear();
 
-	return offset;
+	EVE_cmd_execute();
+	return (EVE_memRead32(EVE_RAM_CMD + offset));
 }
 
 
-/* this is meant to be called outside display-list building, does not support cmd-burst */
-uint16_t EVE_cmd_getptr(void)
+/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* address = EVE_cmd_getpr(); */
+uint32_t EVE_cmd_getptr(void)
 {
 	uint16_t offset;
 
 	EVE_begin_cmd(CMD_GETPTR);
 
-	spi_transmit(0);
-	spi_transmit(0);
-	spi_transmit(0);
-	spi_transmit(0);
-
 	offset = cmdOffset;
 	EVE_inc_cmdoffset(4);
-
 	EVE_cs_clear();
-
-	return offset;
+	EVE_cmd_execute();
+	return (EVE_memRead32(EVE_RAM_CMD + offset));
 }
 
 
-/* this is meant to be called outside display-list building, does not support cmd-burst */
-uint16_t EVE_cmd_regread(uint32_t ptr)
+/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* regvalue = EVE_cmd_regread(ptr); */
+/* this seems to be completely pointless, there is no real use for it outside a display-list since the register could be read directly */
+/* and for what purpose would this be implemented to be used in a display list?? */
+uint32_t EVE_cmd_regread(uint32_t ptr)
 {
 	uint16_t offset;
 
@@ -928,63 +926,86 @@ uint16_t EVE_cmd_regread(uint32_t ptr)
 	spi_transmit((uint8_t)(ptr >> 16));
 	spi_transmit((uint8_t)(ptr >> 24));
 
-	spi_transmit(0);
-	spi_transmit(0);
-	spi_transmit(0);
-	spi_transmit(0);
-
 	EVE_inc_cmdoffset(4);
 	offset = cmdOffset;
 	EVE_inc_cmdoffset(4);
 
 	EVE_cs_clear();
 
-	return offset;
+	EVE_cmd_execute();
+	return (EVE_memRead32(EVE_RAM_CMD + offset));
 }
 
 
-/* be aware that this returns the first offset pointing to "width", in order to also read
-"height" you need to:
+struct EVE_struct_getprops
+{
+	uint32_t ptr;
+	uint32_t width;
+	uint32_t height;
+};
 
- offset = EVE_cmd_getprops(my_last_picture_pointer);
- EVE_cmd_execute();
- width = EVE_memRead32(EVE_RAM_CMD + offset);
- offset += 4;
- offset &= 0x0fff;
- height = EVE_memRead32(EVE_RAM_CMD + offset);
+/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/*
+struct EVE_struct_getprops testprops;
+
+testprops = EVE_cmd_getprops();
 */
-
-/* this is meant to be called outside display-list building, does not support cmd-burst */
-uint16_t EVE_cmd_getprops(uint32_t ptr)
+struct EVE_struct_getprops EVE_cmd_getprops(void)
 {
+	struct EVE_struct_getprops values;
+
 	uint16_t offset;
 
-	EVE_begin_cmd(CMD_REGREAD);
+	EVE_begin_cmd(CMD_GETPROPS);
 
-	spi_transmit((uint8_t)(ptr));
-	spi_transmit((uint8_t)(ptr >> 8));
-	spi_transmit((uint8_t)(ptr >> 16));
-	spi_transmit((uint8_t)(ptr >> 24));
-
-	spi_transmit(0);
-	spi_transmit(0);
-	spi_transmit(0);
-	spi_transmit(0);
-
-	spi_transmit(0);
-	spi_transmit(0);
-	spi_transmit(0);
-	spi_transmit(0);
-
-	EVE_inc_cmdoffset(4);
 	offset = cmdOffset;
-	EVE_inc_cmdoffset(4);
+	EVE_inc_cmdoffset(12);
 
 	EVE_cs_clear();
+	EVE_cmd_execute();
 
-	return offset;
+	values.ptr = EVE_memRead32(EVE_RAM_CMD + offset);
+	values.width = EVE_memRead32(EVE_RAM_CMD + offset + 4);
+	values.height = EVE_memRead32(EVE_RAM_CMD + offset + 8);
+
+	return values;
 }
 
+
+struct EVE_struct_getmatrix
+{
+	uint32_t a;
+	uint32_t b;
+	uint32_t c;
+	uint32_t d;
+	uint32_t e;
+	uint32_t f;
+};
+
+/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+struct EVE_struct_getmatrix EVE_cmd_getmatrix(void)
+{
+	struct EVE_struct_getmatrix values;
+
+	uint16_t offset;
+
+	EVE_begin_cmd(CMD_GETMATRIX);
+
+	offset = cmdOffset;
+	EVE_cs_clear();
+	EVE_inc_cmdoffset(24);
+
+	EVE_cmd_execute();
+
+	values.a = EVE_memRead32(EVE_RAM_CMD + offset);
+	values.b = EVE_memRead32(EVE_RAM_CMD + offset + 4);
+	values.c = EVE_memRead32(EVE_RAM_CMD + offset + 8);
+	values.d = EVE_memRead32(EVE_RAM_CMD + offset + 12);
+	values.e = EVE_memRead32(EVE_RAM_CMD + offset + 16);
+	values.f = EVE_memRead32(EVE_RAM_CMD + offset + 20);
+
+	return values;
+}
 
 
 /* FT811 / FT813 binary-blob from FTDIs AN_336 to patch the touch-engine for Goodix GT911 / GT9271 touch controllers */
@@ -1052,7 +1073,7 @@ uint8_t EVE_init(void)
 	#endif
 
 	#if defined (BT81X_ENABLE)
-	EVE_cmdWrite(EVE_CLKSEL,0x46); /* set clock to 72 MHz */	
+	EVE_cmdWrite(EVE_CLKSEL,0x46); /* set clock to 72 MHz */
 	#endif
 
 	EVE_cmdWrite(EVE_ACTIVE,0);	/* start FT8xx */
@@ -1281,7 +1302,7 @@ void EVE_write_string(const char *text)
 	uint8_t textindex = 0;
 	uint8_t padding = 0;
 	uint8_t *bytes = (uint8_t *) text; /* need to handle the array as bunch of bytes */
-	
+
 	if(cmd_burst)
 	{
 		while(bytes[textindex] != 0)
@@ -1547,8 +1568,80 @@ uint8_t EVE_init_flash(void)
 #endif
 
 
-/* commands to draw graphics objects: */
+#if defined (BT81X_ENABLE)
+void EVE_cmd_text_var(int16_t x0, int16_t y0, int16_t font, uint16_t options, const char* text, uint32_t data)
+{
+	if(cmd_burst)
+	{
+		spi_transmit_async((uint8_t)(CMD_TEXT));	/* send data low byte */
+		spi_transmit_async((uint8_t)(CMD_TEXT >> 8));
+		spi_transmit_async((uint8_t)(CMD_TEXT >> 16));
+		spi_transmit_async((uint8_t)(CMD_TEXT >> 24));	/* Send data high byte */
 
+		spi_transmit_async((uint8_t)(x0));
+		spi_transmit_async((uint8_t)(x0 >> 8));
+
+		spi_transmit_async((uint8_t)(y0));
+		spi_transmit_async((uint8_t)(y0 >> 8));
+
+		spi_transmit_async((uint8_t)(font));
+		spi_transmit_async((uint8_t)(font >> 8));
+
+		spi_transmit_async((uint8_t)(options));
+		spi_transmit_async((uint8_t)(options >> 8));
+
+		EVE_inc_cmdoffset(12);
+
+		EVE_write_string(text);
+
+		if(options & EVE_OPT_FORMAT)
+		{
+			spi_transmit_async((uint8_t)(data));		/* send data low byte */
+			spi_transmit_async((uint8_t)(data >> 8));
+			spi_transmit_async((uint8_t)(data >> 16));
+			spi_transmit_async((uint8_t)(data >> 24));	/* send data high byte */
+
+			EVE_inc_cmdoffset(4);
+		}
+	}
+	else
+	{
+		EVE_start_cmd(CMD_TEXT);
+
+		spi_transmit((uint8_t)(x0));
+		spi_transmit((uint8_t)(x0 >> 8));
+
+		spi_transmit((uint8_t)(y0));
+		spi_transmit((uint8_t)(y0 >> 8));
+
+		spi_transmit((uint8_t)(font));
+		spi_transmit((uint8_t)(font >> 8));
+
+		spi_transmit((uint8_t)(options));
+		spi_transmit((uint8_t)(options >> 8));
+
+		EVE_inc_cmdoffset(8);
+
+		EVE_write_string(text);
+
+		if(options & EVE_OPT_FORMAT)
+		{
+			spi_transmit((uint8_t)(data));		/* send data low byte */
+			spi_transmit((uint8_t)(data >> 8));
+			spi_transmit((uint8_t)(data >> 16));
+			spi_transmit((uint8_t)(data >> 24));	/* send data high byte */
+
+			EVE_inc_cmdoffset(4);
+		}
+
+		EVE_cs_clear();
+	}
+}
+#endif
+
+
+
+/* commands to draw graphics objects: */
 void EVE_cmd_text(int16_t x0, int16_t y0, int16_t font, uint16_t options, const char* text)
 {
 	if(cmd_burst)
@@ -1571,6 +1664,8 @@ void EVE_cmd_text(int16_t x0, int16_t y0, int16_t font, uint16_t options, const 
 		spi_transmit_async((uint8_t)(options >> 8));
 
 		EVE_inc_cmdoffset(12);
+
+		EVE_write_string(text);
 	}
 	else
 	{
@@ -1589,12 +1684,9 @@ void EVE_cmd_text(int16_t x0, int16_t y0, int16_t font, uint16_t options, const 
 		spi_transmit((uint8_t)(options >> 8));
 
 		EVE_inc_cmdoffset(8);
-	}
 
-	EVE_write_string(text);
+		EVE_write_string(text);
 
-	if(cmd_burst == 0)
-	{
 		EVE_cs_clear();
 	}
 }
@@ -2583,87 +2675,6 @@ void EVE_cmd_rotatearound(int32_t x0, int32_t y0, int32_t angle, int32_t scale)
 	EVE_inc_cmdoffset(16);
 }
 #endif
-
-
-/*	the description in the programmers guide is strange for this function
-	while it is named *get*matrix, parameters 'a' to 'f' are supplied to
-	the function and described as "output parameter"
-	best guess is that this one allows to setup the matrix coefficients manually
-	instead automagically like with _translate, _scale and _rotate
-	if this assumption is correct it rather should be named cmd_setupmatrix() */
-void EVE_cmd_getmatrix(int32_t a, int32_t b, int32_t c, int32_t d, int32_t e, int32_t f)
-{
-	EVE_start_cmd(CMD_SETMATRIX);
-
-	if(cmd_burst)
-	{
-		spi_transmit_async((uint8_t)(a));
-		spi_transmit_async((uint8_t)(a >> 8));
-		spi_transmit_async((uint8_t)(a >> 16));
-		spi_transmit_async((uint8_t)(a >> 24));
-
-		spi_transmit_async((uint8_t)(b));
-		spi_transmit_async((uint8_t)(b >> 8));
-		spi_transmit_async((uint8_t)(b >> 16));
-		spi_transmit_async((uint8_t)(b >> 24));
-
-		spi_transmit_async((uint8_t)(c));
-		spi_transmit_async((uint8_t)(c >> 8));
-		spi_transmit_async((uint8_t)(c >> 16));
-		spi_transmit_async((uint8_t)(c >> 24));
-
-		spi_transmit_async((uint8_t)(d));
-		spi_transmit_async((uint8_t)(d >> 8));
-		spi_transmit_async((uint8_t)(d >> 16));
-		spi_transmit_async((uint8_t)(d >> 24));
-
-		spi_transmit_async((uint8_t)(e));
-		spi_transmit_async((uint8_t)(e >> 8));
-		spi_transmit_async((uint8_t)(e >> 16));
-		spi_transmit_async((uint8_t)(e >> 24));
-
-		spi_transmit_async((uint8_t)(f));
-		spi_transmit_async((uint8_t)(f >> 8));
-		spi_transmit_async((uint8_t)(f >> 16));
-		spi_transmit_async((uint8_t)(f >> 24));
-	}
-	else
-	{
-		spi_transmit((uint8_t)(a));
-		spi_transmit((uint8_t)(a >> 8));
-		spi_transmit((uint8_t)(a >> 16));
-		spi_transmit((uint8_t)(a >> 24));
-
-		spi_transmit((uint8_t)(b));
-		spi_transmit((uint8_t)(b >> 8));
-		spi_transmit((uint8_t)(b >> 16));
-		spi_transmit((uint8_t)(b >> 24));
-
-		spi_transmit((uint8_t)(c));
-		spi_transmit((uint8_t)(c >> 8));
-		spi_transmit((uint8_t)(c >> 16));
-		spi_transmit((uint8_t)(c >> 24));
-
-		spi_transmit((uint8_t)(d));
-		spi_transmit((uint8_t)(d >> 8));
-		spi_transmit((uint8_t)(d >> 16));
-		spi_transmit((uint8_t)(d >> 24));
-
-		spi_transmit((uint8_t)(e));
-		spi_transmit((uint8_t)(e >> 8));
-		spi_transmit((uint8_t)(e >> 16));
-		spi_transmit((uint8_t)(e >> 24));
-
-		spi_transmit((uint8_t)(f));
-		spi_transmit((uint8_t)(f >> 8));
-		spi_transmit((uint8_t)(f >> 16));
-		spi_transmit((uint8_t)(f >> 24));
-
-		EVE_cs_clear();
-	}
-
-	EVE_inc_cmdoffset(24);
-}
 
 
 /* other commands: */

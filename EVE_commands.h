@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 4.0
-@date    2019-06-01
+@date    2019-06-23
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -82,6 +82,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	EVE_cmd_animdraw(), EVE_cmd_animframe(), EVE_cmd_gradienta(), EVE_cmd_fillwidth() and EVE_cmd_appendf()
 - added a paramter to EVE_get_touch_tag() to allow multi-touch
 - expanded EVE_cmdWrite() from command only to command+parameter
+- changed the prototype for EVE_cmd_getptr(), it returns the memory-address directly now
+- changed the prototype for EVE_cmd_memcrc(), it returns the crc32 directly now
+- changed the prototype for EVE_cmd_regread(), it returns the 32 bit value directly now
+- changed cmd_getprops() and cmd_getmatrix(), these return structures now
+- added EVE_cmd_text_var() after struggeling with varargs, this function adds a single paramter for string conversion if EVE_OPT_FORMAT is given
+
 */
 
 #ifndef EVE_COMMANDS_H_
@@ -155,6 +161,11 @@ uint8_t EVE_init_flash(void);
 
 
 /* commands to draw graphics objects: */
+
+#if defined (BT81X_ENABLE)
+void EVE_cmd_text_var(int16_t x0, int16_t y0, int16_t font, uint16_t options, const char* text, uint32_t data);
+#endif
+
 void EVE_cmd_text(int16_t x0, int16_t y0, int16_t font, uint16_t options, const char* text);
 void EVE_cmd_button(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t font, uint16_t options, const char* text);
 void EVE_cmd_clock(int16_t x0, int16_t y0, int16_t r0, uint16_t options, uint16_t hours, uint16_t minutes, uint16_t seconds, uint16_t millisecs);
@@ -184,7 +195,6 @@ void EVE_cmd_append(uint32_t ptr, uint32_t num);
 void EVE_cmd_translate(int32_t tx, int32_t ty);
 void EVE_cmd_scale(int32_t sx, int32_t sy);
 void EVE_cmd_rotate(int32_t ang);
-void EVE_cmd_getmatrix(int32_t a, int32_t b, int32_t c, int32_t d, int32_t e, int32_t f);
 
 
 /* other commands: */
@@ -207,10 +217,30 @@ void EVE_cmd_track(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t tag);
 
 
 /* commands that return values by writing to the command-fifo */
-uint16_t EVE_cmd_memcrc(uint32_t ptr, uint32_t num);
-uint16_t EVE_cmd_getptr(void);
-uint16_t EVE_cmd_regread(uint32_t ptr);
-uint16_t EVE_cmd_getprops(uint32_t ptr);
+uint32_t EVE_cmd_memcrc(uint32_t ptr, uint32_t num);
+uint32_t EVE_cmd_getptr(void);
+uint32_t EVE_cmd_regread(uint32_t ptr);
+
+struct EVE_struct_getprops
+{
+	uint32_t ptr;
+	uint32_t width;
+	uint32_t height;
+};
+
+struct EVE_struct_getprops EVE_cmd_getprops(void);
+
+struct EVE_struct_getmatrix
+{
+	uint32_t a;
+	uint32_t b;
+	uint32_t c;
+	uint32_t d;
+	uint32_t e;
+	uint32_t f;
+};
+
+extern struct EVE_struct_getmatrix EVE_cmd_getmatrix(void);
 
 
 /* meta-commands, sequences of several display-list entries condensed into simpler to use functions at the price of some overhead */
