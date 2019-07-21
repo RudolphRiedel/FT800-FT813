@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 4.0
-@date    2019-06-10
+@date    2019-07-21
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -31,6 +31,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added profiles for the BT81x 4.3", 5" and 7" modules from Riverdi - the only tested is the 4.3" with a RVT43ULBNWC00
 - moved all target specific lines from EVE_config.h to EVE_target.h
 - cleaned up history
+- added profiles for EVE3-35G, EVE3-43G, EVE3-50G
+- added a profile for the CFAF800480E0-050SC from Crystalfontz
+- changed EVE_RiTFT50 to use the RVT70 config instead of the RVT50 config since RVT50 uses a different HOFFSET value
 
 */
 
@@ -68,33 +71,49 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE_EVE2_50G
 	#define EVE_EVE2_70
 	#define EVE_EVE2_70G
+	#define EVE_EVE3_35G
+	#define EVE_EVE3_43G
+	#define EVE_EVE3_50G
+	#define EVE_EVE3_70G
 	#define EVE_NHD_35
 	#define EVE_NHD_43
 	#define EVE_NHD_50
 	#define EVE_NHD_70
 	#define EVE_ADAM101
-	#define EVE3_43
+	#define EVE_CFAF800480E0_050SC
 #endif
 
-#define EVE_RiTFT43
+#define EVE_EVE3_50G
 
 
 /* display timing parameters below */
 
-
-/* test-entry with a made-up name, I have no knowledge if such a named product is even planned, just feels logical */
-#if defined (EVE_EVE3_70G)
-#define EVE_EVE2_70G	/* trigger including the setup for the EVE2_70G, assuming the same panel is used and that FT81x is a subset of BT81x */
-#define BT81X_ENABLE
-#endif
-
-/* just annother test setup */
-#if defined (EVE3_43)
-#define EVE_EVE2_43
+/* untested */
+#if defined (EVE_EVE3_35G)
+#define EVE_EVE2_35G
 #define EVE_HAS_CRYSTAL
 #define BT81X_ENABLE
 #endif
 
+/* untested */
+#if defined (EVE_EVE3_43G)
+#define EVE_EVE2_43G
+#define EVE_HAS_CRYSTAL
+#define BT81X_ENABLE
+#endif
+
+#if defined (EVE_EVE3_50G)
+#define EVE_EVE2_50G
+#define EVE_HAS_CRYSTAL
+#define BT81X_ENABLE
+#endif
+
+/* untested */
+#if defined (EVE_EVE3_70G)
+#define EVE_EVE2_70G	/* trigger including the setup for the EVE2_70G, the same panel is used */
+#define EVE_HAS_CRYSTAL
+#define BT81X_ENABLE
+#endif
 
 #if defined (EVE_RiTFT43)
 #define EVE_RVT43
@@ -103,12 +122,14 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define BT81X_ENABLE
 #endif
 
+/* untested */
 #if defined (EVE_RiTFT50)
-#define EVE_RVT50
+#define EVE_RVT70
 #define EVE_HAS_CRYSTAL
 #define BT81X_ENABLE
 #endif
 
+/* untested */
 #if defined (EVE_RiTFT70)
 #define EVE_RVT70
 #define EVE_HAS_CRYSTAL
@@ -709,5 +730,28 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define FT81X_ENABLE
 #endif
 
+
+/* untested */
+/* Crystalfonts EVE_CFAF800480E0-050SC 800x480 5.0" , FT813 capacitive touch */
+#if defined (EVE_CFAF800480E0_050SC)
+#define EVE_HSIZE	(800L)
+#define EVE_VSIZE	(480L)
+
+#define EVE_VSYNC0	(7L)
+#define EVE_VSYNC1	(8L)
+#define EVE_VOFFSET	(30L)
+#define EVE_VCYCLE	(511L)
+#define EVE_HSYNC0	(16L)
+#define EVE_HSYNC1	(17L)
+#define EVE_HOFFSET	(62L)
+#define EVE_HCYCLE 	(978L)
+#define EVE_PCLKPOL	(1L)
+#define EVE_SWIZZLE	(0L)
+#define EVE_PCLK	(2L)
+#define EVE_CSPREAD	(0L)
+#define EVE_TOUCH_RZTHRESH (1200L)
+#define EVE_HAS_GT911
+#define FT81X_ENABLE
+#endif
 
 #endif /* EVE_CONFIG_H */
