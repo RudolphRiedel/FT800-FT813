@@ -28,6 +28,7 @@ I have reports of successfully using it with:
 - ATSAMD20
 - ATSAME4
 - STM32
+- MSP430
 - some PICs
 - ESP32
 
@@ -48,12 +49,9 @@ The TFTs I have tested myself so far:
 - EVE2-70G https://www.matrixorbital.com/eve2-70g
 - NHD-3.5-320240FT-CSXV-CTP
 - RVT43ULBNWC00 (RiTFT-43-CAP-UX) https://riverdi.com/product/ritft43capux/
+- RVT50AQBNWC00 (RiTFT-50-CAP) https://riverdi.com/product/ritft50cap/
 - EVE3-50G https://www.matrixorbital.com/eve3-50g
 
-A word of "warning", you have to take a little care yourself to for example not send more than 4kB at once to the command co-processor
-or to not generate display lists that are longer than 8kB.
-My library does not check and re-check the command-FIFO on every step.
-This is optimised for speed so the training wheels are off.
 
 The examples in the "example_projects" drawer are for use with AtmelStudio7. For Arduino I am using the plugin from www.visualmicro.com .
 Yes, I am aware that these are outdated by now. :-)
@@ -64,14 +62,20 @@ The platform the code is compiled for is automatically detected thru compiler fl
 - Provide the pins used for Chip-Select and Power-Down in EVE_target.h for the target configuration you are using
 
 When compiling for AVR you need to provide the clock it is running at in order to make the _delay_ms() calls used to initialise the TFT work with the intended timing.
-For other plattforms you need to provide a delay(ms) function that works between 1ms and 56ms at least and is at least not performing these delays shorter than requested.
+For other plattforms you need to provide a DELAY_MS(ms) function that works between 1ms and 56ms at least and is at least not performing these delays shorter than requested.
 The delay(ms) is only used during initialisation of the FT8xx.
+See EVE_target.h for examples.
 
 In Addition you need to initialise the pins used for Chip-Select and PowerDown in your hardware correctly to output.
-Plus setup the SPI accordingly, mode-0, 8-bit, MSB-first, not more than 11MHz for the init (if the display can handle it).
+Plus setup the SPI accordingly, mode-0, 8-bit, MSB-first, not more than 11MHz for the init.
 
 Originally the project went public in the German mikrocontroller.net forum, the thread contains some insight: https://www.mikrocontroller.net/topic/395608
 
 Feel free to add to the discussion with questions or remarks.
+
+A word of "warning", you have to take a little care yourself to for example not send more than 4kB at once to the command co-processor
+or to not generate display lists that are longer than 8kB.
+My library does not check and re-check the command-FIFO on every step.
+This is optimised for speed so the training wheels are off.
 
 Note, with so many options to choose from now, FT80x support will be removed at some point in the future.
