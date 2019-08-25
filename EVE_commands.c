@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 4.0
-@date    2019-06-10
+@date    2019-08-25
 @author  Rudolph Riedel
 
 This file needs to be renamed to EVE_command.cpp for use with Arduino.
@@ -158,11 +158,15 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - sped up EVE_cmd_text() and EVE_cmd_number() for burst operations a little by avoiding a call to EVE_start_cmd()
 - removed a redundant #include "EVE_config.h", EVE.h already includes it
 - changed EVE_cmd_getptr(), it includes execution now and directly returns the end memory address of data inflated by EVE_cmd_inflate()
-- changed EVE_cmd_memcrc(), it includes execution now and directly returns the calculated crc32.
-- changed EVE_cmd_regread(), it includes execution now and directly returns the 32 bit value.
-- rewrote EVE_cmd_getprops(), it returns a struct now with pointer, width and height.
-- rewrote EVE_cmd_getmatrix(), it returns a struct now with matrix coefficent a...f.
+- changed EVE_cmd_memcrc(), it includes execution now and directly returns the calculated crc32
+- changed EVE_cmd_regread(), it includes execution now and directly returns the 32 bit value
+- rewrote EVE_cmd_getprops(), it returns a struct now with pointer, width and height
+- rewrote EVE_cmd_getmatrix(), it returns a struct now with matrix coefficent a...f
 - added EVE_cmd_text_var() after struggeling with varargs, this function adds a single paramter for string conversion if EVE_OPT_FORMAT is given
+- "optimized" EVE_init() to only read REG_ID in the loop and to use DELAY_MS(1); before reading REG_ID
+- added waiting for REG_CPURESET to be 0x00 to EVE_init() to follow the initialization sequence more strictly, turned out that the touch-controller needs 10+ms extra
+- added updating of REG_FREQUENCY to 72MHz for BT81x to EVE_init(), the programming guide states that it must be updated if the hosts selects an alternative frequency
+- rephrased the comment for the meta-commands into a warning and put it in front of each function, do not use these functions for several objects at once
 
 */
 
@@ -1049,10 +1053,10 @@ const uint8_t EVE_GT911_data[1184] PROGMEM =
 #endif
 
 
-/* init, has to be executed with the SPI setup to 11 MHz or less as required by FT8xx */
+/* init, has to be executed with the SPI setup to 11 MHz or less as required by FT8xx / BT8xx */
 uint8_t EVE_init(void)
 {
-	uint8_t chipid;
+	uint8_t chipid = 0;
 	uint16_t timeout = 0;
 
 	EVE_pdn_set();
@@ -1060,35 +1064,46 @@ uint8_t EVE_init(void)
 	EVE_pdn_clear();
 	DELAY_MS(21);	/* minimum time to allow from rising PD_N to first access is 20ms */
 
-	#if defined (EVE3_43)
-	EVE_cmdWrite(EVE_CORERST,0); /* test-setup needs a reset at warmstart, probably an issue with the PCB */
-	#endif
-
 //	EVE_cmdWrite(EVE_CORERST,0); /* reset, only required for warmstart if PowerDown line is not used */
 
 	#if defined (EVE_HAS_CRYSTAL)
-	EVE_cmdWrite(EVE_CLKEXT,0);	/* setup FT8xx for external clock */
+	EVE_cmdWrite(EVE_CLKEXT,0);	/* setup EVE for external clock */
 	#else
-	EVE_cmdWrite(EVE_CLKINT,0);	/* setup FT8xx for internal clock */
+	EVE_cmdWrite(EVE_CLKINT,0);	/* setup EVE for internal clock */
 	#endif
 
 	#if defined (BT81X_ENABLE)
 	EVE_cmdWrite(EVE_CLKSEL,0x46); /* set clock to 72 MHz */
 	#endif
 
-	EVE_cmdWrite(EVE_ACTIVE,0);	/* start FT8xx */
+	EVE_cmdWrite(EVE_ACTIVE,0);	/* start EVE */
 
-	chipid = EVE_memRead8(REG_ID);	/* Read ID register */
-	while(chipid != 0x7C)	/* if chipid is not 0x7c, continue to read it until it is, FT81x may need a moment for it's power on selftest */
+	while(chipid != 0x7C)	/* if chipid is not 0x7c, continue to read it until it is, EVE needs a moment for it's power on selftest and configuration */
 	{
-		chipid = EVE_memRead8(REG_ID);
 		DELAY_MS(1);
+		chipid = EVE_memRead8(REG_ID); /* Read ID register */
 		timeout++;
 		if(timeout > 400)
 		{
 			return 0;
 		}
 	}
+
+	timeout = 0;
+	while (0x00 != (EVE_memRead8(REG_CPURESET) & 0x03)) /* check if EVE is in working status */
+	{
+		DELAY_MS(1);
+		timeout++;
+		if(timeout > 50) /* experimental, 10 was the lowest value to get the BT815 started with, the touch-controller was the last to get out of reset */
+		{
+			return 0;
+		}
+	}
+
+	/* tell EVE that we changed the frequency from default to 72MHz for BT8xx */
+	#if defined (BT81X_ENABLE)
+	EVE_memWrite32(REG_FREQUENCY, 72000000);
+	#endif
 
 	/* we have a display with a Goodix GT911 / GT9271 touch-controller on it, so we patch our FT811 or FT813 according to AN_336 or setup a BT815 accordingly */
 	#if defined (EVE_HAS_GT911)
@@ -1120,7 +1135,6 @@ uint8_t EVE_init(void)
 		EVE_memWrite16(REG_GPIOX_DIR,0x8000); /* setting GPIO3 back to input */
 	#endif
 	#endif
-
 
 	/*	EVE_memWrite8(REG_PCLK, 0x00);	*/	/* set PCLK to zero - don't clock the LCD until later, line disabled because zero is reset-default and we just did a reset */
 
@@ -3172,8 +3186,7 @@ void EVE_cmd_appendf(uint32_t ptr, uint32_t num)
 #endif
 
 
-/* meta-commands, sequences of several display-list entries condensed into simpler to use functions at the price of some overhead */
-
+/* warning! meta-command! this is a sequence of display-list commands to simplify use at the price of some overhead */
 void EVE_cmd_point(int16_t x0, int16_t y0, uint16_t size)
 {
 	uint32_t calc;
@@ -3225,6 +3238,7 @@ void EVE_cmd_point(int16_t x0, int16_t y0, uint16_t size)
 }
 
 
+/* warning! meta-command! this is a sequence of display-list commands to simplify use at the price of some overhead */
 void EVE_cmd_line(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t width)
 {
 	uint32_t calc;
@@ -3288,6 +3302,7 @@ void EVE_cmd_line(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t width
 }
 
 
+/* warning! meta-command! this is a sequence of display-list commands to simplify use at the price of some overhead */
 void EVE_cmd_rect(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t corner)
 {
 	uint32_t calc;

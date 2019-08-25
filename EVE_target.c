@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions
 @version 4.0
-@date    2019-06-10
+@date    2019-08-11
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -21,6 +21,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+@section History
+
+4.0
+- added support for MSP432
 
  */
 
@@ -68,7 +73,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 				dmadescriptor.SRCADDR.reg = (uint32_t) &EVE_dma_buffer[EVE_dma_buffer_index]; /* note: last entry in array + 1 */
 				REG_SERCOM0_SPI_CTRLB = 0; /* switch receiver off by setting RXEN to 0 which is not enable-protected */
 				EVE_cs_set();
-				REG_DMAC_CHCTRLA = DMAC_CHCTRLA_ENABLE; /* start sending out EVE_dma_buffer ´*/
+				REG_DMAC_CHCTRLA = DMAC_CHCTRLA_ENABLE; /* start sending out EVE_dma_buffer ï¿½*/
 				EVE_dma_busy = 42;
 			}
 
@@ -85,9 +90,41 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			}
 
 		#endif
+        #endif
+    #endif /* __GNUC__ */
 
+    #if defined (__TI_ARM__)
 
-		#endif
+        #if defined (__MSP432P401R__)
+
+			/* SPI Master Configuration Parameter */
+			const eUSCI_SPI_MasterConfig EVE_Config =
+			{
+			        EUSCI_B_SPI_CLOCKSOURCE_SMCLK,             // SMCLK Clock Source
+			        48000000,                                   // SMCLK  = 48MHZ
+			        500000,                                    // SPICLK = 1Mhz
+			        EUSCI_B_SPI_MSB_FIRST,                     // MSB First
+			        EUSCI_B_SPI_PHASE_DATA_CAPTURED_ONFIRST_CHANGED_ON_NEXT,    // Phase
+			        EUSCI_B_SPI_CLOCKPOLARITY_INACTIVITY_LOW, // High polarity
+			        EUSCI_B_SPI_3PIN                           // 3Wire SPI Mode
+			};
+
+			void EVE_SPI_Init(void)
+			{
+			    GPIO_setAsOutputPin(EVE_CS_PORT,EVE_CS);
+			    GPIO_setAsOutputPin(EVE_PDN_PORT,EVE_PDN);
+//			    GPIO_setAsInputPinWithPullDownResistor(EVE_INT_PORT,EVE_INT);
+
+			    GPIO_setOutputHighOnPin(EVE_CS_PORT,EVE_CS);
+			    GPIO_setOutputHighOnPin(EVE_PDN_PORT,EVE_PDN);
+
+			    GPIO_setAsPeripheralModuleFunctionInputPin(RIVERDI_PORT, RIVERDI_SIMO | RIVERDI_SOMI | RIVERDI_CLK, GPIO_PRIMARY_MODULE_FUNCTION);
+			    SPI_initMaster(EUSCI_B0_BASE, &EVE_Config);
+			    SPI_enableModule(EUSCI_B0_BASE);
+			}
+
+        #endif
+
 	#endif
 #endif
 
