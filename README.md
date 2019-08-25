@@ -29,6 +29,7 @@ I have reports of successfully using it with:
 - ATSAME4
 - STM32
 - MSP430
+- MSP432
 - some PICs
 - ESP32
 
@@ -63,7 +64,7 @@ The platform the code is compiled for is automatically detected thru compiler fl
 
 When compiling for AVR you need to provide the clock it is running at in order to make the _delay_ms() calls used to initialise the TFT work with the intended timing.
 For other plattforms you need to provide a DELAY_MS(ms) function that works between 1ms and 56ms at least and is at least not performing these delays shorter than requested.
-The delay(ms) is only used during initialisation of the FT8xx.
+The DELAY_MS(ms) is only used during initialisation of the FT8xx/BT8xx
 See EVE_target.h for examples.
 
 In Addition you need to initialise the pins used for Chip-Select and PowerDown in your hardware correctly to output.
