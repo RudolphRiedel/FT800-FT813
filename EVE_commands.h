@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 4.0
-@date    2019-06-23
+@date    2019-08-31
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -87,6 +87,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - changed the prototype for EVE_cmd_regread(), it returns the 32 bit value directly now
 - changed cmd_getprops() and cmd_getmatrix(), these return structures now
 - added EVE_cmd_text_var() after struggeling with varargs, this function adds a single paramter for string conversion if EVE_OPT_FORMAT is given
+- changed EVE_cmd_text_var() to a varargs function with the number of arguments as additional argument
+- added EVE_cmd_button_var() and EVE_cmd_toggle_var() functions
 
 */
 
@@ -163,7 +165,9 @@ uint8_t EVE_init_flash(void);
 /* commands to draw graphics objects: */
 
 #if defined (BT81X_ENABLE)
-void EVE_cmd_text_var(int16_t x0, int16_t y0, int16_t font, uint16_t options, const char* text, uint32_t data);
+void EVE_cmd_text_var(int16_t x0, int16_t y0, int16_t font, uint16_t options, const char* text, uint8_t numargs, ...);
+void EVE_cmd_button_var(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t font, uint16_t options, const char* text, uint8_t num_args, ...);
+void EVE_cmd_toggle_var(int16_t x0, int16_t y0, int16_t w0, int16_t font, uint16_t options, uint16_t state, const char* text, uint8_t num_args, ...);
 #endif
 
 void EVE_cmd_text(int16_t x0, int16_t y0, int16_t font, uint16_t options, const char* text);

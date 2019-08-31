@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 4.0
-@date    2019-08-25
+@date    2019-08-31
 @author  Rudolph Riedel
 
 This file needs to be renamed to EVE_command.cpp for use with Arduino.
@@ -167,6 +167,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added waiting for REG_CPURESET to be 0x00 to EVE_init() to follow the initialization sequence more strictly, turned out that the touch-controller needs 10+ms extra
 - added updating of REG_FREQUENCY to 72MHz for BT81x to EVE_init(), the programming guide states that it must be updated if the hosts selects an alternative frequency
 - rephrased the comment for the meta-commands into a warning and put it in front of each function, do not use these functions for several objects at once
+- changed EVE_cmd_text_var() to a varargs function with the number of arguments as additional argument
+- added EVE_cmd_button_var() and EVE_cmd_toggle_var() functions
 
 */
 
@@ -1582,9 +1584,19 @@ uint8_t EVE_init_flash(void)
 #endif
 
 
+/* commands to draw graphics objects: */
+
+
 #if defined (BT81X_ENABLE)
-void EVE_cmd_text_var(int16_t x0, int16_t y0, int16_t font, uint16_t options, const char* text, uint32_t data)
+/* as the name implies, "num_args" is the number of arguments passed to this function as variadic arguments */
+void EVE_cmd_text_var(int16_t x0, int16_t y0, int16_t font, uint16_t options, const char* text, uint8_t num_args, ...)
 {
+	va_list arguments;
+	uint8_t counter;
+	uint32_t data;
+		
+	va_start(arguments, num_args);
+	
 	if(cmd_burst)
 	{
 		spi_transmit_async((uint8_t)(CMD_TEXT));	/* send data low byte */
@@ -1610,12 +1622,15 @@ void EVE_cmd_text_var(int16_t x0, int16_t y0, int16_t font, uint16_t options, co
 
 		if(options & EVE_OPT_FORMAT)
 		{
-			spi_transmit_async((uint8_t)(data));		/* send data low byte */
-			spi_transmit_async((uint8_t)(data >> 8));
-			spi_transmit_async((uint8_t)(data >> 16));
-			spi_transmit_async((uint8_t)(data >> 24));	/* send data high byte */
-
-			EVE_inc_cmdoffset(4);
+			for(counter=0;counter<num_args;counter++)
+			{
+				data = (uint32_t) va_arg(arguments, int); 
+				spi_transmit_async((uint8_t)(data));		/* send data low byte */
+				spi_transmit_async((uint8_t)(data >> 8));
+				spi_transmit_async((uint8_t)(data >> 16));
+				spi_transmit_async((uint8_t)(data >> 24));	/* send data high byte */
+				EVE_inc_cmdoffset(4);
+			}
 		}
 	}
 	else
@@ -1640,22 +1655,26 @@ void EVE_cmd_text_var(int16_t x0, int16_t y0, int16_t font, uint16_t options, co
 
 		if(options & EVE_OPT_FORMAT)
 		{
-			spi_transmit((uint8_t)(data));		/* send data low byte */
-			spi_transmit((uint8_t)(data >> 8));
-			spi_transmit((uint8_t)(data >> 16));
-			spi_transmit((uint8_t)(data >> 24));	/* send data high byte */
-
-			EVE_inc_cmdoffset(4);
+			for(counter=0;counter<num_args;counter++)
+			{
+				data = (uint32_t) va_arg(arguments, int);
+				spi_transmit((uint8_t)(data));		/* send data low byte */
+				spi_transmit((uint8_t)(data >> 8));
+				spi_transmit((uint8_t)(data >> 16));
+				spi_transmit((uint8_t)(data >> 24));	/* send data high byte */
+				EVE_inc_cmdoffset(4);
+			}
 		}
 
 		EVE_cs_clear();
 	}
+
+	va_end(arguments);
+
 }
 #endif
 
 
-
-/* commands to draw graphics objects: */
 void EVE_cmd_text(int16_t x0, int16_t y0, int16_t font, uint16_t options, const char* text)
 {
 	if(cmd_burst)
@@ -1706,6 +1725,98 @@ void EVE_cmd_text(int16_t x0, int16_t y0, int16_t font, uint16_t options, const 
 }
 
 
+#if defined (BT81X_ENABLE)
+/* as the name implies, "num_args" is the number of arguments passed to this function as variadic arguments */
+void EVE_cmd_button_var(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t font, uint16_t options, const char* text, uint8_t num_args, ...)
+{
+	va_list arguments;
+	uint8_t counter;
+	uint32_t data;
+	
+	va_start(arguments, num_args);
+
+	EVE_start_cmd(CMD_BUTTON);
+
+	if(cmd_burst)
+	{
+		spi_transmit_async((uint8_t)(x0));
+		spi_transmit_async((uint8_t)(x0 >> 8));
+
+		spi_transmit_async((uint8_t)(y0));
+		spi_transmit_async((uint8_t)(y0 >> 8));
+
+		spi_transmit_async((uint8_t)(w0));
+		spi_transmit_async((uint8_t)(w0 >> 8));
+
+		spi_transmit_async((uint8_t)(h0));
+		spi_transmit_async((uint8_t)(h0 >> 8));
+
+		spi_transmit_async((uint8_t)(font));
+		spi_transmit_async((uint8_t)(font >> 8));
+
+		spi_transmit_async((uint8_t)(options));
+		spi_transmit_async((uint8_t)(options >> 8));
+
+		EVE_inc_cmdoffset(12);
+		EVE_write_string(text);
+
+		if(options & EVE_OPT_FORMAT)
+		{
+			for(counter=0;counter<num_args;counter++)
+			{
+				data = (uint32_t) va_arg(arguments, int);
+				spi_transmit_async((uint8_t)(data));		/* send data low byte */
+				spi_transmit_async((uint8_t)(data >> 8));
+				spi_transmit_async((uint8_t)(data >> 16));
+				spi_transmit_async((uint8_t)(data >> 24));	/* send data high byte */
+				EVE_inc_cmdoffset(4);
+			}
+		}
+	}
+	else
+	{
+		spi_transmit((uint8_t)(x0));
+		spi_transmit((uint8_t)(x0 >> 8));
+
+		spi_transmit((uint8_t)(y0));
+		spi_transmit((uint8_t)(y0 >> 8));
+
+		spi_transmit((uint8_t)(w0));
+		spi_transmit((uint8_t)(w0 >> 8));
+
+		spi_transmit((uint8_t)(h0));
+		spi_transmit((uint8_t)(h0 >> 8));
+
+		spi_transmit((uint8_t)(font));
+		spi_transmit((uint8_t)(font >> 8));
+
+		spi_transmit((uint8_t)(options));
+		spi_transmit((uint8_t)(options >> 8));
+
+		EVE_inc_cmdoffset(12);
+		EVE_write_string(text);
+
+		if(options & EVE_OPT_FORMAT)
+		{
+			for(counter=0;counter<num_args;counter++)
+			{
+				data = (uint32_t) va_arg(arguments, int);
+				spi_transmit((uint8_t)(data));		/* send data low byte */
+				spi_transmit((uint8_t)(data >> 8));
+				spi_transmit((uint8_t)(data >> 16));
+				spi_transmit((uint8_t)(data >> 24));	/* send data high byte */
+				EVE_inc_cmdoffset(4);
+			}
+		}
+
+		EVE_cs_clear();
+	}
+	
+	va_end(arguments);
+}
+#endif
+
+
 void EVE_cmd_button(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t font, uint16_t options, const char* text)
 {
 	EVE_start_cmd(CMD_BUTTON);
@@ -1729,6 +1840,9 @@ void EVE_cmd_button(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t font
 
 		spi_transmit_async((uint8_t)(options));
 		spi_transmit_async((uint8_t)(options >> 8));
+
+		EVE_inc_cmdoffset(12);
+		EVE_write_string(text);
 	}
 	else
 	{
@@ -1749,13 +1863,9 @@ void EVE_cmd_button(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t font
 
 		spi_transmit((uint8_t)(options));
 		spi_transmit((uint8_t)(options >> 8));
-	}
 
-	EVE_inc_cmdoffset(12);
-	EVE_write_string(text);
-
-	if(cmd_burst == 0)
-	{
+		EVE_inc_cmdoffset(12);
+		EVE_write_string(text);
 		EVE_cs_clear();
 	}
 }
@@ -2313,6 +2423,98 @@ void EVE_cmd_dial(int16_t x0, int16_t y0, int16_t r0, uint16_t options, uint16_t
 }
 
 
+#if defined (BT81X_ENABLE)
+/* as the name implies, "num_args" is the number of arguments passed to this function as variadic arguments */
+void EVE_cmd_toggle_var(int16_t x0, int16_t y0, int16_t w0, int16_t font, uint16_t options, uint16_t state, const char* text, uint8_t num_args, ...)
+{
+	va_list arguments;
+	uint8_t counter;
+	uint32_t data;
+	
+	va_start(arguments, num_args);
+
+	EVE_start_cmd(CMD_TOGGLE);
+
+	if(cmd_burst)
+	{
+		spi_transmit_async((uint8_t)(x0));
+		spi_transmit_async((uint8_t)(x0 >> 8));
+
+		spi_transmit_async((uint8_t)(y0));
+		spi_transmit_async((uint8_t)(y0 >> 8));
+
+		spi_transmit_async((uint8_t)(w0));
+		spi_transmit_async((uint8_t)(w0 >> 8));
+
+		spi_transmit_async((uint8_t)(font));
+		spi_transmit_async((uint8_t)(font >> 8));
+
+		spi_transmit_async((uint8_t)(options));
+		spi_transmit_async((uint8_t)(options >> 8));
+
+		spi_transmit_async((uint8_t)(state));
+		spi_transmit_async((uint8_t)(state >> 8));
+
+		EVE_inc_cmdoffset(12);
+		EVE_write_string(text);
+
+		if(options & EVE_OPT_FORMAT)
+		{
+			for(counter=0;counter<num_args;counter++)
+			{
+				data = (uint32_t) va_arg(arguments, int);
+				spi_transmit_async((uint8_t)(data));		/* send data low byte */
+				spi_transmit_async((uint8_t)(data >> 8));
+				spi_transmit_async((uint8_t)(data >> 16));
+				spi_transmit_async((uint8_t)(data >> 24));	/* send data high byte */
+				EVE_inc_cmdoffset(4);
+			}
+		}
+	}
+	else
+	{
+		spi_transmit((uint8_t)(x0));
+		spi_transmit((uint8_t)(x0 >> 8));
+
+		spi_transmit((uint8_t)(y0));
+		spi_transmit((uint8_t)(y0 >> 8));
+
+		spi_transmit((uint8_t)(w0));
+		spi_transmit((uint8_t)(w0 >> 8));
+
+		spi_transmit((uint8_t)(font));
+		spi_transmit((uint8_t)(font >> 8));
+
+		spi_transmit((uint8_t)(options));
+		spi_transmit((uint8_t)(options >> 8));
+
+		spi_transmit((uint8_t)(state));
+		spi_transmit((uint8_t)(state >> 8));
+
+		EVE_inc_cmdoffset(12);
+		EVE_write_string(text);
+
+		if(options & EVE_OPT_FORMAT)
+		{
+			for(counter=0;counter<num_args;counter++)
+			{
+				data = (uint32_t) va_arg(arguments, int);
+				spi_transmit((uint8_t)(data));		/* send data low byte */
+				spi_transmit((uint8_t)(data >> 8));
+				spi_transmit((uint8_t)(data >> 16));
+				spi_transmit((uint8_t)(data >> 24));	/* send data high byte */
+				EVE_inc_cmdoffset(4);
+			}
+		}
+
+		EVE_cs_clear();
+	}
+	
+	va_end(arguments);
+}
+#endif
+
+
 void EVE_cmd_toggle(int16_t x0, int16_t y0, int16_t w0, int16_t font, uint16_t options, uint16_t state, const char* text)
 {
 	EVE_start_cmd(CMD_TOGGLE);
@@ -2336,6 +2538,9 @@ void EVE_cmd_toggle(int16_t x0, int16_t y0, int16_t w0, int16_t font, uint16_t o
 
 		spi_transmit_async((uint8_t)(state));
 		spi_transmit_async((uint8_t)(state >> 8));
+
+		EVE_inc_cmdoffset(12);
+		EVE_write_string(text);
 	}
 	else
 	{
@@ -2356,13 +2561,9 @@ void EVE_cmd_toggle(int16_t x0, int16_t y0, int16_t w0, int16_t font, uint16_t o
 
 		spi_transmit((uint8_t)(state));
 		spi_transmit((uint8_t)(state >> 8));
-	}
 
-	EVE_inc_cmdoffset(12);
-	EVE_write_string(text);
-
-	if(cmd_burst == 0)
-	{
+		EVE_inc_cmdoffset(12);
+		EVE_write_string(text);
 		EVE_cs_clear();
 	}
 }
