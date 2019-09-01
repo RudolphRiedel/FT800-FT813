@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 4.0
-@date    2019-08-31
+@date    2019-09-01
 @author  Rudolph Riedel
 
 This file needs to be renamed to EVE_command.cpp for use with Arduino.
@@ -169,6 +169,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - rephrased the comment for the meta-commands into a warning and put it in front of each function, do not use these functions for several objects at once
 - changed EVE_cmd_text_var() to a varargs function with the number of arguments as additional argument
 - added EVE_cmd_button_var() and EVE_cmd_toggle_var() functions
+- added EVE_calibrate_manual()
 
 */
 
@@ -3564,4 +3565,108 @@ void EVE_cmd_rect(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t corne
 	}
 
 	EVE_inc_cmdoffset(16);
+}
+
+
+/* this is meant to be called outside display-list building */
+/* this function displays an interactive calibration screen, calculates the calibration values and */
+/* writes the new values to the touch matrix registers of EVE */
+/* unlike the built-in cmd_calibrate() of EVE this also works with displays that are cut down from larger ones like EVE2-38A / EVE2-38G */
+/* the height is needed as parameter as EVE_VSIZE for the EVE2-38 is 272 but the visible size is only 116 */
+/* so the call would be EVE_calibrate_manual(116); for the EVE2-38A and EVE2-38G while for most other displays */
+/* using EVE_calibrate_manual(EVE_VSIZE) would work - but for normal displays the built-in cmd_calibrate would work as expected anyways */
+/* this code was taken from the MatrixOrbital EVE2-Library on Github, adapted and modified */
+void EVE_calibrate_manual(uint16_t height)
+{
+	uint32_t displayX[3], displayY[3];
+	uint32_t touchX[3], touchY[3];
+	uint32_t touchValue = 0;
+	int32_t tmp, k;
+	int32_t TransMatrix[6];
+	uint8_t count = 0;
+	char num[2];
+	uint8_t touch_lock = 1;
+
+	// These values determine where your calibration points will be drawn on your display
+	displayX[0] = (EVE_HSIZE * 0.15);
+	displayY[0] = (height * 0.15);
+	
+	displayX[1] = (EVE_HSIZE * 0.85);
+	displayY[1] = (height / 2);
+	
+	displayX[2] = (EVE_HSIZE / 2);
+	displayY[2] = (height * 0.85);
+
+	while (count < 3)
+	{
+		EVE_cmd_dl(CMD_DLSTART);
+		EVE_cmd_dl(DL_CLEAR_RGB | 0x000000);
+		EVE_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
+
+		// Draw Calibration Point on screen
+		EVE_cmd_dl(DL_COLOR_RGB | 0x0000ff);
+		EVE_cmd_dl(POINT_SIZE(20*16));
+		EVE_cmd_dl((DL_BEGIN | EVE_POINTS));
+		EVE_cmd_dl(VERTEX2F((uint32_t)(displayX[count]) * 16, (uint32_t)((displayY[count])) * 16));
+		EVE_cmd_dl(DL_END);
+		EVE_cmd_dl(DL_COLOR_RGB | 0xffffff);
+		EVE_cmd_text((EVE_HSIZE/2), 50, 27, EVE_OPT_CENTER, "Please tap on the dot.");
+		num[0] = count + 0x31; num[1] = 0; // null terminated string of one character
+		EVE_cmd_text(displayX[count], displayY[count], 27, EVE_OPT_CENTER, num);
+		
+		EVE_cmd_dl(DL_DISPLAY);
+		EVE_cmd_dl(CMD_SWAP);
+		EVE_cmd_execute();
+		
+		while(1)
+		{
+			touchValue = EVE_memRead32(REG_TOUCH_DIRECT_XY);	// Read for any new touch tag inputs
+			
+			if(touch_lock)
+			{
+				if(touchValue & 0x80000000) // check if we have no touch
+				{
+					touch_lock = 0;
+				}
+			}
+			else
+			{
+				if (!(touchValue & 0x80000000)) // check if a touch is detected
+				{
+					touchX[count] = (touchValue>>16) & 0x03FF;	// Raw Touchscreen Y coordinate
+					touchY[count] = touchValue & 0x03FF;		// Raw Touchscreen Y coordinate
+					touch_lock = 1;
+					count++;
+					break; // leave while(1)
+				}
+			}
+		}
+	}
+
+	k = ((touchX[0] - touchX[2])*(touchY[1] - touchY[2])) - ((touchX[1] - touchX[2])*(touchY[0] - touchY[2]));
+
+	tmp = (((displayX[0] - displayX[2]) * (touchY[1] - touchY[2])) - ((displayX[1] - displayX[2])*(touchY[0] - touchY[2])));
+	TransMatrix[0] = ((int64_t)tmp << 16) / k;
+
+	tmp = (((touchX[0] - touchX[2]) * (displayX[1] - displayX[2])) - ((displayX[0] - displayX[2])*(touchX[1] - touchX[2])));
+	TransMatrix[1] = ((int64_t)tmp << 16) / k;
+
+	tmp = ((touchY[0] * (((touchX[2] * displayX[1]) - (touchX[1] * displayX[2])))) + (touchY[1] * (((touchX[0] * displayX[2]) - (touchX[2] * displayX[0])))) + (touchY[2] * (((touchX[1] * displayX[0]) - (touchX[0] * displayX[1])))));
+	TransMatrix[2] = ((int64_t)tmp << 16) / k;
+
+	tmp = (((displayY[0] - displayY[2]) * (touchY[1] - touchY[2])) - ((displayY[1] - displayY[2])*(touchY[0] - touchY[2])));
+	TransMatrix[3] = ((int64_t)tmp << 16) / k;
+
+	tmp = (((touchX[0] - touchX[2]) * (displayY[1] - displayY[2])) - ((displayY[0] - displayY[2])*(touchX[1] - touchX[2])));
+	TransMatrix[4] = ((int64_t)tmp << 16) / k;
+
+	tmp = ((touchY[0] * (((touchX[2] * displayY[1]) - (touchX[1] * displayY[2])))) + (touchY[1] * (((touchX[0] * displayY[2]) - (touchX[2] * displayY[0])))) + (touchY[2] * (((touchX[1] * displayY[0]) - (touchX[0] * displayY[1])))));
+	TransMatrix[5] = ((int64_t)tmp << 16) / k;
+	
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_A, TransMatrix[0]);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_B, TransMatrix[1]);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_C, TransMatrix[2]);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_D, TransMatrix[3]);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_E, TransMatrix[4]);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_F, TransMatrix[5]);
 }

@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 4.0
-@date    2019-08-31
+@date    2019-09-01
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -89,6 +89,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added EVE_cmd_text_var() after struggeling with varargs, this function adds a single paramter for string conversion if EVE_OPT_FORMAT is given
 - changed EVE_cmd_text_var() to a varargs function with the number of arguments as additional argument
 - added EVE_cmd_button_var() and EVE_cmd_toggle_var() functions
+- added prototype for EVE_calibrate_manual()
 
 */
 
@@ -251,6 +252,9 @@ extern struct EVE_struct_getmatrix EVE_cmd_getmatrix(void);
 void EVE_cmd_point(int16_t x0, int16_t y0, uint16_t size);
 void EVE_cmd_line(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t w0);
 void EVE_cmd_rect(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t corner);
+
+
+void EVE_calibrate_manual(uint16_t height);
 
 
 /* startup FT8xx: */
