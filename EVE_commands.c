@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 4.0
-@date    2019-09-01
+@date    2019-09-08
 @author  Rudolph Riedel
 
 This file needs to be renamed to EVE_command.cpp for use with Arduino.
@@ -170,6 +170,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - changed EVE_cmd_text_var() to a varargs function with the number of arguments as additional argument
 - added EVE_cmd_button_var() and EVE_cmd_toggle_var() functions
 - added EVE_calibrate_manual()
+- removed the second updating of REG_FREQUENCY for BT81x in EVE_init() that I overlooked earlier
+- added a couple lines of comments to the EVE3 flash commands
+- reworked EVE_busy() to match the coprocessor fault recovery for BT81x as described in the BT81x programming guide
 
 */
 
@@ -318,13 +321,62 @@ uint8_t EVE_busy(void)
 
 	cmdBufferRead = EVE_memRead16(REG_CMD_READ);	/* read the graphics processor read pointer */
 
-	if(cmdBufferRead == 0xFFF)
+	if(cmdBufferRead == 0xFFF) /* we have a co-processor fault, make EVE play with us again */
 	{
+		#if defined (BT81X_ENABLE)
+		uint16_t copro_patch_pointer;
+		uint32_t ftAddress;
+		
+		copro_patch_pointer = EVE_memRead16(REG_COPRO_PATCH_DTR);
+		#endif
+		
 		EVE_memWrite8(REG_CPURESET, 1);		/* hold co-processor engine in the reset condition */
 		EVE_memWrite16(REG_CMD_READ, 0);	/* set REG_CMD_READ to 0 */
 		EVE_memWrite16(REG_CMD_WRITE, 0);	/* set REG_CMD_WRITE to 0 */
+		EVE_memWrite32(REG_CMD_DL, 0);		/* reset REG_CMD_DL to 0 as required by the BT81x programming guide, should not hurt FT8xx */
 		cmdOffset = 0;						/* reset cmdOffset */
 		EVE_memWrite8(REG_CPURESET, 0);		/* set REG_CMD_WRITE to 0 to restart the co-processor engine*/
+
+		#if defined (BT81X_ENABLE)
+		EVE_memWrite16(REG_COPRO_PATCH_DTR, copro_patch_pointer);
+		
+		DELAY_MS(5); /* just to be safe */
+		
+		ftAddress = EVE_RAM_CMD + cmdOffset;
+
+		EVE_cs_set();
+		spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
+		spi_transmit((uint8_t)(ftAddress >> 8));	/* send middle address byte */
+		spi_transmit((uint8_t)(ftAddress));		/* send low address byte */
+
+		spi_transmit((uint8_t)(CMD_FLASHATTACH));		/* send command low byte */
+		spi_transmit((uint8_t)(CMD_FLASHATTACH >> 8));
+		spi_transmit((uint8_t)(CMD_FLASHATTACH >> 16));
+		spi_transmit((uint8_t)(CMD_FLASHATTACH >> 24));		/* send command high byte */
+
+		spi_transmit((uint8_t)(CMD_FLASHFAST));
+		spi_transmit((uint8_t)(CMD_FLASHFAST >> 8));
+		spi_transmit((uint8_t)(CMD_FLASHFAST >> 16));
+		spi_transmit((uint8_t)(CMD_FLASHFAST >> 24));
+		EVE_cs_clear();
+
+		cmdOffset = 8;
+
+		ftAddress = REG_CMD_WRITE;
+
+		EVE_cs_set();
+		spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
+		spi_transmit((uint8_t)(ftAddress >> 8));	/* send middle address byte */
+		spi_transmit((uint8_t)(ftAddress));			/* send low address byte */
+		spi_transmit((uint8_t)(cmdOffset));			/* send data low byte */
+		spi_transmit((uint8_t)(cmdOffset >> 8));	/* send data high byte */
+		EVE_cs_clear();
+
+		EVE_memWrite8(REG_PCLK, EVE_PCLK); /* restore REG_PCLK in case it was set to zero by an error */
+		
+		DELAY_MS(5); /* just to be safe */
+		
+		#endif
 	}
 
 	if(cmdOffset != cmdBufferRead)
@@ -427,7 +479,7 @@ void EVE_cmd_execute(void)
 }
 
 
-/* Begin a co-processor command, this is used for all non-display-list commands */
+/* begin a co-processor command, this is used for all non-display-list commands */
 void EVE_begin_cmd(uint32_t command)
 {
 	uint32_t ftAddress;
@@ -441,7 +493,7 @@ void EVE_begin_cmd(uint32_t command)
 	spi_transmit((uint8_t)(command));		/* send data low byte */
 	spi_transmit((uint8_t)(command >> 8));
 	spi_transmit((uint8_t)(command >> 16));
-	spi_transmit((uint8_t)(command >> 24));		/* Send data high byte */
+	spi_transmit((uint8_t)(command >> 24));		/* send data high byte */
 	EVE_inc_cmdoffset(4);			/* update the command-ram pointer */
 }
 
@@ -1067,7 +1119,7 @@ uint8_t EVE_init(void)
 	EVE_pdn_clear();
 	DELAY_MS(21);	/* minimum time to allow from rising PD_N to first access is 20ms */
 
-//	EVE_cmdWrite(EVE_CORERST,0); /* reset, only required for warmstart if PowerDown line is not used */
+/*	EVE_cmdWrite(EVE_CORERST,0); */ /* reset, only required for warm-start if PowerDown line is not used */
 
 	#if defined (EVE_HAS_CRYSTAL)
 	EVE_cmdWrite(EVE_CLKEXT,0);	/* setup EVE for external clock */
@@ -1081,10 +1133,10 @@ uint8_t EVE_init(void)
 
 	EVE_cmdWrite(EVE_ACTIVE,0);	/* start EVE */
 
-	while(chipid != 0x7C)	/* if chipid is not 0x7c, continue to read it until it is, EVE needs a moment for it's power on selftest and configuration */
+	while(chipid != 0x7C)	/* if chipid is not 0x7c, continue to read it until it is, EVE needs a moment for it's power on self-test and configuration */
 	{
 		DELAY_MS(1);
-		chipid = EVE_memRead8(REG_ID); /* Read ID register */
+		chipid = EVE_memRead8(REG_ID);
 		timeout++;
 		if(timeout > 400)
 		{
@@ -1147,10 +1199,6 @@ uint8_t EVE_init(void)
 	EVE_memWrite8(REG_PWM_DUTY, 0);		/* turn off backlight for any other module */
 	#endif
 
-	#if defined (BT81X_ENABLE)
-	EVE_memWrite32(REG_FREQUENCY,0x44aa200); /* set frequency used to 72 MHz */
-	#endif
-
 	/* Initialize Display */
 	EVE_memWrite16(REG_HSIZE,   EVE_HSIZE);		/* active display width */
 	EVE_memWrite16(REG_HCYCLE,  EVE_HCYCLE);	/* total number of clocks per line, incl front/back porch */
@@ -1158,7 +1206,7 @@ uint8_t EVE_init(void)
 	EVE_memWrite16(REG_HSYNC0,  EVE_HSYNC0);	/* start of horizontal sync pulse */
 	EVE_memWrite16(REG_HSYNC1,  EVE_HSYNC1);	/* end of horizontal sync pulse */
 	EVE_memWrite16(REG_VSIZE,   EVE_VSIZE);		/* active display height */
-	EVE_memWrite16(REG_VCYCLE,  EVE_VCYCLE);	/* total number of lines per screen, incl pre/post */
+	EVE_memWrite16(REG_VCYCLE,  EVE_VCYCLE);	/* total number of lines per screen, including pre/post */
 	EVE_memWrite16(REG_VOFFSET, EVE_VOFFSET);	/* start of active screen */
 	EVE_memWrite16(REG_VSYNC0,  EVE_VSYNC0);	/* start of vertical sync pulse */
 	EVE_memWrite16(REG_VSYNC1,  EVE_VSYNC1);	/* end of vertical sync pulse */
@@ -1166,7 +1214,7 @@ uint8_t EVE_init(void)
 	EVE_memWrite8(REG_PCLK_POL, EVE_PCLKPOL);	/* LCD data is clocked in on this PCLK edge */
 	EVE_memWrite8(REG_CSPREAD,	EVE_CSPREAD);	/* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
 
-	/* Don't set PCLK yet - wait for just after the first display list */
+	/* do not set PCLK yet - wait for just after the first display list */
 
 	/* configure Touch */
 	EVE_memWrite8(REG_TOUCH_MODE, EVE_TMODE_CONTINUOUS);	/* enable touch */
@@ -1271,14 +1319,14 @@ void EVE_start_cmd(uint32_t command)
 		spi_transmit((uint8_t)(command));		/* send data low byte */
 		spi_transmit((uint8_t)(command >> 8));
 		spi_transmit((uint8_t)(command >> 16));
-		spi_transmit((uint8_t)(command >> 24));		/* Send data high byte */
+		spi_transmit((uint8_t)(command >> 24));		/* send data high byte */
 	}
 	else
 	{
 		spi_transmit_async((uint8_t)(command));		/* send data low byte */
 		spi_transmit_async((uint8_t)(command >> 8));
 		spi_transmit_async((uint8_t)(command >> 16));
-		spi_transmit_async((uint8_t)(command >> 24));		/* Send data high byte */
+		spi_transmit_async((uint8_t)(command >> 24));		/* send data high byte */
 	}
 
 	EVE_inc_cmdoffset(4);			/* update the command-ram pointer */
@@ -1302,7 +1350,7 @@ void EVE_cmd_dl(uint32_t command)
 		spi_transmit_async((uint8_t)(command));	/* send data low byte */
 		spi_transmit_async((uint8_t)(command >> 8));
 		spi_transmit_async((uint8_t)(command >> 16));
-		spi_transmit_async((uint8_t)(command >> 24));	/* Send data high byte */
+		spi_transmit_async((uint8_t)(command >> 24));	/* send data high byte */
 		EVE_inc_cmdoffset(4);	/* update the command-ram pointer */
 	}
 	else
@@ -1313,7 +1361,7 @@ void EVE_cmd_dl(uint32_t command)
 }
 
 
-/* Write a string to co-processor memory in context of a command: no chip-select, just plain SPI-transfers */
+/* write a string to co-processor memory in context of a command: no chip-select, just plain SPI-transfers */
 void EVE_write_string(const char *text)
 {
 	uint8_t textindex = 0;
@@ -1377,6 +1425,9 @@ void EVE_write_string(const char *text)
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 /* write "num" bytes from *data to the external flash on a BT81x board at address ptr */
 /* note: ptr must be 256 byte aligned, num must be a multiple of 256 */
+/* note: EVE will not do anything if the alignment requirements are not met */
+/* note: the address ptr is relative to the flash so the first address is 0x00000000 not 0x800000 */
+/* note: on AVR controllers this expects the data to be located in the controllers flash memory */
 void EVE_cmd_flashwrite(uint32_t ptr, uint32_t num, const uint8_t *data)
 {
 	EVE_begin_cmd(CMD_FLASHWRITE);
@@ -1401,6 +1452,8 @@ void EVE_cmd_flashwrite(uint32_t ptr, uint32_t num, const uint8_t *data)
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 /* write "num" bytes from src in the external flash on a BT81x board to dest in RAM_G */
 /* note: src must be 64-byte aligned, dest must be 4-byte aligned, num must be a multiple of 4 */
+/* note: EVE will not do anything if the alignment requirements are not met */
+/* note: the src pointer is relative to the flash so the first address is 0x00000000 not 0x800000 */
 void EVE_cmd_flashread(uint32_t dest, uint32_t src, uint32_t num)
 {
 	EVE_begin_cmd(CMD_FLASHREAD);
@@ -1429,6 +1482,8 @@ void EVE_cmd_flashread(uint32_t dest, uint32_t src, uint32_t num)
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 /* write "num" bytes from src in RAM_G to to the external flash on a BT81x board at address dest */
 /* note: dest must be 4096-byte aligned, src must be 4-byte aligned, num must be a multiple of 4096 */
+/* note: EVE will not do anything if the alignment requirements are not met */
+/* note: the address ptr is relative to the flash so the first address is 0x00000000 not 0x800000 */
 void EVE_cmd_flashupdate(uint32_t dest, uint32_t src, uint32_t num)
 {
 	EVE_begin_cmd(CMD_FLASHUPDATE);
@@ -1539,7 +1594,7 @@ uint8_t EVE_init_flash(void)
 
 	status = EVE_memRead8(REG_FLASH_STATUS); /* should be 0x02 - FLASH_STATUS_BASIC, power-up is done and the attached flash is detected */
 
-	while(status == 0) /* FLASH_STATUS_INIT - we are somehow stll in init, give it a litte more time, this should never happen */
+	while(status == 0) /* FLASH_STATUS_INIT - we are somehow still in init, give it a litte more time, this should never happen */
 	{
 		status = EVE_memRead8(REG_FLASH_STATUS);
 		DELAY_MS(1);
@@ -1565,7 +1620,7 @@ uint8_t EVE_init_flash(void)
 	{
 		result = EVE_cmd_flashfast();
 
-		if(result == 0) /* cmd_flashfast was succesful */
+		if(result == 0) /* cmd_flashfast was successful */
 		{
 			return 1;
 		}
@@ -1603,7 +1658,7 @@ void EVE_cmd_text_var(int16_t x0, int16_t y0, int16_t font, uint16_t options, co
 		spi_transmit_async((uint8_t)(CMD_TEXT));	/* send data low byte */
 		spi_transmit_async((uint8_t)(CMD_TEXT >> 8));
 		spi_transmit_async((uint8_t)(CMD_TEXT >> 16));
-		spi_transmit_async((uint8_t)(CMD_TEXT >> 24));	/* Send data high byte */
+		spi_transmit_async((uint8_t)(CMD_TEXT >> 24));	/* send data high byte */
 
 		spi_transmit_async((uint8_t)(x0));
 		spi_transmit_async((uint8_t)(x0 >> 8));
@@ -1683,7 +1738,7 @@ void EVE_cmd_text(int16_t x0, int16_t y0, int16_t font, uint16_t options, const 
 		spi_transmit_async((uint8_t)(CMD_TEXT));	/* send data low byte */
 		spi_transmit_async((uint8_t)(CMD_TEXT >> 8));
 		spi_transmit_async((uint8_t)(CMD_TEXT >> 16));
-		spi_transmit_async((uint8_t)(CMD_TEXT >> 24));	/* Send data high byte */
+		spi_transmit_async((uint8_t)(CMD_TEXT >> 24));	/* send data high byte */
 
 		spi_transmit_async((uint8_t)(x0));
 		spi_transmit_async((uint8_t)(x0 >> 8));
@@ -3587,7 +3642,7 @@ void EVE_calibrate_manual(uint16_t height)
 	char num[2];
 	uint8_t touch_lock = 1;
 
-	// These values determine where your calibration points will be drawn on your display
+	/* these values determine where your calibration points will be drawn on your display */
 	displayX[0] = (EVE_HSIZE * 0.15);
 	displayY[0] = (height * 0.15);
 	
@@ -3603,7 +3658,7 @@ void EVE_calibrate_manual(uint16_t height)
 		EVE_cmd_dl(DL_CLEAR_RGB | 0x000000);
 		EVE_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
 
-		// Draw Calibration Point on screen
+		/* draw Calibration Point on screen */
 		EVE_cmd_dl(DL_COLOR_RGB | 0x0000ff);
 		EVE_cmd_dl(POINT_SIZE(20*16));
 		EVE_cmd_dl((DL_BEGIN | EVE_POINTS));
@@ -3611,7 +3666,7 @@ void EVE_calibrate_manual(uint16_t height)
 		EVE_cmd_dl(DL_END);
 		EVE_cmd_dl(DL_COLOR_RGB | 0xffffff);
 		EVE_cmd_text((EVE_HSIZE/2), 50, 27, EVE_OPT_CENTER, "Please tap on the dot.");
-		num[0] = count + 0x31; num[1] = 0; // null terminated string of one character
+		num[0] = count + 0x31; num[1] = 0; /* null terminated string of one character */
 		EVE_cmd_text(displayX[count], displayY[count], 27, EVE_OPT_CENTER, num);
 		
 		EVE_cmd_dl(DL_DISPLAY);
@@ -3620,24 +3675,24 @@ void EVE_calibrate_manual(uint16_t height)
 		
 		while(1)
 		{
-			touchValue = EVE_memRead32(REG_TOUCH_DIRECT_XY);	// Read for any new touch tag inputs
+			touchValue = EVE_memRead32(REG_TOUCH_DIRECT_XY); /* read for any new touch tag inputs */
 			
 			if(touch_lock)
 			{
-				if(touchValue & 0x80000000) // check if we have no touch
+				if(touchValue & 0x80000000) /* check if we have no touch */
 				{
 					touch_lock = 0;
 				}
 			}
 			else
 			{
-				if (!(touchValue & 0x80000000)) // check if a touch is detected
+				if (!(touchValue & 0x80000000)) /* check if a touch is detected */
 				{
-					touchX[count] = (touchValue>>16) & 0x03FF;	// Raw Touchscreen Y coordinate
-					touchY[count] = touchValue & 0x03FF;		// Raw Touchscreen Y coordinate
+					touchX[count] = (touchValue>>16) & 0x03FF;	/* raw Touchscreen Y coordinate */
+					touchY[count] = touchValue & 0x03FF;		/* raw Touchscreen Y coordinate */
 					touch_lock = 1;
 					count++;
-					break; // leave while(1)
+					break; /* leave while(1) */
 				}
 			}
 		}
