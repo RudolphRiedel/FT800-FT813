@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 4.0
-@date    2019-09-01
+@date    2019-09-14
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -90,6 +90,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - changed EVE_cmd_text_var() to a varargs function with the number of arguments as additional argument
 - added EVE_cmd_button_var() and EVE_cmd_toggle_var() functions
 - added prototype for EVE_calibrate_manual()
+- added prototypes EVE_cmd_flasherase(), EVE_cmd_flashattach(), EVE_cmd_flashdetach() and EVE_cmd_flashspidesel()
 
 */
 
@@ -143,6 +144,10 @@ void EVE_cmd_dl(uint32_t command);
 void EVE_cmd_flashwrite(uint32_t ptr, uint32_t num, const uint8_t *data);
 void EVE_cmd_flashread(uint32_t dest, uint32_t src, uint32_t num);
 void EVE_cmd_flashupdate(uint32_t dest, uint32_t src, uint32_t num);
+void EVE_cmd_flasherase(void);
+void EVE_cmd_flashattach(void);
+void EVE_cmd_flashdetach(void);
+void EVE_cmd_flashspidesel(void);
 uint32_t EVE_cmd_flashfast(void);
 void EVE_cmd_flashspitx(uint32_t num, const uint8_t *data);
 void EVE_cmd_flashspirx(uint32_t dest, uint32_t num);

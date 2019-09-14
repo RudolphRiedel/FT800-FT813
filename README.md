@@ -52,6 +52,7 @@ The TFTs I have tested myself so far:
 - RVT43ULBNWC00 (RiTFT-43-CAP-UX) https://riverdi.com/product/ritft43capux/
 - RVT50AQBNWC00 (RiTFT-50-CAP) https://riverdi.com/product/ritft50cap/
 - EVE3-50G https://www.matrixorbital.com/eve3-50g
+- PAF90B5WFNWC01 http://www.panadisplay.com/ftdi-intelligent-display/9-inch-lcd-with-touch-with-bt815-board.html
 
 
 The examples in the "example_projects" drawer are for use with AtmelStudio7. For Arduino I am using the plugin from www.visualmicro.com .

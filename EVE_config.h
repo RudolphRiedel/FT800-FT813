@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 4.0
-@date    2019-07-21
+@date    2019-09-14
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -34,6 +34,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added profiles for EVE3-35G, EVE3-43G, EVE3-50G
 - added a profile for the CFAF800480E0-050SC from Crystalfontz
 - changed EVE_RiTFT50 to use the RVT70 config instead of the RVT50 config since RVT50 uses a different HOFFSET value
+- added EVE_PAF90, a profoöe for the PAF90B5WFNWC01 from Panaysy
 
 */
 
@@ -81,9 +82,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE_NHD_70
 	#define EVE_ADAM101
 	#define EVE_CFAF800480E0_050SC
+	#define EVE_PAF90
 #endif
 
-#define EVE_EVE3_50G
+#define EVE_PAF90
 
 
 /* display timing parameters below */
@@ -752,6 +754,30 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_GT911
 #define FT81X_ENABLE
+#endif
+
+
+/* PAF90B5WFNWC01 800x480 9.0" Panasys, BT815 */
+#if defined (EVE_PAF90)
+#define EVE_HSIZE	(800L)	/* Thd Length of visible part of line (in PCLKs) - display width */
+#define EVE_VSIZE	(480L)	/* Tvd Number of visible lines (in lines) - display height */
+
+#define EVE_VSYNC0	(0L)	/* Tvf Vertical Front Porch */
+#define EVE_VSYNC1	(10L)	/* Tvf + Tvp Vertical Front Porch plus Vsync Pulse width */
+#define EVE_VOFFSET	(23L)	/* Tvf + Tvp + Tvb Number of non-visible lines (in lines) */
+#define EVE_VCYCLE	(525L)	/* Tv Total number of lines (visible and non-visible) (in lines) */
+#define EVE_HSYNC0	(0L)	/* Thf Horizontal Front Porch */
+#define EVE_HSYNC1	(10L)	/* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
+#define EVE_HOFFSET (46L)	/* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
+#define EVE_HCYCLE 	(1056L)	/* Th Total length of line (visible and non-visible) (in PCLKs) */
+#define EVE_PCLKPOL (1L)	/* PCLK polarity (0 = rising edge, 1 = falling edge) */
+#define EVE_SWIZZLE (0L)	/* Defines the arrangement of the RGB pins of the FT800 */
+#define EVE_PCLK	(2L)	/* 60MHz / REG_PCLK = PCLK frequency 30 MHz */
+#define EVE_CSPREAD	(1L)	/* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
+#define EVE_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
+#define EVE_HAS_CRYSTAL
+#define FT81X_ENABLE
+#define BT81X_ENABLE
 #endif
 
 #endif /* EVE_CONFIG_H */
