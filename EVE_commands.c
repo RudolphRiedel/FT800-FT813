@@ -2,10 +2,15 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 4.0
-@date    2019-09-14
+@date    2019-10-03
 @author  Rudolph Riedel
 
+@section info
+
 This file needs to be renamed to EVE_command.cpp for use with Arduino.
+At least für ATSAM I had the best result with -O2.
+The c-standard is C99.
+
 
 @section LICENSE
 
@@ -23,6 +28,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 
 @section History
 
@@ -174,6 +180,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added a couple lines of comments to the EVE3 flash commands
 - reworked EVE_busy() to match the coprocessor fault recovery for BT81x as described in the BT81x programming guide
 - added EVE_cmd_flasherase(), EVE_cmd_flashattach(), EVE_cmd_flashdetach() and EVE_cmd_flashspidesel()
+- sent it thru Cppcheck and removed a couple of "issues" with severity "style"
+
 
 */
 
@@ -325,10 +333,12 @@ uint8_t EVE_busy(void)
 	if(cmdBufferRead == 0xFFF) /* we have a co-processor fault, make EVE play with us again */
 	{
 		#if defined (BT81X_ENABLE)
+
 		uint16_t copro_patch_pointer;
 		uint32_t ftAddress;
 		
 		copro_patch_pointer = EVE_memRead16(REG_COPRO_PATCH_DTR);
+
 		#endif
 		
 		EVE_memWrite8(REG_CPURESET, 1);		/* hold co-processor engine in the reset condition */
@@ -339,6 +349,7 @@ uint8_t EVE_busy(void)
 		EVE_memWrite8(REG_CPURESET, 0);		/* set REG_CMD_WRITE to 0 to restart the co-processor engine*/
 
 		#if defined (BT81X_ENABLE)
+
 		EVE_memWrite16(REG_COPRO_PATCH_DTR, copro_patch_pointer);
 		
 		DELAY_MS(5); /* just to be safe */
@@ -363,12 +374,10 @@ uint8_t EVE_busy(void)
 
 		cmdOffset = 8;
 
-		ftAddress = REG_CMD_WRITE;
-
 		EVE_cs_set();
-		spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
-		spi_transmit((uint8_t)(ftAddress >> 8));	/* send middle address byte */
-		spi_transmit((uint8_t)(ftAddress));			/* send low address byte */
+		spi_transmit(MEM_WRITE | 0x30); /* send Memory Write plus high address byte of REG_CMD_WRITE for EVE81x */
+		spi_transmit(0x20);	/* send middle address byte of REG_CMD_WRITE for EVE81x */
+		spi_transmit(0xfc);	/* send low address byte of REG_CMD_WRITE for EVE81x */
 		spi_transmit((uint8_t)(cmdOffset));			/* send data low byte */
 		spi_transmit((uint8_t)(cmdOffset >> 8));	/* send data high byte */
 		EVE_cs_clear();
@@ -460,7 +469,7 @@ void EVE_cmd_start(void)
 	}
 	#endif
 
-	ftAddress = REG_CMD_WRITE;
+	ftAddress = REG_CMD_WRITE; /* this changes between EVE 80x and 81x, so as a constant at compile-time the compiler should happily optimize away the following bit-shifting */
 
 	EVE_cs_set();
 	spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
@@ -492,9 +501,12 @@ void EVE_begin_cmd(uint32_t command)
 	spi_transmit((uint8_t)(ftAddress));		/* send low address byte */
 
 	spi_transmit((uint8_t)(command));		/* send data low byte */
+	/* current commands are 0xffffff00 to ffffff5f, so sending directly 0xff for the upper three bytes could be faster */
+	/* but as it turned out the code with this "optimization" in place is not a single byte shorter */ 
 	spi_transmit((uint8_t)(command >> 8));
 	spi_transmit((uint8_t)(command >> 16));
 	spi_transmit((uint8_t)(command >> 24));		/* send data high byte */
+
 	EVE_inc_cmdoffset(4);			/* update the command-ram pointer */
 }
 
@@ -635,12 +647,13 @@ void spi_flash_write(const uint8_t *data, uint16_t len)
 void block_transfer(const uint8_t *data, uint16_t len)
 {
 	uint16_t bytes_left;
-	uint16_t block_len;
-	uint32_t ftAddress;
 
 	bytes_left = len;
 	while(bytes_left > 0)
 	{
+		uint16_t block_len;
+		uint32_t ftAddress;		
+		
 		block_len = bytes_left>3840 ? 3840:bytes_left;
 
 		ftAddress = EVE_RAM_CMD + cmdOffset;
@@ -1307,10 +1320,10 @@ void EVE_end_cmd_burst(void)
 /* Begin a co-processor command */
 void EVE_start_cmd(uint32_t command)
 {
-	uint32_t ftAddress;
-
 	if(cmd_burst == 0)
 	{
+		uint32_t ftAddress;
+
 		ftAddress = EVE_RAM_CMD + cmdOffset;
 		EVE_cs_set();
 		spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
@@ -1627,7 +1640,6 @@ uint8_t EVE_init_flash(void)
 {
 	uint8_t timeout = 0;
 	uint8_t status;
-	uint32_t result;
 
 	status = EVE_memRead8(REG_FLASH_STATUS); /* should be 0x02 - FLASH_STATUS_BASIC, power-up is done and the attached flash is detected */
 
@@ -1655,6 +1667,8 @@ uint8_t EVE_init_flash(void)
 
 	if(status == 2) /* FLASH_STATUS_BASIC - flash detected and ready for action, lets move it up to FLASH_STATUS_FULL */
 	{
+		uint32_t result;
+
 		result = EVE_cmd_flashfast();
 
 		if(result == 0) /* cmd_flashfast was successful */
@@ -3672,7 +3686,7 @@ void EVE_calibrate_manual(uint16_t height)
 {
 	uint32_t displayX[3], displayY[3];
 	uint32_t touchX[3], touchY[3];
-	uint32_t touchValue = 0;
+	uint32_t touchValue;
 	int32_t tmp, k;
 	int32_t TransMatrix[6];
 	uint8_t count = 0;
