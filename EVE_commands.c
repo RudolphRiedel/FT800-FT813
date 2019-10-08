@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 4.0
-@date    2019-10-03
+@date    2019-10-08
 @author  Rudolph Riedel
 
 @section info
@@ -181,7 +181,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - reworked EVE_busy() to match the coprocessor fault recovery for BT81x as described in the BT81x programming guide
 - added EVE_cmd_flasherase(), EVE_cmd_flashattach(), EVE_cmd_flashdetach() and EVE_cmd_flashspidesel()
 - sent it thru Cppcheck and removed a couple of "issues" with severity "style"
-
+- bugifx: EVE_cmd_flasherase(), EVE_cmd_flashattach(), EVE_cmd_flashdetach() and EVE_cmd_flashspidesel() were missing a EVE_cs_clear();
 
 */
 
@@ -1528,6 +1528,8 @@ void EVE_cmd_flashupdate(uint32_t dest, uint32_t src, uint32_t num)
 void EVE_cmd_flasherase(void)
 {
 	EVE_begin_cmd(CMD_FLASHERASE);
+	EVE_cs_clear();
+	
 	EVE_cmd_execute();
 }
 
@@ -1537,6 +1539,8 @@ void EVE_cmd_flasherase(void)
 void EVE_cmd_flashattach(void)
 {
 	EVE_begin_cmd(CMD_FLASHATTACH);
+	EVE_cs_clear();
+	
 	EVE_cmd_execute();
 }
 
@@ -1546,6 +1550,8 @@ void EVE_cmd_flashattach(void)
 void EVE_cmd_flashdetach(void)
 {
 	EVE_begin_cmd(CMD_FLASHDETACH);
+	EVE_cs_clear();
+	
 	EVE_cmd_execute();
 }
 
@@ -1555,6 +1561,8 @@ void EVE_cmd_flashdetach(void)
 void EVE_cmd_flashspidesel(void)
 {
 	EVE_begin_cmd(CMD_FLASHSPIDESEL);
+	EVE_cs_clear();
+	
 	EVE_cmd_execute();
 }
 
