@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 4.0
-@date    2019-08-25
+@date    2019-11-17
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -34,6 +34,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - moved all target specific lines from EVE_config.h to EVE_target.h
 - cleaned up history
 - added support for MSP432 - it compiles with Code Composer Studio but is for the most part untested...
+- wrote a couple lines of explanation on how DMA is to be used
+- replaced the dummy read of the SPI data register with a var for ATSAMC21 and ATSAME51 with "(void) REG_SERCOM0_SPI_DATA;"
 
 */
 
@@ -41,7 +43,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_TARGET_H_
 
 
-/* While the following lines make things a lot easier like automatically compiling the code for the platform you are compiling for, */
+/* While the following lines make things a lot easier like automatically compiling the code for the target you are compiling for, */
 /* a few things are expected to be taken care of beforehand. */
 /* - setting the Chip-Select and Power-Down pins to Output, Chip-Select = 1 and Power-Down = 0 */
 /* - setting up the SPI which may or not include things like
@@ -55,8 +57,17 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
   For the SPI transfers single 8-Bit transfers are used with busy-wait for completion.
   While this is okay for AVRs that run at 16MHz with the SPI at 8 MHz and therefore do one transfer in 16 clock-cycles,
   this is wasteful for any 32 bit controller even at higher SPI speeds.
-  However, 32 bit controllers are not my main target (yet) and the amount of data sent over the SPI is really small with the FT8xx.
-  This will be met with a DMA friendly approach in a future release.
+  
+  Check out the section for SAMC21E18A as it has code to transparently add DMA.
+  
+  If the define "EVE_DMA" is set the spi_transmit_async() is changed at compile time to write in a buffer instead directly to SPI.
+  EVE_init() calls EVE_init_dma() which sets up the DMA channel and enables an IRQ for end of DMA.
+  EVE_start_cmd_burst() resets the DMA buffer instead of transferring the first bytes by SPI.
+  EVE_end_cmd_burst() just calls EVE_start_dma_transfer() which triggers the transfer of the SPI buffer by DMA.
+  EVE_cmd_start() just instantly returns if there is an active DMA transfer.
+  EVE_busy() does nothing but to report that EVE is busy if there is an active DMA transfer.
+  At the end of the DMA transfer an IRQ is executed which clears the DMA active state, calls EVE_cs_clear() and EVE_cmd_start().
+
 */
 
 #if !defined (ARDUINO)
@@ -435,23 +446,17 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			#if defined (EVE_DMA)
 				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
 			#else
-				uint8_t dummy;
-
 				REG_SERCOM0_SPI_DATA = data;
 				while((REG_SERCOM0_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
-				dummy = REG_SERCOM0_SPI_DATA;
-				dummy = dummy;
+				(void) REG_SERCOM0_SPI_DATA; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
 			#endif
 		}
 
 		static inline void spi_transmit(uint8_t data)
 		{
-			uint8_t dummy;
-
 			REG_SERCOM0_SPI_DATA = data;
 			while((REG_SERCOM0_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
-			dummy = REG_SERCOM0_SPI_DATA;
-			dummy = dummy;
+			(void) REG_SERCOM0_SPI_DATA; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
 		}
 
 		static inline uint8_t spi_receive(uint8_t data)
@@ -517,23 +522,17 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			#if defined (EVE_DMA)
 				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
 			#else
-				uint8_t dummy;
-
 				REG_SERCOM5_SPI_DATA = data;
 				while((REG_SERCOM5_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
-				dummy = REG_SERCOM5_SPI_DATA;
-				dummy = dummy;
+				(void) REG_SERCOM5_SPI_DATA; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
 			#endif
 		}
 
 		static inline void spi_transmit(uint8_t data)
 		{
-			uint8_t dummy;
-
 			REG_SERCOM5_SPI_DATA = data;
 			while((REG_SERCOM5_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
-			dummy = REG_SERCOM5_SPI_DATA;
-			dummy = dummy;
+			(void) REG_SERCOM5_SPI_DATA; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
 		}
 
 		static inline uint8_t spi_receive(uint8_t data)

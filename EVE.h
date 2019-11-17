@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 4.0
-@date    2019-06-01
+@date    2019-11-17
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -66,12 +66,15 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added EVE_OPT_FILL which has been left out of the documentation for the BT81x so far
 - added a few BT81x specific macros
 - added a few FT81x/BT81x specific host commands
+- removed the preceding underscore from the include guard define to avoid potential undefined behavior
+- removed a bunch of defines for FT80x that I never implemented for FT81x
+
 */
 
 #include "EVE_config.h"
 
-#ifndef _EVE_H_
-#define _EVE_H_
+#ifndef EVE_H_
+#define EVE_H_
 
 
 #define DL_CLEAR		0x26000000UL /* requires OR'd arguments */
@@ -97,12 +100,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_CORERST	0x68  /* reset core - all registers default and processors reset */
 #define EVE_CLK48M	0x62  /* select 48MHz PLL output */
 #define EVE_CLK36M	0x61  /* select 36MHz PLL output */
-#if defined (FT81X_ENABLE)
-#define EVE_CLKSEL			0x61 /* configure system clock */
-#define EVE_RST_PULSE		0x68 /* reset core - all registers default and processors reset */
-#define EVE_PINDRIVE		0x70 /* setup drive strength for various pins */ 
-#define EVE_PIN_PD_STATE	0x71 /* setup how pins behave during power down */
-#endif
 
 
 /* defines used for graphics commands */
@@ -566,7 +563,13 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /* ----------------- FT81x / BT81x exclusive definitions -----------------*/
 #if defined (FT81X_ENABLE)
 
-#define LOW_FREQ_BOUND  58800000L /* 98% of 60Mhz */
+
+/* Host commands */
+#define EVE_CLKSEL			0x61 /* configure system clock */
+#define EVE_RST_PULSE		0x68 /* reset core - all registers default and processors reset */
+#define EVE_PINDRIVE		0x70 /* setup drive strength for various pins */
+#define EVE_PIN_PD_STATE	0x71 /* setup how pins behave during power down */
+
 
 /* Memory definitions */
 #define EVE_RAM_G			0x000000UL
@@ -576,6 +579,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_RAM_DL			0x300000UL
 #define EVE_RAM_REG			0x302000UL
 #define EVE_RAM_CMD			0x308000UL
+
 
 /* Memory buffer sizes */
 #define EVE_RAM_G_SIZE		1024*1024L
@@ -761,42 +765,23 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /* ----------------- FT80x exclusive definitions -----------------*/
 #else
 
-#define EVE_CHIPID		0x00010008UL
-
-/* Coprocessor reset related */
-#define EVE_RESET_HOLD_COPROCESSOR		1
-#define EVE_RESET_RELEASE_COPROCESSOR	0
-
-/* Maximum display display resolution supported by graphics engine */
-#define EVE_MAX_DISPLAYWIDTH	(512L)
-#define EVE_MAX_DISPLAYHEIGHT	(512L)
-
-/* Defines for sound play and stop */
-#define EVE_SOUND_PLAY	1
-#define EVE_AUDIO_PLAY	1
-
-/* Defines for audio playback parameters */
-#define EVE_AUDIO_SAMPLINGFREQ_MIN	8*1000L
-#define EVE_AUDIO_SAMPLINGFREQ_MAX	48*1000L
-
-/* coprocessor error */
-#define EVE_COPRO_ERROR			0xfffUL
-
 /* Memory definitions */
-#define EVE_RAM_G		0x000000UL
-#define EVE_ROM_CHIPID	0x0C0000UL
+#define EVE_RAM_G			0x000000UL
+#define EVE_ROM_CHIPID		0x0C0000UL
 #define EVE_ROM_FONT		0x0BB23CUL
 #define EVE_ROM_FONT_ADDR	0x0FFFFCUL
-#define EVE_RAM_DL		0x100000UL
-#define EVE_RAM_PAL		0x102000UL
-#define EVE_RAM_CMD		0x108000UL
+#define EVE_RAM_DL			0x100000UL
+#define EVE_RAM_PAL			0x102000UL
+#define EVE_RAM_CMD			0x108000UL
 #define EVE_RAM_SCREENSHOT	0x1C2000UL
+
 
 /* Memory buffer sizes */
 #define EVE_RAM_G_SIZE		256*1024L
-#define EVE_CMDFIFO_SIZE		4*1024L
+#define EVE_CMDFIFO_SIZE	4*1024L
 #define EVE_RAM_DL_SIZE		8*1024L
-#define EVE_RAM_PAL_SIZE		1*1024L
+#define EVE_RAM_PAL_SIZE	1*1024L
+
 
 /* Register definitions */
 #define REG_ID					0x102400UL
@@ -884,4 +869,4 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 #endif
 
-#endif /* _EVE_H_ */
+#endif /* EVE_H_ */

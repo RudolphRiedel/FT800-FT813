@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 4.0
-@date    2019-10-08
+@date    2019-11-17
 @author  Rudolph Riedel
 
 @section info
@@ -182,6 +182,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added EVE_cmd_flasherase(), EVE_cmd_flashattach(), EVE_cmd_flashdetach() and EVE_cmd_flashspidesel()
 - sent it thru Cppcheck and removed a couple of "issues" with severity "style"
 - bugifx: EVE_cmd_flasherase(), EVE_cmd_flashattach(), EVE_cmd_flashdetach() and EVE_cmd_flashspidesel() were missing a EVE_cs_clear();
+- changed block_transfer() to use 32bit for the number of bytes to be transferred
 
 */
 
@@ -644,14 +645,14 @@ void spi_flash_write(const uint8_t *data, uint16_t len)
 }
 
 
-void block_transfer(const uint8_t *data, uint16_t len)
+void block_transfer(const uint8_t *data, uint32_t len)
 {
-	uint16_t bytes_left;
+	uint32_t bytes_left;
 
 	bytes_left = len;
 	while(bytes_left > 0)
 	{
-		uint16_t block_len;
+		uint32_t block_len;
 		uint32_t ftAddress;		
 		
 		block_len = bytes_left>3840 ? 3840:bytes_left;

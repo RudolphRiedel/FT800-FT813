@@ -34,7 +34,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added profiles for EVE3-35G, EVE3-43G, EVE3-50G
 - added a profile for the CFAF800480E0-050SC from Crystalfontz
 - changed EVE_RiTFT50 to use the RVT70 config instead of the RVT50 config since RVT50 uses a different HOFFSET value
-- added EVE_PAF90, a profoöe for the PAF90B5WFNWC01 from Panaysy
+- added EVE_PAF90, a profile for the PAF90B5WFNWC01 from Panasys
 
 */
 
