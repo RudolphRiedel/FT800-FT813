@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 4.0
-@date    2019-09-14
+@date    2019-12-19
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -35,6 +35,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added a profile for the CFAF800480E0-050SC from Crystalfontz
 - changed EVE_RiTFT50 to use the RVT70 config instead of the RVT50 config since RVT50 uses a different HOFFSET value
 - added EVE_PAF90, a profile for the PAF90B5WFNWC01 from Panasys
+- added EVE_EVE3_35, EVE_EVE3_43, EVE_EVE3_50 and EVE_EVE3_70 - the resistive touch BT816 versions of the EVE3 series
 
 */
 
@@ -72,9 +73,13 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE_EVE2_50G
 	#define EVE_EVE2_70
 	#define EVE_EVE2_70G
+	#define EVE_EVE3_35
 	#define EVE_EVE3_35G
 	#define EVE_EVE3_43G
+	#define EVE_EVE3_43
+	#define EVE_EVE3_50
 	#define EVE_EVE3_50G
+	#define EVE_EVE3_70
 	#define EVE_EVE3_70G
 	#define EVE_NHD_35
 	#define EVE_NHD_43
@@ -85,10 +90,17 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE_PAF90
 #endif
 
-#define EVE_PAF90
+#define EVE_EVE3_50G
 
 
 /* display timing parameters below */
+
+/* untested */
+#if defined (EVE_EVE3_35)
+#define EVE_EVE2_35
+#define EVE_HAS_CRYSTAL
+#define BT81X_ENABLE
+#endif
 
 /* untested */
 #if defined (EVE_EVE3_35G)
@@ -98,8 +110,21 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #endif
 
 /* untested */
+#if defined (EVE_EVE3_43)
+#define EVE_EVE2_43
+#define EVE_HAS_CRYSTAL
+#define BT81X_ENABLE
+#endif
+
 #if defined (EVE_EVE3_43G)
 #define EVE_EVE2_43G
+#define EVE_HAS_CRYSTAL
+#define BT81X_ENABLE
+#endif
+
+/* untested */
+#if defined (EVE_EVE3_50)
+#define EVE_EVE2_50
 #define EVE_HAS_CRYSTAL
 #define BT81X_ENABLE
 #endif
@@ -111,8 +136,15 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #endif
 
 /* untested */
+#if defined (EVE_EVE3_70)
+#define EVE_EVE2_70
+#define EVE_HAS_CRYSTAL
+#define BT81X_ENABLE
+#endif
+
+/* untested */
 #if defined (EVE_EVE3_70G)
-#define EVE_EVE2_70G	/* trigger including the setup for the EVE2_70G, the same panel is used */
+#define EVE_EVE2_70G
 #define EVE_HAS_CRYSTAL
 #define BT81X_ENABLE
 #endif
