@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions
 @version 4.0
-@date    2019-08-11
+@date    2019-09-12
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -26,16 +26,18 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 4.0
 - added support for MSP432
+- moved the two include lines out of reach for Arduino to increase compatibility with Arduino
 
  */
 
-#include "EVE_target.h"
-#include "EVE_commands.h"
-
 #if !defined (ARDUINO)
+
+  #include "EVE_target.h"
+  #include "EVE_commands.h"
+
 	#if defined (__GNUC__)
 		#if defined (__SAMC21E18A__)
-		
+
 		#if defined (EVE_DMA)
 
 			static DmacDescriptor dmadescriptor __attribute__((aligned(16))) SECTION_DMAC_DESCRIPTOR;
@@ -127,4 +129,3 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 	#endif
 #endif
-
