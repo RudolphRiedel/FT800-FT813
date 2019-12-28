@@ -54,7 +54,7 @@ The TFTs I have tested myself so far:
 - EVE3-50G https://www.matrixorbital.com/eve3-50g
 - PAF90B5WFNWC01 http://www.panadisplay.com/ftdi-intelligent-display/9-inch-lcd-with-touch-with-bt815-board.html
 - EVE3-43G https://www.matrixorbital.com/eve3-43g
-
+- EVE3-35G https://www.matrixorbital.com/eve3-35g
 
 The examples in the "example_projects" drawer are for use with AtmelStudio7. For Arduino I am using the plugin from www.visualmicro.com .
 Yes, I am aware that these are outdated by now. :-)
