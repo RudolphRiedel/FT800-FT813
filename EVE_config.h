@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 4.0
-@date    2019-12-19
+@date    2019-12-28
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -36,6 +36,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - changed EVE_RiTFT50 to use the RVT70 config instead of the RVT50 config since RVT50 uses a different HOFFSET value
 - added EVE_PAF90, a profile for the PAF90B5WFNWC01 from Panasys
 - added EVE_EVE3_35, EVE_EVE3_43, EVE_EVE3_50 and EVE_EVE3_70 - the resistive touch BT816 versions of the EVE3 series
+- added a profile for the Sunflower Arduino Shield
+- looked into adding Gameduino3 / Gameduino3X profiles but there are no documented timing parameters for these panels
 
 */
 
@@ -75,8 +77,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE_EVE2_70G
 	#define EVE_EVE3_35
 	#define EVE_EVE3_35G
-	#define EVE_EVE3_43G
 	#define EVE_EVE3_43
+	#define EVE_EVE3_43G
 	#define EVE_EVE3_50
 	#define EVE_EVE3_50G
 	#define EVE_EVE3_70
@@ -88,9 +90,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE_ADAM101
 	#define EVE_CFAF800480E0_050SC
 	#define EVE_PAF90
+	#define EVE_SUNFLOWER
 #endif
 
-#define EVE_EVE3_50G
+#define EVE_EVE3_43G
 
 
 /* display timing parameters below */
@@ -811,5 +814,31 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define FT81X_ENABLE
 #define BT81X_ENABLE
 #endif
+
+
+/* untested */
+/* Sunflower Arduino Shield, 320x240 3.5" from Cowfish, FT813, https://github.com/Cowfish-Studios/Cowfish_Sunflower_Shield_PCB */
+/* set EVE_CS to 6 and EVE_PDN to 5 in the Arduino block in EVE_target.h */
+#if defined (EVE_SUNFLOWER)
+#define EVE_HSIZE	(320L)
+#define EVE_VSIZE	(240L)
+
+#define EVE_VSYNC0	(0L)
+#define EVE_VSYNC1	(2L)
+#define EVE_VOFFSET	(13L)
+#define EVE_VCYCLE	(263L)
+#define EVE_HSYNC0	(0L)
+#define EVE_HSYNC1	(10L)
+#define EVE_HOFFSET	(70L)
+#define EVE_HCYCLE 	(408L)
+#define EVE_PCLKPOL	(1L)
+#define EVE_SWIZZLE	(2L)
+#define EVE_PCLK	(6L)
+#define EVE_CSPREAD	(0L)
+#define EVE_TOUCH_RZTHRESH (1200L)
+#define EVE_HAS_CRYSTAL
+#define FT81X_ENABLE
+#endif
+
 
 #endif /* EVE_CONFIG_H */

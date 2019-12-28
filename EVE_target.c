@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions
 @version 4.0
-@date    2019-09-12
+@date    2019-12-28
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -27,6 +27,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 4.0
 - added support for MSP432
 - moved the two include lines out of reach for Arduino to increase compatibility with Arduino
+- removed preceding "__" from two CMSIS functions that were not necessary and maybe even wrong
 
  */
 
@@ -64,8 +65,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 				dmadescriptor.DESCADDR.reg = 0; /* no next descriptor */
 
 				REG_DMAC_CHINTENSET = DMAC_CHINTENSET_TCMPL;
-				__NVIC_SetPriority(DMAC_IRQn, 0);
-				__NVIC_EnableIRQ(DMAC_IRQn);
+				NVIC_SetPriority(DMAC_IRQn, 0);
+				NVIC_EnableIRQ(DMAC_IRQn);
 			}
 
 
