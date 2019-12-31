@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 4.0
-@date    2019-11-17
+@date    2019-12-31
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -36,6 +36,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added support for MSP432 - it compiles with Code Composer Studio but is for the most part untested...
 - wrote a couple lines of explanation on how DMA is to be used
 - replaced the dummy read of the SPI data register with a var for ATSAMC21 and ATSAME51 with "(void) REG_SERCOM0_SPI_DATA;"
+- added support for RISC-V, more specifically the GD32VF103 that is on the Sipeed Longan Nano - not tested with a display yet but it looks very good with the Logic-Analyzer 
 
 */
 
@@ -548,6 +549,76 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		}
 
 		#endif /* __SAME51J19A__ */
+
+		#if defined (__riscv)
+
+//		#warning Compiling for GD32VF103CBT6
+
+		#include "gd32vf103.h"
+
+		static inline void DELAY_MS(uint16_t val)
+		{
+			uint16_t counter;
+
+			while(val > 0)
+			{
+				for(counter=0; counter < 18000;counter++) /* ~1ms at 108MHz Core-Clock, according to my Logic-Analyzer */
+				{
+					__asm__ volatile ("nop");
+				}
+				val--;
+			}
+		}
+
+		static inline void EVE_pdn_set(void)
+		{
+			gpio_bit_reset(GPIOB,GPIO_PIN_1);
+		}
+
+		static inline void EVE_pdn_clear(void)
+		{
+			gpio_bit_set(GPIOB,GPIO_PIN_1);
+		}
+
+		static inline void EVE_cs_set(void)
+		{
+			gpio_bit_reset(GPIOB,GPIO_PIN_0);
+		}
+
+		static inline void EVE_cs_clear(void)
+		{
+			gpio_bit_set(GPIOB,GPIO_PIN_0);
+		}
+
+		static inline void spi_transmit_async(uint8_t data)
+		{
+			#if defined (EVE_DMA)
+				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+			#else
+				SPI_DATA(SPI0) = (uint32_t) data;
+				while(SPI_STAT(SPI0) & SPI_STAT_TRANS);
+			#endif
+		}
+
+		static inline void spi_transmit(uint8_t data)
+		{
+				SPI_DATA(SPI0) = (uint32_t) data;
+				while(SPI_STAT(SPI0) & SPI_STAT_TRANS);
+		}
+
+		static inline uint8_t spi_receive(uint8_t data)
+		{
+				SPI_DATA(SPI0) = (uint32_t) data;
+				while(SPI_STAT(SPI0) & SPI_STAT_TRANS);
+				return (uint8_t) SPI_DATA(SPI0);
+		}
+
+		static inline uint8_t fetch_flash_byte(const uint8_t *data)
+		{
+			return *data;
+		}
+
+		#endif /* __riscv */
 
 	#endif /* __GNUC__ */
 
