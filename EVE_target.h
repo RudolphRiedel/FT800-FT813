@@ -2,14 +2,14 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 4.0
-@date    2019-12-31
+@date    2020-01-10
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2019 Rudolph Riedel
+Copyright (c) 2016-2020 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -37,6 +37,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - wrote a couple lines of explanation on how DMA is to be used
 - replaced the dummy read of the SPI data register with a var for ATSAMC21 and ATSAME51 with "(void) REG_SERCOM0_SPI_DATA;"
 - added support for RISC-V, more specifically the GD32VF103 that is on the Sipeed Longan Nano - not tested with a display yet but it looks very good with the Logic-Analyzer 
+- added support for STM32F407 by adding code supplied by User "mokka" on MikroController.net and modifying it by replacing the HAL functions with direct register accesses
+- added comment lines to separate the various targets visually
+- reworked ATSAMC21 support code to use defines for ports, pins and SERCOM, plus changed the "legacy register definitions" to more current ones
+- changed ATSAME51 support code to the new "template" as well
 
 */
 
@@ -72,6 +76,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 */
 
 #if !defined (ARDUINO)
+
 	#if defined (__IMAGECRAFT__)
 		#if defined (_AVR)
 			#include <iccioavr.h>
@@ -143,7 +148,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		#endif
 	#endif
 
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
 	#if defined (__GNUC__)
+
 		#if	defined (__AVR__)
 
 			#include <avr/io.h>
@@ -285,6 +294,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		#endif /* AVR */
 
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
 		#if defined (__v851__)
 
 			#include <stdint.h>
@@ -342,6 +354,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		#endif /* RH850 */
 
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
 		#if defined (__TRICORE__)
 
 			#include "types.h"
@@ -393,10 +408,18 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		#endif /* __TRICORE__ */
 
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
 		#if defined (__SAMC21E18A__)
 
 		#include "sam.h"
 
+		#define EVE_CS_PORT 0
+		#define EVE_CS PORT_PA05
+		#define EVE_PDN_PORT 0
+		#define EVE_PDN PORT_PA03
+		#define EVE_SPI SERCOM0
 		#define EVE_DMA
 
 		#if defined (EVE_DMA)
@@ -424,22 +447,22 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline void EVE_pdn_set(void)
 		{
-			REG_PORT_OUTCLR0 = PORT_PA03;
+			PORT->Group[EVE_PDN_PORT].OUTCLR.reg = EVE_PDN;
 		}
 
 		static inline void EVE_pdn_clear(void)
 		{
-			REG_PORT_OUTSET0 = PORT_PA03;
+			PORT->Group[EVE_PDN_PORT].OUTSET.reg = EVE_PDN;
 		}
 
 		static inline void EVE_cs_set(void)
 		{
-			REG_PORT_OUTCLR0 = PORT_PA05;
+			PORT->Group[EVE_CS_PORT].OUTCLR.reg = EVE_CS;
 		}
 
 		static inline void EVE_cs_clear(void)
 		{
-			REG_PORT_OUTSET0 = PORT_PA05;
+			PORT->Group[EVE_CS_PORT].OUTSET.reg = EVE_CS;
 		}
 
 		static inline void spi_transmit_async(uint8_t data)
@@ -447,24 +470,24 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			#if defined (EVE_DMA)
 				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
 			#else
-				REG_SERCOM0_SPI_DATA = data;
-				while((REG_SERCOM0_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
-				(void) REG_SERCOM0_SPI_DATA; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
+				EVE_SPI->SPI.DATA.reg = data;
+				while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0);
+				(void) EVE_SPI->SPI.DATA.reg; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
 			#endif
 		}
 
 		static inline void spi_transmit(uint8_t data)
 		{
-			REG_SERCOM0_SPI_DATA = data;
-			while((REG_SERCOM0_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
-			(void) REG_SERCOM0_SPI_DATA; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
+			EVE_SPI->SPI.DATA.reg = data;
+			while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0);
+			(void) EVE_SPI->SPI.DATA.reg; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
 		}
 
 		static inline uint8_t spi_receive(uint8_t data)
 		{
-			REG_SERCOM0_SPI_DATA = data;
-			while((REG_SERCOM0_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
-			return REG_SERCOM0_SPI_DATA;
+			EVE_SPI->SPI.DATA.reg = data;
+			while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0);
+			return EVE_SPI->SPI.DATA.reg;
 		}
 
 		static inline uint8_t fetch_flash_byte(const uint8_t *data)
@@ -474,14 +497,27 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		#endif /* __SAMC21J18A__ */
 
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
 		#if defined (__SAME51J19A__)
 
 		#include "sam.h"
 
+		#define EVE_CS_PORT 1
+		#define EVE_CS PORT_PB31
+		#define EVE_PDN_PORT 1
+		#define EVE_PDN PORT_PB01
+		#define EVE_SPI SERCOM5
 //		#define EVE_DMA
 
 		#if defined (EVE_DMA)
-
+			extern uint8_t EVE_dma_buffer[4100];
+			extern volatile uint16_t EVE_dma_buffer_index;
+			extern volatile uint8_t EVE_dma_busy;
+			
+			void EVE_init_dma(void);
+			void EVE_start_dma_transfer(void);
 		#endif
 
 		static inline void DELAY_MS(uint16_t val)
@@ -500,22 +536,22 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline void EVE_pdn_set(void)
 		{
-			REG_PORT_OUTCLR1 = PORT_PB31;
+			PORT->Group[EVE_PDN_PORT].OUTCLR.reg = EVE_PDN;
 		}
 
 		static inline void EVE_pdn_clear(void)
 		{
-			REG_PORT_OUTSET1 = PORT_PB31;
+			PORT->Group[EVE_PDN_PORT].OUTSET.reg = EVE_PDN;
 		}
 
 		static inline void EVE_cs_set(void)
 		{
-			REG_PORT_OUTCLR1 = PORT_PB01;
+			PORT->Group[EVE_CS_PORT].OUTCLR.reg = EVE_CS;
 		}
 
 		static inline void EVE_cs_clear(void)
 		{
-			REG_PORT_OUTSET1 = PORT_PB01;
+			PORT->Group[EVE_CS_PORT].OUTSET.reg = EVE_CS;
 		}
 
 		static inline void spi_transmit_async(uint8_t data)
@@ -523,24 +559,25 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			#if defined (EVE_DMA)
 				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
 			#else
-				REG_SERCOM5_SPI_DATA = data;
-				while((REG_SERCOM5_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
-				(void) REG_SERCOM5_SPI_DATA; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
+				EVE_SPI->SPI.DATA.reg = data;
+				while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0);
+				(void) EVE_SPI->SPI.DATA.reg; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
 			#endif
 		}
 
 		static inline void spi_transmit(uint8_t data)
 		{
-			REG_SERCOM5_SPI_DATA = data;
-			while((REG_SERCOM5_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
-			(void) REG_SERCOM5_SPI_DATA; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
+			EVE_SPI->SPI.DATA.reg = data;
+			while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0);
+			(void) EVE_SPI->SPI.DATA.reg; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
+
 		}
 
 		static inline uint8_t spi_receive(uint8_t data)
 		{
-			REG_SERCOM5_SPI_DATA = data;
-			while((REG_SERCOM5_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0);
-			return REG_SERCOM5_SPI_DATA;
+			EVE_SPI->SPI.DATA.reg = data;
+			while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0);
+			return EVE_SPI->SPI.DATA.reg;
 		}
 
 		static inline uint8_t fetch_flash_byte(const uint8_t *data)
@@ -549,6 +586,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		}
 
 		#endif /* __SAME51J19A__ */
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
 
 		#if defined (__riscv)
 
@@ -620,7 +660,80 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		#endif /* __riscv */
 
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+		
+		#if defined (STM32F407xx)
+		
+		#include "stm32f4xx.h"
+
+		#define EVE_CS_PORT GPIOD
+		#define EVE_CS GPIO_PIN_12
+		#define EVE_PDN_PORT GPIOD
+		#define EVE_PDN GPIO_PIN_13
+		#define EVE_SPI SPI1
+		
+		#define DELAY_MS(ms) HAL_Delay(ms)
+			
+		static inline void EVE_pdn_clear(void)
+		{
+			EVE_PDN_PORT->BSRR = EVE_PDN;
+//			HAL_GPIO_WritePin(EVE_PDN_PORT, EVE_PDN, GPIO_PIN_SET);
+		}
+
+		static inline void EVE_pdn_set(void)
+		{
+			EVE_PDN_PORT->BSRR = (uint32) EVE_PDN << 16;
+//			HAL_GPIO_WritePin(EVE_PDN_PORT, EVE_PDN, GPIO_PIN_RESET);
+		}
+
+		static inline void EVE_cs_clear(void)
+		{
+			EVE_CS_PORT->BSRR = EVE_CS;
+//			HAL_GPIO_WritePin(EVE_CS_PORT, EVE_CS, GPIO_PIN_SET);
+		}
+
+		static inline void EVE_cs_set(void)
+		{
+			EVE_CS_PORT->BSRR = (uint32) EVE_CS << 16;
+//			HAL_GPIO_WritePin(EVE_CS_PORT, EVE_CS, GPIO_PIN_RESET);
+		}
+
+		static inline void spi_transmit(uint8_t byte)
+		{
+			EVE_SPI->DR = byte;
+			while((EVE_SPI->SR & SPI_SR_TXE) == 0);
+		}
+
+		static inline void spi_transmit_async(uint8_t byte)
+		{
+			#if EVE_DMA
+				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+			#else
+				EVE_SPI->DR = byte;
+				while((EVE_SPI->SR & SPI_SR_TXE) == 0);
+			#endif
+		}
+
+		static inline uint8_t spi_receive(uint8_t byte)
+		{
+			EVE_SPI->DR = byte;
+			while((EVE_SPI->SR & SPI_SR_TXE) == 0);
+			while((EVE_SPI->SR & SPI_SR_RXE) == 0); /* does most likely nothing */
+			return EVE_SPI->DR;
+		}
+
+		static inline uint8_t fetch_flash_byte(const uint8_t *data)
+		{
+			return *data;
+		}
+
+		#endif  /* STM32F407xx */
+
 	#endif /* __GNUC__ */
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
 
     #if defined (__TI_ARM__)
 
@@ -721,6 +834,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
     #endif /* __TI_ARM */
 #endif
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
 
 #if defined (ARDUINO)
 	#include <stdio.h>

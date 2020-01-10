@@ -2,14 +2,14 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 4.0
-@date    2019-12-28
+@date    2020-01-10
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2019 Rudolph Riedel
+Copyright (c) 2016-2020 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -38,6 +38,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added EVE_EVE3_35, EVE_EVE3_43, EVE_EVE3_50 and EVE_EVE3_70 - the resistive touch BT816 versions of the EVE3 series
 - added a profile for the Sunflower Arduino Shield
 - looked into adding Gameduino3 / Gameduino3X profiles but there are no documented timing parameters for these panels
+- added a profile for the MikroElektronika ConnectEVE module
 
 */
 
@@ -91,6 +92,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE_CFAF800480E0_050SC
 	#define EVE_PAF90
 	#define EVE_SUNFLOWER
+	#define EVE_CONNECTEVE
 #endif
 
 #define EVE_EVE3_43G
@@ -840,5 +842,26 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define FT81X_ENABLE
 #endif
 
+/* untested */
+/* MikroElektronika ConnectEVE, FT800 480x272 4.3" */
+#if defined (EVE_CONNECTEVE)
+#define EVE_HSIZE	(480L)
+#define EVE_VSIZE	(272L)
+
+#define EVE_VSYNC0	(0L)
+#define EVE_VSYNC1	(10L)
+#define EVE_VOFFSET	(12L)
+#define EVE_VCYCLE	(286L)
+#define EVE_HSYNC0	(0L)
+#define EVE_HSYNC1	(41L)
+#define EVE_HOFFSET	(43L)
+#define EVE_HCYCLE 	(525L)
+#define EVE_PCLKPOL	(1L)
+#define EVE_SWIZZLE	(0L)
+#define EVE_PCLK	(5L)
+#define EVE_CSPREAD	(0L)
+#define EVE_TOUCH_RZTHRESH (2000L)
+#define EVE_HAS_CRYSTAL
+#endif
 
 #endif /* EVE_CONFIG_H */

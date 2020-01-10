@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 4.0
-@date    2019-12-28
+@date    2020-01-10
 @author  Rudolph Riedel
 
 @section info
@@ -16,7 +16,7 @@ The c-standard is C99.
 
 MIT License
 
-Copyright (c) 2016-2019 Rudolph Riedel
+Copyright (c) 2016-2020 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -184,6 +184,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - bugifx: EVE_cmd_flasherase(), EVE_cmd_flashattach(), EVE_cmd_flashdetach() and EVE_cmd_flashspidesel() were missing a EVE_cs_clear();
 - changed block_transfer() to use 32bit for the number of bytes to be transferred
 - minor housekeeping, no functional changes
+- Bugfix: EVE_get_touch_tag() failed to compile for FT80x as there is only one REG_TOUCH_TAG
 
 */
 
@@ -418,6 +419,7 @@ uint32_t EVE_get_touch_tag(uint8_t num)
 		case 1:
 			value = EVE_memRead32(REG_TOUCH_TAG); /* read the value for the first touch point */
 			break;
+#if defined (FT81X_ENABLE)
 		case 2:
 			value = EVE_memRead32(REG_TOUCH_TAG1);
 			break;
@@ -430,6 +432,7 @@ uint32_t EVE_get_touch_tag(uint8_t num)
 		case 5:
 			value = EVE_memRead32(REG_TOUCH_TAG4);
 			break;
+#endif
 		default:
 			value = EVE_memRead32(REG_TOUCH_TAG);
 			break;
