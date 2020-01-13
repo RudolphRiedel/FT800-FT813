@@ -42,7 +42,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - reworked ATSAMC21 support code to use defines for ports, pins and SERCOM, plus changed the "legacy register definitions" to more current ones
 - changed ATSAME51 support code to the new "template" as well
 - bugifx: STM32F407 support was neither working or compiling, also changed it to STM32F4 as it should support the whole family now
-- bugifx: second attempt to fix STM32F3 support, thanks again to user "mokka" on MikroController.net
+- bugifx: second attempt to fix STM32F4 support, thanks again to user "mokka" on MikroController.net
 
 */
 
