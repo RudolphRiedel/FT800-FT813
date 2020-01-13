@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 4.0
-@date    2020-01-10
+@date    2020-01-13
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -41,6 +41,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added comment lines to separate the various targets visually
 - reworked ATSAMC21 support code to use defines for ports, pins and SERCOM, plus changed the "legacy register definitions" to more current ones
 - changed ATSAME51 support code to the new "template" as well
+- bugifx: STM32F407 support was neither working or compiling, also changed it to STM32F4 as it should support the whole family now
 
 */
 
@@ -663,9 +664,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 		
-		#if defined (STM32F407xx)
+		#if defined (STM32F4)
 		
 		#include "stm32f4xx.h"
+		#include "stm32f4xx_hal.h"
+		#include "stm32f4xx_ll_spi.h"
 
 		#define EVE_CS_PORT GPIOD
 		#define EVE_CS GPIO_PIN_12
@@ -677,32 +680,31 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			
 		static inline void EVE_pdn_clear(void)
 		{
-			EVE_PDN_PORT->BSRR = EVE_PDN;
-//			HAL_GPIO_WritePin(EVE_PDN_PORT, EVE_PDN, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(EVE_PDN_PORT, EVE_PDN, GPIO_PIN_SET);
 		}
 
 		static inline void EVE_pdn_set(void)
 		{
-			EVE_PDN_PORT->BSRR = (uint32) EVE_PDN << 16;
-//			HAL_GPIO_WritePin(EVE_PDN_PORT, EVE_PDN, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(EVE_PDN_PORT, EVE_PDN, GPIO_PIN_RESET);
 		}
 
 		static inline void EVE_cs_clear(void)
 		{
-			EVE_CS_PORT->BSRR = EVE_CS;
-//			HAL_GPIO_WritePin(EVE_CS_PORT, EVE_CS, GPIO_PIN_SET);
+//			EVE_CS_PORT->BSRR = EVE_CS;
+			HAL_GPIO_WritePin(EVE_CS_PORT, EVE_CS, GPIO_PIN_SET);
 		}
 
 		static inline void EVE_cs_set(void)
 		{
-			EVE_CS_PORT->BSRR = (uint32) EVE_CS << 16;
-//			HAL_GPIO_WritePin(EVE_CS_PORT, EVE_CS, GPIO_PIN_RESET);
+//			EVE_CS_PORT->BSRR = (uint32) EVE_CS << 16;
+			HAL_GPIO_WritePin(EVE_CS_PORT, EVE_CS, GPIO_PIN_RESET);
 		}
 
 		static inline void spi_transmit(uint8_t byte)
 		{
-			EVE_SPI->DR = byte;
-			while((EVE_SPI->SR & SPI_SR_TXE) == 0);
+	       LL_SPI_TransmitData8(EVE_SPI, byte);
+	       while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
+	       LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXNE */
 		}
 
 		static inline void spi_transmit_async(uint8_t byte)
@@ -710,17 +712,17 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			#if EVE_DMA
 				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
 			#else
-				EVE_SPI->DR = byte;
-				while((EVE_SPI->SR & SPI_SR_TXE) == 0);
+		       LL_SPI_TransmitData8(EVE_SPI, byte);
+		       while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
+		       LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXNE */
 			#endif
 		}
 
 		static inline uint8_t spi_receive(uint8_t byte)
 		{
-			EVE_SPI->DR = byte;
-			while((EVE_SPI->SR & SPI_SR_TXE) == 0);
-			while((EVE_SPI->SR & SPI_SR_RXE) == 0); /* does most likely nothing */
-			return EVE_SPI->DR;
+	       LL_SPI_TransmitData8(EVE_SPI, byte);
+	       while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
+	       return LL_SPI_ReceiveData8(EVE_SPI);
 		}
 
 		static inline uint8_t fetch_flash_byte(const uint8_t *data)
@@ -728,7 +730,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			return *data;
 		}
 
-		#endif  /* STM32F407xx */
+		#endif  /* STM32F4 */
 
 	#endif /* __GNUC__ */
 
