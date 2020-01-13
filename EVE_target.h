@@ -42,6 +42,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - reworked ATSAMC21 support code to use defines for ports, pins and SERCOM, plus changed the "legacy register definitions" to more current ones
 - changed ATSAME51 support code to the new "template" as well
 - bugifx: STM32F407 support was neither working or compiling, also changed it to STM32F4 as it should support the whole family now
+- bugifx: second attempt to fix STM32F3 support, thanks again to user "mokka" on MikroController.net
 
 */
 
@@ -702,9 +703,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline void spi_transmit(uint8_t byte)
 		{
-	       LL_SPI_TransmitData8(EVE_SPI, byte);
-	       while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
-	       LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXNE */
+			LL_SPI_TransmitData8(EVE_SPI, byte);
+			while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
+			while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI));
+			LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXNE */
 		}
 
 		static inline void spi_transmit_async(uint8_t byte)
@@ -712,17 +714,19 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			#if EVE_DMA
 				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
 			#else
-		       LL_SPI_TransmitData8(EVE_SPI, byte);
-		       while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
-		       LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXNE */
+				LL_SPI_TransmitData8(EVE_SPI, byte);
+				while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
+				while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI));
+				LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXNE */
 			#endif
 		}
 
 		static inline uint8_t spi_receive(uint8_t byte)
 		{
-	       LL_SPI_TransmitData8(EVE_SPI, byte);
-	       while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
-	       return LL_SPI_ReceiveData8(EVE_SPI);
+			LL_SPI_TransmitData8(EVE_SPI, byte);
+			while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
+			while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI));
+			return LL_SPI_ReceiveData8(EVE_SPI);
 		}
 
 		static inline uint8_t fetch_flash_byte(const uint8_t *data)
