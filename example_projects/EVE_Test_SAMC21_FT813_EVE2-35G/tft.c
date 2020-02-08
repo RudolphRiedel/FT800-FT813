@@ -1,8 +1,8 @@
 /*
 @file    tft.c
-@brief   TFT handling functions for EVE_Test project, for FT81x only, probably works with BT81x
+@brief   TFT handling functions for EVE_Test project
 @version 1.10
-@date    2019-01-04
+@date    2020-02-08
 @author  Rudolph Riedel
 
 @section History
@@ -47,9 +47,13 @@
 
 1.10
 - some cleanup
+
+1.11
+- updated to be more similar to what I am currently using in projects
  */
 
 #include "EVE.h"
+#include "EVE_target.h"
 #include "EVE_commands.h"
 #include "tft_data.h"
 
@@ -294,21 +298,53 @@ void TFT_init(void)
 }
 
 
-/*
-	dynamic portion of display-handling, meant to be called every 10ms or more
-	divided into two sections:
-		- handling of touch-events and variables
-		- sending a new display-list to the FT8xx
-*/
-void TFT_loop(void)
+uint16_t toggle_state = 0;
+
+
+/* check for touch events and setup vars for TFT_display() */
+void TFT_touch(void)
 {
-    static uint8_t touch_or_list = 0;
+	uint32_t calc;
+	uint8_t tag;
+	static uint8_t toggle_lock = 0;
+	
+	if(EVE_busy() == 0) /* is EVE still processing the last display list? */
+	{
+		return;
+	}
 
-    static uint8_t tag = 0;
-    static uint16_t toggle_state = 0;
-    static uint8_t toggle_lock = 0;
+	calc = EVE_get_touch_tag(1);
+	tag = calc;
 
-	static uint16_t alive_counter = 0;
+	switch(tag)
+	{
+		case 0:
+			toggle_lock = 0;
+			break;
+
+		case 1: /* use button on top as on/off radio-switch */
+			if(toggle_lock == 0)
+			{
+				toggle_lock = 42;
+				if(toggle_state == 0)
+				{
+					toggle_state = EVE_OPT_FLAT;
+				}
+				else
+				{
+					toggle_state = 0;
+				}
+			}
+			break;
+	}
+}
+
+
+/*
+	dynamic portion of display-handling, meant to be called every 20ms or more
+*/
+void TFT_display(void)
+{
     uint32_t calc;
 	uint16_t old_offset, new_offset;
 	static int32_t rotate = 0;
@@ -317,108 +353,65 @@ void TFT_loop(void)
 
 	if(tft_active != 0)
 	{
-	  	switch(touch_or_list)
+		old_offset =  EVE_report_cmdoffset(); /* used to calculate the amount of cmd-fifo bytes necessary */
+		display_list_size = EVE_memRead16(REG_CMD_DL);
+
+		EVE_start_cmd_burst(); /* start writing to the cmd-fifo as one stream of bytes, only sending the address once */
+
+		EVE_cmd_dl(CMD_DLSTART); /* start the display list */
+		EVE_cmd_dl(DL_CLEAR_RGB | WHITE); /* set the default clear color to white */
+		EVE_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG); /* clear the screen - this and the previous prevent artifacts between lists, Attributes are the color, stencil and tag buffers */
+		EVE_cmd_dl(TAG(0));
+
+		EVE_cmd_append(MEM_DL_STATIC, num_dl_static); /* insert static part of display-list from copy in gfx-mem */
+		/* display a button */
+		EVE_cmd_dl(DL_COLOR_RGB | WHITE);
+		EVE_cmd_fgcolor(0x00c0c0c0); /* some grey */
+		EVE_cmd_dl(TAG(1)); /* assign tag-value '1' to the button that follows */
+		EVE_cmd_button(20,20,80,30, 28, toggle_state,"Touch!");
+		EVE_cmd_dl(TAG(0)); /* no touch */
+
+		/* display a picture and rotate it when the button on top is activated */
+		EVE_cmd_setbitmap(MEM_PIC1, EVE_RGB565, 100, 100);
+
+		EVE_cmd_dl(CMD_LOADIDENTITY);
+		EVE_cmd_translate(65536 * 70, 65536 * 50); /* shift off-center */
+		EVE_cmd_rotate(rotate);
+		EVE_cmd_translate(65536 * -70, 65536 * -50); /* shift back */
+		EVE_cmd_dl(CMD_SETMATRIX);
+
+		if(toggle_state != 0)
 		{
-			case 0: /* handling of touch-events */
-
-				touch_or_list = 1; /* build display-list with next call */
-
-				if(EVE_busy() == 0) /* is the FT8xx executing the display list?  note: may be working as intended - or not all to indicate the FT8xx is still up and running */
-				{
-					alive_counter++;
-				}
-
-				calc = EVE_get_touch_tag();
-				tag = calc;
-
-				switch(tag)
-				{
-					case 0:
-						toggle_lock = 0;
-						break;
-
-					case 1: /* use button on top as on/off radio-switch */
-						if(toggle_lock == 0)
-						{
-							toggle_lock = 42;
-							if(toggle_state == 0)
-							{
-								toggle_state = EVE_OPT_FLAT;
-							}
-							else
-							{
-								toggle_state = 0;
-							}
-						}
-						break;
-				}
-				break;
-
-			case 1: /* building a new display-list and sending it */
-
-				touch_or_list = 0; /* handle touch-events with next call */
-				old_offset =  EVE_report_cmdoffset(); /* used to calculate the amount of cmd-fifo bytes necessary */
-				display_list_size = EVE_memRead16(REG_CMD_DL);
-
-				EVE_start_cmd_burst(); /* start writing to the cmd-fifo as one stream of bytes, only sending the address once */
-
-				EVE_cmd_dl(CMD_DLSTART); /* start the display list */
-				EVE_cmd_dl(DL_CLEAR_RGB | WHITE); /* set the default clear color to white */
-				EVE_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG); /* clear the screen - this and the previous prevent artifacts between lists, Attributes are the color, stencil and tag buffers */
-				EVE_cmd_dl(TAG(0));
-
-				EVE_cmd_append(MEM_DL_STATIC, num_dl_static); /* insert static part of display-list from copy in gfx-mem */
-
-				/* display a button */
-				EVE_cmd_dl(DL_COLOR_RGB | WHITE);
-				EVE_cmd_fgcolor(0x00c0c0c0); /* some grey */
-				EVE_cmd_dl(TAG(1)); /* assign tag-value '1' to the button that follows */
-				EVE_cmd_button(20,20,80,30, 28, toggle_state,"Touch!");
-				EVE_cmd_dl(TAG(0)); /* no touch */
-
-				/* display a picture and rotate it when the button on top is activated */
-				EVE_cmd_setbitmap(MEM_PIC1, EVE_RGB565, 100, 100);
-
-				EVE_cmd_dl(CMD_LOADIDENTITY);
-				EVE_cmd_translate(65536 * 70, 65536 * 50); /* shift off-center */
-				EVE_cmd_rotate(rotate);
-				EVE_cmd_translate(65536 * -70, 65536 * -50); /* shift back */
-				EVE_cmd_dl(CMD_SETMATRIX);
-
-				if(toggle_state != 0)
-				{
-					rotate += 256;
-				}
-
-				EVE_cmd_dl(DL_BEGIN | EVE_BITMAPS);
-				EVE_cmd_dl(VERTEX2F(EVE_HSIZE - 105, (LAYOUT_Y1)));
-				EVE_cmd_dl(DL_END);
-
-				/* reset the transformation matrix to default values */
-				EVE_cmd_getmatrix(BITMAP_TRANSFORM_A(256),BITMAP_TRANSFORM_B(0),BITMAP_TRANSFORM_C(0),BITMAP_TRANSFORM_D(0),BITMAP_TRANSFORM_E(256),BITMAP_TRANSFORM_F(0));
-
-				/* print profiling values */
-				EVE_cmd_dl(DL_COLOR_RGB | BLACK);
-
-				EVE_cmd_number(120, EVE_VSIZE - 65, 26, EVE_OPT_RIGHTX, display_list_size); /* number of bytes written to the display-list by the command co-pro */
-				EVE_cmd_number(120, EVE_VSIZE - 35, 26, EVE_OPT_RIGHTX|5, num_profile_a); /* duration in 탎 of TFT_loop() for the touch-event part */
-				EVE_cmd_number(120, EVE_VSIZE - 20, 26, EVE_OPT_RIGHTX|5, num_profile_b); /* duration in 탎 of TFT_loop() for the display-list part */
-
-				new_offset =  EVE_report_cmdoffset();
-				if(old_offset > new_offset)
-				{
-					new_offset+=4096;
-				}
-				calc = new_offset-old_offset;
-				calc += 24; /* adjust for the commands that follow before the end */
-				EVE_cmd_number(120, EVE_VSIZE - 50, 26, EVE_OPT_RIGHTX, calc); /* number of bytes written to the cmd-fifo over the spi without adressing overhead */
-
-				EVE_cmd_dl(DL_DISPLAY);	/* instruct the graphics processor to show the list */
-				EVE_cmd_dl(CMD_SWAP); /* make this list active */
-
-				EVE_end_cmd_burst(); /* stop writing to the cmd-fifo */
-				EVE_cmd_start(); /* order the command co-processor to start processing its FIFO queue but do not wait for completion */
-				break;
+			rotate += 256;
 		}
+
+		EVE_cmd_dl(DL_BEGIN | EVE_BITMAPS);
+		EVE_cmd_dl(VERTEX2F(EVE_HSIZE - 105, (LAYOUT_Y1)));
+		EVE_cmd_dl(DL_END);
+
+		/* reset the transformation matrix to default values */
+		EVE_cmd_dl(RESTORE_CONTEXT());
+
+		/* print profiling values */
+		EVE_cmd_dl(DL_COLOR_RGB | BLACK);
+
+		EVE_cmd_number(120, EVE_VSIZE - 65, 26, EVE_OPT_RIGHTX, display_list_size); /* number of bytes written to the display-list by the command co-pro */
+		EVE_cmd_number(120, EVE_VSIZE - 35, 26, EVE_OPT_RIGHTX|5, num_profile_a); /* duration in 탎 of TFT_loop() for the touch-event part */
+		EVE_cmd_number(120, EVE_VSIZE - 20, 26, EVE_OPT_RIGHTX|5, num_profile_b); /* duration in 탎 of TFT_loop() for the display-list part */
+
+		new_offset =  EVE_report_cmdoffset();
+		if(old_offset > new_offset)
+		{
+			new_offset+=4096;
+		}
+		calc = new_offset-old_offset;
+		calc += 24; /* adjust for the commands that follow before the end */
+		EVE_cmd_number(120, EVE_VSIZE - 50, 26, EVE_OPT_RIGHTX, calc); /* number of bytes written to the cmd-fifo over the spi without adressing overhead */
+
+		EVE_cmd_dl(DL_DISPLAY);	/* instruct the graphics processor to show the list */
+		EVE_cmd_dl(CMD_SWAP); /* make this list active */
+
+		EVE_end_cmd_burst(); /* stop writing to the cmd-fifo */
+		EVE_cmd_start(); /* order the command co-processor to start processing its FIFO queue but do not wait for completion */
 	}
 }

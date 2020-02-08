@@ -2,8 +2,25 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 4.0
-@date    2019-01-27
+@date    2019-11-17
 @author  Rudolph Riedel
+
+@section LICENSE
+
+MIT License
+
+Copyright (c) 2016-2019 Rudolph Riedel
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 @section History
 
@@ -46,13 +63,18 @@
 - started to add specific BT81x defines
 - minor maintenance
 - changed OPT_FLASH to EVE_OPT_FLASH and OPT_FORMAT to EVE_OPT_FORMAT for consistency
+- added EVE_OPT_FILL which has been left out of the documentation for the BT81x so far
+- added a few BT81x specific macros
+- added a few FT81x/BT81x specific host commands
+- removed the preceding underscore from the include guard define to avoid potential undefined behavior
+- removed a bunch of defines for FT80x that I never implemented for FT81x
 
 */
 
 #include "EVE_config.h"
 
-#ifndef _EVE_H_
-#define _EVE_H_
+#ifndef EVE_H_
+#define EVE_H_
 
 
 #define DL_CLEAR		0x26000000UL /* requires OR'd arguments */
@@ -391,7 +413,6 @@
 #define CMD_EXECUTE				0xFFFFFF07
 #define CMD_GETPOINT			0xFFFFFF08
 #define CMD_TOUCH_TRANSFORM		0xFFFFFF20
-#define CMD_BITMAP_TRANSFORM	0xFFFFFF21
 #endif
 
 
@@ -460,15 +481,17 @@
 #define EVE_COMPRESSED_RGBA_ASTC_12x12_KHR 37821UL
 
 
-#define EVE_RAM_ERR_REPORT           0x309800UL // max 128 bytes null terminated string
-#define EVE_RAM_FLASH                0x800000UL
-#define EVE_RAM_FLASH_POSTBLOB       0x801000UL
+#define EVE_RAM_ERR_REPORT      0x309800UL /* max 128 bytes null terminated string */
+#define EVE_RAM_FLASH           0x800000UL
+#define EVE_RAM_FLASH_POSTBLOB  0x801000UL
 
 #define EVE_OPT_FLASH  64UL
 #define EVE_OPT_FORMAT 4096UL
+#define EVE_OPT_FILL   8192UL
 
 
 /* additional commands for BT81x */
+#define CMD_BITMAP_TRANSFORM 0xFFFFFF21
 #define CMD_SYNC             0xFFFFFF42		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_SYNC) */
 #define CMD_FLASHERASE       0xFFFFFF44		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHERASE) */
 #define CMD_FLASHWRITE       0xFFFFFF45
@@ -495,6 +518,15 @@
 #define CMD_ANIMFRAME        0xFFFFFF5A
 #define CMD_VIDEOSTARTF      0xFFFFFF5F		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_VIDEOSTARTF) */
 
+#if 0
+/* some undocumented commands for BT81x */
+#define CMD_NOP              0xFFFFFF5B
+#define CMD_SHA1             0xFFFFFF5C
+#define CMD_HMAC             0xFFFFFF5D
+#define CMD_LAST_            0xFFFFFF5E
+
+#endif
+
 
 /* additional registers for BT81x */
 #define REG_ADAPTIVE_FRAMERATE 0x30257cUL
@@ -504,12 +536,40 @@
 #define REG_PLAY_CONTROL       0x30914eUL
 #define REG_COPRO_PATCH_DTR    0x309162UL
 
+
+/* BT81x graphics engine specific macros */
+#define BITMAP_EXT_FORMAT(format) ((46UL<<24)|(((format)&65535UL)<<0))
+#define BITMAP_SWIZZLE(r,g,b,a) ((47UL<<24)|(((r)&7UL)<<9)|(((g)&7UL)<<6)|(((b)&7UL)<<3)|(((a)&7UL)<<0))
+#define BITMAP_SOURCE2(flash_or_ram, addr) ((1UL<<24)|((flash_or_ram) << 23)|(((addr)&8388607UL)<<0))
+#define INT_FRR() ((48UL<<24))
+
+#undef BITMAP_TRANSFORM_A
+#undef BITMAP_TRANSFORM_B
+#undef BITMAP_TRANSFORM_D
+#undef BITMAP_TRANSFORM_E
+
+#define BITMAP_TRANSFORM_A_EXT(p,v) ((21UL<<24)|(((p)&1UL)<<17)|(((v)&131071UL)<<0))
+#define BITMAP_TRANSFORM_B_EXT(p,v) ((22UL<<24)|(((p)&1UL)<<17)|(((v)&131071UL)<<0))
+#define BITMAP_TRANSFORM_D_EXT(p,v) ((24UL<<24)|(((p)&1UL)<<17)|(((v)&131071UL)<<0))
+#define BITMAP_TRANSFORM_E_EXT(p,v) ((25UL<<24)|(((p)&1UL)<<17)|(((v)&131071UL)<<0))
+
+#define BITMAP_TRANSFORM_A(a) BITMAP_TRANSFORM_A_EXT(0,a)
+#define BITMAP_TRANSFORM_B(b) BITMAP_TRANSFORM_B_EXT(0,b)
+#define BITMAP_TRANSFORM_D(d) BITMAP_TRANSFORM_D_EXT(0,d)
+#define BITMAP_TRANSFORM_E(e) BITMAP_TRANSFORM_E_EXT(0,e)
+
 #endif
 
 /* ----------------- FT81x / BT81x exclusive definitions -----------------*/
 #if defined (FT81X_ENABLE)
 
-#define LOW_FREQ_BOUND  58800000L /* 98% of 60Mhz */
+
+/* Host commands */
+#define EVE_CLKSEL			0x61 /* configure system clock */
+#define EVE_RST_PULSE		0x68 /* reset core - all registers default and processors reset */
+#define EVE_PINDRIVE		0x70 /* setup drive strength for various pins */
+#define EVE_PIN_PD_STATE	0x71 /* setup how pins behave during power down */
+
 
 /* Memory definitions */
 #define EVE_RAM_G			0x000000UL
@@ -519,6 +579,7 @@
 #define EVE_RAM_DL			0x300000UL
 #define EVE_RAM_REG			0x302000UL
 #define EVE_RAM_CMD			0x308000UL
+
 
 /* Memory buffer sizes */
 #define EVE_RAM_G_SIZE		1024*1024L
@@ -564,7 +625,6 @@
 #define CMD_CSKETCH				0xFFFFFF35
 #define CMD_INT_RAMSHARED		0xFFFFFF3D
 #define CMD_INT_SWLOADIMAGE		0xFFFFFF3E
-#define CMD_SYNC				0xFFFFFF42
 #endif
 
 
@@ -705,42 +765,23 @@
 /* ----------------- FT80x exclusive definitions -----------------*/
 #else
 
-#define EVE_CHIPID		0x00010008UL
-
-/* Coprocessor reset related */
-#define EVE_RESET_HOLD_COPROCESSOR		1
-#define EVE_RESET_RELEASE_COPROCESSOR	0
-
-/* Maximum display display resolution supported by graphics engine */
-#define EVE_MAX_DISPLAYWIDTH	(512L)
-#define EVE_MAX_DISPLAYHEIGHT	(512L)
-
-/* Defines for sound play and stop */
-#define EVE_SOUND_PLAY	1
-#define EVE_AUDIO_PLAY	1
-
-/* Defines for audio playback parameters */
-#define EVE_AUDIO_SAMPLINGFREQ_MIN	8*1000L
-#define EVE_AUDIO_SAMPLINGFREQ_MAX	48*1000L
-
-/* coprocessor error */
-#define EVE_COPRO_ERROR			0xfffUL
-
 /* Memory definitions */
-#define EVE_RAM_G		0x000000UL
-#define EVE_ROM_CHIPID	0x0C0000UL
+#define EVE_RAM_G			0x000000UL
+#define EVE_ROM_CHIPID		0x0C0000UL
 #define EVE_ROM_FONT		0x0BB23CUL
 #define EVE_ROM_FONT_ADDR	0x0FFFFCUL
-#define EVE_RAM_DL		0x100000UL
-#define EVE_RAM_PAL		0x102000UL
-#define EVE_RAM_CMD		0x108000UL
+#define EVE_RAM_DL			0x100000UL
+#define EVE_RAM_PAL			0x102000UL
+#define EVE_RAM_CMD			0x108000UL
 #define EVE_RAM_SCREENSHOT	0x1C2000UL
+
 
 /* Memory buffer sizes */
 #define EVE_RAM_G_SIZE		256*1024L
-#define EVE_CMDFIFO_SIZE		4*1024L
+#define EVE_CMDFIFO_SIZE	4*1024L
 #define EVE_RAM_DL_SIZE		8*1024L
-#define EVE_RAM_PAL_SIZE		1*1024L
+#define EVE_RAM_PAL_SIZE	1*1024L
+
 
 /* Register definitions */
 #define REG_ID					0x102400UL
@@ -828,4 +869,4 @@
 
 #endif
 
-#endif /* _EVE_H_ */
+#endif /* EVE_H_ */

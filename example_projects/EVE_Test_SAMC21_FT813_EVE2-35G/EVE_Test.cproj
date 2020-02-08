@@ -43,7 +43,8 @@
     <avrtool>com.atmel.avrdbg.tool.atmelice</avrtool>
     <avrtoolserialnumber>J41800003266</avrtoolserialnumber>
     <avrdeviceexpectedsignature>0x1101050A</avrdeviceexpectedsignature>
-    <avrtoolinterface>SWD</avrtoolinterface>
+    <avrtoolinterface>
+    </avrtoolinterface>
     <com_atmel_avrdbg_tool_atmelice>
       <ToolOptions>
         <InterfaceProperties>
@@ -72,8 +73,8 @@
   </armgcc.compiler.symbols.DefSymbols>
   <armgcc.compiler.directories.IncludePaths>
     <ListValues>
-      <Value>%24(PackRepoDir)\arm\cmsis\5.0.1\CMSIS\Include\</Value>
-      <Value>%24(PackRepoDir)\Atmel\SAMC21_DFP\1.1.144\samc21\include</Value>
+      <Value>%24(PackRepoDir)\arm\cmsis\5.4.0\CMSIS\Core\Include\</Value>
+      <Value>%24(PackRepoDir)\atmel\SAMC21_DFP\1.2.176\samc21\include</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
   <armgcc.compiler.optimization.level>Optimize for size (-Os)</armgcc.compiler.optimization.level>
@@ -93,14 +94,14 @@
   <armgcc.linker.miscellaneous.LinkerFlags>-Tsamc21e18a_flash.ld</armgcc.linker.miscellaneous.LinkerFlags>
   <armgcc.assembler.general.IncludePaths>
     <ListValues>
-      <Value>%24(PackRepoDir)\arm\cmsis\5.0.1\CMSIS\Include\</Value>
-      <Value>%24(PackRepoDir)\Atmel\SAMC21_DFP\1.1.144\samc21\include</Value>
+      <Value>%24(PackRepoDir)\arm\cmsis\5.4.0\CMSIS\Core\Include\</Value>
+      <Value>%24(PackRepoDir)\atmel\SAMC21_DFP\1.2.176\samc21\include</Value>
     </ListValues>
   </armgcc.assembler.general.IncludePaths>
   <armgcc.preprocessingassembler.general.IncludePaths>
     <ListValues>
-      <Value>%24(PackRepoDir)\arm\cmsis\5.0.1\CMSIS\Include\</Value>
-      <Value>%24(PackRepoDir)\Atmel\SAMC21_DFP\1.1.144\samc21\include</Value>
+      <Value>%24(PackRepoDir)\arm\cmsis\5.4.0\CMSIS\Core\Include\</Value>
+      <Value>%24(PackRepoDir)\atmel\SAMC21_DFP\1.2.176\samc21\include</Value>
     </ListValues>
   </armgcc.preprocessingassembler.general.IncludePaths>
 </ArmGcc>
@@ -121,11 +122,11 @@
   </armgcc.compiler.symbols.DefSymbols>
   <armgcc.compiler.directories.IncludePaths>
     <ListValues>
-      <Value>%24(PackRepoDir)\arm\cmsis\5.0.1\CMSIS\Include\</Value>
-      <Value>%24(PackRepoDir)\Atmel\SAMC21_DFP\1.1.144\samc21\include</Value>
+      <Value>%24(PackRepoDir)\arm\cmsis\5.4.0\CMSIS\Core\Include\</Value>
+      <Value>%24(PackRepoDir)\atmel\SAMC21_DFP\1.2.176\samc21\include</Value>
     </ListValues>
   </armgcc.compiler.directories.IncludePaths>
-  <armgcc.compiler.optimization.level>Optimize for size (-Os)</armgcc.compiler.optimization.level>
+  <armgcc.compiler.optimization.level>Optimize more (-O2)</armgcc.compiler.optimization.level>
   <armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>True</armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>
   <armgcc.compiler.optimization.DebugLevel>Maximum (-g3)</armgcc.compiler.optimization.DebugLevel>
   <armgcc.compiler.warnings.AllWarnings>True</armgcc.compiler.warnings.AllWarnings>
@@ -144,15 +145,15 @@
   <armgcc.linker.miscellaneous.LinkerFlags>-Tsamc21e18a_flash.ld</armgcc.linker.miscellaneous.LinkerFlags>
   <armgcc.assembler.general.IncludePaths>
     <ListValues>
-      <Value>%24(PackRepoDir)\arm\cmsis\5.0.1\CMSIS\Include\</Value>
-      <Value>%24(PackRepoDir)\Atmel\SAMC21_DFP\1.1.144\samc21\include</Value>
+      <Value>%24(PackRepoDir)\arm\cmsis\5.4.0\CMSIS\Core\Include\</Value>
+      <Value>%24(PackRepoDir)\atmel\SAMC21_DFP\1.2.176\samc21\include</Value>
     </ListValues>
   </armgcc.assembler.general.IncludePaths>
   <armgcc.assembler.debugging.DebugLevel>Default (-g)</armgcc.assembler.debugging.DebugLevel>
   <armgcc.preprocessingassembler.general.IncludePaths>
     <ListValues>
-      <Value>%24(PackRepoDir)\arm\cmsis\5.0.1\CMSIS\Include\</Value>
-      <Value>%24(PackRepoDir)\Atmel\SAMC21_DFP\1.1.144\samc21\include</Value>
+      <Value>%24(PackRepoDir)\arm\cmsis\5.4.0\CMSIS\Core\Include\</Value>
+      <Value>%24(PackRepoDir)\atmel\SAMC21_DFP\1.2.176\samc21\include</Value>
     </ListValues>
   </armgcc.preprocessingassembler.general.IncludePaths>
   <armgcc.preprocessingassembler.debugging.DebugLevel>Default (-Wa,-g)</armgcc.preprocessingassembler.debugging.DebugLevel>
@@ -161,9 +162,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Device_Startup\startup_samc21.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="Device_Startup\system_samc21.c">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="EVE.h">
@@ -176,6 +174,12 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="EVE_config.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="EVE_target.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="EVE_target.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="main.c">

@@ -2,7 +2,7 @@
 @file    main.c
 @brief   main
 @version 1.1
-@date    2018-12-10
+@date    2020-02-08
 @author  Rudolph Riedel
 
 @section History
@@ -14,12 +14,15 @@
 - switched to hardware-SPI using SERCOM0
 - added using Timer4 for the time spent in TFT_loop()
 
+1.2
+- updated to be more similar to what I am currently using in projects
+
  */
 
 
 #include "sam.h"
 
-#include "EVE_commands.h"
+//#include "EVE_commands.h"
 #include "tft.h"
 
 
@@ -58,6 +61,17 @@ void init_clock(void)
 						GCLK_GENCTRL_IDC ;
 
 	while((REG_GCLK_SYNCBUSY & GCLK_SYNCBUSY_GENCTRL0) != 0);	/* wait for the synchronization between clock domain to be complete */
+
+	REG_OSCCTRL_OSC48MDIV = OSCCTRL_OSC48MDIV_DIV(0);	// set 48MHz Oscillator to 48MHz ouput
+
+	REG_GCLK_GENCTRL1 = GCLK_GENCTRL_DIV(0) |
+	GCLK_GENCTRL_RUNSTDBY |
+	GCLK_GENCTRL_GENEN |
+	GCLK_GENCTRL_SRC_OSC48M |
+	//		GCLK_GENCTRL_SRC_DPLL96M |
+	GCLK_GENCTRL_IDC ;
+
+	while((REG_GCLK_SYNCBUSY & GCLK_SYNCBUSY_GENCTRL1) != 0);	// wait for the synchronization between clock domains is complete
 }
 
 
@@ -120,20 +134,22 @@ void init_timer(void)
 	REG_MCLK_APBCMASK |= MCLK_APBCMASK_TC4;
 	REG_GCLK_PCHCTRL32 = GCLK_PCHCTRL_GEN_GCLK0 | GCLK_PCHCTRL_CHEN; /* setup TC4 to use GLCK0 -> 48MHz */
 	
-	REG_TC4_CTRLA = TC_CTRLA_MODE_COUNT32 | TC_CTRLA_PRESCALER_DIV16 | TC_CTRLA_ENABLE;
+	REG_TC4_CTRLA = TC_CTRLA_MODE_COUNT16 | TC_CTRLA_PRESCALER_DIV16 | TC_CTRLA_ENABLE;
 	while(REG_TC4_SYNCBUSY & TC_SYNCBUSY_ENABLE); /* wait for TC4 to be ready */
 }
 
 
 int main(void)
 {
-	uint8_t toggle = 0;
-	uint32_t counter_val;
-	
+	uint8_t display_delay = 0;
+	uint8_t led_delay = 0;
+		
 	init_clock();
 	init_spi();
 	init_timer();
-	SysTick_Config(48000000 / 100); // configure and Enable Systick for 10 ms ticks
+	SysTick_Config(48000000 / 200); // configure and Enable Systick for 5 ms ticks
+
+	REG_PORT_DIRSET0 = PORT_PA27; /* Debug-LED */
 
 	TFT_init();
 	set_spi_speed(1); /* speed up to 12MHz after init, with 24MHz touch is not working on my HW... */
@@ -144,27 +160,41 @@ int main(void)
 		{
 			system_tick = 0;
 
-			REG_TC4_COUNT32_COUNT = 0;
+			led_delay++;
+			if(led_delay > 39)
+			{
+				led_delay = 0;
+				REG_PORT_OUTTGL0 = PORT_PA27;
+			}
+
+			REG_TC4_COUNT16_COUNT = 0;
 			REG_TC4_CTRLBSET = TC_CTRLBSET_CMD_UPDATE;
 			while((REG_TC4_CTRLBSET & TC_CTRLBSET_MASK) == 0);
 
-			TFT_loop();
-
+			TFT_touch();
+			
 			REG_TC4_CTRLBSET = TC_CTRLBSET_CMD_READSYNC;
 			while((REG_TC4_CTRLBSET & TC_CTRLBSET_MASK) == 0);
 
-			counter_val = REG_TC4_COUNT32_COUNT;
-			counter_val /= 3; /* 1µs */
-			
-			if(toggle == 0)
+			num_profile_b = REG_TC4_COUNT16_COUNT;
+			num_profile_b /= 3; /* 1?s */
+
+			display_delay++;
+			if(display_delay > 3)
 			{
-				num_profile_a = counter_val;
-				toggle++;
-			}
-			else
-			{
-				num_profile_b = counter_val;
-				toggle = 0;
+				display_delay = 0;
+
+				REG_TC4_COUNT16_COUNT = 0;
+				REG_TC4_CTRLBSET = TC_CTRLBSET_CMD_UPDATE;
+				while((REG_TC4_CTRLBSET & TC_CTRLBSET_MASK) == 0);
+
+				TFT_display();
+
+				REG_TC4_CTRLBSET = TC_CTRLBSET_CMD_READSYNC;
+				while((REG_TC4_CTRLBSET & TC_CTRLBSET_MASK) == 0);
+
+				num_profile_a = REG_TC4_COUNT16_COUNT;
+				num_profile_a /= 3; /* 1?s */
 			}
 		}
 	}
