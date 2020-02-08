@@ -308,7 +308,7 @@ void TFT_touch(void)
 	uint8_t tag;
 	static uint8_t toggle_lock = 0;
 	
-	if(EVE_busy() == 0) /* is EVE still processing the last display list? */
+	if(EVE_busy()) /* is EVE still processing the last display list? */
 	{
 		return;
 	}
