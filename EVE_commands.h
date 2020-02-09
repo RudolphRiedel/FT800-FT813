@@ -2,14 +2,14 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 4.0
-@date    2019-09-14
+@date    2020-02-09
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2019 Rudolph Riedel
+Copyright (c) 2016-2020 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -91,8 +91,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added EVE_cmd_button_var() and EVE_cmd_toggle_var() functions
 - added prototype for EVE_calibrate_manual()
 - added prototypes EVE_cmd_flasherase(), EVE_cmd_flashattach(), EVE_cmd_flashdetach() and EVE_cmd_flashspidesel()
+- added an include for "EVE.h" in order to reduce the necessary includes in the main project file, only including "EVE_commands.h" is fine now
 
 */
+
+#include "EVE.h"
 
 #ifndef EVE_COMMANDS_H_
 #define EVE_COMMANDS_H_

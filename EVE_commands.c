@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 4.0
-@date    2020-01-10
+@date    2020-02-09
 @author  Rudolph Riedel
 
 @section info
@@ -185,11 +185,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - changed block_transfer() to use 32bit for the number of bytes to be transferred
 - minor housekeeping, no functional changes
 - Bugfix: EVE_get_touch_tag() failed to compile for FT80x as there is only one REG_TOUCH_TAG
+- removed include for "EVE_target.h" since "EVE.h" already includes it now
 
 */
 
 #include "EVE.h"
-#include "EVE_target.h"
 
 #if defined (BT81X_ENABLE)
 #include <stdarg.h>

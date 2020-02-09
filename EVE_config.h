@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 4.0
-@date    2020-01-10
+@date    2020-02-09
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -39,6 +39,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added a profile for the Sunflower Arduino Shield
 - looked into adding Gameduino3 / Gameduino3X profiles but there are no documented timing parameters for these panels
 - added a profile for the MikroElektronika ConnectEVE module
+- added a profile for the CFAF240400C0-030SC from Crystalfontz
 
 */
 
@@ -89,6 +90,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE_NHD_50
 	#define EVE_NHD_70
 	#define EVE_ADAM101
+	#define EVE_CFAF240400C1_030SC
 	#define EVE_CFAF800480E0_050SC
 	#define EVE_PAF90
 	#define EVE_SUNFLOWER
@@ -771,7 +773,30 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 
 /* untested */
-/* Crystalfonts EVE_CFAF800480E0-050SC 800x480 5.0" , FT813 capacitive touch */
+/* Crystalfonts CFAF240400C1-030SC 240x400 3.0" , FT811 capacitive touch */
+#if defined (EVE_CFAF240400C1_030SC)
+#define EVE_HSIZE	(240L)
+#define EVE_VSIZE	(400L)
+
+#define EVE_VSYNC0	(4L)
+#define EVE_VSYNC1	(6L)
+#define EVE_VOFFSET	(8L)
+#define EVE_VCYCLE	(409L)
+#define EVE_HSYNC0	(10L)
+#define EVE_HSYNC1	(20L)
+#define EVE_HOFFSET	(40L)
+#define EVE_HCYCLE 	(489L)
+#define EVE_PCLKPOL	(0L)
+#define EVE_SWIZZLE	(2L)
+#define EVE_PCLK	(5L)
+#define EVE_CSPREAD	(0L)
+#define EVE_TOUCH_RZTHRESH (1200L)
+#define FT81X_ENABLE
+#endif
+
+
+/* untested */
+/* Crystalfonts CFAF800480E0-050SC 800x480 5.0" , FT813 capacitive touch */
 #if defined (EVE_CFAF800480E0_050SC)
 #define EVE_HSIZE	(800L)
 #define EVE_VSIZE	(480L)
