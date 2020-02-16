@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 4.0
-@date    2020-02-09
+@date    2020-02-16
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -40,6 +40,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - looked into adding Gameduino3 / Gameduino3X profiles but there are no documented timing parameters for these panels
 - added a profile for the MikroElektronika ConnectEVE module
 - added a profile for the CFAF240400C0-030SC from Crystalfontz
+- added a profile for the CFAF480128A0-039TC from Crystalfontz
+- added a profile for the CFAF320240F-035T from Crystalfontz
 
 */
 
@@ -91,13 +93,15 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE_NHD_70
 	#define EVE_ADAM101
 	#define EVE_CFAF240400C1_030SC
+	#define EVE_CFAF320240F_035T
+	#define EVE_CFAF480128A0_039TC
 	#define EVE_CFAF800480E0_050SC
 	#define EVE_PAF90
 	#define EVE_SUNFLOWER
 	#define EVE_CONNECTEVE
 #endif
 
-#define EVE_EVE3_43G
+#define EVE_CFAF800480E0_050SC
 
 
 /* display timing parameters below */
@@ -772,7 +776,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #endif
 
 
-/* untested */
 /* Crystalfonts CFAF240400C1-030SC 240x400 3.0" , FT811 capacitive touch */
 #if defined (EVE_CFAF240400C1_030SC)
 #define EVE_HSIZE	(240L)
@@ -795,7 +798,50 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #endif
 
 
-/* untested */
+/* Crystalfonts CFAF320240F-035T 320x240 3.5" , FT810 resistive touch */
+#if defined (EVE_CFAF320240F_035T)
+#define EVE_HSIZE	(320L)
+#define EVE_VSIZE	(240L)
+
+#define EVE_VSYNC0	(1L)
+#define EVE_VSYNC1	(4L)
+#define EVE_VOFFSET	(4L)
+#define EVE_VCYCLE	(245L)
+#define EVE_HSYNC0	(10L)
+#define EVE_HSYNC1	(20L)
+#define EVE_HOFFSET	(40L)
+#define EVE_HCYCLE 	(510L)
+#define EVE_PCLKPOL	(0L)
+#define EVE_SWIZZLE	(2L)
+#define EVE_PCLK	(8L)
+#define EVE_CSPREAD	(0L)
+#define EVE_TOUCH_RZTHRESH (1200L)
+#define FT81X_ENABLE
+#endif
+
+
+/* Crystalfonts CFAF480128A0-039TC 480x128 3.9" , FT811 capacitive touch */
+#if defined (EVE_CFAF480128A0_039TC)
+#define EVE_HSIZE	(480L)
+#define EVE_VSIZE	(128L)
+
+#define EVE_VSYNC0	(4L)
+#define EVE_VSYNC1	(5L)
+#define EVE_VOFFSET	(8L)
+#define EVE_VCYCLE	(137L)
+#define EVE_HSYNC0	(24L)
+#define EVE_HSYNC1	(35L)
+#define EVE_HOFFSET	(41L)
+#define EVE_HCYCLE 	(1042L)
+#define EVE_PCLKPOL	(1L)
+#define EVE_SWIZZLE	(0L)
+#define EVE_PCLK	(7L)
+#define EVE_CSPREAD	(0L)
+#define EVE_TOUCH_RZTHRESH (1200L)
+#define FT81X_ENABLE
+#endif
+
+
 /* Crystalfonts CFAF800480E0-050SC 800x480 5.0" , FT813 capacitive touch */
 #if defined (EVE_CFAF800480E0_050SC)
 #define EVE_HSIZE	(800L)

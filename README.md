@@ -55,9 +55,13 @@ The TFTs I have tested myself so far:
 - PAF90B5WFNWC01 http://www.panadisplay.com/ftdi-intelligent-display/9-inch-lcd-with-touch-with-bt815-board.html
 - EVE3-43G https://www.matrixorbital.com/eve3-43g
 - EVE3-35G https://www.matrixorbital.com/eve3-35g
+- CFAF240400C0-030SC https://www.crystalfontz.com/product/cfaf240400c0030sca11-240x400-eve-touchscreen-tft-ft813
+- CFAF320240F-035T https://www.crystalfontz.com/product/cfaf320240f035ttsa11-320x240-eve-tft-lcd-display-kit
+- CFAF480128A0-039TC
+- CFAF800480E0-050SC https://www.crystalfontz.com/product/cfaf800480e1050sca11-800x480-eve-accelerated-tft
 
-The examples in the "example_projects" drawer are for use with AtmelStudio7. For Arduino I am using the plugin from www.visualmicro.com .
-Yes, I am aware that these are outdated by now. :-)
+The examples in the "example_projects" drawer are for use with AtmelStudio7.
+For Arduino I am using PlatformIO with Visual Studio Code.
 
 The platform the code is compiled for is automatically detected thru compiler flags in EVE_target.h. This is the only file that should need editing to customize the library to your needs.
 
