@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 4.0
-@date    2020-03-01
+@date    2020-04-13
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -93,8 +93,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added prototypes EVE_cmd_flasherase(), EVE_cmd_flashattach(), EVE_cmd_flashdetach() and EVE_cmd_flashspidesel()
 - added an include for "EVE.h" in order to reduce the necessary includes in the main project file, only including "EVE_commands.h" is fine now
 - changed EVE_cmd_getprops() again, inspired by BRTs AN_025, changed the name to EVE_LIB_GetProps() and got rid of the returning data-structure
-- replaced EVE_cmd_getmatrix() with an earlier implementation again, looks like it is supposed to write, not read. 
+- replaced EVE_cmd_getmatrix() with an earlier implementation again, looks like it is supposed to write, not read
 - added function EVE_color_rgb()
+- marked EVE_get_touch_tag() as deprecated
 
 */
 
@@ -116,7 +117,7 @@ void EVE_memWrite_flash_buffer(uint32_t ftAddress, const uint8_t *data, uint16_t
 uint8_t EVE_busy(void);
 void EVE_get_cmdoffset(void);
 uint16_t EVE_report_cmdoffset(void);
-uint32_t EVE_get_touch_tag(uint8_t num);
+uint32_t EVE_get_touch_tag(uint8_t num) __attribute__ ((deprecated("use EVE_memRead8(REG_TOUCH_TAG);")));
 
 
 /* commands to operate on memory: */

@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 4.0
-@date    2020-03-01
+@date    2020-04-13
 @author  Rudolph Riedel
 
 @section info
@@ -189,6 +189,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - changed EVE_cmd_getprops() again, inspired by BRTs AN_025, changed the name to EVE_LIB_GetProps() and got rid of the returning data-structure
 - replaced EVE_cmd_getmatrix() with an earlier implementation again, looks like it is supposed to write, not read. 
 - added function EVE_color_rgb()
+- added a fixed 40ms delay in EVE_init() between ACTIVE and the first reading of 0x7c as a compromise to comply with AN033 V1.2
 
 */
 
@@ -1122,6 +1123,16 @@ uint8_t EVE_init(void)
 	#endif
 
 	EVE_cmdWrite(EVE_ACTIVE,0);	/* start EVE */
+
+	/* BRT AN033 BT81X_Series_Programming_Guide V1.2 had a small change to chapter 2.4 "Initialization Sequence during Boot Up" */
+	/* Send Host command “ACTIVE” and wait for at least 300 milliseconds. */
+	/* Ensure that there is no SPI access during this time. */
+	/* I asked Bridgetek for clarification why this has been made stricter. */
+	/* From observation with quite a few of different displays I do not agree that either the 300ms are necessary or that */
+	/* *reading* the SPI while EVE inits itself is causing any issues. */
+	/* But since BT815 at 72MHz need 42ms anyways before they start to answer, here is my compromise, a fixed 40ms delay */
+	/* to provide at least a short moment of silence for EVE */		
+	DELAY_MS(40);
 
 	while(chipid != 0x7C) /* if chipid is not 0x7c, continue to read it until it is, EVE needs a moment for it's power on self-test and configuration */
 	{

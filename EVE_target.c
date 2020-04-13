@@ -2,14 +2,14 @@
 @file    EVE_target.c
 @brief   target specific functions
 @version 4.0
-@date    2019-12-28
+@date    2020-04-13
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2019 Rudolph Riedel
+Copyright (c) 2016-2020 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -28,6 +28,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added support for MSP432
 - moved the two include lines out of reach for Arduino to increase compatibility with Arduino
 - removed preceding "__" from two CMSIS functions that were not necessary and maybe even wrong
+- moved the very basic DELAY_MS() function for ATSAM to EVE_target.c and therefore removed the unneceesary inlining for this function
+- added DMA support for ATSAME51
 
  */
 
@@ -37,63 +39,136 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
   #include "EVE_commands.h"
 
 	#if defined (__GNUC__)
-		#if defined (__SAMC21E18A__)
+		#if defined (__SAMC21E18A__) || (__SAME51J19A__)	/* target as set by AtmelStudio */
+
+		void DELAY_MS(uint16_t val)
+		{
+			uint16_t counter;
+
+			while(val > 0)
+			{
+				for(counter=0; counter < EVE_DELAY_1MS;counter++)
+				{
+					__asm__ volatile ("nop");
+				}
+				val--;
+			}
+		}
 
 		#if defined (EVE_DMA)
 
-			static DmacDescriptor dmadescriptor __attribute__((aligned(16))) SECTION_DMAC_DESCRIPTOR;
-			static DmacDescriptor dmawriteback __attribute__((aligned(16))) SECTION_DMAC_DESCRIPTOR;
+			static DmacDescriptor dmadescriptor __attribute__((aligned(16)));
+			static DmacDescriptor dmawriteback __attribute__((aligned(16)));
 			uint8_t EVE_dma_buffer[4100];
 			volatile uint16_t EVE_dma_buffer_index;
 
 			volatile uint8_t EVE_dma_busy = 0;
 
-			#define EVE_dma_channel 0
+			#if defined (__SAMC21E18A__)
 
 			void EVE_init_dma(void)
 			{
-				REG_DMAC_BASEADDR = (uint32_t) &dmadescriptor;
-				REG_DMAC_WRBADDR = (uint32_t) &dmawriteback;
-				REG_DMAC_PRICTRL0 = 0; /* all off, reset-default */
+				DMAC->CTRL.reg = 0;
+				while(DMAC->CTRL.bit.DMAENABLE);
+				DMAC->CTRL.bit.SWRST = 1;
+				while(DMAC->CTRL.bit.SWRST); /* wait for the software-reset to be complete */
 
-				REG_DMAC_CHCTRLB = DMAC_CHCTRLB_TRIGACT_BEAT | DMAC_CHCTRLB_TRIGSRC(SERCOM0_DMAC_ID_TX); /* beat-transfer, SERCOM0 TX Trigger, level 0, channel-event input / output disabled */
-				REG_DMAC_CTRL = DMAC_CTRL_LVLEN0 | DMAC_CTRL_DMAENABLE; /* enable level 0 transfers, enable DMA */
-				REG_DMAC_CHID = EVE_dma_channel; /* select channel 0, reset-default */
+				DMAC->BASEADDR.reg = (uint32_t) &dmadescriptor;
+				DMAC->WRBADDR.reg = (uint32_t) &dmawriteback;
+
+				DMAC->CHCTRLB.reg = DMAC_CHCTRLB_TRIGACT_BEAT | DMAC_CHCTRLB_TRIGSRC(EVE_SPI_DMA_TRIGGER); /* beat-transfer, SERCOM0 TX Trigger, level 0, channel-event input / output disabled */
+				DMAC->CHID.reg = EVE_DMA_CHANNEL; /* select channel */
+				DMAC->CTRL.reg = DMAC_CTRL_LVLEN0 | DMAC_CTRL_DMAENABLE; /* enable level 0 transfers, enable DMA */
 
 				dmadescriptor.BTCTRL.reg = DMAC_BTCTRL_SRCINC | DMAC_BTCTRL_VALID; /* increase source-address, beat-size = 8-bit */
-				dmadescriptor.DSTADDR.reg = (uint32_t) &REG_SERCOM0_SPI_DATA;
+				dmadescriptor.DSTADDR.reg = (uint32_t) &EVE_SPI->SPI.DATA.reg;
 				dmadescriptor.DESCADDR.reg = 0; /* no next descriptor */
 
-				REG_DMAC_CHINTENSET = DMAC_CHINTENSET_TCMPL;
+				DMAC->CHINTENSET.reg = DMAC_CHINTENSET_TCMPL;
 				NVIC_SetPriority(DMAC_IRQn, 0);
 				NVIC_EnableIRQ(DMAC_IRQn);
 			}
-
 
 			void EVE_start_dma_transfer(void)
 			{
 				dmadescriptor.BTCNT.reg = EVE_dma_buffer_index;
 				dmadescriptor.SRCADDR.reg = (uint32_t) &EVE_dma_buffer[EVE_dma_buffer_index]; /* note: last entry in array + 1 */
-				REG_SERCOM0_SPI_CTRLB = 0; /* switch receiver off by setting RXEN to 0 which is not enable-protected */
+				EVE_SPI->SPI.CTRLB.bit.RXEN = 0; /* switch receiver off by setting RXEN to 0 which is not enable-protected */
 				EVE_cs_set();
-				REG_DMAC_CHCTRLA = DMAC_CHCTRLA_ENABLE; /* start sending out EVE_dma_buffer �*/
+				DMAC->CHCTRLA.bit.ENABLE = 1; /* start sending out EVE_dma_buffer ?*/
 				EVE_dma_busy = 42;
 			}
 
 			/* executed at the end of the DMA transfer */
 			void DMAC_Handler()
 			{
-				REG_DMAC_CHID = EVE_dma_channel; /* we only use one channel, so this should not even change */
-				REG_DMAC_CHINTFLAG = DMAC_CHINTFLAG_TCMPL; /* ack irq */
-				while((REG_SERCOM0_SPI_INTFLAG & SERCOM_SPI_INTFLAG_TXC) == 0); /* wait for the SPI to be done transmitting */
-				REG_SERCOM0_SPI_CTRLB = SERCOM_SPI_CTRLB_RXEN; /* switch receiver on by setting RXEN to 1 which is not enable protected */
+				DMAC->CHID.reg = EVE_DMA_CHANNEL; /* we only use one channel, so this should not even change */
+				DMAC->CHINTFLAG.reg = DMAC_CHINTFLAG_TCMPL; /* ack irq */
+				while(EVE_SPI->SPI.INTFLAG.bit.TXC == 0); /* wait for the SPI to be done transmitting */
+				EVE_SPI->SPI.CTRLB.bit.RXEN = 1; /* switch receiver on by setting RXEN to 1 which is not enable protected */
 				EVE_dma_busy = 0;
 				EVE_cs_clear();
 				EVE_cmd_start(); /* order the command co-processor to start processing its FIFO queue but do not wait for completion */
 			}
 
-		#endif
-        #endif
+			#endif /* DMA functions SAMC21 */
+
+			#if defined (__SAME51J19A__)
+
+			void EVE_init_dma(void)
+			{
+				DMAC->CTRL.reg = 0;
+				while(DMAC->CTRL.bit.DMAENABLE);
+				DMAC->CTRL.bit.SWRST = 1;
+				while(DMAC->CTRL.bit.SWRST); /* wait for the software-reset to be complete */
+
+				DMAC->BASEADDR.reg = (uint32_t) &dmadescriptor;
+				DMAC->WRBADDR.reg = (uint32_t) &dmawriteback;
+				DMAC->CTRL.reg = DMAC_CTRL_LVLEN0 | DMAC_CTRL_DMAENABLE; /* enable level 0 transfers, enable DMA */
+				DMAC->Channel[EVE_DMA_CHANNEL].CHCTRLA.reg =
+					DMAC_CHCTRLA_BURSTLEN_SINGLE |
+					DMAC_CHCTRLA_TRIGACT_BURST |
+					DMAC_CHCTRLA_TRIGSRC(EVE_SPI_DMA_TRIGGER);
+
+				dmadescriptor.BTCTRL.reg = DMAC_BTCTRL_SRCINC | DMAC_BTCTRL_VALID; /* increase source-address, beat-size = 8-bit */
+				dmadescriptor.DSTADDR.reg = (uint32_t) &EVE_SPI->SPI.DATA.reg;
+				dmadescriptor.DESCADDR.reg = 0; /* no next descriptor */
+
+				DMAC->Channel[EVE_DMA_CHANNEL].CHINTENSET.bit.TCMPL = 1; /* enable transfer complete interrupt */
+				DMAC->CTRL.reg = DMAC_CTRL_LVLEN0 | DMAC_CTRL_DMAENABLE; /* enable level 0 transfers, enable DMA */
+
+				NVIC_SetPriority(DMAC_0_IRQn, 0);
+				NVIC_EnableIRQ(DMAC_0_IRQn);
+			}
+
+			void EVE_start_dma_transfer(void)
+			{
+				dmadescriptor.BTCNT.reg = EVE_dma_buffer_index;
+				dmadescriptor.SRCADDR.reg = (uint32_t) &EVE_dma_buffer[EVE_dma_buffer_index]; /* note: last entry in array + 1 */
+				EVE_SPI->SPI.CTRLB.bit.RXEN = 0; /* switch receiver off by setting RXEN to 0 which is not enable-protected */
+				EVE_cs_set();
+				DMAC->Channel[EVE_DMA_CHANNEL].CHCTRLA.bit.ENABLE = 1; /* start sending out EVE_dma_buffer */
+				EVE_dma_busy = 42;
+			}
+
+			/* executed at the end of the DMA transfer */
+			void DMAC_0_Handler()
+			{
+				DMAC->Channel[EVE_DMA_CHANNEL].CHINTFLAG.reg = DMAC_CHINTFLAG_TCMPL; /* ack irq */
+				while(EVE_SPI->SPI.INTFLAG.bit.TXC == 0); /* wait for the SPI to be done transmitting */
+				EVE_SPI->SPI.CTRLB.bit.RXEN = 1; /* switch receiver on by setting RXEN to 1 which is not enable protected */
+				EVE_dma_busy = 0;
+				EVE_cs_clear();
+				EVE_cmd_start(); /* order the command co-processor to start processing its FIFO queue but do not wait for completion */
+			}
+
+		#endif /* DMA functions SAME51 */
+
+		#endif /* DMA */
+
+        #endif /* ATSAM */
+
+
     #endif /* __GNUC__ */
 
     #if defined (__TI_ARM__)
