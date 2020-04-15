@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 4.0
-@date    2020-04-11
+@date    2020-04-15
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -46,6 +46,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - combined ATSAMC21 and ATSAME51 targets into one block since these were using the same code anyways
 - moved the very basic DELAY_MS() function for ATSAM to EVE_target.c and therefore removed the unneceesary inlining for this function
 - expanded the STM32F4 section with lines for STM32L073, STM32F1, STM32F207 and STM32F3
+- forgot to add the "#include <Arduino.h>" line I found to be necessary for ESP32/Arduino
+- started to implement DMA support for STM32
 
 */
 
@@ -623,6 +625,19 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		#define EVE_PDN_PORT GPIOD
 		#define EVE_PDN GPIO_PIN_13
 		#define EVE_SPI SPI1
+		#define EVE_DMA_INSTANCE DMA2
+		#define EVE_DMA_CHANNEL 3
+		#define EVE_DMA_STREAM 3
+//		#define EVE_DMA		/* do not active, it is not working yet */
+
+		#if defined (EVE_DMA)
+			extern uint8_t EVE_dma_buffer[4100];
+			extern volatile uint16_t EVE_dma_buffer_index;
+			extern volatile uint8_t EVE_dma_busy;
+
+			void EVE_init_dma(void);
+			void EVE_start_dma_transfer(void);
+		#endif
 
 		#define DELAY_MS(ms) HAL_Delay(ms)
 
@@ -646,29 +661,29 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			HAL_GPIO_WritePin(EVE_CS_PORT, EVE_CS, GPIO_PIN_RESET);
 		}
 
-		static inline void spi_transmit(uint8_t byte)
+		static inline void spi_transmit(uint8_t data)
 		{
-			LL_SPI_TransmitData8(EVE_SPI, byte);
+			LL_SPI_TransmitData8(EVE_SPI, data);
 			while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
 			while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI));
 			LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXNE */
 		}
 
-		static inline void spi_transmit_async(uint8_t byte)
+		static inline void spi_transmit_async(uint8_t data)
 		{
-			#if EVE_DMA
+			#if defined (EVE_DMA)
 				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
 			#else
-				LL_SPI_TransmitData8(EVE_SPI, byte);
+				LL_SPI_TransmitData8(EVE_SPI, data);
 				while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
 				while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI));
 				LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXNE */
 			#endif
 		}
 
-		static inline uint8_t spi_receive(uint8_t byte)
+		static inline uint8_t spi_receive(uint8_t data)
 		{
-			LL_SPI_TransmitData8(EVE_SPI, byte);
+			LL_SPI_TransmitData8(EVE_SPI, data);
 			while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
 			while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI));
 			return LL_SPI_ReceiveData8(EVE_SPI);
@@ -790,6 +805,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 
 #if defined (ARDUINO)
+
+	#include <Arduino.h>
 	#include <stdio.h>
 	#include <SPI.h>
 

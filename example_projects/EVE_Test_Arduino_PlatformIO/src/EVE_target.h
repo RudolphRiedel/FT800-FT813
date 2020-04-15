@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 4.0
-@date    2020-01-13
+@date    2020-04-15
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -36,13 +36,18 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added support for MSP432 - it compiles with Code Composer Studio but is for the most part untested...
 - wrote a couple lines of explanation on how DMA is to be used
 - replaced the dummy read of the SPI data register with a var for ATSAMC21 and ATSAME51 with "(void) REG_SERCOM0_SPI_DATA;"
-- added support for RISC-V, more specifically the GD32VF103 that is on the Sipeed Longan Nano - not tested with a display yet but it looks very good with the Logic-Analyzer 
+- added support for RISC-V, more specifically the GD32VF103 that is on the Sipeed Longan Nano - not tested with a display yet but it looks very good with the Logic-Analyzer
 - added support for STM32F407 by adding code supplied by User "mokka" on MikroController.net and modifying it by replacing the HAL functions with direct register accesses
 - added comment lines to separate the various targets visually
 - reworked ATSAMC21 support code to use defines for ports, pins and SERCOM, plus changed the "legacy register definitions" to more current ones
 - changed ATSAME51 support code to the new "template" as well
 - bugifx: STM32F407 support was neither working or compiling, also changed it to STM32F4 as it should support the whole family now
 - bugifx: second attempt to fix STM32F4 support, thanks again to user "mokka" on MikroController.net
+- combined ATSAMC21 and ATSAME51 targets into one block since these were using the same code anyways
+- moved the very basic DELAY_MS() function for ATSAM to EVE_target.c and therefore removed the unneceesary inlining for this function
+- expanded the STM32F4 section with lines for STM32L073, STM32F1, STM32F207 and STM32F3
+- forgot to add the "#include <Arduino.h>" line I found to be necessary for ESP32/Arduino
+- started to implement DMA support for STM32
 
 */
 
@@ -64,9 +69,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
   For the SPI transfers single 8-Bit transfers are used with busy-wait for completion.
   While this is okay for AVRs that run at 16MHz with the SPI at 8 MHz and therefore do one transfer in 16 clock-cycles,
   this is wasteful for any 32 bit controller even at higher SPI speeds.
-  
+
   Check out the section for SAMC21E18A as it has code to transparently add DMA.
-  
+
   If the define "EVE_DMA" is set the spi_transmit_async() is changed at compile time to write in a buffer instead directly to SPI.
   EVE_init() calls EVE_init_dma() which sets up the DMA channel and enables an IRQ for end of DMA.
   EVE_start_cmd_burst() resets the DMA buffer instead of transferring the first bytes by SPI.
@@ -413,128 +418,46 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 
-		#if defined (__SAMC21E18A__)
+		#if defined (__SAMC21E18A__) || (__SAME51J19A__)	/* target as set by AtmelStudio */
 
 		#include "sam.h"
 
+		#if defined  (__SAMC21E18A__)
 		#define EVE_CS_PORT 0
 		#define EVE_CS PORT_PA05
 		#define EVE_PDN_PORT 0
 		#define EVE_PDN PORT_PA03
 		#define EVE_SPI SERCOM0
+		#define EVE_SPI_DMA_TRIGGER SERCOM0_DMAC_ID_TX
+		#define EVE_DMA_CHANNEL 0
 		#define EVE_DMA
-
-		#if defined (EVE_DMA)
-			extern uint8_t EVE_dma_buffer[4100];
-			extern volatile uint16_t EVE_dma_buffer_index;
-			extern volatile uint8_t EVE_dma_busy;
-			
-			void EVE_init_dma(void);
-			void EVE_start_dma_transfer(void);
+		#define EVE_DELAY_1MS 8000	 // ~1ms at 48MHz Core-Clock
 		#endif
-
-		static inline void DELAY_MS(uint16_t val)
-		{
-			uint16_t counter;
-
-			while(val > 0)
-			{
-				for(counter=0; counter < 8000;counter++) // ~1ms at 48MHz Core-Clock
-				{
-					__asm__ volatile ("nop");
-				}
-				val--;
-			}
-		}
-
-		static inline void EVE_pdn_set(void)
-		{
-			PORT->Group[EVE_PDN_PORT].OUTCLR.reg = EVE_PDN;
-		}
-
-		static inline void EVE_pdn_clear(void)
-		{
-			PORT->Group[EVE_PDN_PORT].OUTSET.reg = EVE_PDN;
-		}
-
-		static inline void EVE_cs_set(void)
-		{
-			PORT->Group[EVE_CS_PORT].OUTCLR.reg = EVE_CS;
-		}
-
-		static inline void EVE_cs_clear(void)
-		{
-			PORT->Group[EVE_CS_PORT].OUTSET.reg = EVE_CS;
-		}
-
-		static inline void spi_transmit_async(uint8_t data)
-		{
-			#if defined (EVE_DMA)
-				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
-			#else
-				EVE_SPI->SPI.DATA.reg = data;
-				while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0);
-				(void) EVE_SPI->SPI.DATA.reg; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
-			#endif
-		}
-
-		static inline void spi_transmit(uint8_t data)
-		{
-			EVE_SPI->SPI.DATA.reg = data;
-			while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0);
-			(void) EVE_SPI->SPI.DATA.reg; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
-		}
-
-		static inline uint8_t spi_receive(uint8_t data)
-		{
-			EVE_SPI->SPI.DATA.reg = data;
-			while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0);
-			return EVE_SPI->SPI.DATA.reg;
-		}
-
-		static inline uint8_t fetch_flash_byte(const uint8_t *data)
-		{
-			return *data;
-		}
-
-		#endif /* __SAMC21J18A__ */
-
-/*----------------------------------------------------------------------------------------------------------------*/
-/*----------------------------------------------------------------------------------------------------------------*/
 
 		#if defined (__SAME51J19A__)
-
-		#include "sam.h"
-
 		#define EVE_CS_PORT 1
-		#define EVE_CS PORT_PB31
+		#define EVE_CS PORT_PB01
 		#define EVE_PDN_PORT 1
-		#define EVE_PDN PORT_PB01
+		#define EVE_PDN PORT_PB31
 		#define EVE_SPI SERCOM5
-//		#define EVE_DMA
+		#define EVE_SPI_DMA_TRIGGER SERCOM5_DMAC_ID_TX
+		#define EVE_DMA_CHANNEL 0
+		#define EVE_DMA
+		#define EVE_DELAY_1MS 9000	 /* ~1ms at 120MHz Core-Clock, according to my Logic-Analyzer */
+		#endif
+
 
 		#if defined (EVE_DMA)
 			extern uint8_t EVE_dma_buffer[4100];
 			extern volatile uint16_t EVE_dma_buffer_index;
 			extern volatile uint8_t EVE_dma_busy;
-			
+
 			void EVE_init_dma(void);
 			void EVE_start_dma_transfer(void);
 		#endif
 
-		static inline void DELAY_MS(uint16_t val)
-		{
-			uint16_t counter;
+		void DELAY_MS(uint16_t val);
 
-			while(val > 0)
-			{
-				for(counter=0; counter < 8800;counter++) /* ~1ms at 120MHz Core-Clock, according to my Logic-Analyzer */
-				{
-					__asm__ volatile ("nop");
-				}
-				val--;
-			}
-		}
 
 		static inline void EVE_pdn_set(void)
 		{
@@ -572,7 +495,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			EVE_SPI->SPI.DATA.reg = data;
 			while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0);
 			(void) EVE_SPI->SPI.DATA.reg; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
-
 		}
 
 		static inline uint8_t spi_receive(uint8_t data)
@@ -587,7 +509,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			return *data;
 		}
 
-		#endif /* __SAME51J19A__ */
+		#endif /* __SAMC21J18A__ / __SAME51J19A__ */
 
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
@@ -664,21 +586,61 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
-		
-		#if defined (STM32F4)
-		
+
+		#if defined (STM32L073xx) || (STM32F1) || (STM32F207xx) || (STM32F3) || (STM32F4)
+
+		#if defined (STM32L073xx) /* set by PlatformIO board definition file nucleo_l073z.json */
+		#include "stm32l0xx.h"
+		#include "stm32l0xx_hal.h"
+		#include "stm32l0xx_ll_spi.h"
+		#endif
+
+		#if defined (STM32F1) /* set by PlatformIO board definition file genericSTM32F103C8.json */
+		#include "stm32f1xx.h"
+		#include "stm32f1xx_hal.h"
+		#include "stm32f1xx_ll_spi.h"
+		#endif
+
+		#if defined (STM32F207xx) /* set by PlatformIO board definition file nucleo_f207zg.json */
+		#include "stm32f2xx.h"
+		#include "stm32f2xx_hal.h"
+		#include "stm32f2xx_ll_spi.h"
+		#endif
+
+		#if defined (STM32F3) /* set by PlatformIO board definition file genericSTM32F303CB.json */
+		#include "stm32f3xx.h"
+		#include "stm32f3xx_hal.h"
+		#include "stm32f3xx_ll_spi.h"
+		#endif
+
+		#if defined (STM32F4) /* set by PlatformIO board definition file genericSTM32F407VET6.json */
 		#include "stm32f4xx.h"
 		#include "stm32f4xx_hal.h"
 		#include "stm32f4xx_ll_spi.h"
+		#endif
+
 
 		#define EVE_CS_PORT GPIOD
 		#define EVE_CS GPIO_PIN_12
 		#define EVE_PDN_PORT GPIOD
 		#define EVE_PDN GPIO_PIN_13
 		#define EVE_SPI SPI1
-		
+		#define EVE_DMA_INSTANCE DMA2
+		#define EVE_DMA_CHANNEL 3
+		#define EVE_DMA_STREAM 3
+//		#define EVE_DMA		/* do not active, it is not working yet */
+
+		#if defined (EVE_DMA)
+			extern uint8_t EVE_dma_buffer[4100];
+			extern volatile uint16_t EVE_dma_buffer_index;
+			extern volatile uint8_t EVE_dma_busy;
+
+			void EVE_init_dma(void);
+			void EVE_start_dma_transfer(void);
+		#endif
+
 		#define DELAY_MS(ms) HAL_Delay(ms)
-			
+
 		static inline void EVE_pdn_clear(void)
 		{
 			HAL_GPIO_WritePin(EVE_PDN_PORT, EVE_PDN, GPIO_PIN_SET);
@@ -691,39 +653,37 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline void EVE_cs_clear(void)
 		{
-//			EVE_CS_PORT->BSRR = EVE_CS;
 			HAL_GPIO_WritePin(EVE_CS_PORT, EVE_CS, GPIO_PIN_SET);
 		}
 
 		static inline void EVE_cs_set(void)
 		{
-//			EVE_CS_PORT->BSRR = (uint32) EVE_CS << 16;
 			HAL_GPIO_WritePin(EVE_CS_PORT, EVE_CS, GPIO_PIN_RESET);
 		}
 
-		static inline void spi_transmit(uint8_t byte)
+		static inline void spi_transmit(uint8_t data)
 		{
-			LL_SPI_TransmitData8(EVE_SPI, byte);
+			LL_SPI_TransmitData8(EVE_SPI, data);
 			while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
 			while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI));
 			LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXNE */
 		}
 
-		static inline void spi_transmit_async(uint8_t byte)
+		static inline void spi_transmit_async(uint8_t data)
 		{
-			#if EVE_DMA
+			#if defined (EVE_DMA)
 				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
 			#else
-				LL_SPI_TransmitData8(EVE_SPI, byte);
+				LL_SPI_TransmitData8(EVE_SPI, data);
 				while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
 				while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI));
 				LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXNE */
 			#endif
 		}
 
-		static inline uint8_t spi_receive(uint8_t byte)
+		static inline uint8_t spi_receive(uint8_t data)
 		{
-			LL_SPI_TransmitData8(EVE_SPI, byte);
+			LL_SPI_TransmitData8(EVE_SPI, data);
 			while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
 			while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI));
 			return LL_SPI_ReceiveData8(EVE_SPI);
@@ -734,7 +694,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			return *data;
 		}
 
-		#endif  /* STM32F4 */
+		#endif  /* STM32 */
 
 	#endif /* __GNUC__ */
 
@@ -845,6 +805,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 
 #if defined (ARDUINO)
+
+	#include <Arduino.h>
 	#include <stdio.h>
 	#include <SPI.h>
 
