@@ -2,14 +2,14 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 4.0
-@date    2019-11-17
+@date    2020-02-09
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2019 Rudolph Riedel
+Copyright (c) 2016-2020 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -68,9 +68,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added a few FT81x/BT81x specific host commands
 - removed the preceding underscore from the include guard define to avoid potential undefined behavior
 - removed a bunch of defines for FT80x that I never implemented for FT81x
+- added an include for "EVE_target.h" in order to reduce the necessary includes in the main project file
 
 */
 
+#include "EVE_target.h"
 #include "EVE_config.h"
 
 #ifndef EVE_H_

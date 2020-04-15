@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 4.0
-@date    2020-01-10
+@date    2020-04-13
 @author  Rudolph Riedel
 
 @section info
@@ -185,11 +185,15 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - changed block_transfer() to use 32bit for the number of bytes to be transferred
 - minor housekeeping, no functional changes
 - Bugfix: EVE_get_touch_tag() failed to compile for FT80x as there is only one REG_TOUCH_TAG
+- removed include for "EVE_target.h" since "EVE.h" already includes it now
+- changed EVE_cmd_getprops() again, inspired by BRTs AN_025, changed the name to EVE_LIB_GetProps() and got rid of the returning data-structure
+- replaced EVE_cmd_getmatrix() with an earlier implementation again, looks like it is supposed to write, not read. 
+- added function EVE_color_rgb()
+- added a fixed 40ms delay in EVE_init() between ACTIVE and the first reading of 0x7c as a compromise to comply with AN033 V1.2
 
 */
 
 #include "EVE.h"
-#include "EVE_target.h"
 
 #if defined (BT81X_ENABLE)
 #include <stdarg.h>
@@ -1015,23 +1019,20 @@ uint32_t EVE_cmd_regread(uint32_t ptr)
 }
 
 
-struct EVE_struct_getprops
-{
-	uint32_t ptr;
-	uint32_t width;
-	uint32_t height;
-};
-
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 /*
-struct EVE_struct_getprops testprops;
+	Get the properties of an image after a CMD_LOADIMAGE operation.
+	
+	uint32 pointer, width, height;
+	EVE_LIB_GetProps(&pointer, &width, &height);
 
-testprops = EVE_cmd_getprops();
+	uint32 width, height;
+	EVE_LIB_GetProps(0, &width, &height);
+	
+	this is meant to be called outside display-list building, it includes executing the command
+	and waiting for completion, does not support cmd-burst
 */
-struct EVE_struct_getprops EVE_cmd_getprops(void)
+void EVE_LIB_GetProps(uint32_t *pointer, uint32_t *width, uint32_t *height)
 {
-	struct EVE_struct_getprops values;
-
 	uint16_t offset;
 
 	EVE_begin_cmd(CMD_GETPROPS);
@@ -1041,48 +1042,19 @@ struct EVE_struct_getprops EVE_cmd_getprops(void)
 
 	EVE_cs_clear();
 	EVE_cmd_execute();
-
-	values.ptr = EVE_memRead32(EVE_RAM_CMD + offset);
-	values.width = EVE_memRead32(EVE_RAM_CMD + offset + 4);
-	values.height = EVE_memRead32(EVE_RAM_CMD + offset + 8);
-
-	return values;
-}
-
-
-struct EVE_struct_getmatrix
-{
-	uint32_t a;
-	uint32_t b;
-	uint32_t c;
-	uint32_t d;
-	uint32_t e;
-	uint32_t f;
-};
-
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
-struct EVE_struct_getmatrix EVE_cmd_getmatrix(void)
-{
-	struct EVE_struct_getmatrix values;
-
-	uint16_t offset;
-
-	EVE_begin_cmd(CMD_GETMATRIX);
-
-	offset = cmdOffset;
-	EVE_cs_clear();
-	EVE_inc_cmdoffset(24);
-
-	EVE_cmd_execute();
-
-	values.a = EVE_memRead32(EVE_RAM_CMD + offset);
-	values.b = EVE_memRead32(EVE_RAM_CMD + offset + 4);
-	values.c = EVE_memRead32(EVE_RAM_CMD + offset + 8);
-	values.d = EVE_memRead32(EVE_RAM_CMD + offset + 12);
-	values.e = EVE_memRead32(EVE_RAM_CMD + offset + 16);
-	values.f = EVE_memRead32(EVE_RAM_CMD + offset + 20);
-
-	return values;
+	
+	if(pointer)
+	{
+		*pointer = EVE_memRead32(EVE_RAM_CMD + offset);
+	}
+	if(width)
+	{
+		*width = EVE_memRead32(EVE_RAM_CMD + offset + 4);
+	}
+	if(height)
+	{
+		*height = EVE_memRead32(EVE_RAM_CMD + offset + 8);
+	}
 }
 
 
@@ -1151,6 +1123,16 @@ uint8_t EVE_init(void)
 	#endif
 
 	EVE_cmdWrite(EVE_ACTIVE,0);	/* start EVE */
+
+	/* BRT AN033 BT81X_Series_Programming_Guide V1.2 had a small change to chapter 2.4 "Initialization Sequence during Boot Up" */
+	/* Send Host command “ACTIVE” and wait for at least 300 milliseconds. */
+	/* Ensure that there is no SPI access during this time. */
+	/* I asked Bridgetek for clarification why this has been made stricter. */
+	/* From observation with quite a few of different displays I do not agree that either the 300ms are necessary or that */
+	/* *reading* the SPI while EVE inits itself is causing any issues. */
+	/* But since BT815 at 72MHz need 42ms anyways before they start to answer, here is my compromise, a fixed 40ms delay */
+	/* to provide at least a short moment of silence for EVE */		
+	DELAY_MS(40);
 
 	while(chipid != 0x7C) /* if chipid is not 0x7c, continue to read it until it is, EVE needs a moment for it's power on self-test and configuration */
 	{
@@ -2054,6 +2036,28 @@ void EVE_cmd_clock(int16_t x0, int16_t y0, int16_t r0, uint16_t options, uint16_
 }
 
 
+void EVE_color_rgb(uint8_t red, uint8_t green, uint8_t blue)
+{
+	if(cmd_burst)
+	{
+		spi_transmit_async(green); /* low-byte */
+		spi_transmit_async(blue);
+		spi_transmit_async(red);
+		spi_transmit_async(0x04); /* encoding for COLOR_RGB */
+	}
+	else
+	{
+		spi_transmit(green);
+		spi_transmit(blue);
+		spi_transmit(red);
+		spi_transmit(0x04); /* encoding for COLOR_RGB */
+		EVE_cs_clear();
+	}
+
+	EVE_inc_cmdoffset(4);
+}
+
+
 void EVE_cmd_bgcolor(uint32_t color)
 {
 	EVE_start_cmd(CMD_BGCOLOR);
@@ -2859,6 +2863,88 @@ void EVE_cmd_append(uint32_t ptr, uint32_t num)
 
 
 /* commands for setting the bitmap transform matrix: */
+
+/*
+ The description in the programmers guide is strange for this function.
+ While it is named *get*matrix, parameters 'a' to 'f' are supplied to the function
+ and described as "output parameter"
+ Best guess is that this one allows to setup the matrix coefficients manually.
+ If this assumption is correct it rather should be named cmd_setupmatrix().
+*/
+void EVE_cmd_getmatrix(int32_t a, int32_t b, int32_t c, int32_t d, int32_t e, int32_t f)
+{
+	EVE_start_cmd(CMD_GETMATRIX);
+
+	if(cmd_burst)
+	{
+		spi_transmit_async((uint8_t)(a));
+		spi_transmit_async((uint8_t)(a >> 8));
+		spi_transmit_async((uint8_t)(a >> 16));
+		spi_transmit_async((uint8_t)(a >> 24));
+
+		spi_transmit_async((uint8_t)(b));
+		spi_transmit_async((uint8_t)(b >> 8));
+		spi_transmit_async((uint8_t)(b >> 16));
+		spi_transmit_async((uint8_t)(b >> 24));
+
+		spi_transmit_async((uint8_t)(c));
+		spi_transmit_async((uint8_t)(c >> 8));
+		spi_transmit_async((uint8_t)(c >> 16));
+		spi_transmit_async((uint8_t)(c >> 24));
+
+		spi_transmit_async((uint8_t)(d));
+		spi_transmit_async((uint8_t)(d >> 8));
+		spi_transmit_async((uint8_t)(d >> 16));
+		spi_transmit_async((uint8_t)(d >> 24));
+
+		spi_transmit_async((uint8_t)(e));
+		spi_transmit_async((uint8_t)(e >> 8));
+		spi_transmit_async((uint8_t)(e >> 16));
+		spi_transmit_async((uint8_t)(e >> 24));
+
+		spi_transmit_async((uint8_t)(f));
+		spi_transmit_async((uint8_t)(f >> 8));
+		spi_transmit_async((uint8_t)(f >> 16));
+		spi_transmit_async((uint8_t)(f >> 24));
+	}
+	else
+	{
+		spi_transmit((uint8_t)(a));
+		spi_transmit((uint8_t)(a >> 8));
+		spi_transmit((uint8_t)(a >> 16));
+		spi_transmit((uint8_t)(a >> 24));
+
+		spi_transmit((uint8_t)(b));
+		spi_transmit((uint8_t)(b >> 8));
+		spi_transmit((uint8_t)(b >> 16));
+		spi_transmit((uint8_t)(b >> 24));
+
+		spi_transmit((uint8_t)(c));
+		spi_transmit((uint8_t)(c >> 8));
+		spi_transmit((uint8_t)(c >> 16));
+		spi_transmit((uint8_t)(c >> 24));
+
+		spi_transmit((uint8_t)(d));
+		spi_transmit((uint8_t)(d >> 8));
+		spi_transmit((uint8_t)(d >> 16));
+		spi_transmit((uint8_t)(d >> 24));
+
+		spi_transmit((uint8_t)(e));
+		spi_transmit((uint8_t)(e >> 8));
+		spi_transmit((uint8_t)(e >> 16));
+		spi_transmit((uint8_t)(e >> 24));
+
+		spi_transmit((uint8_t)(f));
+		spi_transmit((uint8_t)(f >> 8));
+		spi_transmit((uint8_t)(f >> 16));
+		spi_transmit((uint8_t)(f >> 24));
+
+		EVE_cs_clear();
+	}
+
+	EVE_inc_cmdoffset(24);
+}
+
 
 void EVE_cmd_translate(int32_t tx, int32_t ty)
 {

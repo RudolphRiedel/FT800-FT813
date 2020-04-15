@@ -1,8 +1,8 @@
 /*
 @file    main.c
 @brief   main
-@version 1.1
-@date    2020-02-08
+@version 1.2
+@date    2020-04-15
 @author  Rudolph Riedel
 
 @section History
@@ -15,14 +15,13 @@
 - added using Timer4 for the time spent in TFT_loop()
 
 1.2
-- updated to be more similar to what I am currently using in projects
+- generell cleanup, switching from legacy register names
+
 
  */
 
 
 #include "sam.h"
-
-//#include "EVE_commands.h"
 #include "tft.h"
 
 
@@ -36,106 +35,107 @@ void SysTick_Handler(void)
 
 void init_clock(void)
 {
-	REG_NVMCTRL_CTRLB = NVMCTRL_CTRLB_RWS(2);	// Set the NVM Read Wait States to 2, Since the operating frequency will be 48 MHz
-
-	REG_OSCCTRL_XOSCCTRL =  OSCCTRL_XOSCCTRL_STARTUP(6) |		// 1,953 ms
-							OSCCTRL_XOSCCTRL_RUNSTDBY |
-							OSCCTRL_XOSCCTRL_AMPGC |
-							OSCCTRL_XOSCCTRL_GAIN(3) |
-							OSCCTRL_XOSCCTRL_XTALEN |
-							OSCCTRL_XOSCCTRL_ENABLE;
-
-	while((REG_OSCCTRL_STATUS & OSCCTRL_STATUS_XOSCRDY) == 0);
+	NVMCTRL->CTRLB.reg = NVMCTRL_CTRLB_RWS(2);	/* set the NVM Read Wait States to 2, since the operating frequency will be 48 MHz */
+	
+	OSCCTRL->XOSCCTRL.reg =
+		OSCCTRL_XOSCCTRL_STARTUP(6) |		/* 1,953 ms */
+		OSCCTRL_XOSCCTRL_RUNSTDBY |
+		OSCCTRL_XOSCCTRL_AMPGC |
+		OSCCTRL_XOSCCTRL_GAIN(3) |
+		OSCCTRL_XOSCCTRL_XTALEN |
+		OSCCTRL_XOSCCTRL_ENABLE;
+	while(0 == OSCCTRL->STATUS.bit.XOSCRDY);
 
 	/* configure the PLL, source = XOSC, pre-scaler = 8, multiply by 24 -> 48MHz clock from 16MHz input */
-	REG_OSCCTRL_DPLLCTRLB = OSCCTRL_DPLLCTRLB_DIV(3) | OSCCTRL_DPLLCTRLB_REFCLK(1); // setup PLL to use XOSC input
-	REG_OSCCTRL_DPLLRATIO = OSCCTRL_DPLLRATIO_LDRFRAC(0x0) | OSCCTRL_DPLLRATIO_LDR(23);
-	REG_OSCCTRL_DPLLCTRLA = OSCCTRL_DPLLCTRLA_RUNSTDBY | OSCCTRL_DPLLCTRLA_ENABLE;
-	while((REG_OSCCTRL_DPLLSTATUS & OSCCTRL_DPLLSTATUS_CLKRDY) != 0); // wait for the pll to be ready
+	OSCCTRL->DPLLCTRLB.reg = OSCCTRL_DPLLCTRLB_DIV(3) | OSCCTRL_DPLLCTRLB_REFCLK(1);
+	OSCCTRL->DPLLRATIO.reg = OSCCTRL_DPLLRATIO_LDRFRAC(0x0) | OSCCTRL_DPLLRATIO_LDR(23);
+	OSCCTRL->DPLLCTRLA.reg = OSCCTRL_DPLLCTRLA_RUNSTDBY | OSCCTRL_DPLLCTRLA_ENABLE;
+	while(0 == OSCCTRL->DPLLSTATUS.bit.CLKRDY); /* wait for the pll to be ready */
 
-	REG_GCLK_GENCTRL0 = GCLK_GENCTRL_DIV(0) |
-						GCLK_GENCTRL_RUNSTDBY |
-						GCLK_GENCTRL_GENEN |
-						//GCLK_GENCTRL_SRC_XOSC |
-						GCLK_GENCTRL_SRC_DPLL96M |
-						GCLK_GENCTRL_IDC ;
+	/* configure the clock-generator for the core to use the PLL -> run at 48MHz */
+	GCLK->GENCTRL[0].reg =
+		GCLK_GENCTRL_DIV(0) |
+		GCLK_GENCTRL_RUNSTDBY |
+		GCLK_GENCTRL_GENEN |
+		GCLK_GENCTRL_SRC_DPLL96M |
+		GCLK_GENCTRL_IDC ;
+	while(1 == GCLK->SYNCBUSY.bit.GENCTRL0); /* wait for the synchronization between clock domains to be complete */
 
-	while((REG_GCLK_SYNCBUSY & GCLK_SYNCBUSY_GENCTRL0) != 0);	/* wait for the synchronization between clock domain to be complete */
-
-	REG_OSCCTRL_OSC48MDIV = OSCCTRL_OSC48MDIV_DIV(0);	// set 48MHz Oscillator to 48MHz ouput
-
-	REG_GCLK_GENCTRL1 = GCLK_GENCTRL_DIV(0) |
-	GCLK_GENCTRL_RUNSTDBY |
-	GCLK_GENCTRL_GENEN |
-	GCLK_GENCTRL_SRC_OSC48M |
-	//		GCLK_GENCTRL_SRC_DPLL96M |
-	GCLK_GENCTRL_IDC ;
-
-	while((REG_GCLK_SYNCBUSY & GCLK_SYNCBUSY_GENCTRL1) != 0);	// wait for the synchronization between clock domains is complete
+	OSCCTRL->OSC48MDIV.reg = OSCCTRL_OSC48MDIV_DIV(0);	/* set 48MHz Oscillator to 48MHz output */
+	
+	/* configure the clock-generator 1 to use the 48MHz Oscillator */
+	GCLK->GENCTRL[1].reg =
+		GCLK_GENCTRL_DIV(0) |
+		GCLK_GENCTRL_RUNSTDBY |
+		GCLK_GENCTRL_GENEN |
+		GCLK_GENCTRL_SRC_OSC48M |
+		GCLK_GENCTRL_IDC ;
+	while(1 == GCLK->SYNCBUSY.bit.GENCTRL1); /* wait for the synchronization between clock domains to be complete */
 }
 
 
 void set_spi_speed(uint8_t baudval)
 {
-	if(REG_SERCOM0_SPI_CTRLA & SERCOM_SPI_CTRLA_ENABLE) /* SPI already is active, need to disable first and re-activate */
+	if(SERCOM0->SPI.CTRLA.bit.ENABLE)  /* SPI already is active, need to disable first and re-activate */
 	{
-		REG_SERCOM0_SPI_CTRLA &= ~SERCOM_SPI_CTRLA_ENABLE; /* disable SERCOM0 -> enable config */
-		while(REG_SERCOM0_SPI_SYNCBUSY & SERCOM_SPI_SYNCBUSY_ENABLE); /* wait for SERCOM0 to be ready */
-		REG_SERCOM0_SPI_BAUD = baudval; /* 48 / (2 * (baudval + 1)) -> @48Mhz: 0 = 24MHz, 1 = 12MHz, 2 = 8MHz, 3 = 6MHz */
-		REG_SERCOM0_SPI_CTRLA |= SERCOM_SPI_CTRLA_ENABLE; /* activate SERCOM0 */
-		while(REG_SERCOM0_SPI_SYNCBUSY & SERCOM_SPI_SYNCBUSY_ENABLE); /* wait for SERCOM0 to be ready */
+		SERCOM0->SPI.CTRLA.bit.ENABLE = 0; /* disable SERCOM -> enable config */
+		while(SERCOM0->SPI.SYNCBUSY.bit.ENABLE);
+		SERCOM0->SPI.BAUD.reg = baudval; /* 48 / (2 * (baudval + 1)) -> @48Mhz: 0 = 24MHz, 1 = 12MHz, 2 = 8MHz, 3 = 6MHz */
+		SERCOM0->SPI.CTRLA.bit.ENABLE = 1; /* activate SERCOM */
+		while(SERCOM0->SPI.SYNCBUSY.bit.ENABLE); /* wait for SERCOM to be ready */
 	}
 	else
 	{
-		REG_SERCOM0_SPI_BAUD = baudval; /* 48 / (2 * (baudval + 1)) -> @48Mhz: 0 = 24MHz, 1 = 12MHz, 2 = 8MHz, 3 = 6MHz */
+		SERCOM0->SPI.BAUD.reg = baudval; /* 48 / (2 * (baudval + 1)) -> @48Mhz: 0 = 24MHz, 1 = 12MHz, 2 = 8MHz, 3 = 6MHz */
 	}
 }
 
 
 void init_spi(void)
 {
-	REG_PORT_DIRSET0 = PORT_PA03; /* PD_TFT */
-	REG_PORT_DIRSET0 = PORT_PA05; /* CS_TFT */
-	REG_PORT_OUTCLR0 = PORT_PA03; /* PD_TFT */
-	REG_PORT_OUTSET0 = PORT_PA05; /* CS_TFT */
+	PORT->Group[0].DIRSET.reg = PORT_PA03; /* PD_TFT */
+	PORT->Group[0].DIRSET.reg = PORT_PA05; /* CS_TFT */
+	PORT->Group[0].OUTCLR.reg = PORT_PA03; /* PD_TFT */
+	PORT->Group[0].OUTSET.reg = PORT_PA05; /* CS_TFT */
 
 	/* configure SERCOM0 MISO on PA04 */
-	REG_PORT_WRCONFIG0 =
-	PORT_WRCONFIG_WRPINCFG |
-	PORT_WRCONFIG_WRPMUX |
-	PORT_WRCONFIG_PMUX(3) |		/* SERCOM0 */
-	PORT_WRCONFIG_INEN |
-	PORT_WRCONFIG_PINMASK(0x10) |	/* PA04 */
-	PORT_WRCONFIG_PMUXEN;
+	PORT->Group[0].WRCONFIG.reg =
+		PORT_WRCONFIG_WRPINCFG |
+		PORT_WRCONFIG_WRPMUX |
+		PORT_WRCONFIG_PMUX(MUX_PA04D_SERCOM0_PAD0) |
+		PORT_WRCONFIG_INEN |
+		PORT_WRCONFIG_PINMASK(0x10) |	/* PA04 */
+		PORT_WRCONFIG_PMUXEN;
 
 	/* configure SERCOM0 MOSI on PA06 and SERCOM0 SCK on PA07 */
-	REG_PORT_WRCONFIG0 =
-	PORT_WRCONFIG_WRPINCFG |
-	PORT_WRCONFIG_WRPMUX |
-	PORT_WRCONFIG_PMUX(3) |		/* SERCOM0 */
-	PORT_WRCONFIG_DRVSTR |
-	PORT_WRCONFIG_PINMASK(0xc0) | /* PA06 + PA07 */
-	PORT_WRCONFIG_PMUXEN;
+	PORT->Group[0].WRCONFIG.reg =
+		PORT_WRCONFIG_WRPINCFG |
+		PORT_WRCONFIG_WRPMUX |
+		PORT_WRCONFIG_PMUX(MUX_PA06D_SERCOM0_PAD2) |
+		PORT_WRCONFIG_DRVSTR |
+		PORT_WRCONFIG_PINMASK(0xc0) | /* PA06 + PA07 */
+		PORT_WRCONFIG_PMUXEN;
+	
+	MCLK->APBCMASK.bit.SERCOM0_ = 1;
+	GCLK->PCHCTRL[19].reg = GCLK_PCHCTRL_GEN_GCLK0 | GCLK_PCHCTRL_CHEN; /* setup SERCOM0 to use GLCK0 -> 48MHz */
 
-	REG_MCLK_APBCMASK |= MCLK_APBCMASK_SERCOM0;
-	REG_GCLK_PCHCTRL19 = GCLK_PCHCTRL_GEN_GCLK0 | GCLK_PCHCTRL_CHEN; /* setup SERCOM0 to use GLCK0 -> 48MHz */
-
-	REG_SERCOM0_SPI_CTRLA = 0x00; /* disable SPI -> enable config */
-	REG_SERCOM0_SPI_CTRLA = SERCOM_SPI_CTRLA_MODE(3) | SERCOM_SPI_CTRLA_DOPO(1); /* MSB first, CPOL = 0, CPHA = 0, SPI frame, master mode, PAD0 = MISO, PAD2 = MOSI, PAD3 = SCK */
+	SERCOM0->SPI.CTRLA.reg = 0x00; /* disable SPI -> enable config */
+	while(SERCOM0->SPI.SYNCBUSY.bit.ENABLE);
+	SERCOM0->SPI.CTRLA.reg = SERCOM_SPI_CTRLA_MODE(3) | SERCOM_SPI_CTRLA_DOPO(1); /* MSB first, CPOL = 0, CPHA = 0, SPI frame, master mode, PAD0 = MISO, PAD2 = MOSI, PAD3 = SCK */
 	set_spi_speed(2); /* 48 / (2 * (2 + 1)) -> 48 / 6 -> 8MHZ clock from 48MHz core-clock */
-	REG_SERCOM0_SPI_CTRLB = SERCOM_SPI_CTRLB_RXEN; /* receiver enabled, no hardware select, 8-bit */
-	REG_SERCOM0_SPI_CTRLA |= SERCOM_SPI_CTRLA_ENABLE; /* activate SERCOM0 */
-	while(REG_SERCOM0_SPI_SYNCBUSY & SERCOM_SPI_SYNCBUSY_ENABLE); /* wait for SERCOM0 to be ready */
+	SERCOM0->SPI.CTRLB.reg = SERCOM_SPI_CTRLB_RXEN; /* receiver enabled, no hardware select, 8-bit */
+	SERCOM0->SPI.CTRLA.bit.ENABLE = 1; /* activate SERCOM0 */
+	while(SERCOM0->SPI.SYNCBUSY.bit.ENABLE); /* wait for SERCOM to be ready */
 }
 
 
 void init_timer(void)
 {
-	REG_MCLK_APBCMASK |= MCLK_APBCMASK_TC4;
-	REG_GCLK_PCHCTRL32 = GCLK_PCHCTRL_GEN_GCLK0 | GCLK_PCHCTRL_CHEN; /* setup TC4 to use GLCK0 -> 48MHz */
-	
-	REG_TC4_CTRLA = TC_CTRLA_MODE_COUNT16 | TC_CTRLA_PRESCALER_DIV16 | TC_CTRLA_ENABLE;
-	while(REG_TC4_SYNCBUSY & TC_SYNCBUSY_ENABLE); /* wait for TC4 to be ready */
+	MCLK->APBCMASK.bit.TC4_ = 1;
+	GCLK->PCHCTRL[32].reg = GCLK_PCHCTRL_GEN_GCLK1 | GCLK_PCHCTRL_CHEN; /* setup TC4 to use GLCK1 -> 48MHz */
+	TC4->COUNT16.CTRLA.reg = TC_CTRLA_MODE_COUNT16 | TC_CTRLA_PRESCALER_DIV16;
+	TC4->COUNT16.CTRLA.bit.ENABLE = 1;
+	while(1 == TC4->COUNT16.SYNCBUSY.bit.ENABLE); /* wait for TC4 to be ready */
 }
 
 
@@ -143,14 +143,14 @@ int main(void)
 {
 	uint8_t display_delay = 0;
 	uint8_t led_delay = 0;
-		
+	
 	init_clock();
 	init_spi();
 	init_timer();
 	SysTick_Config(48000000 / 200); // configure and Enable Systick for 5 ms ticks
-
-	REG_PORT_DIRSET0 = PORT_PA27; /* Debug-LED */
-
+	
+	PORT->Group[0].DIRSET.reg = PORT_PA27; /* Debug-LED */
+	
 	TFT_init();
 	set_spi_speed(1); /* speed up to 12MHz after init, with 24MHz touch is not working on my HW... */
 
@@ -164,37 +164,35 @@ int main(void)
 			if(led_delay > 39)
 			{
 				led_delay = 0;
-				REG_PORT_OUTTGL0 = PORT_PA27;
+				PORT->Group[0].OUTTGL.reg = PORT_PA27;
 			}
 
-			REG_TC4_COUNT16_COUNT = 0;
-			REG_TC4_CTRLBSET = TC_CTRLBSET_CMD_UPDATE;
-			while((REG_TC4_CTRLBSET & TC_CTRLBSET_MASK) == 0);
+			TC4->COUNT16.COUNT.reg = 0;
+			TC4->COUNT16.CTRLBSET.reg = TC_CTRLBSET_CMD_UPDATE;
+			while(TC4->COUNT16.CTRLBSET.reg);
 
 			TFT_touch();
-			
-			REG_TC4_CTRLBSET = TC_CTRLBSET_CMD_READSYNC;
-			while((REG_TC4_CTRLBSET & TC_CTRLBSET_MASK) == 0);
 
-			num_profile_b = REG_TC4_COUNT16_COUNT;
-			num_profile_b /= 3; /* 1?s */
+			TC4->COUNT16.CTRLBSET.reg = TC_CTRLBSET_CMD_READSYNC;
+			while(TC4->COUNT16.CTRLBSET.reg);
+			num_profile_b =	TC4->COUNT16.COUNT.reg;
+			num_profile_b /= 3; /* 1µs */
 
 			display_delay++;
 			if(display_delay > 3)
 			{
 				display_delay = 0;
 
-				REG_TC4_COUNT16_COUNT = 0;
-				REG_TC4_CTRLBSET = TC_CTRLBSET_CMD_UPDATE;
-				while((REG_TC4_CTRLBSET & TC_CTRLBSET_MASK) == 0);
-
+				TC4->COUNT16.COUNT.reg = 0;
+				TC4->COUNT16.CTRLBSET.reg = TC_CTRLBSET_CMD_UPDATE;
+				while(TC4->COUNT16.CTRLBSET.reg);
+			
 				TFT_display();
 
-				REG_TC4_CTRLBSET = TC_CTRLBSET_CMD_READSYNC;
-				while((REG_TC4_CTRLBSET & TC_CTRLBSET_MASK) == 0);
-
-				num_profile_a = REG_TC4_COUNT16_COUNT;
-				num_profile_a /= 3; /* 1?s */
+				TC4->COUNT16.CTRLBSET.reg = TC_CTRLBSET_CMD_READSYNC;
+				while(TC4->COUNT16.CTRLBSET.reg);
+				num_profile_a =	TC4->COUNT16.COUNT.reg;
+				num_profile_a /= 3; /* 1µs */
 			}
 		}
 	}

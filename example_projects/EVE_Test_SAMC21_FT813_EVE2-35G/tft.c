@@ -1,8 +1,8 @@
 /*
 @file    tft.c
 @brief   TFT handling functions for EVE_Test project
-@version 1.10
-@date    2020-02-08
+@version 1.12
+@date    2020-04-13
 @author  Rudolph Riedel
 
 @section History
@@ -50,6 +50,11 @@
 
 1.11
 - updated to be more similar to what I am currently using in projects
+
+1.12
+- minor cleanup, switched from EVE_get_touch_tag(1); to EVE_memRead8(REG_TOUCH_TAG);
+- added some more sets of calibration data from my displays
+
  */
 
 #include "EVE.h"
@@ -87,14 +92,67 @@ void touch_calibrate(void)
 
 /* send pre-recorded touch calibration values, depending on the display the code is compiled for */
 
+#if defined (EVE_CFAF240400C1_030SC)
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_A, 0x0000ed11);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_B, 0x00001139);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_C, 0xfff76809);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_D, 0x00000000);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_E, 0x00010690);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0xfffadf2e);
+#endif
+
+#if defined (EVE_CFAF320240F_035T)
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_A, 0x00005614);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_B, 0x0000009e);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_C, 0xfff43422);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_D, 0x0000001d);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_E, 0xffffbda4);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0x00f8f2ef);
+#endif
+
+#if defined (EVE_CFAF480128A0_039TC)
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_A, 0x00010485);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_B, 0x0000017f);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_C, 0xfffb0bd3);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_D, 0x00000073);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_E, 0x0000e293);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0x00069904);
+#endif
+
+#if defined (EVE_CFAF800480E0_050SC)
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_A, 0x000107f9);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_B, 0xffffff8c);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_C, 0xfff451ae);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_D, 0x000000d2);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_E, 0x0000feac);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0xfffcfaaf);
+#endif
+
+#if defined (EVE_PAF90)
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_A, 0x00000159);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_B, 0x0001019c);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_C, 0xfff93625);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_D, 0x00010157);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_E, 0x00000000);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0x0000c101);
+#endif
+
+#if defined (EVE_RiTFT43)
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_A, 0x000062cd);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_B, 0xfffffe45);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_C, 0xfff45e0a);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_D, 0x000001a3);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_E, 0x00005b33);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0xFFFbb870);
+#endif
+
 #if defined (EVE_EVE2_38)
-	// no values yet, calibration does not work with it
-	//	EVE_memWrite32(REG_TOUCH_TRANSFORM_A, 0x0000a1ff);
-	//	EVE_memWrite32(REG_TOUCH_TRANSFORM_B, 0x00000680);
-	//	EVE_memWrite32(REG_TOUCH_TRANSFORM_C, 0xffe54cc2);
-	//	EVE_memWrite32(REG_TOUCH_TRANSFORM_D, 0xffffff53);
-	//	EVE_memWrite32(REG_TOUCH_TRANSFORM_E, 0x0000912c);
-	//	EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0xfffe628d);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_A, 0x00007bed);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_B, 0x000001b0);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_C, 0xfff60aa5);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_D, 0x00000095);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_E, 0xffffdcda);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0x00829c08);
 #endif
 
 #if defined (EVE_EVE2_35G)
@@ -300,11 +358,9 @@ void TFT_init(void)
 
 uint16_t toggle_state = 0;
 
-
 /* check for touch events and setup vars for TFT_display() */
 void TFT_touch(void)
 {
-	uint32_t calc;
 	uint8_t tag;
 	static uint8_t toggle_lock = 0;
 	
@@ -313,8 +369,7 @@ void TFT_touch(void)
 		return;
 	}
 
-	calc = EVE_get_touch_tag(1);
-	tag = calc;
+	tag = EVE_memRead8(REG_TOUCH_TAG); /* read the value for the first touch point */
 
 	switch(tag)
 	{
@@ -322,7 +377,7 @@ void TFT_touch(void)
 			toggle_lock = 0;
 			break;
 
-		case 1: /* use button on top as on/off radio-switch */
+		case 10: /* use button on top as on/off radio-switch */
 			if(toggle_lock == 0)
 			{
 				toggle_lock = 42;
@@ -367,7 +422,7 @@ void TFT_display(void)
 		/* display a button */
 		EVE_cmd_dl(DL_COLOR_RGB | WHITE);
 		EVE_cmd_fgcolor(0x00c0c0c0); /* some grey */
-		EVE_cmd_dl(TAG(1)); /* assign tag-value '1' to the button that follows */
+		EVE_cmd_dl(TAG(10)); /* assign tag-value '10' to the button that follows */
 		EVE_cmd_button(20,20,80,30, 28, toggle_state,"Touch!");
 		EVE_cmd_dl(TAG(0)); /* no touch */
 

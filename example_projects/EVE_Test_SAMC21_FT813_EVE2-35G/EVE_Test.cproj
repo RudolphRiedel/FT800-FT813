@@ -130,6 +130,7 @@
   <armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>True</armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>
   <armgcc.compiler.optimization.DebugLevel>Maximum (-g3)</armgcc.compiler.optimization.DebugLevel>
   <armgcc.compiler.warnings.AllWarnings>True</armgcc.compiler.warnings.AllWarnings>
+  <armgcc.compiler.warnings.ExtraWarnings>True</armgcc.compiler.warnings.ExtraWarnings>
   <armgcc.linker.libraries.Libraries>
     <ListValues>
       <Value>libm</Value>
