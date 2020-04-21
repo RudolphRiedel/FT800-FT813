@@ -1,8 +1,8 @@
 /*
 @file    tft.c
 @brief   TFT handling functions for EVE_Test project
-@version 1.11
-@date    2020-02-09
+@version 1.12
+@date    2020-04-13
 @author  Rudolph Riedel
 
 @section History
@@ -49,10 +49,16 @@
 - some cleanup
 
 1.11
-- reduced the includes to "EVE_commands.h"
+- updated to be more similar to what I am currently using in projects
+
+1.12
+- minor cleanup, switched from EVE_get_touch_tag(1); to EVE_memRead8(REG_TOUCH_TAG);
+- added some more sets of calibration data from my displays
 
  */
 
+#include "EVE.h"
+#include "EVE_target.h"
 #include "EVE_commands.h"
 #include "tft_data.h"
 
@@ -85,7 +91,6 @@ void touch_calibrate(void)
 {
 
 /* send pre-recorded touch calibration values, depending on the display the code is compiled for */
-#if 1
 
 #if defined (EVE_CFAF240400C1_030SC)
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_A, 0x0000ed11);
@@ -121,6 +126,24 @@ void touch_calibrate(void)
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_D, 0x000000d2);
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_E, 0x0000feac);
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0xfffcfaaf);
+#endif
+
+#if defined (EVE_PAF90)
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_A, 0x00000159);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_B, 0x0001019c);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_C, 0xfff93625);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_D, 0x00010157);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_E, 0x00000000);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0x0000c101);
+#endif
+
+#if defined (EVE_RiTFT43)
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_A, 0x000062cd);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_B, 0xfffffe45);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_C, 0xfff45e0a);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_D, 0x000001a3);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_E, 0x00005b33);
+	EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0xFFFbb870);
 #endif
 
 #if defined (EVE_EVE2_38)
@@ -203,14 +226,11 @@ void touch_calibrate(void)
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_E, 0x00010226);
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0x0000C783);
 #endif
-#endif
 
 /* activate this if you are using a module for the first time or if you need to re-calibrate it */
 /* write down the numbers on the screen and either place them in one of the pre-defined blocks above or make a new block */
 #if 0
 	/* calibrate touch and displays values to screen */
-
-#if 1
 	EVE_cmd_dl(CMD_DLSTART);
 	EVE_cmd_dl(DL_CLEAR_RGB | BLACK);
 	EVE_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
@@ -219,9 +239,6 @@ void touch_calibrate(void)
 	EVE_cmd_dl(DL_DISPLAY);
 	EVE_cmd_dl(CMD_SWAP);
 	EVE_cmd_execute();
-#else
-	EVE_calibrate_manual(116);
-#endif
 
 	uint32_t touch_a, touch_b, touch_c, touch_d, touch_e, touch_f;
 
@@ -237,21 +254,21 @@ void touch_calibrate(void)
 	EVE_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
 	EVE_cmd_dl(TAG(0));
 
-	EVE_cmd_text(5, 15, 26, 0, "TRANSFORM_A:");
-	EVE_cmd_text(5, 30, 26, 0, "TRANSFORM_B:");
-	EVE_cmd_text(5, 45, 26, 0, "TRANSFORM_C:");
-	EVE_cmd_text(5, 60, 26, 0, "TRANSFORM_D:");
-	EVE_cmd_text(5, 75, 26, 0, "TRANSFORM_E:");
-	EVE_cmd_text(5, 90, 26, 0, "TRANSFORM_F:");
+	EVE_cmd_text(5, 15, 26, 0, "TOUCH_TRANSFORM_A:");
+	EVE_cmd_text(5, 30, 26, 0, "TOUCH_TRANSFORM_B:");
+	EVE_cmd_text(5, 45, 26, 0, "TOUCH_TRANSFORM_C:");
+	EVE_cmd_text(5, 60, 26, 0, "TOUCH_TRANSFORM_D:");
+	EVE_cmd_text(5, 75, 26, 0, "TOUCH_TRANSFORM_E:");
+	EVE_cmd_text(5, 90, 26, 0, "TOUCH_TRANSFORM_F:");
 
 #if defined (FT81X_ENABLE)
 	EVE_cmd_setbase(16L); /* FT81x only */
-	EVE_cmd_number(230, 15, 26, EVE_OPT_RIGHTX|8, touch_a);
-	EVE_cmd_number(230, 30, 26, EVE_OPT_RIGHTX|8, touch_b);
-	EVE_cmd_number(230, 45, 26, EVE_OPT_RIGHTX|8, touch_c);
-	EVE_cmd_number(230, 60, 26, EVE_OPT_RIGHTX|8, touch_d);
-	EVE_cmd_number(230, 75, 26, EVE_OPT_RIGHTX|8, touch_e);
-	EVE_cmd_number(230, 90, 26, EVE_OPT_RIGHTX|8, touch_f);
+	EVE_cmd_number(310, 15, 26, EVE_OPT_RIGHTX|8, touch_a);
+	EVE_cmd_number(310, 30, 26, EVE_OPT_RIGHTX|8, touch_b);
+	EVE_cmd_number(310, 45, 26, EVE_OPT_RIGHTX|8, touch_c);
+	EVE_cmd_number(310, 60, 26, EVE_OPT_RIGHTX|8, touch_d);
+	EVE_cmd_number(310, 75, 26, EVE_OPT_RIGHTX|8, touch_e);
+	EVE_cmd_number(310, 90, 26, EVE_OPT_RIGHTX|8, touch_f);
 #else
 	EVE_cmd_number(310, 15, 26, EVE_OPT_RIGHTX, touch_a);
 	EVE_cmd_number(310, 30, 26, EVE_OPT_RIGHTX, touch_b);
@@ -270,7 +287,7 @@ void touch_calibrate(void)
 }
 
 
-void initStaticBackground(void)
+void initStaticBackground()
 {
 	EVE_cmd_dl(CMD_DLSTART); /* Start the display list */
 
@@ -338,29 +355,21 @@ void TFT_init(void)
 	}
 }
 
+
 uint16_t toggle_state = 0;
-uint8_t button1 = 0;
-uint8_t button2 = 0;
-uint8_t button3 = 0;
 
 /* check for touch events and setup vars for TFT_display() */
 void TFT_touch(void)
 {
-	uint32_t calc;
 	uint8_t tag;
 	static uint8_t toggle_lock = 0;
-
-	if(EVE_busy()) /* is the FT8xx still processing the last display list? */
+	
+	if(EVE_busy()) /* is EVE still processing the last display list? */
 	{
 		return;
 	}
 
-	button1 = 0;
-	button2 = 0;
-	button3 = 0;
-
-	calc = EVE_get_touch_tag(1);
-	tag = calc;
+	tag = EVE_memRead8(REG_TOUCH_TAG); /* read the value for the first touch point */
 
 	switch(tag)
 	{
@@ -382,25 +391,15 @@ void TFT_touch(void)
 				}
 			}
 			break;
-		case 11:
-			button1 = 1;
-			break;
-		case 12:
-			button2 = 1;
-			break;
-		case 13:
-			button3 = 1;
-			break;
-
 	}
 }
+
 
 /*
 	dynamic portion of display-handling, meant to be called every 20ms or more
 */
 void TFT_display(void)
 {
-	static uint16_t alive_counter = 0;
     uint32_t calc;
 	uint16_t old_offset, new_offset;
 	static int32_t rotate = 0;
@@ -409,12 +408,6 @@ void TFT_display(void)
 
 	if(tft_active != 0)
 	{
-
-		if(EVE_busy() == 0) /* is the FT8xx executing the display list?  note: may be working as intended - or not all to indicate the FT8xx is still up and running */
-		{
-			alive_counter++;
-		}
-
 		old_offset =  EVE_report_cmdoffset(); /* used to calculate the amount of cmd-fifo bytes necessary */
 		display_list_size = EVE_memRead16(REG_CMD_DL);
 
@@ -426,23 +419,12 @@ void TFT_display(void)
 		EVE_cmd_dl(TAG(0));
 
 		EVE_cmd_append(MEM_DL_STATIC, num_dl_static); /* insert static part of display-list from copy in gfx-mem */
-
 		/* display a button */
 		EVE_cmd_dl(DL_COLOR_RGB | WHITE);
 		EVE_cmd_fgcolor(0x00c0c0c0); /* some grey */
 		EVE_cmd_dl(TAG(10)); /* assign tag-value '10' to the button that follows */
 		EVE_cmd_button(20,20,80,30, 28, toggle_state,"Touch!");
-
-#if 0
-		EVE_cmd_dl(TAG(11));
-		EVE_cmd_button(10,80,50,40, 28, button1 ? EVE_OPT_FLAT : 0,"1");
-		EVE_cmd_dl(TAG(12));
-		EVE_cmd_button(80,80,50,40, 28, button2 ? EVE_OPT_FLAT : 0,"2");
-		EVE_cmd_dl(TAG(13));
-		EVE_cmd_button(150,80,50,40, 28, button3 ? EVE_OPT_FLAT : 0,"3");
-#endif
 		EVE_cmd_dl(TAG(0)); /* no touch */
-
 
 		/* display a picture and rotate it when the button on top is activated */
 		EVE_cmd_setbitmap(MEM_PIC1, EVE_RGB565, 100, 100);
@@ -465,21 +447,12 @@ void TFT_display(void)
 		/* reset the transformation matrix to default values */
 		EVE_cmd_dl(RESTORE_CONTEXT());
 
-#if defined (BT81X_ENABLE)
-#if 0
-		EVE_cmd_dl(DL_COLOR_RGB | BLACK);
-		EVE_cmd_text_var(20, 300, 27, EVE_OPT_FORMAT, "Hello %0+8d %08x %06d",3,23,-654389,0x1000);
-		EVE_cmd_button_var(20,240,100,40, 27, EVE_OPT_FORMAT,"Bang %d",1,666);
-		EVE_cmd_toggle_var(150,260,100,28, EVE_OPT_FORMAT, 0, "Off %d" "\xff" "On",1,323);
-#endif
-#endif
-
 		/* print profiling values */
 		EVE_cmd_dl(DL_COLOR_RGB | BLACK);
 
 		EVE_cmd_number(120, EVE_VSIZE - 65, 26, EVE_OPT_RIGHTX, display_list_size); /* number of bytes written to the display-list by the command co-pro */
-		EVE_cmd_number(120, EVE_VSIZE - 35, 26, EVE_OPT_RIGHTX|5, num_profile_a); /* duration in ï¿½s of TFT_loop() for the touch-event part */
-		EVE_cmd_number(120, EVE_VSIZE - 20, 26, EVE_OPT_RIGHTX|5, num_profile_b); /* duration in ï¿½s of TFT_loop() for the display-list part */
+		EVE_cmd_number(120, EVE_VSIZE - 35, 26, EVE_OPT_RIGHTX|5, num_profile_a); /* duration in µs of TFT_loop() for the touch-event part */
+		EVE_cmd_number(120, EVE_VSIZE - 20, 26, EVE_OPT_RIGHTX|5, num_profile_b); /* duration in µs of TFT_loop() for the display-list part */
 
 		new_offset =  EVE_report_cmdoffset();
 		if(old_offset > new_offset)

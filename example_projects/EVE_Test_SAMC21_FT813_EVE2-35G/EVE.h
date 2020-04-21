@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 4.0
-@date    2020-02-09
+@date    2020-04-15
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -69,6 +69,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - removed the preceding underscore from the include guard define to avoid potential undefined behavior
 - removed a bunch of defines for FT80x that I never implemented for FT81x
 - added an include for "EVE_target.h" in order to reduce the necessary includes in the main project file
+- commented out the NOP macro as it was colliding with ESP32 includes
 
 */
 
@@ -754,7 +755,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define BITMAP_SIZE_H(width,height) ((41UL<<24)|((((width&0x600)>>9)&3UL)<<2)|((((height&0x600)>>9)&3UL)<<0))
 
 #define BITMAP_SOURCE(addr) ((1UL<<24)|(((addr)&4194303UL)<<0))
-#define NOP() ((45UL<<24))
+//#define NOP() ((45UL<<24))
 #define PALETTE_SOURCE(addr) ((42UL<<24)|(((addr)&4194303UL)<<0))
 #define SCISSOR_SIZE(width,height) ((28UL<<24)|(((width)&4095UL)<<12)|(((height)&4095UL)<<0))
 #define SCISSOR_XY(x,y) ((27UL<<24)|(((x)&2047UL)<<11)|(((y)&2047UL)<<0))

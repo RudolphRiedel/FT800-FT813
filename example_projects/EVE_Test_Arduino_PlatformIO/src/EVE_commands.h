@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 4.0
-@date    2020-02-09
+@date    2020-04-13
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -92,6 +92,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added prototype for EVE_calibrate_manual()
 - added prototypes EVE_cmd_flasherase(), EVE_cmd_flashattach(), EVE_cmd_flashdetach() and EVE_cmd_flashspidesel()
 - added an include for "EVE.h" in order to reduce the necessary includes in the main project file, only including "EVE_commands.h" is fine now
+- changed EVE_cmd_getprops() again, inspired by BRTs AN_025, changed the name to EVE_LIB_GetProps() and got rid of the returning data-structure
+- replaced EVE_cmd_getmatrix() with an earlier implementation again, looks like it is supposed to write, not read
+- added function EVE_color_rgb()
+- marked EVE_get_touch_tag() as deprecated
 
 */
 
@@ -113,7 +117,7 @@ void EVE_memWrite_flash_buffer(uint32_t ftAddress, const uint8_t *data, uint16_t
 uint8_t EVE_busy(void);
 void EVE_get_cmdoffset(void);
 uint16_t EVE_report_cmdoffset(void);
-uint32_t EVE_get_touch_tag(uint8_t num);
+uint32_t EVE_get_touch_tag(uint8_t num) __attribute__ ((deprecated("use EVE_memRead8(REG_TOUCH_TAG);")));
 
 
 /* commands to operate on memory: */
@@ -182,6 +186,7 @@ void EVE_cmd_toggle_var(int16_t x0, int16_t y0, int16_t w0, int16_t font, uint16
 void EVE_cmd_text(int16_t x0, int16_t y0, int16_t font, uint16_t options, const char* text);
 void EVE_cmd_button(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t font, uint16_t options, const char* text);
 void EVE_cmd_clock(int16_t x0, int16_t y0, int16_t r0, uint16_t options, uint16_t hours, uint16_t minutes, uint16_t seconds, uint16_t millisecs);
+void EVE_color_rgb(uint8_t red, uint8_t green, uint8_t blue);
 void EVE_cmd_bgcolor(uint32_t color);
 void EVE_cmd_fgcolor(uint32_t color);
 void EVE_cmd_gradcolor(uint32_t color);
@@ -205,6 +210,7 @@ void EVE_cmd_append(uint32_t ptr, uint32_t num);
 
 
 /* commands for setting the bitmap transform matrix: */
+void EVE_cmd_getmatrix(int32_t a, int32_t b, int32_t c, int32_t d, int32_t e, int32_t f);
 void EVE_cmd_translate(int32_t tx, int32_t ty);
 void EVE_cmd_scale(int32_t sx, int32_t sy);
 void EVE_cmd_rotate(int32_t ang);
@@ -233,27 +239,7 @@ void EVE_cmd_track(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t tag);
 uint32_t EVE_cmd_memcrc(uint32_t ptr, uint32_t num);
 uint32_t EVE_cmd_getptr(void);
 uint32_t EVE_cmd_regread(uint32_t ptr);
-
-struct EVE_struct_getprops
-{
-	uint32_t ptr;
-	uint32_t width;
-	uint32_t height;
-};
-
-struct EVE_struct_getprops EVE_cmd_getprops(void);
-
-struct EVE_struct_getmatrix
-{
-	uint32_t a;
-	uint32_t b;
-	uint32_t c;
-	uint32_t d;
-	uint32_t e;
-	uint32_t f;
-};
-
-extern struct EVE_struct_getmatrix EVE_cmd_getmatrix(void);
+void EVE_LIB_GetProps(uint32_t *pointer, uint32_t *width, uint32_t *height);
 
 
 /* meta-commands, sequences of several display-list entries condensed into simpler to use functions at the price of some overhead */

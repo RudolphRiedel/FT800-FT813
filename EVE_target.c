@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions
 @version 4.0
-@date    2020-04-13
+@date    2020-04-15
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -30,6 +30,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - removed preceding "__" from two CMSIS functions that were not necessary and maybe even wrong
 - moved the very basic DELAY_MS() function for ATSAM to EVE_target.c and therefore removed the unneceesary inlining for this function
 - added DMA support for ATSAME51
+- started to implement DMA support for STM32
 
  */
 
@@ -167,6 +168,44 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		#endif /* DMA */
 
         #endif /* ATSAM */
+
+		#if defined (STM32L073xx) || (STM32F1) || (STM32F207xx) || (STM32F3) || (STM32F4)
+
+		#if defined (EVE_DMA)
+
+			uint8_t EVE_dma_buffer[4100];
+			volatile uint16_t EVE_dma_buffer_index;
+			volatile uint8_t EVE_dma_busy = 0;
+
+			volatile DMA_HandleTypeDef EVE_dma_tx;
+
+			void EVE_init_dma(void)
+			{
+
+			}
+
+			void EVE_start_dma_transfer(void)
+			{
+
+				EVE_cs_set();
+				EVE_dma_busy = 42;
+			}
+
+			/* DMA-done-Interrupt-Handler */
+#if 0
+			void some_name_handler()
+			{
+
+
+				EVE_dma_busy = 0;
+				EVE_cs_clear();
+				EVE_cmd_start(); /* order the command co-processor to start processing its FIFO queue but do not wait for completion */
+			}
+#endif
+
+		#endif /* DMA */
+
+		#endif /* STM32 */
 
 
     #endif /* __GNUC__ */
