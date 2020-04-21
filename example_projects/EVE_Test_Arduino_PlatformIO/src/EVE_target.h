@@ -514,6 +514,96 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 
+		#if defined (__SAMD51P20A__)  // Adafruit Grand Central M4
+
+		#include "sam.h"
+
+		#define EVE_CS_PORT 1
+		#define EVE_CS PORT_PB18
+		#define EVE_PDN_PORT 1
+		#define EVE_PDN PORT_PB02
+		#define EVE_SPI SERCOM7
+//		#define EVE_DMA
+
+		#if defined (EVE_DMA)
+			extern uint8_t EVE_dma_buffer[4100];
+			extern volatile uint16_t EVE_dma_buffer_index;
+			extern volatile uint8_t EVE_dma_busy;
+
+			void EVE_init_dma(void);
+			void EVE_start_dma_transfer(void);
+		#endif
+
+		static inline void DELAY_MS(uint16_t val)
+		{
+			uint16_t counter;
+
+			while(val > 0)
+			{
+				for(counter=0; counter < 8800;counter++) /* ~1ms at 120MHz Core-Clock, according to my Logic-Analyzer */
+				{
+					__asm__ volatile ("nop");
+				}
+				val--;
+			}
+		}
+
+		static inline void EVE_pdn_set(void)
+		{
+			PORT->Group[EVE_PDN_PORT].OUTCLR.reg = EVE_PDN;
+		}
+
+		static inline void EVE_pdn_clear(void)
+		{
+			PORT->Group[EVE_PDN_PORT].OUTSET.reg = EVE_PDN;
+		}
+
+		static inline void EVE_cs_set(void)
+		{
+			PORT->Group[EVE_CS_PORT].OUTCLR.reg = EVE_CS;
+		}
+
+		static inline void EVE_cs_clear(void)
+		{
+			PORT->Group[EVE_CS_PORT].OUTSET.reg = EVE_CS;
+		}
+
+		static inline void spi_transmit_async(uint8_t data)
+		{
+			#if defined (EVE_DMA)
+				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+			#else
+				EVE_SPI->SPI.DATA.reg = data;
+				while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0);
+				(void) EVE_SPI->SPI.DATA.reg; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
+			#endif
+		}
+
+		static inline void spi_transmit(uint8_t data)
+		{
+			EVE_SPI->SPI.DATA.reg = data;
+			while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0);
+			(void) EVE_SPI->SPI.DATA.reg; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
+
+		}
+
+		static inline uint8_t spi_receive(uint8_t data)
+		{
+			EVE_SPI->SPI.DATA.reg = data;
+			while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0);
+			return EVE_SPI->SPI.DATA.reg;
+		}
+
+		static inline uint8_t fetch_flash_byte(const uint8_t *data)
+		{
+			return *data;
+		}
+
+		#endif /* __SAMD51P20A__ */
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
 		#if defined (__riscv)
 
 //		#warning Compiling for GD32VF103CBT6
