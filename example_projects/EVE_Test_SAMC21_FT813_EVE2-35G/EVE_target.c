@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions
 @version 4.0
-@date    2020-04-15
+@date    2020-05-01
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -31,6 +31,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - moved the very basic DELAY_MS() function for ATSAM to EVE_target.c and therefore removed the unneceesary inlining for this function
 - added DMA support for ATSAME51
 - started to implement DMA support for STM32
+- added a few more controllers as examples from the ATSAMC2x and ATSAMx5x family trees
 
  */
 
@@ -40,7 +41,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
   #include "EVE_commands.h"
 
 	#if defined (__GNUC__)
-		#if defined (__SAMC21E18A__) || (__SAME51J19A__)	/* target as set by AtmelStudio */
+		#if defined (__SAMC21E18A__) || (__ATSAMC20G17A__) || (__SAME51J19A__) || (__SAMD51P20A__) || (__SAMD51J19A__) || (__SAMD51G18A__)
+		/* note: target as set by AtmelStudio, valid  are all from the same family, ATSAMC2x and ATSAMx5x use the same SERCOM units */
 
 		void DELAY_MS(uint16_t val)
 		{
@@ -65,7 +67,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 			volatile uint8_t EVE_dma_busy = 0;
 
-			#if defined (__SAMC21E18A__)
+			#if defined  (__SAMC21E18A__) || (__ATSAMC20G17A__)
 
 			void EVE_init_dma(void)
 			{
@@ -112,9 +114,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 				EVE_cmd_start(); /* order the command co-processor to start processing its FIFO queue but do not wait for completion */
 			}
 
-			#endif /* DMA functions SAMC21 */
+			#endif /* DMA functions SAMC2x */
 
-			#if defined (__SAME51J19A__)
+			#if defined (__SAME51J19A__) || (__SAMD51P20A__) || (__SAMD51J19A__) || (__SAMD51G18A__)
 
 			void EVE_init_dma(void)
 			{
@@ -163,7 +165,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 				EVE_cmd_start(); /* order the command co-processor to start processing its FIFO queue but do not wait for completion */
 			}
 
-		#endif /* DMA functions SAME51 */
+		#endif /* DMA functions SAMx5x */
 
 		#endif /* DMA */
 

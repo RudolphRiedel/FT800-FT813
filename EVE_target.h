@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 4.0
-@date    2020-04-15
+@date    2020-05-01
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -48,6 +48,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - expanded the STM32F4 section with lines for STM32L073, STM32F1, STM32F207 and STM32F3
 - forgot to add the "#include <Arduino.h>" line I found to be necessary for ESP32/Arduino
 - started to implement DMA support for STM32
+- added a few more controllers as examples from the ATSAMC2x and ATSAMx5x family trees
+- measured the delay for ATSAME51 again and changed EVE_DELAY_1MS to 20000 for use with 120MHz core-clock and activated cache
 
 */
 
@@ -418,11 +420,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 
-		#if defined (__SAMC21E18A__) || (__SAME51J19A__)	/* target as set by AtmelStudio */
+		#if defined (__SAMC21E18A__) || (__ATSAMC20G17A__) || (__SAME51J19A__) || (__SAMD51P20A__) || (__SAMD51J19A__) || (__SAMD51G18A__)
+		/* note: target as set by AtmelStudio, valid  are all from the same family, ATSAMC2x and ATSAMx5x use the same SERCOM units */
 
 		#include "sam.h"
 
-		#if defined  (__SAMC21E18A__)
+		#if defined (__SAMC21E18A__) || (__ATSAMC20G17A__)
 		#define EVE_CS_PORT 0
 		#define EVE_CS PORT_PA05
 		#define EVE_PDN_PORT 0
@@ -431,10 +434,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		#define EVE_SPI_DMA_TRIGGER SERCOM0_DMAC_ID_TX
 		#define EVE_DMA_CHANNEL 0
 		#define EVE_DMA
-		#define EVE_DELAY_1MS 8000	 // ~1ms at 48MHz Core-Clock
+		#define EVE_DELAY_1MS 8000	/* ~1ms at 48MHz Core-Clock */
 		#endif
 
-		#if defined (__SAME51J19A__)
+		#if defined (__SAME51J19A__) || (__SAMD51P20A__) || (__SAMD51J19A__) || (__SAMD51G18A__)
 		#define EVE_CS_PORT 1
 		#define EVE_CS PORT_PB01
 		#define EVE_PDN_PORT 1
@@ -443,7 +446,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		#define EVE_SPI_DMA_TRIGGER SERCOM5_DMAC_ID_TX
 		#define EVE_DMA_CHANNEL 0
 		#define EVE_DMA
-		#define EVE_DELAY_1MS 9000	 /* ~1ms at 120MHz Core-Clock, according to my Logic-Analyzer */
+		#define EVE_DELAY_1MS 20000	/* ~1ms at 120MHz Core-Clock and activated cache, according to my Logic-Analyzer */
 		#endif
 
 
@@ -509,7 +512,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			return *data;
 		}
 
-		#endif /* __SAMC21J18A__ / __SAME51J19A__ */
+		#endif /* SAMC2x / SAMx5x */
 
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
