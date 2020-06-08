@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 4.0
-@date    2020-04-13
+@date    2020-06-08
 @author  Rudolph Riedel
 
 @section info
@@ -20,7 +20,7 @@ Copyright (c) 2016-2020 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
-sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conions:
 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
@@ -190,6 +190,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - replaced EVE_cmd_getmatrix() with an earlier implementation again, looks like it is supposed to write, not read. 
 - added function EVE_color_rgb()
 - added a fixed 40ms delay in EVE_init() between ACTIVE and the first reading of 0x7c as a compromise to comply with AN033 V1.2
+- removed writing of REG_CSSPREAD from EVE_init() so it is per default activated now for all displays
+
 
 */
 
@@ -1213,7 +1215,6 @@ uint8_t EVE_init(void)
 	EVE_memWrite16(REG_VSYNC1,  EVE_VSYNC1);  /* end of vertical sync pulse */
 	EVE_memWrite8(REG_SWIZZLE,  EVE_SWIZZLE); /* FT8xx output to LCD - pin order */
 	EVE_memWrite8(REG_PCLK_POL, EVE_PCLKPOL); /* LCD data is clocked in on this PCLK edge */
-	EVE_memWrite8(REG_CSPREAD,	EVE_CSPREAD); /* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
 
 	/* do not set PCLK yet - wait for just after the first display list */
 
