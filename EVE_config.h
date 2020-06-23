@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 4.0
-@date    2020-06-08
+@date    2020-06-23
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -47,6 +47,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - removed parameter: EVE_CSPREAD - left on default=1 for all displays now
 - adjusted several PCLK settings to bring the frame-rates closer to 60Hz
 - sorted displays by resolution
+- added profiles for EVE3x-39A/EVE3x-39G
 
 */
 
@@ -92,6 +93,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE_EVE3_50G
 	#define EVE_EVE3_70
 	#define EVE_EVE3_70G
+	#define EVE_EVE3x_39
+	#define EVE_EVE3x_39G
 	#define EVE_NHD_35
 	#define EVE_NHD_43
 	#define EVE_NHD_50
@@ -112,7 +115,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 #endif
 
-#define EVE_CFAF800480E0_050SC
+#define EVE_EVE3_50G
 
 
 /* display timing parameters below */
@@ -731,6 +734,55 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_GT911	/* special treatment required for out-of-spec touch-controller */
 #define FT81X_ENABLE
+#endif
+
+
+/* untested */
+/* EVE3x-39A 482x272 3.9" 1U Matrix Orbital, resistive touch, BT816 */
+#if defined (EVE_EVE3x_39)
+#define EVE_HSIZE	(482L)
+#define EVE_VSIZE	(272L)
+
+#define EVE_VSYNC0	(11L)
+#define EVE_VSYNC1	(8L)
+#define EVE_VOFFSET	(12L)
+#define EVE_VCYCLE	(288L)
+#define EVE_HSYNC0	(0L)
+#define EVE_HSYNC1	(44L)
+#define EVE_HOFFSET	(16L)
+#define EVE_HCYCLE 	(524L)
+#define EVE_PCLKPOL	(1L)
+#define EVE_SWIZZLE	(0L)
+#define EVE_PCLK	(6L)
+#define EVE_TOUCH_RZTHRESH (1200L)
+#define EVE_HAS_CRYSTAL
+#define FT81X_ENABLE
+#define BT81X_ENABLE
+#endif
+
+
+/* untested */
+/* EVE3x-39G 482x272 3.9" 1U Matrix Orbital, capacitive touch, BT815 */
+#if defined (EVE_EVE3x_39G)
+#define EVE_HSIZE	(482L)
+#define EVE_VSIZE	(272L)
+
+#define EVE_VSYNC0	(11L)
+#define EVE_VSYNC1	(8L)
+#define EVE_VOFFSET	(12L)
+#define EVE_VCYCLE	(288L)
+#define EVE_HSYNC0	(0L)
+#define EVE_HSYNC1	(44L)
+#define EVE_HOFFSET	(16L)
+#define EVE_HCYCLE 	(524L)
+#define EVE_PCLKPOL	(1L)
+#define EVE_SWIZZLE	(0L)
+#define EVE_PCLK	(6L)
+#define EVE_TOUCH_RZTHRESH (1200L)
+#define EVE_HAS_CRYSTAL
+#define EVE_HAS_GT911
+#define FT81X_ENABLE
+#define BT81X_ENABLE
 #endif
 
 
