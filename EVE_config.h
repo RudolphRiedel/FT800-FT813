@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 4.0
-@date    2020-06-23
+@date    2020-06-26
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -48,6 +48,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - adjusted several PCLK settings to bring the frame-rates closer to 60Hz
 - sorted displays by resolution
 - added profiles for EVE3x-39A/EVE3x-39G
+- updated EVE3x-39A/EVE3x-39G profiles
 
 */
 
@@ -738,18 +739,18 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 
 /* untested */
-/* EVE3x-39A 482x272 3.9" 1U Matrix Orbital, resistive touch, BT816 */
+/* EVE3x-39A 480x128 3.9" 1U Matrix Orbital, resistive touch, BT816 */
 #if defined (EVE_EVE3x_39)
-#define EVE_HSIZE	(482L)
+#define EVE_HSIZE	(480L)
 #define EVE_VSIZE	(272L)
 
-#define EVE_VSYNC0	(11L)
-#define EVE_VSYNC1	(8L)
-#define EVE_VOFFSET	(12L)
+#define EVE_VSYNC0	(8L)
+#define EVE_VSYNC1	(11L)
+#define EVE_VOFFSET	(15L)
 #define EVE_VCYCLE	(288L)
-#define EVE_HSYNC0	(0L)
-#define EVE_HSYNC1	(44L)
-#define EVE_HOFFSET	(16L)
+#define EVE_HSYNC0	(44L)
+#define EVE_HSYNC1	(28L)
+#define EVE_HOFFSET	(44L)
 #define EVE_HCYCLE 	(524L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
@@ -762,18 +763,18 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 
 /* untested */
-/* EVE3x-39G 482x272 3.9" 1U Matrix Orbital, capacitive touch, BT815 */
+/* EVE3x-39G 480x128 3.9" 1U Matrix Orbital, capacitive touch, BT815 */
 #if defined (EVE_EVE3x_39G)
-#define EVE_HSIZE	(482L)
+#define EVE_HSIZE	(480L)
 #define EVE_VSIZE	(272L)
 
-#define EVE_VSYNC0	(11L)
-#define EVE_VSYNC1	(8L)
-#define EVE_VOFFSET	(12L)
+#define EVE_VSYNC0	(8L)
+#define EVE_VSYNC1	(11L)
+#define EVE_VOFFSET	(15L)
 #define EVE_VCYCLE	(288L)
-#define EVE_HSYNC0	(0L)
-#define EVE_HSYNC1	(44L)
-#define EVE_HOFFSET	(16L)
+#define EVE_HSYNC0	(44L)
+#define EVE_HSYNC1	(28L)
+#define EVE_HOFFSET	(44L)
 #define EVE_HCYCLE 	(524L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
