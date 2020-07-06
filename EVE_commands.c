@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 4.0
-@date    2020-06-08
+@date    2020-07-06
 @author  Rudolph Riedel
 
 @section info
@@ -191,6 +191,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added function EVE_color_rgb()
 - added a fixed 40ms delay in EVE_init() between ACTIVE and the first reading of 0x7c as a compromise to comply with AN033 V1.2
 - removed writing of REG_CSSPREAD from EVE_init() so it is per default activated now for all displays
+- changed the "len" parameter for loadimage, inflate, inflate2 and EVE_memWrite_flash_buffer() to uint32_t
 
 
 */
@@ -303,7 +304,7 @@ void EVE_memWrite32(uint32_t ftAddress, uint32_t ftData32)
 }
 
 
-void EVE_memWrite_flash_buffer(uint32_t ftAddress, const uint8_t *data, uint16_t len)
+void EVE_memWrite_flash_buffer(uint32_t ftAddress, const uint8_t *data, uint32_t len)
 {
 	uint16_t count;
 
@@ -682,7 +683,7 @@ void block_transfer(const uint8_t *data, uint32_t len)
 
 
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
-void EVE_cmd_inflate(uint32_t ptr, const uint8_t *data, uint16_t len)
+void EVE_cmd_inflate(uint32_t ptr, const uint8_t *data, uint32_t len)
 {
 	EVE_begin_cmd(CMD_INFLATE);
 
@@ -700,7 +701,7 @@ void EVE_cmd_inflate(uint32_t ptr, const uint8_t *data, uint16_t len)
 
 #if defined (BT81X_ENABLE)
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
-void EVE_cmd_inflate2(uint32_t ptr, uint32_t options, const uint8_t *data, uint16_t len)
+void EVE_cmd_inflate2(uint32_t ptr, uint32_t options, const uint8_t *data, uint32_t len)
 {
 	EVE_begin_cmd(CMD_INFLATE2);
 
@@ -726,7 +727,7 @@ void EVE_cmd_inflate2(uint32_t ptr, uint32_t options, const uint8_t *data, uint1
 
 
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
-void EVE_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *data, uint16_t len)
+void EVE_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *data, uint32_t len)
 {
 	EVE_begin_cmd(CMD_LOADIMAGE);
 

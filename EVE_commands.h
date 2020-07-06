@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 4.0
-@date    2020-04-13
+@date    2020-07-06
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -96,6 +96,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - replaced EVE_cmd_getmatrix() with an earlier implementation again, looks like it is supposed to write, not read
 - added function EVE_color_rgb()
 - marked EVE_get_touch_tag() as deprecated
+- changed the "len" parameter for loadimage, inflate, inflate2 and EVE_memWrite_flash_buffer() to uint32_t
 
 */
 
@@ -113,7 +114,7 @@ uint32_t EVE_memRead32(uint32_t ftAddress);
 void EVE_memWrite8(uint32_t ftAddress, uint8_t ftData8);
 void EVE_memWrite16(uint32_t ftAddress, uint16_t ftData16);
 void EVE_memWrite32(uint32_t ftAddress, uint32_t ftData32);
-void EVE_memWrite_flash_buffer(uint32_t ftAddress, const uint8_t *data, uint16_t len);
+void EVE_memWrite_flash_buffer(uint32_t ftAddress, const uint8_t *data, uint32_t len);
 uint8_t EVE_busy(void);
 void EVE_get_cmdoffset(void);
 uint16_t EVE_report_cmdoffset(void);
@@ -128,8 +129,8 @@ void EVE_cmd_memcpy(uint32_t dest, uint32_t src, uint32_t num);
 
 
 /* commands for loading image data into FT8xx memory: */
-void EVE_cmd_inflate(uint32_t ptr, const uint8_t *data, uint16_t len);
-void EVE_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *data, uint16_t len);
+void EVE_cmd_inflate(uint32_t ptr, const uint8_t *data, uint32_t len);
+void EVE_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *data, uint32_t len);
 
 #if defined (FT81X_ENABLE)
 void EVE_cmd_mediafifo(uint32_t ptr, uint32_t size);
@@ -160,7 +161,7 @@ void EVE_cmd_flashspitx(uint32_t num, const uint8_t *data);
 void EVE_cmd_flashspirx(uint32_t dest, uint32_t num);
 void EVE_cmd_flashsource(uint32_t ptr);
 
-void EVE_cmd_inflate2(uint32_t ptr, uint32_t options, const uint8_t *data, uint16_t len);
+void EVE_cmd_inflate2(uint32_t ptr, uint32_t options, const uint8_t *data, uint32_t len);
 void EVE_cmd_rotatearound(int32_t x0, int32_t y0, int32_t angle, int32_t scale);
 void EVE_cmd_animstart(int32_t ch, uint32_t aoptr, uint32_t loop);
 void EVE_cmd_animstop(int32_t ch);
