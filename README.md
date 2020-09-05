@@ -1,17 +1,14 @@
-# FT810-FT813, BT81x
-This is a code library for EVE/EVE2/EVE3 graphics controller ICs from FTDI/Bridgetek:
+# EVE2 / EVE3 / EVE4 code library
+This is a code library for EVE2/EVE3/EVE4 graphics controller ICs from FTDI/Bridgetek:
 
-http://www.ftdichip.com/EVE.htm
-
-http://brtchip.com/eve/
-
-http://brtchip.com/ft80x/
-
-http://brtchip.com/ft81x/
-
+http://www.ftdichip.com/EVE.htm  
+http://brtchip.com/eve/  
+http://brtchip.com/ft81x/  
 https://brtchip.com/bt81x/
 
-It contains code for and has been used with various mikro-controllers and displays.
+It contains code for and has been used with various micro-controllers and displays.
+
+## Controllers
 
 I have used it so far with:
 
@@ -20,7 +17,7 @@ I have used it so far with:
 - Renesas F1L RH850
 - Infineon Aurix TC222
 - ATSAMC21E18A (DMA)
-- ATSAME51J19A
+- ATSAME51J19A (DMA)
 
 I have reports of successfully using it with:
 
@@ -33,11 +30,10 @@ I have reports of successfully using it with:
 - some PICs
 - ESP32
 
+## Displays
+
 The TFTs I have tested myself so far:
 
-- VM800B35A http://www.ftdichip.com/Products/Modules/VM800B.html
-- VM800B50A
-- FT800CB-HY50B http://www.hotmcu.com/5-graphical-lcd-touchscreen-480x272-spi-ft800-p-124.html
 - FT810CB-HY50HD http://www.hotmcu.com/5-graphical-lcd-touchscreen-800x480-spi-ft810-p-286.html
 - FT811CB-HY50HD  http://www.hotmcu.com/5-graphical-lcd-capacitive-touch-screen-800x480-spi-ft811-p-301.html
 - RVT70UQFNWC0x https://riverdi.com/product/rvt70uqfnwc0x/
@@ -60,6 +56,66 @@ The TFTs I have tested myself so far:
 - CFAF480128A0-039TC
 - CFAF800480E0-050SC https://www.crystalfontz.com/product/cfaf800480e1050sca11-800x480-eve-accelerated-tft
 
+## This is version 5
+
+This is version 5 of this code library and there are a couple of changes from V4.
+
+First of all, support for FT80x is gone. The main reason is that this allowed a nice speed improvement modification that only works with FT81x and beyond.
+Then there is a hard break from FT80x to FT81x with ony 256k of memory in FT80x but 1MB in FT81x. The memory map is different and all the registers are located elsewhere.
+FT810, FT811, FT812, FT813, BT815, BT816, BT817 and BT818 can use the exact same code as long none of the new features of BT81x are used - and there are plenty of modules with these available to choose from
+
+As a side effect all commands are automatically started now. 
+
+Second is that there are two sets of display-list building command functions now: EVE_cmd_xxx() and EVE_cmd_xxx_burst().
+The EVE_cmd_xxx_burst() functions are optimised for speed, these are pure data transfer functions and do not even check anymore if burst mode is active.
+
+## Examples
+
+Generate a basic display list and tell EVE to use it:
+````
+EVE_cmd_dl(CMD_DLSTART); // tells EVE to start a new display-list
+EVE_cmd_dl(DL_CLEAR_RGB | WHITE); // sets the background color
+EVE_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
+EVE_color_rgb(BLACK);
+EVE_cmd_text(5, 15, 28, 0, "Hello there!");
+EVE_cmd_dl(DL_DISPLAY); // put in the display list to mark its end
+EVE_cmd_dl(CMD_SWAP); // tell EVE to use the new display list
+while (EVE_busy());
+````
+
+Note, these commands are executed one by one, for each command chip-select is pulled low, a three byte address is send, the data for the command and its parameters is send and then chip-select is pulled high again which also makes EVE execute the command.
+
+But there is a way to speed things up, we can get away with only sending the address once:
+````
+EVE_start_cmd_burst();
+EVE_cmd_dl_burst(CMD_DLSTART);
+EVE_cmd_dl_burst(DL_CLEAR_RGB | WHITE);
+EVE_cmd_dl_burst(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
+EVE_color_rgb_burst(BLACK);
+EVE_cmd_text_burst(5, 15, 28, 0, "Hello there!");
+EVE_cmd_dl_burst(DL_DISPLAY);
+EVE_cmd_dl_burst(CMD_SWAP);
+EVE_end_cmd_burst();
+while (EVE_busy());
+````
+
+This does the same as the first example but faster.
+The trailing EVE_start_cmd_burst() either sets chip-select to low and sends out the three byte address.  
+Or if DMA is available for the target you are compiling for with support code in EVE_target.c and EVE_target.h, it writes the address to EVE_dma_buffer and sets EVE_dma_buffer_index to 1.
+
+Note the trailing "_burst" in the following functions, these are special versions of these commands that only can be used within an EVE_start_cmd_burst()/EVE_end_cmd_bust() pair.
+These functions are optimised to push out data and nothing else.
+
+The final EVE_end_cmd_bust() either pulls back the chip-select to high.  
+Or if we have DMA it calls EVE_start_dma_transfer() to start pushing out the buffer in the background.
+
+As we have 7 commands for EVE in these simple examples, the second one has the address overhead removed from six commands and therefore needs to transfer 18 bytes less over SPI.  
+So even with a small 8-bit controller that does not support DMA this is a usefull optimisation for building display lists.
+
+Using DMA has one caveat: we need to limit the transfer to <4k as we are writing to the FIFO of EVEs command co-processor. This is usually not an issue though as we can shorten the display list generation with previously generated snippets that we attach to the current list with CMD_APPEND. And when we use widgets like CMD_BUTTON or CMD_CLOCK the generated display list grows by a larger amount than what we need to put into the command-FIFO so we likely reach the 8k limit of the display-list before we hit the 4k limit of the command-FIFO.
+
+## Remarks
+
 The examples in the "example_projects" drawer are for use with AtmelStudio7.
 For Arduino I am using PlatformIO with Visual Studio Code.
 
@@ -76,13 +132,13 @@ See EVE_target.h for examples.
 In Addition you need to initialise the pins used for Chip-Select and PowerDown in your hardware correctly to output.
 Plus setup the SPI accordingly, mode-0, 8-bit, MSB-first, not more than 11MHz for the init.
 
-Originally the project went public in the German mikrocontroller.net forum, the thread contains some insight: https://www.mikrocontroller.net/topic/395608
-
-Feel free to add to the discussion with questions or remarks.
-
 A word of "warning", you have to take a little care yourself to for example not send more than 4kB at once to the command co-processor
 or to not generate display lists that are longer than 8kB.
 My library does not check and re-check the command-FIFO on every step.
 This is optimised for speed so the training wheels are off.
 
-Note, with so many options to choose from now, FT80x support will be removed at some point in the future.
+## Post questions here
+
+Originally the project went public in the German mikrocontroller.net forum, the thread contains some insight: https://www.mikrocontroller.net/topic/395608
+
+Feel free to add to the discussion with questions or remarks.

@@ -1,8 +1,8 @@
 /*
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
-@version 4.0
-@date    2020-05-01
+@version 5.0
+@date    2020-09-05
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -51,6 +51,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added a few more controllers as examples from the ATSAMC2x and ATSAMx5x family trees
 - measured the delay for ATSAME51 again and changed EVE_DELAY_1MS to 20000 for use with 120MHz core-clock and activated cache
 
+5.0
+- replaced spi_transmit_async() with spi_transmit_burst()
+- changed the DMA buffer from uin8_t to uint32_t
+
+
 */
 
 #ifndef EVE_TARGET_H_
@@ -74,15 +79,17 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
   Check out the section for SAMC21E18A as it has code to transparently add DMA.
 
-  If the define "EVE_DMA" is set the spi_transmit_async() is changed at compile time to write in a buffer instead directly to SPI.
+  If the define "EVE_DMA" is set the spi_transmit_burst() is changed at compile time to write in a buffer instead directly to SPI.
   EVE_init() calls EVE_init_dma() which sets up the DMA channel and enables an IRQ for end of DMA.
   EVE_start_cmd_burst() resets the DMA buffer instead of transferring the first bytes by SPI.
   EVE_end_cmd_burst() just calls EVE_start_dma_transfer() which triggers the transfer of the SPI buffer by DMA.
   EVE_cmd_start() just instantly returns if there is an active DMA transfer.
   EVE_busy() does nothing but to report that EVE is busy if there is an active DMA transfer.
-  At the end of the DMA transfer an IRQ is executed which clears the DMA active state, calls EVE_cs_clear() and EVE_cmd_start().
+  At the end of the DMA transfer an IRQ is executed which clears the DMA active state and calls EVE_cs_clear().
 
 */
+
+#pragma once
 
 #if !defined (ARDUINO)
 
@@ -129,16 +136,19 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 				EVE_CS_PORT |= EVE_CS;	/* cs high */
 			}
 
-			static inline void spi_transmit_async(uint8_t data)
+			static inline void spi_transmit(uint8_t data)
 			{
 				SPDR = data; /* start transmission */
 				while(!(SPSR & (1<<SPIF))); /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
 			}
 
-			static inline void spi_transmit(uint8_t data)
+			/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+			static inline void spi_transmit_burst(uint32_t data)
 			{
-				SPDR = data; /* start transmission */
-				while(!(SPSR & (1<<SPIF))); /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
+				spi_transmit((uint8_t)(data));
+				spi_transmit((uint8_t)(data >> 8));
+				spi_transmit((uint8_t)(data >> 16));
+				spi_transmit((uint8_t)(data >> 24));
 			}
 
 			static inline uint8_t spi_receive(uint8_t data)
@@ -196,33 +206,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 				EVE_CS_PORT |= EVE_CS;	/* cs high */
 			}
 
-			static inline void spi_transmit_async(uint8_t data)
-			{
-#if 1
-				SPDR = data; /* start transmission */
-				while(!(SPSR & (1<<SPIF))); /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
-#endif
-
-#if 0
-				uint8_t spiIndex  = 0x80;
-				uint8_t k;
-
-				for(k = 0; k <8; k++) {         // Output each bit of spiOutByte
-					if(data & spiIndex) {   // Output MOSI Bit
-						PORTC |= (1<<PORTC1);
-					}
-					else {
-						PORTC &= ~(1<<PORTC1);
-					}
-
-					PORTA |= (1<<PORTA1); // toggle SCK
-					PORTA &= ~(1<<PORTA1);
-
-					spiIndex >>= 1;
-				}
-#endif
-			}
-
 			static inline void spi_transmit(uint8_t data)
 			{
 #if 1
@@ -251,6 +234,15 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 					spiIndex >>= 1;
 				}
 #endif
+			}
+
+			/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+			static inline void spi_transmit_burst(uint32_t data)
+			{
+				spi_transmit((uint8_t)(data));
+				spi_transmit((uint8_t)(data >> 8));
+				spi_transmit((uint8_t)(data >> 16));
+				spi_transmit((uint8_t)(data >> 24));
 			}
 
 			static inline uint8_t spi_receive(uint8_t data)
@@ -334,18 +326,20 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 				P8 |= (1u<<2);  /* manually set chip-select to high */
 			}
 
-			static inline void spi_transmit_async(uint8_t data)
+			static inline void spi_transmit(uint8_t data)
 			{
 				CSIH0CTL0 = 0xC1; /* CSIH2PWR = 1;  CSIH2TXE=1; CSIH2RXE = 0; direct access mode  */
 				CSIH0TX0H = data;	/* start transmission */
 				while(CSIH0STR0 & 0x00080);	/* wait for transmission to complete - 800ns @ 10MHz SPI-Clock */
 			}
 
-			static inline void spi_transmit(uint8_t data)
+			/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+			static inline void spi_transmit_burst(uint32_t data)
 			{
-				CSIH0CTL0 = 0xC1; /* CSIH2PWR = 1;  CSIH2TXE=1; CSIH2RXE = 0; direct access mode  */
-				CSIH0TX0H = data;	/* start transmission */
-				while(CSIH0STR0 & 0x00080);	/* wait for transmission to complete - 800ns @ 10MHz SPI-Clock */
+				spi_transmit((uint8_t)(data));
+				spi_transmit((uint8_t)(data >> 8));
+				spi_transmit((uint8_t)(data >> 16));
+				spi_transmit((uint8_t)(data >> 24));
 			}
 
 			static inline uint8_t spi_receive(uint8_t data)
@@ -395,14 +389,18 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 				HW_DIO_SetSync(IO_DIO_DIGOUT_CS_TFT, 1);  /* manually set chip-select to high */
 			}
 
-			static inline void spi_transmit_async(uint8_t data)
+			static inline void spi_transmit(uint8_t data)
 			{
 				SPI_ReceiveByte(data);
 			}
 
-			static inline void spi_transmit(uint8_t data)
+			/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+			static inline void spi_transmit_burst(uint32_t data)
 			{
-				SPI_ReceiveByte(data);
+				spi_transmit((uint8_t)(data));
+				spi_transmit((uint8_t)(data >> 8));
+				spi_transmit((uint8_t)(data >> 16));
+				spi_transmit((uint8_t)(data >> 24));
 			}
 
 			static inline uint8_t spi_receive(uint8_t data)
@@ -451,7 +449,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 
 		#if defined (EVE_DMA)
-			extern uint8_t EVE_dma_buffer[4100];
+			extern uint32_t EVE_dma_buffer[1025];
 			extern volatile uint16_t EVE_dma_buffer_index;
 			extern volatile uint8_t EVE_dma_busy;
 
@@ -482,22 +480,24 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			PORT->Group[EVE_CS_PORT].OUTSET.reg = EVE_CS;
 		}
 
-		static inline void spi_transmit_async(uint8_t data)
-		{
-			#if defined (EVE_DMA)
-				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
-			#else
-				EVE_SPI->SPI.DATA.reg = data;
-				while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0);
-				(void) EVE_SPI->SPI.DATA.reg; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
-			#endif
-		}
-
 		static inline void spi_transmit(uint8_t data)
 		{
 			EVE_SPI->SPI.DATA.reg = data;
 			while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0);
 			(void) EVE_SPI->SPI.DATA.reg; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
+		}
+
+		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+		static inline void spi_transmit_burst(uint32_t data)
+		{
+			#if defined (EVE_DMA)
+				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+			#else
+				spi_transmit((uint8_t)(data));
+				spi_transmit((uint8_t)(data >> 8));
+				spi_transmit((uint8_t)(data >> 16));
+				spi_transmit((uint8_t)(data >> 24));
+			#endif
 		}
 
 		static inline uint8_t spi_receive(uint8_t data)
@@ -557,20 +557,19 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			gpio_bit_set(GPIOB,GPIO_PIN_0);
 		}
 
-		static inline void spi_transmit_async(uint8_t data)
-		{
-			#if defined (EVE_DMA)
-				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
-			#else
-				SPI_DATA(SPI0) = (uint32_t) data;
-				while(SPI_STAT(SPI0) & SPI_STAT_TRANS);
-			#endif
-		}
-
 		static inline void spi_transmit(uint8_t data)
 		{
 				SPI_DATA(SPI0) = (uint32_t) data;
 				while(SPI_STAT(SPI0) & SPI_STAT_TRANS);
+		}
+
+		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+		static inline void spi_transmit_burst(uint32_t data)
+		{
+			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data >> 8));
+			spi_transmit((uint8_t)(data >> 16));
+			spi_transmit((uint8_t)(data >> 24));
 		}
 
 		static inline uint8_t spi_receive(uint8_t data)
@@ -672,15 +671,16 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXNE */
 		}
 
-		static inline void spi_transmit_async(uint8_t data)
+		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+		static inline void spi_transmit_burst(uint32_t data)
 		{
 			#if defined (EVE_DMA)
 				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
 			#else
-				LL_SPI_TransmitData8(EVE_SPI, data);
-				while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
-				while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI));
-				LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXNE */
+				spi_transmit((uint8_t)(data));
+				spi_transmit((uint8_t)(data >> 8));
+				spi_transmit((uint8_t)(data >> 16));
+				spi_transmit((uint8_t)(data >> 24));
 			#endif
 		}
 
@@ -761,19 +761,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
             P5OUT |= EVE_CS;    /* CS high */
         }
 
-        static inline void spi_transmit_async(uint8_t data)
-        {
-            #if defined (EVE_DMA)
-
-            #else
-//            SPI_transmitData(EUSCI_B0_BASE, data);
-//            while (!(SPI_getInterruptStatus(EUSCI_B0_BASE,EUSCI_B_SPI_TRANSMIT_INTERRUPT)));
-
-            UCB0TXBUF_SPI = data;
-            while(!(UCB0IFG_SPI & UCTXIFG)); /* wait for transmission to complete */
-            #endif
-        }
-
         static inline void spi_transmit(uint8_t data)
         {
 //            SPI_transmitData(EUSCI_B0_BASE, data);
@@ -782,6 +769,19 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
             UCB0TXBUF_SPI = data;
             while(!(UCB0IFG_SPI & UCTXIFG)); /* wait for transmission to complete */
         }
+
+		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+		static inline void spi_transmit_burst(uint32_t data)
+		{
+			#if defined (EVE_DMA)
+				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+			#else
+				spi_transmit((uint8_t)(data));
+				spi_transmit((uint8_t)(data >> 8));
+				spi_transmit((uint8_t)(data >> 16));
+				spi_transmit((uint8_t)(data >> 24));
+			#endif
+		}
 
         static inline uint8_t spi_receive(uint8_t data)
         {
@@ -849,26 +849,25 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	}
 
 	#if defined (ESP8266)
-		static inline void spi_transmit_async(uint8_t data)
-		{
-			SPI.write(data);
-		}
-
 		static inline void spi_transmit(uint8_t data)
 		{
 			SPI.write(data);
 		}
 	#else
-		static inline void spi_transmit_async(uint8_t data)
-		{
-			SPI.transfer(data);
-		}
-
 		static inline void spi_transmit(uint8_t data)
 		{
 			SPI.transfer(data);
 		}
 	#endif
+
+	/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+	static inline void spi_transmit_burst(uint32_t data)
+	{
+		spi_transmit((uint8_t)(data));
+		spi_transmit((uint8_t)(data >> 8));
+		spi_transmit((uint8_t)(data >> 16));
+		spi_transmit((uint8_t)(data >> 24));
+	}
 
 	static inline uint8_t spi_receive(uint8_t data)
 	{

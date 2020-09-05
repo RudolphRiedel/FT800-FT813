@@ -1,8 +1,8 @@
 /*
 @file    EVE_config.h
 @brief   configuration information for some TFTs
-@version 4.0
-@date    2020-06-26
+@version 5.0
+@date    2020-09-05
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -49,8 +49,18 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - sorted displays by resolution
 - added profiles for EVE3x-39A/EVE3x-39G
 - updated EVE3x-39A/EVE3x-39G profiles
+- added EVE_NHD_43_800480 for the NHD-4.3-800480FT-CSXP-CTP from Newhaven
+
+5.0
+- re-added the EVE_CSPREAD parameters to all profiles
+- added a profile for the Gameduino3 shield
+- cleanup: removed FT80x profiles
+- replaced FT81x_enable and BT81x_enable with "EVE_GEN n"
+- removed everything BT817 / BT818 related for an earlier release
 
 */
+
+#pragma once
 
 #ifndef EVE_CONFIG_H_
 #define EVE_CONFIG_H_
@@ -58,18 +68,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 /* select the settings for the TFT attached */
 #if 0
-	#define EVE_VM800B35A
-	#define EVE_VM800B43A
-	#define EVE_VM800B50A
 	#define EVE_VM810C
 	#define EVE_ME812A
 	#define EVE_ME813A
 	#define EVE_FT810CB_HY50HD
 	#define EVE_FT811CB_HY50HD
 	#define EVE_ET07
-	#define EVE_RVT28
-	#define EVE_RVT35
-	#define EVE_RVT43
 	#define EVE_RVT50
 	#define EVE_RVT70
 	#define EVE_RiTFT43
@@ -98,6 +102,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE_EVE3x_39G
 	#define EVE_NHD_35
 	#define EVE_NHD_43
+	#define EVE_NHD_43_800480
 	#define EVE_NHD_50
 	#define EVE_NHD_70
 	#define EVE_ADAM101
@@ -107,7 +112,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE_CFAF800480E0_050SC
 	#define EVE_PAF90
 	#define EVE_SUNFLOWER
-	#define EVE_CONNECTEVE
 	#define EVE_GEN4_FT81x_43
 	#define EVE_GEN4_FT812_50
 	#define EVE_GEN4_FT812_70
@@ -116,45 +120,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 #endif
 
-#define EVE_EVE3_50G
+#define EVE_CFAF800480E0_050SC
 
 
 /* display timing parameters below */
 
 /* ----------- 320 x 240 ----------- */
-
-/* VM800B35A: FT800 320x240 3.5" FTDI FT800 */
-#if defined (EVE_VM800B35A)
-#define Resolution_320x240
-
-#define EVE_PCLK	(7L)	/* 48MHz / REG_PCLK = PCLK frequency */
-#define EVE_PCLKPOL	(0L)
-#define EVE_SWIZZLE	(2L)
-#define EVE_TOUCH_RZTHRESH (1200L)
-#define EVE_HAS_CRYSTAL		/* use external crystal or internal oscillator? */
-#endif
-
-
-/* untested */
-/* RVT28 240x320 2.8" Riverdi, various options, FT800/FT801 */
-#if defined (EVE_RVT28)
-#define EVE_HSIZE	(320L)
-#define EVE_VSIZE	(240L)
-
-#define EVE_VSYNC0	(0L)
-#define EVE_VSYNC1	(2L)
-#define EVE_VOFFSET	(2L)
-#define EVE_VCYCLE	(326L)
-#define EVE_HSYNC0	(0L)
-#define EVE_HSYNC1	(10L)
-#define EVE_HOFFSET	(20L)
-#define EVE_HCYCLE 	(270L)
-#define EVE_PCLKPOL	(0L)
-#define EVE_SWIZZLE	(4L)
-#define EVE_PCLK	(9L)
-#define EVE_TOUCH_RZTHRESH (1200L)
-#endif
-
 
 /* EVE2-35A 320x240 3.5" Matrix Orbital, resistive, or non-touch, FT812 */
 #if defined (EVE_EVE2_35)
@@ -163,8 +134,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(9L)
 #define EVE_PCLKPOL	(0L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1200L)
-#define FT81X_ENABLE
+#define EVE_GEN 2
 #endif
 
 
@@ -175,8 +147,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(9L)
 #define EVE_PCLKPOL	(0L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1200L)
-#define FT81X_ENABLE
+#define EVE_GEN 2
 #define EVE_HAS_GT911	/* special treatment required for out-of-spec touch-controller */
 #endif
 
@@ -189,9 +162,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(11L)
 #define EVE_PCLKPOL	(0L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_CRYSTAL
-#define FT81X_ENABLE
+#define EVE_GEN 3
 #define BT81X_ENABLE
 #endif
 
@@ -203,23 +177,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(11L)
 #define EVE_PCLKPOL	(0L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_CRYSTAL
-#define FT81X_ENABLE
-#define BT81X_ENABLE
+#define EVE_GEN 3
 #define EVE_HAS_GT911	/* special treatment required for out-of-spec touch-controller */
-#endif
-
-
-/* untested */
-/* RVT3.5 320x240 3.5" Riverdi, various options, FT800/FT801 */
-#if defined (EVE_RVT35)
-#define Resolution_320x240
-
-#define EVE_PCLK	(7L)	/* 48MHz / REG_PCLK = PCLK frequency */
-#define EVE_PCLKPOL	(1L)
-#define EVE_SWIZZLE	(2L)
-#define EVE_TOUCH_RZTHRESH (1200L)
 #endif
 
 
@@ -236,11 +198,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_HSYNC1	(20L)
 #define EVE_HOFFSET	(40L)
 #define EVE_HCYCLE 	(510L)
+#define EVE_PCLK	(8L)
 #define EVE_PCLKPOL	(0L)
 #define EVE_SWIZZLE	(2L)
-#define EVE_PCLK	(8L)
+#define EVE_CSPREAD	(0L)
 #define EVE_TOUCH_RZTHRESH (1800L)
-#define FT81X_ENABLE
+#define EVE_GEN 2
 #endif
 
 
@@ -253,8 +216,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(9L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(2L)
+#define EVE_CSPREAD	(0L)
 #define EVE_TOUCH_RZTHRESH (1200L)
-#define FT81X_ENABLE
+#define EVE_GEN 2
 #endif
 
 
@@ -265,25 +229,14 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(9L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(2L)
+#define EVE_CSPREAD	(0L)
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_CRYSTAL
-#define FT81X_ENABLE
+#define EVE_GEN 2
 #endif
 
 
 /* ----------- 480 x 272 ----------- */
-
-/* FTDI/BRT EVE modules VM800B43A and VM800B50A  FT800 480x272 4.3" and 5.0" */
-#if defined (EVE_VM800B43A) || defined (EVE_VM800B50A)
-#define Resolution_480x272
-
-#define EVE_PCLK	(5L)
-#define EVE_PCLKPOL	(1L)
-#define EVE_SWIZZLE	(0L)
-#define EVE_TOUCH_RZTHRESH (1200L)
-#define EVE_HAS_CRYSTAL
-#endif
-
 
 /* untested */
 /* EVE2-43A 480x272 4.3" Matrix Orbital, resistive or no touch, FT812 */
@@ -293,8 +246,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(6L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1200L)
-#define FT81X_ENABLE
+#define EVE_GEN 2
 #endif
 
 
@@ -305,8 +259,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(6L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1200L)
-#define FT81X_ENABLE
+#define EVE_GEN 2
 #define EVE_HAS_GT911	/* special treatment required for out-of-spec touch-controller */
 #endif
 
@@ -319,9 +274,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(7L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_CRYSTAL
-#define FT81X_ENABLE
+#define EVE_GEN 3
 #define BT81X_ENABLE
 #endif
 
@@ -333,23 +289,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(7L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_CRYSTAL
-#define FT81X_ENABLE
+#define EVE_GEN 3
 #define BT81X_ENABLE
 #define EVE_HAS_GT911
-#endif
-
-
-/* untested */
-/* RVT43 / RVT4.3 480x272 4.3" Riverdi, various options, FT800/FT801 */
-#if defined (EVE_RVT43)
-#define Resolution_480x272
-
-#define EVE_PCLK	(5L)
-#define EVE_PCLKPOL	(1L)
-#define EVE_SWIZZLE	(0L)
-#define EVE_TOUCH_RZTHRESH (1200L)
 #endif
 
 
@@ -360,9 +305,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(7L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_CRYSTAL
-#define FT81X_ENABLE
+#define EVE_GEN 3
 #define BT81X_ENABLE
 #endif
 
@@ -375,22 +321,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(6L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_CRYSTAL
-#define FT81X_ENABLE
-#endif
-
-
-/* untested */
-/* MikroElektronika ConnectEVE, FT800 480x272 4.3" */
-#if defined (EVE_CONNECTEVE)
-#define Resolution_480x272
-
-#define EVE_PCLK	(5L)
-#define EVE_PCLKPOL	(1L)
-#define EVE_SWIZZLE	(0L)
-#define EVE_TOUCH_RZTHRESH (2000L)
-#define EVE_HAS_CRYSTAL
+#define EVE_GEN 2
 #endif
 
 
@@ -402,9 +336,24 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(6L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_CRYSTAL
-#define FT81X_ENABLE
+#define EVE_GEN 2
+#endif
+
+
+/* untested */
+/* Gameduino 3, 480x272 4.3",resistive touch, FT810 */
+#if defined (EVE_GEN4_FT81x_43)
+#define Resolution_480x272
+
+#define EVE_PCLK	(6L)
+#define EVE_PCLKPOL	(1L)
+#define EVE_SWIZZLE	(3L)
+#define EVE_CSPREAD	(1L)
+#define EVE_TOUCH_RZTHRESH (1200L)
+#define EVE_GEN 2
 #endif
 
 
@@ -413,16 +362,32 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /* untested */
 /* FTDI/BRT EVE2 modules VM810C50A-D, ME812A-WH50R and ME813A-WH50C, 800x480 5.0" */
 /* 4D-Systems GEN4 FT812/FT813 5.0/7.0 */
-/* NHD-7.0-800480FT-CxXx-xxx 800x480 7.0" Newhaven, resistive or capacitive, FT81x */
-#if defined (EVE_VM810C) || defined (EVE_ME812A) || defined (EVE_ME813A) || defined (EVE_GEN4_FT812_50) || defined (EVE_GEN4_FT813_50) || defined (EVE_GEN4_FT812_70) || defined (EVE_GEN4_FT813_70) || defined (EVE_NHD_70)
+/* NHD-4.3-800480FT-CSXP-CTP 800x480 4.3" Newhaven, capacitive touch, FT813 */
+#if defined (EVE_VM810C) || defined (EVE_ME812A) || defined (EVE_ME813A) || defined (EVE_GEN4_FT812_50) || defined (EVE_GEN4_FT813_50) || defined (EVE_GEN4_FT812_70) || defined (EVE_GEN4_FT813_70) || defined (EVE_NHD_43_800480)
 #define Resolution_800x480
 
 #define EVE_PCLK	(2L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(0L)
 #define EVE_TOUCH_RZTHRESH (1800L)
 #define EVE_HAS_CRYSTAL
-#define FT81X_ENABLE
+#define EVE_GEN 2
+#endif
+
+
+/* untested */
+/* NHD-7.0-800480FT-CxXx-xxx 800x480 7.0" Newhaven, resistive or capacitive, FT81x */
+#if defined (EVE_NHD_70)
+#define Resolution_800x480
+
+#define EVE_PCLK	(2L)
+#define EVE_PCLKPOL	(1L)
+#define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(1L)
+#define EVE_TOUCH_RZTHRESH (1800L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 2
 #endif
 
 
@@ -434,8 +399,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(2L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(0L)
 #define EVE_TOUCH_RZTHRESH (1200L)
-#define FT81X_ENABLE
+#define EVE_GEN 2
 #endif
 
 
@@ -447,8 +413,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(2L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(0L)
 #define EVE_TOUCH_RZTHRESH (1200L)
-#define FT81X_ENABLE
+#define EVE_GEN 2
 #define EVE_HAS_GT911	/* special treatment required for out-of-spec touch-controller */
 #endif
 
@@ -461,10 +428,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(2L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(0L)
 #define EVE_TOUCH_RZTHRESH (1600L)
 #define EVE_HAS_CRYSTAL
-#define FT81X_ENABLE
-#define BT81X_ENABLE
+#define EVE_GEN 3
 #endif
 
 
@@ -475,10 +442,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(2L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(0L)
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_CRYSTAL
-#define FT81X_ENABLE
-#define BT81X_ENABLE
+#define EVE_GEN 3
 #define EVE_HAS_GT911
 #endif
 
@@ -491,9 +458,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(2L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(1L)
 #define EVE_HAS_CRYSTAL
-#define FT81X_ENABLE
-#define BT81X_ENABLE
+#define EVE_GEN 3
 #endif
 
 
@@ -514,8 +481,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(2L)	/* 60MHz / REG_PCLK = PCLK frequency 30 MHz */
 #define EVE_PCLKPOL (1L)	/* PCLK polarity (0 = rising edge, 1 = falling edge) */
 #define EVE_SWIZZLE (0L)	/* Defines the arrangement of the RGB pins of the FT800 */
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1800L)	/* touch-sensitivity */
-#define FT81X_ENABLE
+#define EVE_GEN 2
 #endif
 
 
@@ -536,10 +504,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(2L)	/* 72MHz / REG_PCLK = PCLK frequency 30 MHz */
 #define EVE_PCLKPOL (1L)	/* PCLK polarity (0 = rising edge, 1 = falling edge) */
 #define EVE_SWIZZLE (0L)	/* Defines the arrangement of the RGB pins of the FT800 */
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1800L)	/* touch-sensitivity */
 #define EVE_HAS_CRYSTAL
-#define FT81X_ENABLE
-#define BT81X_ENABLE
+#define EVE_GEN 3
 #endif
 
 
@@ -551,9 +519,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(2L)
 #define EVE_PCLKPOL	(0L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_CRYSTAL
-#define FT81X_ENABLE
+#define EVE_GEN 2
 #endif
 
 
@@ -573,9 +542,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(2L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (2000L)	/* touch-sensitivity */
 #define EVE_HAS_CRYSTAL
-#define FT81X_ENABLE
+#define EVE_GEN 2
 #endif
 
 
@@ -595,9 +565,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLK	(2L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
 #define EVE_HAS_CRYSTAL
-#define FT81X_ENABLE
+#define EVE_GEN 2
 #endif
 
 
@@ -618,8 +589,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_PCLK	(2L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1200L)
-#define FT81X_ENABLE
+#define EVE_GEN 2
 #endif
 
 
@@ -641,10 +613,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
 #define EVE_PCLK	(2L)
+#define EVE_CSPREAD	(0L)
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_CRYSTAL
-#define FT81X_ENABLE
+#define EVE_GEN 2
 #endif
+
 
 /* ----------- 1280 x 800 ------------ */
 
@@ -668,9 +642,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_HCYCLE 	(408L)
 #define EVE_PCLKPOL	(0L)
 #define EVE_SWIZZLE	(0L)
-#define EVE_PCLK	(8L)
+#define EVE_PCLK	(9L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1200L)
-#define FT81X_ENABLE
+#define EVE_GEN 2
 #endif
 
 
@@ -690,8 +665,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLKPOL	(0L)
 #define EVE_SWIZZLE	(2L)
 #define EVE_PCLK	(5L)
+#define EVE_CSPREAD	(0L)
 #define EVE_TOUCH_RZTHRESH (1200L)
-#define FT81X_ENABLE
+#define EVE_GEN 2
 #endif
 
 
@@ -710,9 +686,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_HCYCLE 	(548L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
-#define EVE_PCLK	(5L)
+#define EVE_PCLK	(6L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1200L)
-#define FT81X_ENABLE
+#define EVE_GEN 2
 #endif
 
 
@@ -731,10 +708,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_HCYCLE 	(548L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
-#define EVE_PCLK	(5L)
+#define EVE_PCLK	(6L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1200L)
+#define EVE_GEN 2
 #define EVE_HAS_GT911	/* special treatment required for out-of-spec touch-controller */
-#define FT81X_ENABLE
 #endif
 
 
@@ -755,10 +733,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
 #define EVE_PCLK	(7L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_CRYSTAL
-#define FT81X_ENABLE
-#define BT81X_ENABLE
+#define EVE_GEN 3
 #endif
 
 
@@ -779,11 +757,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
 #define EVE_PCLK	(7L)
+#define EVE_CSPREAD	(1L)
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_CRYSTAL
+#define EVE_GEN 3
 #define EVE_HAS_GT911
-#define FT81X_ENABLE
-#define BT81X_ENABLE
 #endif
 
 
@@ -803,8 +781,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
 #define EVE_PCLK	(7L)
+#define EVE_CSPREAD	(0L)
 #define EVE_TOUCH_RZTHRESH (1200L)
-#define FT81X_ENABLE
+#define EVE_GEN 2
 #endif
 
 

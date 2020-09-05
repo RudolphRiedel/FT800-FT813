@@ -1,8 +1,8 @@
 /*
 @file    tft.c
 @brief   TFT handling functions for EVE_Test project
-@version 1.12
-@date    2020-04-13
+@version 1.13
+@date    2020-09-05
 @author  Rudolph Riedel
 
 @section History
@@ -55,11 +55,13 @@
 - minor cleanup, switched from EVE_get_touch_tag(1); to EVE_memRead8(REG_TOUCH_TAG);
 - added some more sets of calibration data from my displays
 
+1.13
+- adapted to V5
+- new logo
+
  */
 
 #include "EVE.h"
-#include "EVE_target.h"
-#include "EVE_commands.h"
 #include "tft_data.h"
 
 /* some pre-definded colors */
@@ -75,10 +77,10 @@
 #define BLACK	0x000000UL
 
 /* memory-map defines */
-#define MEM_LOGO 0x00000000 /* start-address of logo, needs 2242 bytes of memory */
-#define MEM_PIC1 0x00000900 /* start of 100x100 pixel test image, ARGB565, needs 20000 bytes of memory */
+#define MEM_LOGO 0x000f8000 /* start-address of logo, needs 6272 bytes of memory */
+#define MEM_PIC1 0x000fa000 /* start of 100x100 pixel test image, ARGB565, needs 20000 bytes of memory */
 
-#define MEM_DL_STATIC (EVE_RAM_G_SIZE - 4096) /* start-address of the static part of the display-list, upper 4k of gfx-mem */
+#define MEM_DL_STATIC (EVE_RAM_G_SIZE - 4096) /* 0xff000 - start-address of the static part of the display-list, upper 4k of gfx-mem */
 
 uint32_t num_dl_static; /* amount of bytes in the static part of our display-list */
 uint8_t tft_active = 0;
@@ -155,7 +157,7 @@ void touch_calibrate(void)
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0x00829c08);
 #endif
 
-#if defined (EVE_EVE2_35G)
+#if defined (EVE_EVE2_35G) ||  defined (EVE_EVE3_35G)
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_A, 0x000109E4);
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_B, 0x000007A6);
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_C, 0xFFEC1EBA);
@@ -164,7 +166,7 @@ void touch_calibrate(void)
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0xFFF469CF);
 #endif
 
-#if defined (EVE_EVE2_43G)
+#if defined (EVE_EVE2_43G) ||  defined (EVE_EVE3_43G)
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_A, 0x0000a1ff);
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_B, 0x00000680);
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_C, 0xffe54cc2);
@@ -173,7 +175,7 @@ void touch_calibrate(void)
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0xfffe628d);
 #endif
 
-#if defined (EVE_EVE2_50G)
+#if defined (EVE_EVE2_50G)||  defined (EVE_EVE3_50G)
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_A, 0x000109E4);
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_B, 0x000007A6);
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_C, 0xFFEC1EBA);
@@ -261,22 +263,13 @@ void touch_calibrate(void)
 	EVE_cmd_text(5, 75, 26, 0, "TOUCH_TRANSFORM_E:");
 	EVE_cmd_text(5, 90, 26, 0, "TOUCH_TRANSFORM_F:");
 
-#if defined (FT81X_ENABLE)
-	EVE_cmd_setbase(16L); /* FT81x only */
+	EVE_cmd_setbase(16L);
 	EVE_cmd_number(310, 15, 26, EVE_OPT_RIGHTX|8, touch_a);
 	EVE_cmd_number(310, 30, 26, EVE_OPT_RIGHTX|8, touch_b);
 	EVE_cmd_number(310, 45, 26, EVE_OPT_RIGHTX|8, touch_c);
 	EVE_cmd_number(310, 60, 26, EVE_OPT_RIGHTX|8, touch_d);
 	EVE_cmd_number(310, 75, 26, EVE_OPT_RIGHTX|8, touch_e);
 	EVE_cmd_number(310, 90, 26, EVE_OPT_RIGHTX|8, touch_f);
-#else
-	EVE_cmd_number(310, 15, 26, EVE_OPT_RIGHTX, touch_a);
-	EVE_cmd_number(310, 30, 26, EVE_OPT_RIGHTX, touch_b);
-	EVE_cmd_number(310, 45, 26, EVE_OPT_RIGHTX, touch_c);
-	EVE_cmd_number(310, 60, 26, EVE_OPT_RIGHTX, touch_d);
-	EVE_cmd_number(310, 75, 26, EVE_OPT_RIGHTX, touch_e);
-	EVE_cmd_number(310, 90, 26, EVE_OPT_RIGHTX, touch_f);
-#endif
 
 	EVE_cmd_dl(DL_DISPLAY);	/* instruct the graphics processor to show the list */
 	EVE_cmd_dl(CMD_SWAP); /* make this list active */
@@ -309,8 +302,8 @@ void initStaticBackground()
 	/* display the logo */
 	EVE_cmd_dl(DL_COLOR_RGB | WHITE);
 	EVE_cmd_dl(DL_BEGIN | EVE_BITMAPS);
-	EVE_cmd_setbitmap(MEM_LOGO, EVE_L8, 38, 59);
-	EVE_cmd_dl(VERTEX2F(EVE_HSIZE - 50, 5));
+	EVE_cmd_setbitmap(MEM_LOGO, EVE_ARGB1555, 56, 56);
+	EVE_cmd_dl(VERTEX2F(EVE_HSIZE - 58, 5));
 	EVE_cmd_dl(DL_END);
 
 	/* draw a black line to separate things */
@@ -321,20 +314,22 @@ void initStaticBackground()
 	EVE_cmd_dl(DL_END);
 
 	/* add the static text to the list */
-	EVE_cmd_text(10, EVE_VSIZE - 65, 26, 0, "DL-size:");
-	EVE_cmd_text(10, EVE_VSIZE - 50, 26, 0, "Bytes:");
+#if defined (EVE_DMA)
+	EVE_cmd_text(10, EVE_VSIZE - 65, 26, 0, "Bytes:");
+#endif
+	EVE_cmd_text(10, EVE_VSIZE - 50, 26, 0, "DL-size:");
 	EVE_cmd_text(10, EVE_VSIZE - 35, 26, 0, "Time1:");
 	EVE_cmd_text(10, EVE_VSIZE - 20, 26, 0, "Time2:");
 
 	EVE_cmd_text(125, EVE_VSIZE - 35, 26, 0, "us");
 	EVE_cmd_text(125, EVE_VSIZE - 20, 26, 0, "us");
 
-	EVE_cmd_execute();
+	while (EVE_busy());
 
 	num_dl_static = EVE_memRead16(REG_CMD_DL);
 
 	EVE_cmd_memcpy(MEM_DL_STATIC, EVE_RAM_DL, num_dl_static);
-	EVE_cmd_execute();
+	while (EVE_busy());
 }
 
 
@@ -400,73 +395,65 @@ void TFT_touch(void)
 */
 void TFT_display(void)
 {
-    uint32_t calc;
-	uint16_t old_offset, new_offset;
 	static int32_t rotate = 0;
-
 	uint16_t display_list_size = 0;
 
 	if(tft_active != 0)
 	{
-		old_offset =  EVE_report_cmdoffset(); /* used to calculate the amount of cmd-fifo bytes necessary */
+		#if defined (EVE_DMA)
+			uint16_t cmd_fifo_size;
+			cmd_fifo_size = EVE_dma_buffer_index*4; /* without DMA there is no way to tell how many bytes are written to the cmd-fifo */
+		#endif
 		display_list_size = EVE_memRead16(REG_CMD_DL);
 
 		EVE_start_cmd_burst(); /* start writing to the cmd-fifo as one stream of bytes, only sending the address once */
 
-		EVE_cmd_dl(CMD_DLSTART); /* start the display list */
-		EVE_cmd_dl(DL_CLEAR_RGB | WHITE); /* set the default clear color to white */
-		EVE_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG); /* clear the screen - this and the previous prevent artifacts between lists, Attributes are the color, stencil and tag buffers */
-		EVE_cmd_dl(TAG(0));
+		EVE_cmd_dl_burst(CMD_DLSTART); /* start the display list */
+		EVE_cmd_dl_burst(DL_CLEAR_RGB | WHITE); /* set the default clear color to white */
+		EVE_cmd_dl_burst(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG); /* clear the screen - this and the previous prevent artifacts between lists, Attributes are the color, stencil and tag buffers */
+		EVE_cmd_dl_burst(TAG(0));
 
-		EVE_cmd_append(MEM_DL_STATIC, num_dl_static); /* insert static part of display-list from copy in gfx-mem */
+		EVE_cmd_append_burst(MEM_DL_STATIC, num_dl_static); /* insert static part of display-list from copy in gfx-mem */
 		/* display a button */
-		EVE_cmd_dl(DL_COLOR_RGB | WHITE);
-		EVE_cmd_fgcolor(0x00c0c0c0); /* some grey */
-		EVE_cmd_dl(TAG(10)); /* assign tag-value '10' to the button that follows */
-		EVE_cmd_button(20,20,80,30, 28, toggle_state,"Touch!");
-		EVE_cmd_dl(TAG(0)); /* no touch */
+		EVE_cmd_dl_burst(DL_COLOR_RGB | WHITE);
+		EVE_cmd_fgcolor_burst(0x00c0c0c0); /* some grey */
+		EVE_cmd_dl_burst(TAG(10)); /* assign tag-value '10' to the button that follows */
+		EVE_cmd_button_burst(20,20,80,30, 28, toggle_state,"Touch!");
+		EVE_cmd_dl_burst(TAG(0)); /* no touch */
 
 		/* display a picture and rotate it when the button on top is activated */
-		EVE_cmd_setbitmap(MEM_PIC1, EVE_RGB565, 100, 100);
+		EVE_cmd_setbitmap_burst(MEM_PIC1, EVE_RGB565, 100, 100);
 
-		EVE_cmd_dl(CMD_LOADIDENTITY);
-		EVE_cmd_translate(65536 * 70, 65536 * 50); /* shift off-center */
-		EVE_cmd_rotate(rotate);
-		EVE_cmd_translate(65536 * -70, 65536 * -50); /* shift back */
-		EVE_cmd_dl(CMD_SETMATRIX);
+		EVE_cmd_dl_burst(CMD_LOADIDENTITY);
+		EVE_cmd_translate_burst(65536 * 70, 65536 * 50); /* shift off-center */
+		EVE_cmd_rotate_burst(rotate);
+		EVE_cmd_translate_burst(65536 * -70, 65536 * -50); /* shift back */
+		EVE_cmd_dl_burst(CMD_SETMATRIX);
 
 		if(toggle_state != 0)
 		{
 			rotate += 256;
 		}
 
-		EVE_cmd_dl(DL_BEGIN | EVE_BITMAPS);
-		EVE_cmd_dl(VERTEX2F(EVE_HSIZE - 105, (LAYOUT_Y1)));
-		EVE_cmd_dl(DL_END);
+		EVE_cmd_dl_burst(DL_BEGIN | EVE_BITMAPS);
+		EVE_cmd_dl_burst(VERTEX2F(EVE_HSIZE - 100, (LAYOUT_Y1)));
+		EVE_cmd_dl_burst(DL_END);
 
-		/* reset the transformation matrix to default values */
-		EVE_cmd_dl(RESTORE_CONTEXT());
+		EVE_cmd_dl_burst(RESTORE_CONTEXT()); /* reset the transformation matrix to default values */
 
 		/* print profiling values */
-		EVE_cmd_dl(DL_COLOR_RGB | BLACK);
+		EVE_cmd_dl_burst(DL_COLOR_RGB | BLACK);
 
-		EVE_cmd_number(120, EVE_VSIZE - 65, 26, EVE_OPT_RIGHTX, display_list_size); /* number of bytes written to the display-list by the command co-pro */
-		EVE_cmd_number(120, EVE_VSIZE - 35, 26, EVE_OPT_RIGHTX|5, num_profile_a); /* duration in µs of TFT_loop() for the touch-event part */
-		EVE_cmd_number(120, EVE_VSIZE - 20, 26, EVE_OPT_RIGHTX|5, num_profile_b); /* duration in µs of TFT_loop() for the display-list part */
+		#if defined (EVE_DMA)
+		EVE_cmd_number_burst(120, EVE_VSIZE - 65, 26, EVE_OPT_RIGHTX, cmd_fifo_size); /* number of bytes written to the cmd-fifo */
+		#endif
+		EVE_cmd_number_burst(120, EVE_VSIZE - 50, 26, EVE_OPT_RIGHTX, display_list_size); /* number of bytes written to the display-list by the command co-pro */
+		EVE_cmd_number_burst(120, EVE_VSIZE - 35, 26, EVE_OPT_RIGHTX|5, num_profile_a); /* duration in us of TFT_loop() for the touch-event part */
+		EVE_cmd_number_burst(120, EVE_VSIZE - 20, 26, EVE_OPT_RIGHTX|5, num_profile_b); /* duration in us of TFT_loop() for the display-list part */
 
-		new_offset =  EVE_report_cmdoffset();
-		if(old_offset > new_offset)
-		{
-			new_offset+=4096;
-		}
-		calc = new_offset-old_offset;
-		calc += 24; /* adjust for the commands that follow before the end */
-		EVE_cmd_number(120, EVE_VSIZE - 50, 26, EVE_OPT_RIGHTX, calc); /* number of bytes written to the cmd-fifo over the spi without adressing overhead */
+		EVE_cmd_dl_burst(DL_DISPLAY); /* instruct the graphics processor to show the list */
+		EVE_cmd_dl_burst(CMD_SWAP); /* make this list active */
 
-		EVE_cmd_dl(DL_DISPLAY);	/* instruct the graphics processor to show the list */
-		EVE_cmd_dl(CMD_SWAP); /* make this list active */
-
-		EVE_end_cmd_burst(); /* stop writing to the cmd-fifo */
-		EVE_cmd_start(); /* order the command co-processor to start processing its FIFO queue but do not wait for completion */
+		EVE_end_cmd_burst(); /* stop writing to the cmd-fifo, the cmd-FIFO will be executed automatically after this or when DMA is done */
 	}
 }
