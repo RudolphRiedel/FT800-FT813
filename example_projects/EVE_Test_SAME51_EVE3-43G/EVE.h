@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 5.0
-@date    2020-09-05
+@date    2020-10-29
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -23,37 +23,6 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMA
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 @section History
-
-2.1
-- changes to this header
-
-2.2
-- commented out "#define DISPLAY() ((0UL<<24))" as it collides with a define in the Arduino IDE - the whole section of "macros" needs a rework...
-
-3.0
-- renamed from FT800.h to FT8.h
-- changed FT_ prefixes to FT8_
-- switched to standard-C compliant comment-style
-- changed FT81x register definitions from decimal to hex
-- verified all FT81x register definitions
-- moved FT81x registers marked as "reserved" to an #if 0 block
-
-3.1
-- moved several undocumented commands to an #if 0 block
-
-3.2
-- moved CMD_CRC to the block of undocumented commands as well
-
-3.3
-- changed macros BITMAP_LAYOUT_H and BITMAP_SIZE_H as submitted to github by "jventerprises"
-	These macros provide the extended bits for bitmaps bigger than 511 pixels, FTDIs original implementation that I used and never touched takes the arguments
-	as already processed and not the original values.
-	Note the one example in "FT81x Series Programmers Guide" Version 1.1 for displaying a 800x480 sized bitmap:
-	dl(BITMAP_SIZE_H(1, 0));
-	dl(BITMAP_SIZE(NEAREST, BORDER, BORDER, 288, 480));
-	Now you can use it like this:
-	EVE_cmd_dl(BITMAP_SIZE_H(800, 480));
-	EVE_cmd_dl(BITMAP_SIZE(NEAREST, BORDER, BORDER, 800, 480));
 
 4.0
 - renamed from FT8.h to EVE.h
@@ -79,7 +48,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added more BT817 / BT818 defines
 - removed undocumented registers and commands
 - merged FT80x and FT81x definitions as FT81x is baseline now
-- removed everything BT817 / BT818 related for an earlier release
+- removed the history from before 4.0
 
 */
 
@@ -729,7 +698,33 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /* EVE Generation 4: BT817 / BT818 definitions -----------------*/
 #if EVE_GEN > 3
 
+/* Commands for BT817 / BT818 */
+#define CMD_ANIMFRAMERAM   0xFFFFFF6D
+#define CMD_ANIMSTARTRAM   0xFFFFFF6E
+#define CMD_APILEVEL       0xFFFFFF63
+#define CMD_CALIBRATESUB   0xFFFFFF60
+#define CMD_CALLLIST       0xFFFFFF67
+#define CMD_ENDLIST        0xFFFFFF69	/* does not need a dedicated function, just use EVE_cmd_dl(CMD_ENDLIST) */
+#define CMD_FLASHPROGRAM   0xFFFFFF70
+#define CMD_FONTCACHE      0xFFFFFF6B
+#define CMD_FONTCACHEQUERY 0xFFFFFF6C
+#define CMD_GETIMAGE       0xFFFFFF64
+#define CMD_HSF            0xFFFFFF62
+#define CMD_LINETIME       0xFFFFFF5E
+#define CMD_NEWLIST        0xFFFFFF68
+#define CMD_PCLKFREQ       0xFFFFFF6A
+#define CMD_RETURN         0xFFFFFF66	/* does not need a dedicated function, just use EVE_cmd_dl(CMD_RETURN) */
+#define CMD_RUNANIM        0xFFFFFF6F
+#define CMD_TESTCARD       0xFFFFFF61	/* does not need a dedicated function, just use EVE_cmd_dl(CMD_TESTCARD) */
+#define CMD_WAIT           0xFFFFFF65
 
+
+/* Registers for BT817 / BT818 */
+#define REG_UNDERRUN     0x0030260c
+#define REG_AH_CYCLE_MAX 0x00302610
+#define REG_PCLK_FREQ    0x00302614
+#define REG_PCLK_2X      0x00302618
+#define REG_ANIM_ACTIVE  0x0030902C
 
 #endif /*  EVE_GEN > 3 */
 

@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2020-09-05
+@date    2020-10-29
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -23,55 +23,6 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMA
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 @section History
-
-2.2
-- changes to this header
-
-2.3
-
-- changed type of result-value for EVE_init from void to uint8_t
-- added prototype for EVE_cmd_romfont()
-- added millis option to EVE_cmd_clock()
-- switched to standard-C compliant comment-style
-
-2.4
-- added prototype for EVE_memWrite_flash_buffer()
-
-3.0
-- renamed from FT800_commands.h to EVE_commands.h
-- changed FT_ prefixes to EVE_
-- changed ft800_ prefixes to EVE_
-- removed test-function EVE_cmd_loadimage_mf()
-
-3.1
-- added prototypes for EVE_cmd_setfont() and EVE_cmd_setfont2()
-
-3.2
-- removed several prototypes for commands that do not need a function of their own:
-	EVE_cmd_stop(), EVE_cmd_loadidentity(), EVE_cmd_setmatrix(), EVE_cmd_screensaver(),
-	EVE_cmd_logo(), EVE_cmd_coldstart()
-	These all do not have any arguments and can be used with EVE_cmd_dl(), for example:
-	EVE_cmd_dl(CMD_SCREENSAVER);
-	EVE_cmd_dl(CMD_SETMATRIX);
-- added prototype for EVE_cmd_snapshot2()
-- added prototype for EVE_cmd_setscratch()
-
-3.3
-- added prototypes for EVE_cmd_memcrc(), EVE_cmd_getptr(), EVE_cmd_regread() and EVE_cmd_getprops()
-
-3.4
-- added protoypes for EVE_start_cmd_burst() and EVE_end_cmd_burst()
-
-3.5
-- added prototype for EVE_cmd_start()
-
-3.6
-- added prototype for EVE_report_cmdoffset()
-- removed exporting var cmdOffset
-
-3.7
-- sorted functions
-- changed #ifdef to #if defined for consistency
 
 4.0
 - changed FT8_ prefixes to EVE_
@@ -99,6 +50,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - changed the "len" parameter for loadimage, inflate, inflate2 and EVE_memWrite_flash_buffer() to uint32_t
 
 5.0
+- added prototype for EVE_cmd_plkfreq()
 - replaced BT81X_ENABLE with "EVE_GEN > 2"
 - removed FT81X_ENABLE as FT81x already is the lowest supported chip revision now
 - removed the formerly as deprected marked EVE_get_touch_tag()
@@ -113,8 +65,19 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added prototype for EVE_cmd_videoframe()
 - restructured: functions are sorted by chip-generation and within their group in alphabetical order
 - reimplementedEVE_cmd_getmatrix() again, it needs to read values, not write them
-- removed everything BT817 / BT818 related for an earlier release
-
+- added prototypes for EVE_cmd_fontcache() and EVE_cmd_fontcachequery()
+- added prototype for EVE_cmd_flashprogram()
+- added prototype for EVE_cmd_calibratesub()
+- added prototypes for EVE_cmd_animframeram(), EVE_cmd_animframeram_burst(), EVE_cmd_animstartram(), EVE_cmd_animstartram_burst()
+- added prototypes for EVE_cmd_apilevel(), EVE_cmd_apilevel_burst()
+- added prototypes for EVE_cmd_calllist(), EVE_cmd_calllist_burst()
+- added prototype for EVE_cmd_getimage()
+- added prototypes for EVE_cmd_hsf(), EVE_cmd_hsf_burst()
+- added prototype for EVE_cmd_linetime()
+- added prototypes for EVE_cmd_newlist(), EVE_cmd_newlist_burst()
+- added prototypes for EVE_cmd_runanim(), EVE_cmd_runanim_burst()
+- added prototype for EVE_cmd_wait()
+- removed the history from before 4.0
 
 */
 
@@ -152,7 +115,13 @@ void EVE_cmd_execute(void);
 /* EVE4: BT817 / BT818 */
 #if EVE_GEN > 3
 
-
+void EVE_cmd_flashprogram(uint32_t dest, uint32_t src, uint32_t num);
+void EVE_cmd_fontcache(uint32_t font, int32_t ptr, uint32_t num);
+void EVE_cmd_fontcachequery(uint32_t *total, int32_t *used);
+void EVE_cmd_getimage(uint32_t *source, uint32_t *fmt, uint32_t *width, uint32_t *height, uint32_t *palette);
+void EVE_cmd_linetime(uint32_t dest);
+uint32_t EVE_cmd_pclkfreq(uint32_t ftarget, int32_t rounding);
+void EVE_cmd_wait(uint32_t us);
 
 #endif /* EVE_GEN > 3 */
 
@@ -223,6 +192,21 @@ void EVE_end_cmd_burst(void);
 /* EVE4: BT817 / BT818 */
 #if EVE_GEN > 3
 
+void EVE_cmd_animframeram(int16_t x0, int16_t y0, uint32_t aoptr, uint32_t frame);
+void EVE_cmd_animframeram_burst(int16_t x0, int16_t y0, uint32_t aoptr, uint32_t frame);
+void EVE_cmd_animstartram(int32_t ch, uint32_t aoptr, uint32_t loop);
+void EVE_cmd_animstartram_burst(int32_t ch, uint32_t aoptr, uint32_t loop);
+void EVE_cmd_apilevel(uint32_t level);
+void EVE_cmd_apilevel_burst(uint32_t level);
+void EVE_cmd_calibratesub(uint16_t x0, uint16_t y0, uint16_t width, uint16_t height);
+void EVE_cmd_calllist(uint32_t adr);
+void EVE_cmd_calllist_burst(uint32_t adr);
+void EVE_cmd_hsf(uint32_t hsf);
+void EVE_cmd_hsf_burst(uint32_t hsf);
+void EVE_cmd_newlist(uint32_t adr);
+void EVE_cmd_newlist_burst(uint32_t adr);
+void EVE_cmd_runanim(uint32_t waitmask, uint32_t play);
+void EVE_cmd_runanim_burst(uint32_t waitmask, uint32_t play);
 
 
 #endif /* EVE_GEN > 3 */

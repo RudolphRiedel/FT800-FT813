@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2020-09-05
+@date    2020-10-29
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -54,13 +54,13 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 5.0
 - replaced spi_transmit_async() with spi_transmit_burst()
 - changed the DMA buffer from uin8_t to uint32_t
-
+- added spi_transmit_32(uint32_t data) to help shorten EVE_commands.c a bit
+- added spi_transmit_32() to all targets and changed the non-DMA version of spi_transmit_burst() to use spi_transmit_32()
 
 */
 
 #ifndef EVE_TARGET_H_
 #define EVE_TARGET_H_
-
 
 /* While the following lines make things a lot easier like automatically compiling the code for the target you are compiling for, */
 /* a few things are expected to be taken care of beforehand. */
@@ -79,13 +79,13 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
   Check out the section for SAMC21E18A as it has code to transparently add DMA.
 
-  If the define "EVE_DMA" is set the spi_transmit_burst() is changed at compile time to write in a buffer instead directly to SPI.
+  If the define "EVE_DMA" is set the spi_transmit_async() is changed at compile time to write in a buffer instead directly to SPI.
   EVE_init() calls EVE_init_dma() which sets up the DMA channel and enables an IRQ for end of DMA.
   EVE_start_cmd_burst() resets the DMA buffer instead of transferring the first bytes by SPI.
   EVE_end_cmd_burst() just calls EVE_start_dma_transfer() which triggers the transfer of the SPI buffer by DMA.
   EVE_cmd_start() just instantly returns if there is an active DMA transfer.
   EVE_busy() does nothing but to report that EVE is busy if there is an active DMA transfer.
-  At the end of the DMA transfer an IRQ is executed which clears the DMA active state and calls EVE_cs_clear().
+  At the end of the DMA transfer an IRQ is executed which clears the DMA active state, calls EVE_cs_clear() and EVE_cmd_start().
 
 */
 
@@ -142,13 +142,18 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 				while(!(SPSR & (1<<SPIF))); /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
 			}
 
-			/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
-			static inline void spi_transmit_burst(uint32_t data)
+			static inline void spi_transmit_32(uint32_t data)
 			{
 				spi_transmit((uint8_t)(data));
 				spi_transmit((uint8_t)(data >> 8));
 				spi_transmit((uint8_t)(data >> 16));
 				spi_transmit((uint8_t)(data >> 24));
+			}
+
+			/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+			static inline void spi_transmit_burst(uint32_t data)
+			{
+				spi_transmit_32(data);
 			}
 
 			static inline uint8_t spi_receive(uint8_t data)
@@ -236,13 +241,18 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #endif
 			}
 
-			/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
-			static inline void spi_transmit_burst(uint32_t data)
+			static inline void spi_transmit_32(uint32_t data)
 			{
 				spi_transmit((uint8_t)(data));
 				spi_transmit((uint8_t)(data >> 8));
 				spi_transmit((uint8_t)(data >> 16));
 				spi_transmit((uint8_t)(data >> 24));
+			}
+
+			/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+			static inline void spi_transmit_burst(uint32_t data)
+			{
+				spi_transmit_32(data);
 			}
 
 			static inline uint8_t spi_receive(uint8_t data)
@@ -333,13 +343,18 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 				while(CSIH0STR0 & 0x00080);	/* wait for transmission to complete - 800ns @ 10MHz SPI-Clock */
 			}
 
-			/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
-			static inline void spi_transmit_burst(uint32_t data)
+			static inline void spi_transmit_32(uint32_t data)
 			{
 				spi_transmit((uint8_t)(data));
 				spi_transmit((uint8_t)(data >> 8));
 				spi_transmit((uint8_t)(data >> 16));
 				spi_transmit((uint8_t)(data >> 24));
+			}
+
+			/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+			static inline void spi_transmit_burst(uint32_t data)
+			{
+				spi_transmit_32(data);
 			}
 
 			static inline uint8_t spi_receive(uint8_t data)
@@ -394,13 +409,18 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 				SPI_ReceiveByte(data);
 			}
 
-			/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
-			static inline void spi_transmit_burst(uint32_t data)
+			static inline void spi_transmit_32(uint32_t data)
 			{
 				spi_transmit((uint8_t)(data));
 				spi_transmit((uint8_t)(data >> 8));
 				spi_transmit((uint8_t)(data >> 16));
 				spi_transmit((uint8_t)(data >> 24));
+			}
+
+			/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+			static inline void spi_transmit_burst(uint32_t data)
+			{
+				spi_transmit_32(data);
 			}
 
 			static inline uint8_t spi_receive(uint8_t data)
@@ -418,12 +438,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 
-		#if defined (__SAMC21E18A__) || (__ATSAMC20G17A__) || (__SAME51J19A__) || (__SAMD51P20A__) || (__SAMD51J19A__) || (__SAMD51G18A__)
+		#if defined (__SAMC21E18A__) || (__SAMC21J18A__) || (__SAME51J19A__) || (__SAMD51P20A__) || (__SAMD51J19A__) || (__SAMD51G18A__)
 		/* note: target as set by AtmelStudio, valid  are all from the same family, ATSAMC2x and ATSAMx5x use the same SERCOM units */
 
 		#include "sam.h"
 
-		#if defined (__SAMC21E18A__) || (__ATSAMC20G17A__)
+		#if defined (__SAMC21E18A__) || (__SAMC21J18A__)
 		#define EVE_CS_PORT 0
 		#define EVE_CS PORT_PA05
 		#define EVE_PDN_PORT 0
@@ -487,16 +507,21 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			(void) EVE_SPI->SPI.DATA.reg; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
 		}
 
+		static inline void spi_transmit_32(uint32_t data)
+		{
+			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data >> 8));
+			spi_transmit((uint8_t)(data >> 16));
+			spi_transmit((uint8_t)(data >> 24));
+		}
+
 		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
 		static inline void spi_transmit_burst(uint32_t data)
 		{
 			#if defined (EVE_DMA)
 				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
 			#else
-				spi_transmit((uint8_t)(data));
-				spi_transmit((uint8_t)(data >> 8));
-				spi_transmit((uint8_t)(data >> 16));
-				spi_transmit((uint8_t)(data >> 24));
+				spi_transmit_32(data);
 			#endif
 		}
 
@@ -563,13 +588,18 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 				while(SPI_STAT(SPI0) & SPI_STAT_TRANS);
 		}
 
-		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
-		static inline void spi_transmit_burst(uint32_t data)
+		static inline void spi_transmit_32(uint32_t data)
 		{
 			spi_transmit((uint8_t)(data));
 			spi_transmit((uint8_t)(data >> 8));
 			spi_transmit((uint8_t)(data >> 16));
 			spi_transmit((uint8_t)(data >> 24));
+		}
+
+		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+		static inline void spi_transmit_burst(uint32_t data)
+		{
+			spi_transmit_32(data);
 		}
 
 		static inline uint8_t spi_receive(uint8_t data)
@@ -671,16 +701,21 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXNE */
 		}
 
+		static inline void spi_transmit_32(uint32_t data)
+		{
+			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data >> 8));
+			spi_transmit((uint8_t)(data >> 16));
+			spi_transmit((uint8_t)(data >> 24));
+		}
+
 		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
 		static inline void spi_transmit_burst(uint32_t data)
 		{
 			#if defined (EVE_DMA)
 				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
 			#else
-				spi_transmit((uint8_t)(data));
-				spi_transmit((uint8_t)(data >> 8));
-				spi_transmit((uint8_t)(data >> 16));
-				spi_transmit((uint8_t)(data >> 24));
+				spi_transmit_32(data);
 			#endif
 		}
 
@@ -770,16 +805,21 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
             while(!(UCB0IFG_SPI & UCTXIFG)); /* wait for transmission to complete */
         }
 
+		static inline void spi_transmit_32(uint32_t data)
+		{
+			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data >> 8));
+			spi_transmit((uint8_t)(data >> 16));
+			spi_transmit((uint8_t)(data >> 24));
+		}
+
 		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
 		static inline void spi_transmit_burst(uint32_t data)
 		{
 			#if defined (EVE_DMA)
 				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
 			#else
-				spi_transmit((uint8_t)(data));
-				spi_transmit((uint8_t)(data >> 8));
-				spi_transmit((uint8_t)(data >> 16));
-				spi_transmit((uint8_t)(data >> 24));
+				spi_transmit_32(data);
 			#endif
 		}
 
@@ -860,13 +900,18 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		}
 	#endif
 
-	/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
-	static inline void spi_transmit_burst(uint32_t data)
+	static inline void spi_transmit_32(uint32_t data)
 	{
 		spi_transmit((uint8_t)(data));
 		spi_transmit((uint8_t)(data >> 8));
 		spi_transmit((uint8_t)(data >> 16));
 		spi_transmit((uint8_t)(data >> 24));
+	}
+
+	/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+	static inline void spi_transmit_burst(uint32_t data)
+	{
+		spi_transmit_32(data);
 	}
 
 	static inline uint8_t spi_receive(uint8_t data)
