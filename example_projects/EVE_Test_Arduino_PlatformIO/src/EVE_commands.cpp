@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2020-10-29
+@date    2020-10-31
 @author  Rudolph Riedel
 
 @section info
@@ -129,6 +129,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added a safeguard to EVE_start_cmd_burst() to protect it from overlapping transfers with DMA and segmented lists
 - used spi_transmit_32() to shorten this file by around 600 lines with no functional change
 - removed the history from before 4.0
+- removed a couple of spi_transmit_32() calls from EVE_cmd_getptr() to make it work again
 
 */
 
@@ -805,10 +806,6 @@ uint32_t EVE_cmd_getptr(void)
 	uint16_t cmdoffset;
 
 	EVE_begin_cmd(CMD_GETPTR);
-
-	spi_transmit_32(0);
-	spi_transmit_32(0);
-	spi_transmit_32(0);
 	spi_transmit_32(0);
 
 	EVE_cs_clear();
