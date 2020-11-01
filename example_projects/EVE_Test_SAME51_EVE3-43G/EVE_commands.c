@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2020-10-31
+@date    2020-11-01
 @author  Rudolph Riedel
 
 @section info
@@ -130,6 +130,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - used spi_transmit_32() to shorten this file by around 600 lines with no functional change
 - removed the history from before 4.0
 - removed a couple of spi_transmit_32() calls from EVE_cmd_getptr() to make it work again
+- Bugfix: EVE_cmd_setfont2_burst() was using CMD_SETFONT instead of CMD_SETFONT2
 
 */
 
@@ -2792,7 +2793,7 @@ void EVE_cmd_setfont2(uint32_t font, uint32_t ptr, uint32_t firstchar)
 
 void EVE_cmd_setfont2_burst(uint32_t font, uint32_t ptr, uint32_t firstchar)
 {
-	spi_transmit_burst(CMD_SETFONT);
+	spi_transmit_burst(CMD_SETFONT2);
 	spi_transmit_burst(font);
 	spi_transmit_burst(ptr);
 	spi_transmit_burst(firstchar);
