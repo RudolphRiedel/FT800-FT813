@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2020-11-01
+@date    2020-11-10
 @author  Rudolph Riedel
 
 @section info
@@ -131,6 +131,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - removed the history from before 4.0
 - removed a couple of spi_transmit_32() calls from EVE_cmd_getptr() to make it work again
 - Bugfix: EVE_cmd_setfont2_burst() was using CMD_SETFONT instead of CMD_SETFONT2
+- removed a check for cmd_burst from EVE_cmd_getimage() as it is in the group of commands that are not used for display lists
+- moved EVE_cmd_newlist() to the group of commands that are not used for display lists
+- removed EVE_cmd_newlist_burst()
 
 */
 
@@ -370,7 +373,7 @@ void EVE_cmd_execute(void)
 
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
-/*---- commands and functions that to be used outside of display-lists -------------------------------------------------------*/
+/*---- commands and functions that are meant to be used outside of display-lists ---------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -437,8 +440,10 @@ void block_transfer(const uint8_t *data, uint32_t len)
 	}
 }
 
+/*----------------------------------------------------------------------------------------------------------------------------*/
+/*---- co-processor commands that are not used in displays lists, these are not to be used with burst transfers --------------*/
+/*----------------------------------------------------------------------------------------------------------------------------*/
 
-/* co-processor commands that are not used in displays lists, these are not to be used with burst transfers */
 
 /* BT817 / BT818 */
 #if EVE_GEN > 3
@@ -495,45 +500,40 @@ void EVE_cmd_fontcachequery(uint32_t *total, int32_t *used)
 }
 
 
-/* this function is meant to be called  with display-list building, but it waits for completion */
-/* as this function returns values by writing to the command-fifo, it can not be used with cmd-burst */
-/* guess: this is to be used after CMD_LOADIMAGE() */
+/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void EVE_cmd_getimage(uint32_t *source, uint32_t *fmt, uint32_t *width, uint32_t *height, uint32_t *palette)
 {
-	if(!cmd_burst)
+	uint16_t cmdoffset;
+
+	EVE_begin_cmd(CMD_GETIMAGE);
+	spi_transmit_32(0);
+	spi_transmit_32(0);
+	spi_transmit_32(0);
+	spi_transmit_32(0);
+	spi_transmit_32(0);
+	EVE_cs_clear();
+	while (EVE_busy());
+	cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
+
+	if(palette)
 	{
-		uint16_t cmdoffset;
-
-		EVE_begin_cmd(CMD_GETIMAGE);
-		spi_transmit_32(0);
-		spi_transmit_32(0);
-		spi_transmit_32(0);
-		spi_transmit_32(0);
-		spi_transmit_32(0);
-		EVE_cs_clear();
-		while (EVE_busy());
-		cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
-
-		if(palette)
-		{
-			*palette = EVE_memRead32(EVE_RAM_CMD + ((cmdoffset - 4) & 0xfff));
-		}
-		if(height)
-		{
-			*height = EVE_memRead32(EVE_RAM_CMD + ((cmdoffset - 8) & 0xfff));
-		}
-		if(width)
-		{
-			*width = EVE_memRead32(EVE_RAM_CMD + ((cmdoffset - 12) & 0xfff));
-		}
-		if(fmt)
-		{
-			*fmt = EVE_memRead32(EVE_RAM_CMD + ((cmdoffset - 16) & 0xfff));
-		}
-		if(source)
-		{
-			*source = EVE_memRead32(EVE_RAM_CMD + ((cmdoffset - 20) & 0xfff));
-		}
+		*palette = EVE_memRead32(EVE_RAM_CMD + ((cmdoffset - 4) & 0xfff));
+	}
+	if(height)
+	{
+		*height = EVE_memRead32(EVE_RAM_CMD + ((cmdoffset - 8) & 0xfff));
+	}
+	if(width)
+	{
+		*width = EVE_memRead32(EVE_RAM_CMD + ((cmdoffset - 12) & 0xfff));
+	}
+	if(fmt)
+	{
+		*fmt = EVE_memRead32(EVE_RAM_CMD + ((cmdoffset - 16) & 0xfff));
+	}
+	if(source)
+	{
+		*source = EVE_memRead32(EVE_RAM_CMD + ((cmdoffset - 20) & 0xfff));
 	}
 }
 
@@ -543,6 +543,15 @@ void EVE_cmd_linetime(uint32_t dest)
 {
 	EVE_begin_cmd(CMD_LINETIME);
 	spi_transmit_32(dest);
+	EVE_cs_clear();
+	while (EVE_busy());
+}
+
+/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+void EVE_cmd_newlist(uint32_t adr)
+{
+	EVE_begin_cmd(CMD_NEWLIST);
+	spi_transmit_32(adr);
 	EVE_cs_clear();
 	while (EVE_busy());
 }
@@ -1613,24 +1622,6 @@ void EVE_cmd_hsf_burst(uint32_t hsf)
 {
 	spi_transmit_burst(CMD_HSF);
 	spi_transmit_burst(hsf);
-}
-
-
-void EVE_cmd_newlist(uint32_t adr)
-{
-	if(!cmd_burst)
-	{
-		EVE_start_command(CMD_NEWLIST);
-		spi_transmit_32(adr);
-		EVE_cs_clear();
-	}
-}
-
-
-void EVE_cmd_newlist_burst(uint32_t adr)
-{
-	spi_transmit_burst(CMD_NEWLIST);
-	spi_transmit_burst(adr);
 }
 
 
