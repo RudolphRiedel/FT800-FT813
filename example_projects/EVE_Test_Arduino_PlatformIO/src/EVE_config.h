@@ -121,7 +121,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 #endif
 
-#define EVE_CFAF800480E0_050SC
+#define EVE_EVE3_50G
 
 
 /* display timing parameters below */

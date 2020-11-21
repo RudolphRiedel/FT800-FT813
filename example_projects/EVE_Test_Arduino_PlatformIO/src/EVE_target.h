@@ -853,8 +853,13 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#include <stdio.h>
 	#include <SPI.h>
 
-	#define EVE_CS 		9
-	#define EVE_PDN		8
+	#if defined (ESP32)
+		#define EVE_CS 		13
+		#define EVE_PDN		12
+	#else
+		#define EVE_CS 		9
+		#define EVE_PDN		8
+	#endif
 
 	#define DELAY_MS(ms) delay(ms)
 
