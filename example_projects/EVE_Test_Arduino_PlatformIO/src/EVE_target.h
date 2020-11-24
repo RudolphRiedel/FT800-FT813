@@ -663,7 +663,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 //		#define EVE_DMA		/* do not active, it is not working yet */
 
 		#if defined (EVE_DMA)
-			extern uint8_t EVE_dma_buffer[4100];
+			extern uint32_t EVE_dma_buffer[1025];
 			extern volatile uint16_t EVE_dma_buffer_index;
 			extern volatile uint8_t EVE_dma_busy;
 
@@ -856,6 +856,17 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#if defined (ESP32)
 		#define EVE_CS 		13
 		#define EVE_PDN		12
+		#define EVE_SCK		18
+		#define EVE_MISO	19
+		#define EVE_MOSI	23
+
+		#define EVE_DMA
+
+		#if defined (EVE_DMA)
+			extern uint32_t EVE_dma_buffer[1025];
+			extern volatile uint16_t EVE_dma_buffer_index;
+			extern volatile uint8_t EVE_dma_busy;
+		#endif
 	#else
 		#define EVE_CS 		9
 		#define EVE_PDN		8
@@ -893,7 +904,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		digitalWrite(EVE_CS, HIGH);
 	}
 
-	#if defined (ESP8266)
+	#if defined (ESP8266) || (ESP32)
 		static inline void spi_transmit(uint8_t data)
 		{
 			SPI.write(data);
@@ -907,16 +918,72 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 	static inline void spi_transmit_32(uint32_t data)
 	{
+	#if defined (ESP32)
+#if 0
 		spi_transmit((uint8_t)(data));
 		spi_transmit((uint8_t)(data >> 8));
 		spi_transmit((uint8_t)(data >> 16));
 		spi_transmit((uint8_t)(data >> 24));
+#endif
+
+#if 0
+		uint8_t buffer[4];
+		buffer[0] = (uint8_t)(data);
+		buffer[1] = (uint8_t)(data >> 8);
+		buffer[2] = (uint8_t)(data >> 16);
+		buffer[3] = (uint8_t)(data >> 24);
+		SPI.writeBytes(buffer, 4);
+//		SPI.transfer(buffer, 4);
+#endif
+
+#if 1
+		uint32_t swap;
+		swap = ((uint8_t)(data >> 24)) + ((data >> 8) & 0xff00) + ((data << 8) &0xff0000) + ((data << 24) & 0xff000000); /* we need a different byte-order */
+		SPI.write32(swap);
+#endif
+
+	#else
+		spi_transmit((uint8_t)(data));
+		spi_transmit((uint8_t)(data >> 8));
+		spi_transmit((uint8_t)(data >> 16));
+		spi_transmit((uint8_t)(data >> 24));
+	#endif
 	}
+
+#if defined (EVE_DMA)
+/*
+note: this is not using DMA!
+as a quick and easy optimisation this makes use of the existing DMA support to
+write a display list in a buffer and send this buffer out as one big chunk of data
+this is what the Arduino implementation for ESP32 directly supports
+work in progress...
+*/
+	static inline void EVE_init_dma(void)
+	{
+	}
+
+	static inline void EVE_start_dma_transfer(void)
+	{
+		uint8_t buffer[3];
+		buffer[0] = (uint8_t)(EVE_dma_buffer[0] >> 8) ;
+		buffer[1] = (uint8_t)(EVE_dma_buffer[0] >> 16);
+		buffer[2] = (uint8_t)(EVE_dma_buffer[0] >> 24);
+
+		EVE_cs_set();
+		SPI.writeBytes(buffer, 3);
+		SPI.writeBytes((uint8_t *) &EVE_dma_buffer[1], (EVE_dma_buffer_index-1)*4);
+		EVE_cs_clear();
+	}
+#endif
 
 	/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
 	static inline void spi_transmit_burst(uint32_t data)
 	{
-		spi_transmit_32(data);
+		#if defined (EVE_DMA)
+			EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+		#else
+			spi_transmit_32(data);
+		#endif
 	}
 
 	static inline uint8_t spi_receive(uint8_t data)

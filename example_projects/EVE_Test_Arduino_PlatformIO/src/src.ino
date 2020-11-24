@@ -21,10 +21,12 @@ void setup()
 	pinMode(LED_BUILTIN, OUTPUT);
 	digitalWrite(LED_BUILTIN, HIGH);
 
-	SPI.begin(); /* sets up the SPI to run in Mode 0 and 1 MHz */
 #if defined (ESP32)
-	SPI.setClockDivider(0x00081001); /* speed up SPI */
+	SPI.begin(EVE_SCK, EVE_MISO, EVE_MOSI, EVE_CS);
+	SPI.setClockDivider(SPI_CLOCK_DIV2); /* speed up SPI */
+//	SPI.setClockDivider(0x00081001); /* speed up SPI */
 #else
+	SPI.begin(); /* sets up the SPI to run in Mode 0 and 1 MHz */
 	SPI.setClockDivider(SPI_CLOCK_DIV2); /* speed up SPI */
 #endif
 
