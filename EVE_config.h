@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2020-10-29
+@date    2020-11-27
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -57,7 +57,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - cleanup: removed FT80x profiles
 - replaced FT81x_enable and BT81x_enable with "EVE_GEN n"
 - added a couple of test profiles for BT817
-
+- moved the profile for the RiTFT50 over to the one for the RiTFT70
+- added a profile for the VM816C50A-D from Bridgetek
+- added a profile for PH800480T024-IFC03 and PH800480T013-IFC05 from PowerTip
 
 */
 
@@ -72,6 +74,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE_VM810C
 	#define EVE_ME812A
 	#define EVE_ME813A
+	#define EVE_VM816C50AD
 	#define EVE_FT810CB_HY50HD
 	#define EVE_FT811CB_HY50HD
 	#define EVE_ET07
@@ -118,7 +121,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE_GEN4_FT812_70
 	#define EVE_GEN4_FT813_50
 	#define EVE_GEN4_FT813_70
-
+	#define EVE_PH800480
 #endif
 
 #define EVE_EVE3_50G
@@ -378,6 +381,22 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 
 /* untested */
+/* PH800480T024-IFC03 800x480 7.0" FT813 from PowerTip */
+/* PH800480T013-IFC05 800x480 7.0" FT813 from PowerTip */
+#if defined (EVE_PH800480)
+#define Resolution_800x480
+
+#define EVE_PCLK	(2L)
+#define EVE_PCLKPOL	(1L)
+#define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(0L)
+#define EVE_TOUCH_RZTHRESH (1200L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 2
+#endif
+
+
+/* untested */
 /* NHD-7.0-800480FT-CxXx-xxx 800x480 7.0" Newhaven, resistive or capacitive, FT81x */
 #if defined (EVE_NHD_70)
 #define Resolution_800x480
@@ -452,14 +471,15 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 
 /* untested */
-/* RVT50xQBxxxxx 800x480 5.0" Riverdi, various options, BT815/BT816 */
-#if defined (EVE_RiTFT50)
+/* Bridgtek 800x480 5.0" BT816 */
+#if defined (EVE_VM816C50AD)
 #define Resolution_800x480
 
 #define EVE_PCLK	(2L)
 #define EVE_PCLKPOL	(1L)
 #define EVE_SWIZZLE	(0L)
-#define EVE_CSPREAD	(1L)
+#define EVE_CSPREAD	(0L)
+#define EVE_TOUCH_RZTHRESH (1800L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
 #endif
@@ -489,8 +509,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 
 /* untested */
+/* RVT50xQBxxxxx 800x480 5.0" Riverdi, various options, BT815/BT816 */
 /* RVT70xQBxxxxx 800x480 7.0" Riverdi, various options, BT815/BT816 */
-#if defined (EVE_RiTFT70)
+#if defined (EVE_RiTFT70) || defined (EVE_RiTFT50)
 #define EVE_HSIZE	(800L)	/* Thd Length of visible part of line (in PCLKs) - display width */
 #define EVE_VSIZE	(480L)	/* Tvd Number of visible lines (in lines) - display height */
 
