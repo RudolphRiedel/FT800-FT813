@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2020-10-29
+@date    2020-11-28
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -56,6 +56,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - changed the DMA buffer from uin8_t to uint32_t
 - added spi_transmit_32(uint32_t data) to help shorten EVE_commands.c a bit
 - added spi_transmit_32() to all targets and changed the non-DMA version of spi_transmit_burst() to use spi_transmit_32()
+- added a couple of measures to speed up things for Arduino-ESP32
 
 */
 
@@ -663,7 +664,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 //		#define EVE_DMA		/* do not active, it is not working yet */
 
 		#if defined (EVE_DMA)
-			extern uint8_t EVE_dma_buffer[4100];
+			extern uint32_t EVE_dma_buffer[1025];
 			extern volatile uint16_t EVE_dma_buffer_index;
 			extern volatile uint8_t EVE_dma_busy;
 
@@ -853,28 +854,42 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#include <stdio.h>
 	#include <SPI.h>
 
-	#define EVE_CS 		9
-	#define EVE_PDN		8
+	#if defined (ESP32)
+		#define EVE_CS 		13
+		#define EVE_PDN		12
+		#define EVE_SCK		18
+		#define EVE_MISO	19
+		#define EVE_MOSI	23
+
+		#define EVE_DMA
+
+		#if defined (EVE_DMA)
+			extern uint32_t EVE_dma_buffer[1025];
+			extern volatile uint16_t EVE_dma_buffer_index;
+			extern volatile uint8_t EVE_dma_busy;
+
+			void EVE_init_dma(void);
+			void EVE_start_dma_transfer(void);
+		#endif
+	#else
+		#define EVE_CS 		9
+		#define EVE_PDN		8
+	#endif
 
 	#define DELAY_MS(ms) delay(ms)
-
-	#if defined (ESP8266)
-
-	#endif
 
 	#if	defined (__AVR__)
 		#include <avr/pgmspace.h>
 	#endif
 
-
 	static inline void EVE_pdn_set(void)
 	{
-		digitalWrite(EVE_PDN, LOW);	/* Power-Down low */
+		digitalWrite(EVE_PDN, LOW); /* Power-Down low */
 	}
 
 	static inline void EVE_pdn_clear(void)
 	{
-		digitalWrite(EVE_PDN, HIGH);	/* Power-Down high */
+		digitalWrite(EVE_PDN, HIGH); /* Power-Down high */
 	}
 
 	static inline void EVE_cs_set(void)
@@ -888,7 +903,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		digitalWrite(EVE_CS, HIGH);
 	}
 
-	#if defined (ESP8266)
+	#if defined (ESP8266) || (ESP32)
 		static inline void spi_transmit(uint8_t data)
 		{
 			SPI.write(data);
@@ -902,16 +917,24 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 	static inline void spi_transmit_32(uint32_t data)
 	{
+	#if defined (ESP32)
+		SPI.write32(__builtin_bswap32(data));
+	#else
 		spi_transmit((uint8_t)(data));
 		spi_transmit((uint8_t)(data >> 8));
 		spi_transmit((uint8_t)(data >> 16));
 		spi_transmit((uint8_t)(data >> 24));
+	#endif
 	}
 
 	/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
 	static inline void spi_transmit_burst(uint32_t data)
 	{
-		spi_transmit_32(data);
+		#if defined (EVE_DMA)
+			EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+		#else
+			spi_transmit_32(data);
+		#endif
 	}
 
 	static inline uint8_t spi_receive(uint8_t data)

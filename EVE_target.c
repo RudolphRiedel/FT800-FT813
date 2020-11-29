@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions
 @version 5.0
-@date    2020-10-29
+@date    2020-11-29
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -35,6 +35,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 5.0
 - changed the DMA buffer from uin8_t to uint32_t
+- added a section for Arduino-ESP32
 
 
  */
@@ -195,7 +196,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			}
 
 			/* DMA-done-Interrupt-Handler */
-#if 0
+	#if 0
 			void some_name_handler()
 			{
 
@@ -204,12 +205,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 				EVE_cs_clear();
 				EVE_cmd_start(); /* order the command co-processor to start processing its FIFO queue but do not wait for completion */
 			}
-#endif
+	#endif
 
 		#endif /* DMA */
-
 		#endif /* STM32 */
-
 
     #endif /* __GNUC__ */
 
@@ -243,7 +242,39 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			    SPI_enableModule(EUSCI_B0_BASE);
 			}
 
-        #endif
+        #endif /* __MSP432P401R__ */
+	#endif /* __TI_ARM__ */
+#else
 
-	#endif
+/* Arduino */
+
+	#if defined (ESP32)
+		#include "EVE_target.h"
+		#include "EVE_commands.h"
+
+/* note: this is not using DMA!
+* The Arduino-ESP32 SPI class and the esp32-hal-spi.c do not seem to support DMA.
+* As a quick and easy optimisation this makes use of the existing DMA support that writes
+* the display list in a buffer and sends this buffer out as one big chunk of data.
+* Sending out a large buffer instead of smaller chunks is a lot faster with the Arduino-ESP32 SPI class. 
+*/
+		#if defined (EVE_DMA)
+			uint32_t EVE_dma_buffer[1025];
+			volatile uint16_t EVE_dma_buffer_index;
+			volatile uint8_t EVE_dma_busy = 0;
+
+			void EVE_init_dma(void)
+			{
+			}
+
+			void EVE_start_dma_transfer(void)
+			{
+				SPI.setClockDivider(0x00002002); /* write only, go faster: use Apb clock of 80MHz and divide by 3 -> 26,667MHz */ 
+				EVE_cs_set();
+				SPI.writeBytes(((uint8_t *) &EVE_dma_buffer[0])+1, ((EVE_dma_buffer_index)*4)-1);
+				EVE_cs_clear();
+				SPI.setClockDivider(0x00004004); /* read/write, go slower: use Apb clock of 80MHz and divide by 5 -> 16MHz */ 
+			}
+		#endif
+	#endif /* ESP32 */
 #endif
