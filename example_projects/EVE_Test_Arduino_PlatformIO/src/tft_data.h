@@ -5,7 +5,9 @@
 #if	defined (__AVR__)
 	#include <avr/pgmspace.h>
 #else
-	#define PROGMEM
+	#if !defined(PROGMEM)
+		#define PROGMEM
+	#endif
 #endif
 
 extern const uint8_t logo[239] PROGMEM;

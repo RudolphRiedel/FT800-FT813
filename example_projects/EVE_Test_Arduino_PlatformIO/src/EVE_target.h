@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2020-11-28
+@date    2020-12-05
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -57,6 +57,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added spi_transmit_32(uint32_t data) to help shorten EVE_commands.c a bit
 - added spi_transmit_32() to all targets and changed the non-DMA version of spi_transmit_burst() to use spi_transmit_32()
 - added a couple of measures to speed up things for Arduino-ESP32
+- stretched out the different Arduino targets, more difficult to maintain but easier to read
+- sped up ARDUINO_AVR_UNO a little by making spi_transmit() native and write only and by direct writes of EVE_CS
 
 */
 
@@ -854,14 +856,164 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#include <stdio.h>
 	#include <SPI.h>
 
-	#if defined (ESP32)
+
+//	#if	defined (__AVR__)
+	#if defined (ARDUINO_AVR_UNO)
+		#include <avr/pgmspace.h>
+
+		#define EVE_CS 		9
+		#define EVE_PDN		8
+
+		static inline void EVE_cs_set(void)
+		{
+//			digitalWrite(EVE_CS, LOW); /* make EVE listening */
+			PORTB &=~(1<<PORTB1); /* directly use pin 9 */
+		}
+
+		static inline void EVE_cs_clear(void)
+		{
+//			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listening */
+			PORTB |=(1<<PORTB1); /* directly use pin 9 */
+		}
+
+		static inline void spi_transmit(uint8_t data)
+		{
+		    SPDR = data;
+		    asm volatile("nop");
+    		while (!(SPSR & (1<<SPIF)));
+		}
+
+		static inline void spi_transmit_32(uint32_t data)
+		{
+			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data >> 8));
+			spi_transmit((uint8_t)(data >> 16));
+			spi_transmit((uint8_t)(data >> 24));
+		}
+
+		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+		static inline void spi_transmit_burst(uint32_t data)
+		{
+			spi_transmit_32(data);
+		}
+
+		static inline uint8_t spi_receive(uint8_t data)
+		{
+			return SPI.transfer(data);
+		}
+
+		static inline uint8_t fetch_flash_byte(const uint8_t *data)
+		{
+			#if defined(RAMPZ)
+				return(pgm_read_byte_far(data));
+			#else
+				return(pgm_read_byte_near(data));
+			#endif
+		}
+
+	#elif defined (ARDUINO_METRO_M4)
+		#define EVE_CS 		9
+		#define EVE_PDN		8
+
+		static inline void EVE_cs_set(void)
+		{
+			digitalWrite(EVE_CS, LOW); /* make EVE listening */
+		}
+
+		static inline void EVE_cs_clear(void)
+		{
+			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listening */
+		}
+
+		static inline void spi_transmit(uint8_t data)
+		{
+			SPI.transfer(data);
+		}
+
+		static inline void spi_transmit_32(uint32_t data)
+		{
+			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data >> 8));
+			spi_transmit((uint8_t)(data >> 16));
+			spi_transmit((uint8_t)(data >> 24));
+		}
+
+		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+		static inline void spi_transmit_burst(uint32_t data)
+		{
+			#if defined (EVE_DMA)
+				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+			#else
+				spi_transmit_32(data);
+			#endif
+		}
+
+		static inline uint8_t spi_receive(uint8_t data)
+		{
+			return SPI.transfer(data);
+		}
+
+		static inline uint8_t fetch_flash_byte(const uint8_t *data)
+		{
+			return *data;
+		}
+
+
+	#elif defined (ESP8266)
+		#define EVE_CS 		4	// D2 on D1 mini
+		#define EVE_PDN		5	// D1 on D1 mini
+
+		static inline void EVE_cs_set(void)
+		{
+			digitalWrite(EVE_CS, LOW); /* make EVE listening */
+		}
+
+		static inline void EVE_cs_clear(void)
+		{
+			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listening */
+		}
+
+		static inline void spi_transmit(uint8_t data)
+		{
+			SPI.write(data);
+		}
+
+		static inline void spi_transmit_32(uint32_t data)
+		{
+			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data >> 8));
+			spi_transmit((uint8_t)(data >> 16));
+			spi_transmit((uint8_t)(data >> 24));
+		}
+
+		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+		static inline void spi_transmit_burst(uint32_t data)
+		{
+			#if defined (EVE_DMA)
+				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+			#else
+				spi_transmit_32(data);
+			#endif
+		}
+
+		static inline uint8_t spi_receive(uint8_t data)
+		{
+			return SPI.transfer(data);
+		}
+
+		static inline uint8_t fetch_flash_byte(const uint8_t *data)
+		{
+			return *data;
+		}
+
+	#elif defined (ESP32)
 		#define EVE_CS 		13
 		#define EVE_PDN		12
 		#define EVE_SCK		18
 		#define EVE_MISO	19
 		#define EVE_MOSI	23
 
-		#define EVE_DMA
+		#define EVE_DMA /* note: not really DMA (yet) for Arduino-ESP32, but sending the display-list as one buffer */
 
 		#if defined (EVE_DMA)
 			extern uint32_t EVE_dma_buffer[1025];
@@ -871,91 +1023,96 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			void EVE_init_dma(void);
 			void EVE_start_dma_transfer(void);
 		#endif
-	#else
-		#define EVE_CS 		9
-		#define EVE_PDN		8
-	#endif
 
-	#define DELAY_MS(ms) delay(ms)
+		static inline void EVE_cs_set(void)
+		{
+			digitalWrite(EVE_CS, LOW); /* make EVE listening */
+		}
 
-	#if	defined (__AVR__)
-		#include <avr/pgmspace.h>
-	#endif
+		static inline void EVE_cs_clear(void)
+		{
+			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listening */
+		}
 
-	static inline void EVE_pdn_set(void)
-	{
-		digitalWrite(EVE_PDN, LOW); /* Power-Down low */
-	}
-
-	static inline void EVE_pdn_clear(void)
-	{
-		digitalWrite(EVE_PDN, HIGH); /* Power-Down high */
-	}
-
-	static inline void EVE_cs_set(void)
-	{
-		SPI.setDataMode(SPI_MODE0);
-		digitalWrite(EVE_CS, LOW);
-	}
-
-	static inline void EVE_cs_clear(void)
-	{
-		digitalWrite(EVE_CS, HIGH);
-	}
-
-	#if defined (ESP8266) || (ESP32)
 		static inline void spi_transmit(uint8_t data)
 		{
 			SPI.write(data);
 		}
-	#else
+
+		static inline void spi_transmit_32(uint32_t data)
+		{
+			SPI.write32(__builtin_bswap32(data));
+		}
+
+		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+		static inline void spi_transmit_burst(uint32_t data)
+		{
+			#if defined (EVE_DMA)
+				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+			#else
+				spi_transmit_32(data);
+			#endif
+		}
+
+		static inline uint8_t spi_receive(uint8_t data)
+		{
+			return SPI.transfer(data);
+		}
+
+		static inline uint8_t fetch_flash_byte(const uint8_t *data)
+		{
+			return *data;
+		}
+
+	#else		/* generic functions for other Arduino architectures */
+		#define EVE_CS 		9
+		#define EVE_PDN		8
+
 		static inline void spi_transmit(uint8_t data)
 		{
 			SPI.transfer(data);
 		}
-	#endif
 
-	static inline void spi_transmit_32(uint32_t data)
-	{
-	#if defined (ESP32)
-		SPI.write32(__builtin_bswap32(data));
-	#else
-		spi_transmit((uint8_t)(data));
-		spi_transmit((uint8_t)(data >> 8));
-		spi_transmit((uint8_t)(data >> 16));
-		spi_transmit((uint8_t)(data >> 24));
-	#endif
-	}
+		static inline void spi_transmit_32(uint32_t data)
+		{
+			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data >> 8));
+			spi_transmit((uint8_t)(data >> 16));
+			spi_transmit((uint8_t)(data >> 24));
+		}
 
-	/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
-	static inline void spi_transmit_burst(uint32_t data)
-	{
-		#if defined (EVE_DMA)
-			EVE_dma_buffer[EVE_dma_buffer_index++] = data;
-		#else
+		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+		static inline void spi_transmit_burst(uint32_t data)
+		{
 			spi_transmit_32(data);
-		#endif
-	}
+		}
 
-	static inline uint8_t spi_receive(uint8_t data)
-	{
-		return SPI.transfer(data);
-	}
+		static inline uint8_t spi_receive(uint8_t data)
+		{
+			return SPI.transfer(data);
+		}
 
-	static inline uint8_t fetch_flash_byte(const uint8_t *data)
-	{
-		#if	defined (__AVR__)
-			#if defined(RAMPZ)
-				return(pgm_read_byte_far(data));
-			#else
-				return(pgm_read_byte_near(data));
-			#endif
-		#else /* this may fail on your Arduino system that is not AVR and that I am not aware of */
+		static inline uint8_t fetch_flash_byte(const uint8_t *data)
+		{
 			return *data;
-		#endif
+		}
+	#endif
+
+
+	/* functions that should be common across Arduino architectures */
+
+	#define DELAY_MS(ms) delay(ms)
+
+	static inline void EVE_pdn_set(void)
+	{
+		digitalWrite(EVE_PDN, LOW); /* go into power-down */
+	}
+
+	static inline void EVE_pdn_clear(void)
+	{
+		digitalWrite(EVE_PDN, HIGH); /* power up */
 	}
 
 #endif /* Arduino */
-
 
 #endif /* EVE_TARGET_H_ */

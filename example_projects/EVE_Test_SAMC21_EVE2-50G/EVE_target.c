@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions
 @version 5.0
-@date    2020-11-29
+@date    2020-12-05
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -36,6 +36,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 5.0
 - changed the DMA buffer from uin8_t to uint32_t
 - added a section for Arduino-ESP32
+- corrected the clock-divider settings for ESP32
 
 
  */
@@ -269,11 +270,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 			void EVE_start_dma_transfer(void)
 			{
-				SPI.setClockDivider(0x00002002); /* write only, go faster: use Apb clock of 80MHz and divide by 3 -> 26,667MHz */ 
+				SPI.setClockDivider(0x00002001); /* write only, go faster: use Apb clock of 80MHz and divide by 3 -> 26,667MHz */ 
 				EVE_cs_set();
 				SPI.writeBytes(((uint8_t *) &EVE_dma_buffer[0])+1, ((EVE_dma_buffer_index)*4)-1);
 				EVE_cs_clear();
-				SPI.setClockDivider(0x00004004); /* read/write, go slower: use Apb clock of 80MHz and divide by 5 -> 16MHz */ 
+				SPI.setClockDivider(0x00004002); /* read/write, go slower: use Apb clock of 80MHz and divide by 5 -> 16MHz */ 
 			}
 		#endif
 	#endif /* ESP32 */

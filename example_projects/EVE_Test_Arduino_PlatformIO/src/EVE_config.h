@@ -124,7 +124,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE_PH800480
 #endif
 
-#define EVE_EVE3_50G
+#define EVE_RiTFT50
 
 
 /* display timing parameters below */

@@ -3,7 +3,9 @@
 	#include <avr/pgmspace.h>
 #else
 	#include <stdint.h>
-	#define PROGMEM
+	#if !defined(PROGMEM)
+		#define PROGMEM
+	#endif
 #endif
 
 

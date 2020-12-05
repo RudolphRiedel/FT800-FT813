@@ -1,8 +1,8 @@
 /*
 @file    src.ino
 @brief   Main file for Arduino EVE test-code
-@version 2.1
-@date    2020-11-21
+@version 2.2
+@date    2020-12-05
 @author  Rudolph Riedel
 */
 
@@ -11,28 +11,26 @@
 #include "EVE_commands.h"
 #include "tft.h"
 
-
 void setup()
 {
 	digitalWrite(EVE_CS, HIGH);
 	pinMode(EVE_CS, OUTPUT);
-	digitalWrite(EVE_PDN, HIGH);
+	digitalWrite(EVE_PDN, LOW);
 	pinMode(EVE_PDN, OUTPUT);
+
 	pinMode(LED_BUILTIN, OUTPUT);
 	digitalWrite(LED_BUILTIN, HIGH);
 
 #if defined (ESP32)
-	SPI.begin(EVE_SCK, EVE_MISO, EVE_MOSI, EVE_CS);
-	SPI.setClockDivider(SPI_CLOCK_DIV2); /* speed up SPI */
-//	SPI.setClockDivider(0x00081001); /* speed up SPI */
+	SPI.begin(EVE_SCK, EVE_MISO, EVE_MOSI); /* we need to setup the pins as they are used for our board, defines are in EVE_target.h */
 #else
 	SPI.begin(); /* sets up the SPI to run in Mode 0 and 1 MHz */
-	SPI.setClockDivider(SPI_CLOCK_DIV2); /* speed up SPI */
 #endif
+
+	SPI.setClockDivider(SPI_CLOCK_DIV2); /* speed up SPI to 8MHz*/
 
 	TFT_init();
 }
-
 
 void loop()
 {
@@ -45,13 +43,13 @@ void loop()
 	uint32_t micros_start, micros_end;
 
 	current_millis = millis();
-	
-	if((current_millis - previous_millis) > 4) /* execute the code only every 5 milli-seconds */
+
+	if((current_millis - previous_millis) > 4) /* execute the code every 5 milli-seconds */
 	{
 		previous_millis = current_millis;
 
 		led++;
-		if(led > 99)
+		if(led > 69)
 		{
 			led = 0;
 			if(led_state)
