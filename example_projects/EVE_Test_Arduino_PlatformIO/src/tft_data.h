@@ -12,5 +12,6 @@
 
 extern const uint8_t logo[239] PROGMEM;
 extern const uint8_t pic[3844] PROGMEM;
+extern const uint8_t flash[10784] PROGMEM;
 
 #endif /* TFT_DATA_H_ */

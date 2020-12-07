@@ -1,8 +1,8 @@
 /*
 @file    tft.c
 @brief   TFT handling functions for EVE_Test project
-@version 1.13
-@date    2020-09-05
+@version 1.14
+@date    2020-12-07
 @author  Rudolph Riedel
 
 @section History
@@ -59,10 +59,18 @@
 - adapted to V5
 - new logo
 
+1.14
+- added example code for BT81x that demonstrates how to write a flash-image from the microcontrollers memory
+  to an external flash on a BT81x module and how to use an UTF-8 font contained in this flash-image
+
  */
 
 #include "EVE.h"
 #include "tft_data.h"
+
+
+#define TEST_UTF8 1
+
 
 /* some pre-definded colors */
 #define RED		0xff0000UL
@@ -77,8 +85,10 @@
 #define BLACK	0x000000UL
 
 /* memory-map defines */
+#define MEM_FONT 0x000f6000
 #define MEM_LOGO 0x000f8000 /* start-address of logo, needs 6272 bytes of memory */
 #define MEM_PIC1 0x000fa000 /* start of 100x100 pixel test image, ARGB565, needs 20000 bytes of memory */
+
 
 #define MEM_DL_STATIC (EVE_RAM_G_SIZE - 4096) /* 0xff000 - start-address of the static part of the display-list, upper 4k of gfx-mem */
 
@@ -234,14 +244,13 @@ void touch_calibrate(void)
 #if 0
 	/* calibrate touch and displays values to screen */
 	EVE_cmd_dl(CMD_DLSTART);
-	EVE_cmd_dl(DL_CLEAR_RGB | WHITE); /* set the default clear color to white */
+	EVE_cmd_dl(DL_CLEAR_RGB | BLACK);
 	EVE_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
-	EVE_color_rgb(BLACK);
 	EVE_cmd_text((EVE_HSIZE/2), 50, 26, EVE_OPT_CENTER, "Please tap on the dot.");
 	EVE_cmd_calibrate();
 	EVE_cmd_dl(DL_DISPLAY);
 	EVE_cmd_dl(CMD_SWAP);
-	while (EVE_busy());
+	EVE_cmd_execute();
 
 	uint32_t touch_a, touch_b, touch_c, touch_d, touch_e, touch_f;
 
@@ -253,11 +262,10 @@ void touch_calibrate(void)
 	touch_f = EVE_memRead32(REG_TOUCH_TRANSFORM_F);
 
 	EVE_cmd_dl(CMD_DLSTART);
-	EVE_cmd_dl(DL_CLEAR_RGB | WHITE);
+	EVE_cmd_dl(DL_CLEAR_RGB | BLACK);
 	EVE_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
 	EVE_cmd_dl(TAG(0));
-	
-	EVE_color_rgb(BLACK);
+
 	EVE_cmd_text(5, 15, 26, 0, "TOUCH_TRANSFORM_A:");
 	EVE_cmd_text(5, 30, 26, 0, "TOUCH_TRANSFORM_B:");
 	EVE_cmd_text(5, 45, 26, 0, "TOUCH_TRANSFORM_C:");
@@ -275,7 +283,7 @@ void touch_calibrate(void)
 
 	EVE_cmd_dl(DL_DISPLAY);	/* instruct the graphics processor to show the list */
 	EVE_cmd_dl(CMD_SWAP); /* make this list active */
-	while (EVE_busy());
+	EVE_cmd_execute();
 
 	while(1);
 #endif
@@ -296,24 +304,31 @@ void initStaticBackground()
 	EVE_cmd_dl(DL_BEGIN | EVE_RECTS);
 	EVE_cmd_dl(LINE_WIDTH(1*16)); /* size is in 1/16 pixel */
 
-	EVE_color_rgb(BLUE_1);
+	EVE_cmd_dl(DL_COLOR_RGB | BLUE_1);
 	EVE_cmd_dl(VERTEX2F(0,0));
 	EVE_cmd_dl(VERTEX2F(EVE_HSIZE,LAYOUT_Y1-2));
 	EVE_cmd_dl(DL_END);
 
 	/* display the logo */
-	EVE_color_rgb(WHITE);
+	EVE_cmd_dl(DL_COLOR_RGB | WHITE);
 	EVE_cmd_dl(DL_BEGIN | EVE_BITMAPS);
 	EVE_cmd_setbitmap(MEM_LOGO, EVE_ARGB1555, 56, 56);
 	EVE_cmd_dl(VERTEX2F(EVE_HSIZE - 58, 5));
 	EVE_cmd_dl(DL_END);
 
 	/* draw a black line to separate things */
-	EVE_color_rgb(BLACK);
+	EVE_cmd_dl(DL_COLOR_RGB | BLACK);
 	EVE_cmd_dl(DL_BEGIN | EVE_LINES);
 	EVE_cmd_dl(VERTEX2F(0,LAYOUT_Y1-2));
 	EVE_cmd_dl(VERTEX2F(EVE_HSIZE,LAYOUT_Y1-2));
 	EVE_cmd_dl(DL_END);
+
+#if (TEST_UTF8 != 0) && (EVE_GEN > 2)
+	EVE_cmd_setfont2(12,MEM_FONT,32); /* assign bitmap handle to a custom font */
+	EVE_cmd_text(EVE_HSIZE/2, 15, 12, EVE_OPT_CENTERX, "EVE Demo");
+#else
+	EVE_cmd_text(EVE_HSIZE/2, 15, 29, EVE_OPT_CENTERX, "EVE Demo");
+#endif
 
 	/* add the static text to the list */
 #if defined (EVE_DMA)
@@ -342,8 +357,24 @@ void TFT_init(void)
 		tft_active = 1;
 
 		EVE_memWrite8(REG_PWM_DUTY, 0x30);	/* setup backlight, range is from 0 = off to 0x80 = max */
-
 		touch_calibrate();
+
+#if (TEST_UTF8 != 0) && (EVE_GEN > 2)	/* we need a BT81x for this */
+	#if 0
+		/* this is only needed once to transfer the flash-image to the external flash */
+		uint32_t datasize;
+
+		EVE_cmd_inflate(0, flash, sizeof(flash)); /* de-compress flash-image to RAM_G */
+		datasize = EVE_cmd_getptr(); /* we unpacked to RAM_G address 0x0000, so the first address after the unpacked data also is the size */
+		EVE_cmd_flashupdate(0,0,4096); /* write blob first */
+		EVE_init_flash();
+		EVE_cmd_flashupdate(0,0,(datasize|4095)+1); /* size must be a multiple of 4096, so set the lower 12 bits and add 1 */
+	#endif
+
+		EVE_init_flash();
+		EVE_cmd_flashread(MEM_FONT, 216896, 4864); /* copy .xfont from FLASH to RAM_G, offset and length are from the .map file */
+
+#endif // TEST_UTF8
 
 		EVE_cmd_inflate(MEM_LOGO, logo, sizeof(logo)); /* load logo into gfx-memory and de-compress it */
 		EVE_cmd_loadimage(MEM_PIC1, EVE_OPT_NODL, pic, sizeof(pic));
@@ -417,7 +448,7 @@ void TFT_display(void)
 
 		EVE_cmd_append_burst(MEM_DL_STATIC, num_dl_static); /* insert static part of display-list from copy in gfx-mem */
 		/* display a button */
-		EVE_color_rgb_burst(WHITE);
+		EVE_cmd_dl_burst(DL_COLOR_RGB | WHITE);
 		EVE_cmd_fgcolor_burst(0x00c0c0c0); /* some grey */
 		EVE_cmd_dl_burst(TAG(10)); /* assign tag-value '10' to the button that follows */
 		EVE_cmd_button_burst(20,20,80,30, 28, toggle_state,"Touch!");
@@ -444,7 +475,7 @@ void TFT_display(void)
 		EVE_cmd_dl_burst(RESTORE_CONTEXT()); /* reset the transformation matrix to default values */
 
 		/* print profiling values */
-		EVE_color_rgb_burst(BLACK);
+		EVE_cmd_dl_burst(DL_COLOR_RGB | BLACK);
 
 		#if defined (EVE_DMA)
 		EVE_cmd_number_burst(120, EVE_VSIZE - 65, 26, EVE_OPT_RIGHTX, cmd_fifo_size); /* number of bytes written to the cmd-fifo */

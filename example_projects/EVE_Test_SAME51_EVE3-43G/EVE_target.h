@@ -59,6 +59,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added a couple of measures to speed up things for Arduino-ESP32
 - stretched out the different Arduino targets, more difficult to maintain but easier to read
 - sped up ARDUINO_AVR_UNO a little by making spi_transmit() native and write only and by direct writes of EVE_CS
+- reverted the chip-select optimisation for ARDUINO_AVR_UNO to avoid confusion, left in the code but commented-out
+
 
 */
 
@@ -857,8 +859,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#include <SPI.h>
 
 
-//	#if	defined (__AVR__)
-	#if defined (ARDUINO_AVR_UNO)
+	#if	defined (__AVR__)
+//	#if defined (ARDUINO_AVR_UNO)
 		#include <avr/pgmspace.h>
 
 		#define EVE_CS 		9
@@ -866,14 +868,14 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline void EVE_cs_set(void)
 		{
-//			digitalWrite(EVE_CS, LOW); /* make EVE listening */
-			PORTB &=~(1<<PORTB1); /* directly use pin 9 */
+			digitalWrite(EVE_CS, LOW); /* make EVE listening */
+//			PORTB &=~(1<<PORTB1); /* directly use pin 9 */
 		}
 
 		static inline void EVE_cs_clear(void)
 		{
-//			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listening */
-			PORTB |=(1<<PORTB1); /* directly use pin 9 */
+			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listening */
+//			PORTB |=(1<<PORTB1); /* directly use pin 9 */
 		}
 
 		static inline void spi_transmit(uint8_t data)
@@ -960,8 +962,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 
 	#elif defined (ESP8266)
-		#define EVE_CS 		4	// D2 on D1 mini
-		#define EVE_PDN		5	// D1 on D1 mini
+		#define EVE_CS 		D2	// D2 on D1 mini
+		#define EVE_PDN		D1	// D1 on D1 mini
 
 		static inline void EVE_cs_set(void)
 		{
