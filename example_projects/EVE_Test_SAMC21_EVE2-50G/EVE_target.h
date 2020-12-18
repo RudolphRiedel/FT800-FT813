@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2020-12-05
+@date    2020-12-18
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -60,6 +60,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - stretched out the different Arduino targets, more difficult to maintain but easier to read
 - sped up ARDUINO_AVR_UNO a little by making spi_transmit() native and write only and by direct writes of EVE_CS
 - reverted the chip-select optimisation for ARDUINO_AVR_UNO to avoid confusion, left in the code but commented-out
+- sped up ESP8266 by using 32 bit transfers for spi_transmit_32()
 
 
 */
@@ -982,10 +983,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline void spi_transmit_32(uint32_t data)
 		{
-			spi_transmit((uint8_t)(data));
-			spi_transmit((uint8_t)(data >> 8));
-			spi_transmit((uint8_t)(data >> 16));
-			spi_transmit((uint8_t)(data >> 24));
+			SPI.write32(__builtin_bswap32(data));
 		}
 
 		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */

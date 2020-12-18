@@ -1,8 +1,8 @@
 /*
 @file    src.ino
 @brief   Main file for Arduino EVE test-code
-@version 2.2
-@date    2020-12-05
+@version 2.3
+@date    2020-12-18
 @author  Rudolph Riedel
 */
 
@@ -30,6 +30,11 @@ void setup()
 	SPI.setClockDivider(SPI_CLOCK_DIV2); /* speed up SPI to 8MHz*/
 
 	TFT_init();
+
+#if defined (ESP8266) || (ESP32)
+	SPI.setFrequency(16000000);
+#endif
+
 }
 
 void loop()
