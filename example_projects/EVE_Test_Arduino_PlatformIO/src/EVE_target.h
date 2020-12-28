@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2020-12-18
+@date    2020-12-28
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -61,6 +61,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - sped up ARDUINO_AVR_UNO a little by making spi_transmit() native and write only and by direct writes of EVE_CS
 - reverted the chip-select optimisation for ARDUINO_AVR_UNO to avoid confusion, left in the code but commented-out
 - sped up ESP8266 by using 32 bit transfers for spi_transmit_32()
+- added DMA to ARDUINO_METRO_M4 target
 
 
 */
@@ -917,6 +918,17 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#elif defined (ARDUINO_METRO_M4)
 		#define EVE_CS 		9
 		#define EVE_PDN		8
+
+		#define EVE_DMA
+
+		#if defined (EVE_DMA)
+			extern uint32_t EVE_dma_buffer[1025];
+			extern volatile uint16_t EVE_dma_buffer_index;
+			extern volatile uint8_t EVE_dma_busy;
+
+			void EVE_init_dma(void);
+			void EVE_start_dma_transfer(void);
+		#endif
 
 		static inline void EVE_cs_set(void)
 		{

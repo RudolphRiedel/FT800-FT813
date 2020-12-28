@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions
 @version 5.0
-@date    2020-12-05
+@date    2020-12-28
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -37,6 +37,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - changed the DMA buffer from uin8_t to uint32_t
 - added a section for Arduino-ESP32
 - corrected the clock-divider settings for ESP32
+- added DMA to ARDUINO_METRO_M4 target
 
 
  */
@@ -248,6 +249,56 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #else
 
 /* Arduino */
+
+	#if defined (ARDUINO_METRO_M4)
+		#include "EVE_target.h"
+		#include "EVE_commands.h"
+
+		#include <Adafruit_ZeroDMA.h>
+
+		#if defined (EVE_DMA)
+			uint32_t EVE_dma_buffer[1025];
+			volatile uint16_t EVE_dma_buffer_index;
+			volatile uint8_t EVE_dma_busy = 0;
+
+			Adafruit_ZeroDMA myDMA;
+			DmacDescriptor *desc;
+
+			/* Callback for end-of-DMA-transfer */
+			void dma_callback(Adafruit_ZeroDMA *dma)
+			{
+				while(SERCOM2->SPI.INTFLAG.bit.TXC == 0);
+				SERCOM2->SPI.CTRLB.bit.RXEN = 1; /* switch receiver on by setting RXEN to 1 which is not enable protected */
+				EVE_dma_busy = 0;
+				EVE_cs_clear();
+			}
+
+			void EVE_init_dma(void)
+			{
+				myDMA.setTrigger(SERCOM2_DMAC_ID_TX);
+				myDMA.setAction(DMA_TRIGGER_ACTON_BEAT);
+				myDMA.allocate();
+				myDMA.setCallback(dma_callback);
+				desc = myDMA.addDescriptor(
+					NULL, /* from */
+					(void *) &SERCOM2->SPI.DATA.reg, /* to */
+					100, /* size */
+					DMA_BEAT_SIZE_BYTE,	/* beat size -> byte */
+					true,	/* increment source */
+					false); /* increment dest */
+			}
+
+			void EVE_start_dma_transfer(void)
+			{
+				myDMA.changeDescriptor(desc, (void *) (((uint32_t) &EVE_dma_buffer[0])+1), NULL, (EVE_dma_buffer_index*4)-1);
+				SERCOM2->SPI.CTRLB.bit.RXEN = 0; /* switch receiver off by setting RXEN to 0 which is not enable-protected */
+				EVE_cs_set();
+				EVE_dma_busy = 42;
+				myDMA.startJob();
+//				SPI.transfer( ((uint8_t *) &EVE_dma_buffer[0])+1, ((uint8_t *) &EVE_dma_buffer[0]), (((EVE_dma_buffer_index)*4)-1), false ); /* alternative to using ZeroDMA */
+			}
+		#endif
+	#endif
 
 	#if defined (ESP32)
 		#include "EVE_target.h"
