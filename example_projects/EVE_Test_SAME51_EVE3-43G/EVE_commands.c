@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2020-11-10
+@date    2020-12-28
 @author  Rudolph Riedel
 
 @section info
@@ -138,6 +138,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - renamed EVE_write_string() to private_string_write() and made it static
 - made EVE_start_command() static
 - Bugfix: ESP8266 needs 32 bit alignment for 32 bit pointers, changed private_string_write() for burst-mode to read 8-bit values
+- Bugfix: somehow messed up private_string_write() for burst-mode but only for 8-Bit controllers
+- changed EVE_memRead8(), EVE_memRead16() and EVE_memRead32() to use spi_transmit_32() for the initial address+zero byte transfer
+ This speeds up ESP32/ESP8266 by several µs, has no measureable effect for ATSAMD51 and is a little slower for AVR.
 
 
 */
@@ -172,10 +175,7 @@ uint8_t EVE_memRead8(uint32_t ftAddress)
 {
 	uint8_t ftData8;
 	EVE_cs_set();
-	spi_transmit((uint8_t)(ftAddress >> 16) | MEM_READ); /* send Memory Write plus high address byte */
-	spi_transmit((uint8_t)(ftAddress >> 8)); /* send middle address byte */
-	spi_transmit((uint8_t)(ftAddress));	/* send low address byte */
-	spi_transmit(0x00);	/* send dummy byte */
+	spi_transmit_32(0x00000000 + ((uint8_t)(ftAddress >> 16) | MEM_READ) + (ftAddress & 0x0000ff00) + ( (ftAddress & 0x000000ff) << 16) );
 	ftData8 = spi_receive(0x00); /* read data byte by sending another dummy byte */
 	EVE_cs_clear();
 	return ftData8;	/* return byte read */
@@ -186,10 +186,7 @@ uint16_t EVE_memRead16(uint32_t ftAddress)
 {
 	uint16_t ftData16 = 0;
 	EVE_cs_set();
-	spi_transmit((uint8_t)(ftAddress >> 16) | MEM_READ); /* send Memory Write plus high address byte */
-	spi_transmit((uint8_t)(ftAddress >> 8)); /* send middle address byte */
-	spi_transmit((uint8_t)(ftAddress)); /* send low address byte */
-	spi_transmit(0x00);	/* send dummy byte */
+	spi_transmit_32(0x00000000 + ((uint8_t)(ftAddress >> 16) | MEM_READ) + (ftAddress & 0x0000ff00) + ( (ftAddress & 0x000000ff) << 16) );
 	ftData16 = (spi_receive(0x00));	/* read low byte */
 	ftData16 = (spi_receive(0x00) << 8) | ftData16;	/* read high byte */
 	EVE_cs_clear();
@@ -201,10 +198,7 @@ uint32_t EVE_memRead32(uint32_t ftAddress)
 {
 	uint32_t ftData32= 0;
 	EVE_cs_set();
-	spi_transmit((uint8_t)(ftAddress >> 16) | MEM_READ); /* send Memory Write plus high address byte */
-	spi_transmit((uint8_t)(ftAddress >> 8)); /* send middle address byte */
-	spi_transmit((uint8_t)(ftAddress));	/* send low address byte */
-	spi_transmit(0x00);	/* send dummy byte */
+	spi_transmit_32(0x00000000 + ((uint8_t)(ftAddress >> 16) | MEM_READ) + (ftAddress & 0x0000ff00) + ( (ftAddress & 0x000000ff) << 16) );
 	ftData32 = ((uint32_t)spi_receive(0x00)); /* read low byte */
 	ftData32 = ((uint32_t)spi_receive(0x00) << 8) | ftData32;
 	ftData32 = ((uint32_t)spi_receive(0x00) << 16) | ftData32;
@@ -1454,7 +1448,7 @@ static void private_string_write(const char *text)
 				spi_transmit_burst(calc);
 				break;
 			}
-			calc += (uint32_t) (data << 8);
+			calc += ((uint32_t) data) << 8;
 
 			data = bytes[textindex++];
 			if(data == 0)
@@ -1462,7 +1456,7 @@ static void private_string_write(const char *text)
 				spi_transmit_burst(calc);
 				break;
 			}
-			calc += (uint32_t) (data << 16);
+			calc += ((uint32_t) data) << 16;
 
 			data = bytes[textindex++];
 			if(data == 0)
@@ -1470,7 +1464,7 @@ static void private_string_write(const char *text)
 				spi_transmit_burst(calc);
 				break;
 			}
-			calc += (uint32_t) (data << 24);
+			calc += ((uint32_t) data) << 24;
 
 			spi_transmit_burst(calc);
 		}
