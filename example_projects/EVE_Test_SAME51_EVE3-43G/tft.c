@@ -1,8 +1,8 @@
 /*
-@file    tft.c
+@file    tft.c / tft.cpp
 @brief   TFT handling functions for EVE_Test project
-@version 1.14
-@date    2020-12-07
+@version 1.15
+@date    2020-12-28
 @author  Rudolph Riedel
 
 @section History
@@ -62,6 +62,10 @@
 1.14
 - added example code for BT81x that demonstrates how to write a flash-image from the microcontrollers memory
   to an external flash on a BT81x module and how to use an UTF-8 font contained in this flash-image
+
+1.15
+- moved "display_list_size = EVE_memRead16(REG_CMD_DL);" from TFT_display() to TFT_touch() to speed up the display
+ refresh for non-DMA targets
 
  */
 
@@ -385,6 +389,7 @@ void TFT_init(void)
 
 
 uint16_t toggle_state = 0;
+uint16_t display_list_size = 0;
 
 /* check for touch events and setup vars for TFT_display() */
 void TFT_touch(void)
@@ -396,6 +401,8 @@ void TFT_touch(void)
 	{
 		return;
 	}
+
+	display_list_size = EVE_memRead16(REG_CMD_DL); /* debug-information, get the size of the last generated display-list */
 
 	tag = EVE_memRead8(REG_TOUCH_TAG); /* read the value for the first touch point */
 
@@ -429,7 +436,7 @@ void TFT_touch(void)
 void TFT_display(void)
 {
 	static int32_t rotate = 0;
-	uint16_t display_list_size = 0;
+	
 
 	if(tft_active != 0)
 	{
@@ -437,7 +444,6 @@ void TFT_display(void)
 			uint16_t cmd_fifo_size;
 			cmd_fifo_size = EVE_dma_buffer_index*4; /* without DMA there is no way to tell how many bytes are written to the cmd-fifo */
 		#endif
-		display_list_size = EVE_memRead16(REG_CMD_DL);
 
 		EVE_start_cmd_burst(); /* start writing to the cmd-fifo as one stream of bytes, only sending the address once */
 
