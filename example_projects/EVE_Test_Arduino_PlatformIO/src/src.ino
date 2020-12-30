@@ -1,8 +1,8 @@
 /*
 @file    src.ino
 @brief   Main file for Arduino EVE test-code
-@version 2.3
-@date    2020-12-18
+@version 2.4
+@date    2020-12-30
 @author  Rudolph Riedel
 */
 
@@ -23,11 +23,11 @@ void setup()
 
 #if defined (ESP32)
 	SPI.begin(EVE_SCK, EVE_MISO, EVE_MOSI); /* we need to setup the pins as they are used for our board, defines are in EVE_target.h */
+	SPI.setFrequency(8000000);
 #else
 	SPI.begin(); /* sets up the SPI to run in Mode 0 and 1 MHz */
+	SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
 #endif
-
-	SPI.setClockDivider(SPI_CLOCK_DIV2); /* speed up SPI to 8MHz*/
 
 	TFT_init();
 
@@ -35,6 +35,9 @@ void setup()
 	SPI.setFrequency(16000000);
 #endif
 
+#if defined (ARDUINO_ARCH_STM32)
+	SPI.beginTransaction(SPISettings(16000000, MSBFIRST, SPI_MODE0));
+#endif
 }
 
 void loop()
@@ -44,9 +47,7 @@ void loop()
 	static uint8_t display_delay = 0;
 	static uint16_t led = 0;
 	static uint8_t led_state = 0;
-
 	uint32_t micros_start, micros_end;
-
 	current_millis = millis();
 
 	if((current_millis - previous_millis) > 4) /* execute the code every 5 milli-seconds */
@@ -54,7 +55,7 @@ void loop()
 		previous_millis = current_millis;
 
 		led++;
-		if(led > 69)
+		if(led > 0)
 		{
 			led = 0;
 			if(led_state)

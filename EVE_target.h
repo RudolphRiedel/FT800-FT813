@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2020-12-28
+@date    2020-12-30
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -62,7 +62,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - reverted the chip-select optimisation for ARDUINO_AVR_UNO to avoid confusion, left in the code but commented-out
 - sped up ESP8266 by using 32 bit transfers for spi_transmit_32()
 - added DMA to ARDUINO_METRO_M4 target
-
+- added a STM32 target: ARDUINO_NUCLEO_F446RE
 
 */
 
@@ -973,6 +973,52 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			return *data;
 		}
 
+	#elif defined (ARDUINO_NUCLEO_F446RE)
+		#define EVE_CS 		9
+		#define EVE_PDN		8
+
+		static inline void EVE_cs_set(void)
+		{
+			digitalWrite(EVE_CS, LOW); /* make EVE listening */
+		}
+
+		static inline void EVE_cs_clear(void)
+		{
+			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listening */
+		}
+
+		static inline void spi_transmit(uint8_t data)
+		{
+			SPI.transfer(data);
+		}
+
+		static inline void spi_transmit_32(uint32_t data)
+		{
+			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data >> 8));
+			spi_transmit((uint8_t)(data >> 16));
+			spi_transmit((uint8_t)(data >> 24));
+		}
+
+		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+		static inline void spi_transmit_burst(uint32_t data)
+		{
+			#if defined (EVE_DMA)
+				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+			#else
+				spi_transmit_32(data);
+			#endif
+		}
+
+		static inline uint8_t spi_receive(uint8_t data)
+		{
+			return SPI.transfer(data);
+		}
+
+		static inline uint8_t fetch_flash_byte(const uint8_t *data)
+		{
+			return *data;
+		}
 
 	#elif defined (ESP8266)
 		#define EVE_CS 		D2	// D2 on D1 mini
