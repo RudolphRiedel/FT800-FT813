@@ -13,7 +13,7 @@ It contains code for and has been used with various micro-controllers and displa
 I have used it so far with:
 
 - 8-Bit AVR, specifically the 90CAN series
-- Arduino, Uno, mini-pro, ESP8266
+- Arduino: Uno, mini-pro, ESP8266, ESP32, Metro-M4 (DMA), STM32 Nucleo_F446RE (DMA)
 - Renesas F1L RH850
 - Infineon Aurix TC222
 - ATSAMC21E18A (DMA)
@@ -24,11 +24,9 @@ I have reports of successfully using it with:
 - ATSAMV70
 - ATSAMD20
 - ATSAME4
-- STM32
 - MSP430
 - MSP432
 - some PICs
-- ESP32
 
 ## Displays
 
@@ -103,7 +101,7 @@ This does the same as the first example but faster.
 The trailing EVE_start_cmd_burst() either sets chip-select to low and sends out the three byte address.  
 Or if DMA is available for the target you are compiling for with support code in EVE_target.c and EVE_target.h, it writes the address to EVE_dma_buffer and sets EVE_dma_buffer_index to 1.
 
-Note the trailing "_burst" in the following functions, these are special versions of these commands that only can be used within an EVE_start_cmd_burst()/EVE_end_cmd_bust() pair.
+Note the trailing "_burst" in the following functions, these are special versions of these commands that can only be used within an EVE_start_cmd_burst()/EVE_end_cmd_bust() pair.
 These functions are optimised to push out data and nothing else.
 
 The final EVE_end_cmd_bust() either pulls back the chip-select to high.  
@@ -119,18 +117,19 @@ Using DMA has one caveat: we need to limit the transfer to <4k as we are writing
 The examples in the "example_projects" drawer are for use with AtmelStudio7.
 For Arduino I am using PlatformIO with Visual Studio Code.
 
-The platform the code is compiled for is automatically detected thru compiler flags in EVE_target.h. This is the only file that should need editing to customize the library to your needs.
+The platform the code is compiled for is automatically detected thru compiler flags in EVE_target.h.
 
-- Select the TFT attached by enabling one of the pre-defined setups in EVE_config.h.
+- Select the TFT attached by enabling one of the pre-defined setups in EVE_config.h
 - Provide the pins used for Chip-Select and Power-Down in EVE_target.h for the target configuration you are using
 
 When compiling for AVR you need to provide the clock it is running at in order to make the _delay_ms() calls used to initialise the TFT work with the intended timing.
-For other plattforms you need to provide a DELAY_MS(ms) function that works between 1ms and 56ms at least and is at least not performing these delays shorter than requested.
-The DELAY_MS(ms) is only used during initialisation of the FT8xx/BT8xx
+For other plattforms you need to provide a DELAY_MS(ms) function that works at least between 1ms and 56ms and is not performing these delays shorter than requested.
+The DELAY_MS(ms) is only used during initialisation of the FT8xx/BT8xx.
 See EVE_target.h for examples.
 
 In Addition you need to initialise the pins used for Chip-Select and PowerDown in your hardware correctly to output.
 Plus setup the SPI accordingly, mode-0, 8-bit, MSB-first, not more than 11MHz for the init.
+A couple of targets already have a function EVE_init_spi() in EVE_target.c.
 
 A word of "warning", you have to take a little care yourself to for example not send more than 4kB at once to the command co-processor
 or to not generate display lists that are longer than 8kB.
