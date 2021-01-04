@@ -2,14 +2,14 @@
 @file    EVE_target.c
 @brief   target specific functions
 @version 5.0
-@date    2020-12-28
+@date    2021-01-04
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2020 Rudolph Riedel
+Copyright (c) 2016-2021 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -38,6 +38,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added a section for Arduino-ESP32
 - corrected the clock-divider settings for ESP32
 - added DMA to ARDUINO_METRO_M4 target
+- added DMA to ARDUINO_NUCLEO_F446RE target
 
 
  */
@@ -296,6 +297,91 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 				EVE_dma_busy = 42;
 				myDMA.startJob();
 //				SPI.transfer( ((uint8_t *) &EVE_dma_buffer[0])+1, ((uint8_t *) &EVE_dma_buffer[0]), (((EVE_dma_buffer_index)*4)-1), false ); /* alternative to using ZeroDMA */
+			}
+		#endif
+	#endif
+
+	#if defined (ARDUINO_NUCLEO_F446RE)
+		#include "EVE_target.h"
+		#include "EVE_commands.h"
+
+		SPI_HandleTypeDef eve_spi_handle;
+
+		void EVE_init_spi(void)
+		{
+			__HAL_RCC_GPIOA_CLK_ENABLE();
+			__HAL_RCC_SPI1_CLK_ENABLE();
+
+			/* SPI1 GPIO Configuration: PA5 -> SPI1_SCK, PA6 -> SPI1_MISO, PA7 -> SPI1_MOSI */
+			GPIO_InitTypeDef gpio_init;
+			gpio_init.Pin = GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
+			gpio_init.Mode = GPIO_MODE_AF_PP;
+			gpio_init.Pull = GPIO_NOPULL;
+			gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+			gpio_init.Alternate = GPIO_AF5_SPI1;
+			HAL_GPIO_Init(GPIOA, &gpio_init);
+
+			eve_spi_handle.Instance = EVE_SPI;
+			eve_spi_handle.Init.Mode = SPI_MODE_MASTER; 
+			eve_spi_handle.Init.Direction = SPI_DIRECTION_2LINES;
+			eve_spi_handle.Init.DataSize = SPI_DATASIZE_8BIT;
+			eve_spi_handle.Init.CLKPolarity = SPI_POLARITY_LOW;
+			eve_spi_handle.Init.CLKPhase = SPI_PHASE_1EDGE;
+			eve_spi_handle.Init.NSS = SPI_NSS_SOFT;
+			eve_spi_handle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+			eve_spi_handle.Init.FirstBit = SPI_FIRSTBIT_MSB;
+			eve_spi_handle.Init.TIMode = SPI_TIMODE_DISABLED;
+			eve_spi_handle.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLED;
+			eve_spi_handle.Init.CRCPolynomial = 3;
+			HAL_SPI_Init(&eve_spi_handle);
+			__HAL_SPI_ENABLE(&eve_spi_handle);
+		}
+
+		#if defined (EVE_DMA)
+			uint32_t EVE_dma_buffer[1025];
+			volatile uint16_t EVE_dma_buffer_index;
+			volatile uint8_t EVE_dma_busy = 0;
+
+			DMA_HandleTypeDef eve_dma_handle;
+
+			extern "C" void DMA2_Stream3_IRQHandler(void)
+			{
+				HAL_DMA_IRQHandler(&eve_dma_handle);
+			}
+
+			/* Callback for end-of-DMA-transfer */
+			void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
+			{
+				EVE_dma_busy = 0;
+				EVE_cs_clear();
+			}
+
+			void EVE_init_dma(void)
+			{
+				__HAL_RCC_DMA2_CLK_ENABLE();
+				eve_dma_handle.Instance = DMA2_Stream3;
+				eve_dma_handle.Init.Channel = DMA_CHANNEL_3;
+				eve_dma_handle.Init.Direction = DMA_MEMORY_TO_PERIPH;
+				eve_dma_handle.Init.PeriphInc = DMA_PINC_DISABLE;
+				eve_dma_handle.Init.MemInc = DMA_MINC_ENABLE;
+				eve_dma_handle.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+				eve_dma_handle.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+				eve_dma_handle.Init.Mode = DMA_NORMAL;
+				eve_dma_handle.Init.Priority = DMA_PRIORITY_HIGH;
+				eve_dma_handle.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+				HAL_DMA_Init(&eve_dma_handle);
+				__HAL_LINKDMA(&eve_spi_handle, hdmatx, eve_dma_handle);
+				HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 0, 0);
+				HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
+			}
+
+			void EVE_start_dma_transfer(void)
+			{
+				EVE_cs_set();
+				if(HAL_OK == HAL_SPI_Transmit_DMA(&eve_spi_handle, ((uint8_t *) &EVE_dma_buffer[0])+1, ((EVE_dma_buffer_index)*4)-1))
+				{
+					EVE_dma_busy = 42;
+				}
 			}
 		#endif
 	#endif

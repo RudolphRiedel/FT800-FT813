@@ -2,14 +2,14 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2020-12-30
+@date    2021-01-04
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2020 Rudolph Riedel
+Copyright (c) 2016-2021 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -63,6 +63,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - sped up ESP8266 by using 32 bit transfers for spi_transmit_32()
 - added DMA to ARDUINO_METRO_M4 target
 - added a STM32 target: ARDUINO_NUCLEO_F446RE
+- added DMA to ARDUINO_NUCLEO_F446RE target
 
 */
 
@@ -915,6 +916,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			#endif
 		}
 
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
 	#elif defined (ARDUINO_METRO_M4)
 		#define EVE_CS 		9
 		#define EVE_PDN		8
@@ -973,9 +977,29 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			return *data;
 		}
 
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
 	#elif defined (ARDUINO_NUCLEO_F446RE)
+		#include "stm32f4xx_hal.h"
+		#include "stm32f4xx_ll_spi.h"
+
 		#define EVE_CS 		9
 		#define EVE_PDN		8
+		#define EVE_SPI SPI1
+
+		void EVE_init_spi(void);
+
+		#define EVE_DMA
+
+		#if defined (EVE_DMA)
+			extern uint32_t EVE_dma_buffer[1025];
+			extern volatile uint16_t EVE_dma_buffer_index;
+			extern volatile uint8_t EVE_dma_busy;
+
+			void EVE_init_dma(void);
+			void EVE_start_dma_transfer(void);
+		#endif
 
 		static inline void EVE_cs_set(void)
 		{
@@ -989,7 +1013,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline void spi_transmit(uint8_t data)
 		{
-			SPI.transfer(data);
+//			SPI.transfer(data);
+			LL_SPI_TransmitData8(EVE_SPI, data);
+			while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
+			while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI));
+			LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXNE */
 		}
 
 		static inline void spi_transmit_32(uint32_t data)
@@ -1012,13 +1040,20 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline uint8_t spi_receive(uint8_t data)
 		{
-			return SPI.transfer(data);
+//			return SPI.transfer(data);
+			LL_SPI_TransmitData8(EVE_SPI, data);
+			while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
+			while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI));
+			return LL_SPI_ReceiveData8(EVE_SPI);
 		}
 
 		static inline uint8_t fetch_flash_byte(const uint8_t *data)
 		{
 			return *data;
 		}
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
 
 	#elif defined (ESP8266)
 		#define EVE_CS 		D2	// D2 on D1 mini
@@ -1063,6 +1098,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		{
 			return *data;
 		}
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
 
 	#elif defined (ESP32)
 		#define EVE_CS 		13
@@ -1121,6 +1159,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		{
 			return *data;
 		}
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
 
 	#else		/* generic functions for other Arduino architectures */
 		#define EVE_CS 		9
