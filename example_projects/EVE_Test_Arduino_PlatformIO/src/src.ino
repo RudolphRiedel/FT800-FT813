@@ -1,8 +1,8 @@
 /*
 @file    src.ino
 @brief   Main file for Arduino EVE test-code
-@version 2.5
-@date    2021-01-04
+@version 2.6
+@date    2021-01-06
 @author  Rudolph Riedel
 */
 
@@ -22,10 +22,7 @@ void setup()
 	pinMode(LED_BUILTIN, OUTPUT);
 	digitalWrite(LED_BUILTIN, HIGH);
 
-#if defined (ESP32)
-	SPI.begin(EVE_SCK, EVE_MISO, EVE_MOSI); /* we need to setup the pins as they are used for our board, defines are in EVE_target.h */
-	SPI.setFrequency(8000000);
-#elif defined (ARDUINO_NUCLEO_F446RE)
+#if defined (ESP32) || (ARDUINO_NUCLEO_F446RE)
 	EVE_init_spi();
 #else
 	SPI.begin(); /* sets up the SPI to run in Mode 0 and 1 MHz */
@@ -34,7 +31,7 @@ void setup()
 
 	TFT_init();
 
-#if defined (ESP8266) || (ESP32)
+#if defined (ESP8266)
 	SPI.setFrequency(16000000);
 #endif
 }
@@ -54,7 +51,7 @@ void loop()
 		previous_millis = current_millis;
 
 		led++;
-		if(led > 0)
+		if(led > 69)
 		{
 			led = 0;
 			if(led_state)

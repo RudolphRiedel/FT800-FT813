@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2021-01-04
+@date    2021-01-06
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -64,6 +64,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added DMA to ARDUINO_METRO_M4 target
 - added a STM32 target: ARDUINO_NUCLEO_F446RE
 - added DMA to ARDUINO_NUCLEO_F446RE target
+- added DMA to Arduino-ESP32 target
 
 */
 
@@ -668,7 +669,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		#define EVE_DMA_INSTANCE DMA2
 		#define EVE_DMA_CHANNEL 3
 		#define EVE_DMA_STREAM 3
-//		#define EVE_DMA		/* do not active, it is not working yet */
+//		#define EVE_DMA		/* do not activate, it is not working yet */
 
 		#if defined (EVE_DMA)
 			extern uint32_t EVE_dma_buffer[1025];
@@ -741,6 +742,71 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		}
 
 		#endif  /* STM32 */
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
+	/* danger, not working yet! */
+
+		#if defined (ESP_PLATFORM)
+
+		#include "driver/spi_master.h"
+		#include "driver/gpio.h"
+
+		spi_device_handle_t EVE_SPI_DEVICE_HANDLE;
+
+		void EVE_init_spi(void)
+		{
+			esp_err_t ret;
+
+			//set cs and pd pins as output
+			gpio_config_t io_cfg = {
+				.intr_type = GPIO_PIN_INTR_DISABLE,
+				.mode = GPIO_MODE_OUTPUT,
+				.pin_bit_mask = BIT(EVE_PDN) | BIT(EVE_CS),
+				.pull_down_en = 0,
+				.pull_up_en = 0
+				};
+
+			ret = gpio_config(&io_cfg);
+			if(ret)
+			{
+//				ESP_LOGE("EVE_SPI_Init()", "could not set io config, error = 0x%x", ret);
+			}
+
+			gpio_set_level(EVE_CS, 1);
+			gpio_set_level(EVE_PDN, 0);
+
+			spi_bus_config_t buscfg = {
+				.miso_io_num = EVE_MISO,
+				.mosi_io_num = EVE_MOSI,
+				.sclk_io_num = EVE_SCK,
+				.quadhd_io_num = -1,
+				.quadwp_io_num = -1
+				};
+			spi_device_interface_config_t devcfg = {
+				.clock_speed_hz = 8 * 1000 * 1000, 	//Clock = 8 MHz
+				.mode = 0,							//SPI mode 0
+				.spics_io_num = -1,					//CS pin operated by app
+				.queue_size = 7,
+				.address_bits = 0,					//address operated by app
+				.command_bits = 0					//command operated by app
+				};
+
+			//Initialize SPI bus
+			ret = spi_bus_initialize(EVE_SPI_HOST, &buscfg, EVE_DMA_CHN);
+			if(ret) {
+//				ESP_LOGE("EVE_SPI_Init()", "could not initialize SPI bus, error = 0x%x", ret);
+			}
+
+			//Add EVE to SPI
+			ret = spi_bus_add_device(EVE_SPI_HOST, &devcfg, &EVE_SPI_DEVICE_HANDLE);
+			if(ret) {
+//				ESP_LOGE("EVE_SPI_Init()", "could not add SPI device, error = 0x%x", ret);
+			}
+		}
+
+	#endif /* ESP_PLATFORM */
 
 	#endif /* __GNUC__ */
 
@@ -871,13 +937,13 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline void EVE_cs_set(void)
 		{
-			digitalWrite(EVE_CS, LOW); /* make EVE listening */
+			digitalWrite(EVE_CS, LOW); /* make EVE listen */
 //			PORTB &=~(1<<PORTB1); /* directly use pin 9 */
 		}
 
 		static inline void EVE_cs_clear(void)
 		{
-			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listening */
+			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listen */
 //			PORTB |=(1<<PORTB1); /* directly use pin 9 */
 		}
 
@@ -936,12 +1002,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline void EVE_cs_set(void)
 		{
-			digitalWrite(EVE_CS, LOW); /* make EVE listening */
+			digitalWrite(EVE_CS, LOW); /* make EVE listen */
 		}
 
 		static inline void EVE_cs_clear(void)
 		{
-			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listening */
+			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listen */
 		}
 
 		static inline void spi_transmit(uint8_t data)
@@ -1003,12 +1069,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline void EVE_cs_set(void)
 		{
-			digitalWrite(EVE_CS, LOW); /* make EVE listening */
+			digitalWrite(EVE_CS, LOW); /* make EVE listen */
 		}
 
 		static inline void EVE_cs_clear(void)
 		{
-			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listening */
+			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listen */
 		}
 
 		static inline void spi_transmit(uint8_t data)
@@ -1061,12 +1127,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline void EVE_cs_set(void)
 		{
-			digitalWrite(EVE_CS, LOW); /* make EVE listening */
+			digitalWrite(EVE_CS, LOW); /* make EVE listen */
 		}
 
 		static inline void EVE_cs_clear(void)
 		{
-			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listening */
+			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listen */
 		}
 
 		static inline void spi_transmit(uint8_t data)
@@ -1103,13 +1169,21 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 
 	#elif defined (ESP32)
+	/* note: this is using the ESP-IDF driver as the Arduino class and driver does not allow DMA for SPI */
+		#include "driver/spi_master.h"
+
 		#define EVE_CS 		13
 		#define EVE_PDN		12
 		#define EVE_SCK		18
 		#define EVE_MISO	19
 		#define EVE_MOSI	23
 
-		#define EVE_DMA /* note: not really DMA (yet) for Arduino-ESP32, but sending the display-list as one buffer */
+		#define EVE_DMA
+
+		void EVE_init_spi(void);
+
+		extern spi_device_handle_t EVE_spi_device;
+		extern spi_device_handle_t EVE_spi_device_simple;
 
 		#if defined (EVE_DMA)
 			extern uint32_t EVE_dma_buffer[1025];
@@ -1122,22 +1196,34 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline void EVE_cs_set(void)
 		{
-			digitalWrite(EVE_CS, LOW); /* make EVE listening */
+			spi_device_acquire_bus(EVE_spi_device_simple, portMAX_DELAY);
+			digitalWrite(EVE_CS, LOW); /* make EVE listen */
 		}
 
 		static inline void EVE_cs_clear(void)
 		{
-			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listening */
+			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listen */
+			spi_device_release_bus(EVE_spi_device_simple);
 		}
 
 		static inline void spi_transmit(uint8_t data)
 		{
-			SPI.write(data);
+			spi_transaction_t trans = {0};
+			trans.length = 8;
+			trans.rxlength = 0;
+			trans.flags = SPI_TRANS_USE_TXDATA;
+			trans.tx_data[0] = data;
+			spi_device_polling_transmit(EVE_spi_device_simple, &trans);
 		}
 
 		static inline void spi_transmit_32(uint32_t data)
 		{
-			SPI.write32(__builtin_bswap32(data));
+			spi_transaction_t trans = {0};
+			trans.length = 32;
+			trans.rxlength = 0;
+			trans.flags = 0;
+			trans.tx_buffer = &data;
+			spi_device_polling_transmit(EVE_spi_device_simple, &trans);
 		}
 
 		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
@@ -1152,7 +1238,14 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline uint8_t spi_receive(uint8_t data)
 		{
-			return SPI.transfer(data);
+			spi_transaction_t trans = {0};
+			trans.length = 8;
+			trans.rxlength = 8;
+			trans.flags = (SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA);
+			trans.tx_data[0] = data;
+			spi_device_polling_transmit(EVE_spi_device_simple, &trans);
+
+			return trans.rx_data[0];
 		}
 
 		static inline uint8_t fetch_flash_byte(const uint8_t *data)

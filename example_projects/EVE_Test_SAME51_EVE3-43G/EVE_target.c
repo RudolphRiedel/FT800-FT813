@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions
 @version 5.0
-@date    2021-01-04
+@date    2021-01-06
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -39,6 +39,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - corrected the clock-divider settings for ESP32
 - added DMA to ARDUINO_METRO_M4 target
 - added DMA to ARDUINO_NUCLEO_F446RE target
+- added DMA to Arduino-ESP32 target
 
 
  */
@@ -387,15 +388,49 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#endif
 
 	#if defined (ESP32)
+	/* note: this is using the ESP-IDF driver as the Arduino class and driver does not allow DMA for SPI */
 		#include "EVE_target.h"
-		#include "EVE_commands.h"
 
-/* note: this is not using DMA!
-* The Arduino-ESP32 SPI class and the esp32-hal-spi.c do not seem to support DMA.
-* As a quick and easy optimisation this makes use of the existing DMA support that writes
-* the display list in a buffer and sends this buffer out as one big chunk of data.
-* Sending out a large buffer instead of smaller chunks is a lot faster with the Arduino-ESP32 SPI class. 
-*/
+		spi_device_handle_t EVE_spi_device = {0};
+		spi_device_handle_t EVE_spi_device_simple = {0};
+
+		static void eve_spi_post_transfer_callback(void)
+		{
+			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listen */
+			#if defined (EVE_DMA)
+				EVE_dma_busy = 0;
+			#endif
+			}
+
+		void EVE_init_spi(void)
+		{
+			spi_bus_config_t buscfg = {0};
+			spi_device_interface_config_t devcfg = {0};
+
+			buscfg.mosi_io_num = EVE_MOSI;
+			buscfg.miso_io_num = EVE_MISO;
+			buscfg.sclk_io_num = EVE_SCK;
+			buscfg.quadwp_io_num = -1;
+			buscfg.quadhd_io_num = -1;
+			buscfg.max_transfer_sz= 4088;
+
+			devcfg.clock_speed_hz = 16 * 1000 * 1000;	//Clock = 16 MHz
+			devcfg.mode = 0;							//SPI mode 0
+			devcfg.spics_io_num = -1;					//CS pin operated by app
+			devcfg.queue_size = 3;						// we need only one transaction in the que
+			devcfg.address_bits = 24;
+			devcfg.command_bits = 0;					//command operated by app
+			devcfg.post_cb = (transaction_cb_t)eve_spi_post_transfer_callback;
+
+			spi_bus_initialize(HSPI_HOST, &buscfg, 2);
+			spi_bus_add_device(HSPI_HOST, &devcfg, &EVE_spi_device);
+
+			devcfg.address_bits = 0;
+			devcfg.post_cb = 0;
+			devcfg.clock_speed_hz = 10 * 1000 * 1000;	//Clock = 10 MHz
+			spi_bus_add_device(HSPI_HOST, &devcfg, &EVE_spi_device_simple);
+		}
+
 		#if defined (EVE_DMA)
 			uint32_t EVE_dma_buffer[1025];
 			volatile uint16_t EVE_dma_buffer_index;
@@ -407,11 +442,16 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 			void EVE_start_dma_transfer(void)
 			{
-				SPI.setClockDivider(0x00002001); /* write only, go faster: use Apb clock of 80MHz and divide by 3 -> 26,667MHz */ 
-				EVE_cs_set();
-				SPI.writeBytes(((uint8_t *) &EVE_dma_buffer[0])+1, ((EVE_dma_buffer_index)*4)-1);
-				EVE_cs_clear();
-				SPI.setClockDivider(0x00004002); /* read/write, go slower: use Apb clock of 80MHz and divide by 5 -> 16MHz */ 
+				spi_transaction_t EVE_spi_transaction = {0};
+				digitalWrite(EVE_CS, LOW); /* make EVE listen */
+				EVE_spi_transaction.tx_buffer = (uint8_t *) &EVE_dma_buffer[1];
+				EVE_spi_transaction.length = (EVE_dma_buffer_index-1) * 4 * 8;
+				EVE_spi_transaction.addr = 0x00b02578; // WRITE + REG_CMDB_WRITE;
+//				EVE_spi_transaction.flags = 0;
+//				EVE_spi_transaction.cmd = 0;
+//				EVE_spi_transaction.rxlength = 0;
+				spi_device_queue_trans(EVE_spi_device, &EVE_spi_transaction, portMAX_DELAY);
+				EVE_dma_busy = 42;
 			}
 		#endif
 	#endif /* ESP32 */
