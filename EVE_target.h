@@ -65,6 +65,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added a STM32 target: ARDUINO_NUCLEO_F446RE
 - added DMA to ARDUINO_NUCLEO_F446RE target
 - added DMA to Arduino-ESP32 target
+- Bugfix: the generic Arduino target was missing EVE_cs_set() / EVE_cs_clear()
 
 */
 
@@ -1259,6 +1260,16 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#else		/* generic functions for other Arduino architectures */
 		#define EVE_CS 		9
 		#define EVE_PDN		8
+
+		static inline void EVE_cs_set(void)
+		{
+			digitalWrite(EVE_CS, LOW); /* make EVE listen */
+		}
+
+		static inline void EVE_cs_clear(void)
+		{
+			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listen */
+		}
 
 		static inline void spi_transmit(uint8_t data)
 		{
