@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions
 @version 5.0
-@date    2021-01-06
+@date    2021-01-08
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -40,6 +40,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added DMA to ARDUINO_METRO_M4 target
 - added DMA to ARDUINO_NUCLEO_F446RE target
 - added DMA to Arduino-ESP32 target
+- added a native ESP32 target with DMA
 
 
  */
@@ -173,10 +174,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			}
 
 		#endif /* DMA functions SAMx5x */
-
 		#endif /* DMA */
-
         #endif /* ATSAM */
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
 
 		#if defined (STM32L073xx) || (STM32F1) || (STM32F207xx) || (STM32F3) || (STM32F4)
 
@@ -211,10 +213,105 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			}
 	#endif
 
+	#endif /* DMA */
+	#endif /* STM32 */
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
+		#if defined (ESP_PLATFORM) /* ESP32 */
+
+		#include "EVE_target.h"
+
+		void DELAY_MS(uint16_t ms)
+		{
+			TickType_t ticksMS = pdMS_TO_TICKS(ms);
+			if(ticksMS < 2) ticksMS = 2;
+			vTaskDelay(ticksMS);
+		} 
+
+		spi_device_handle_t EVE_spi_device = {0};
+		spi_device_handle_t EVE_spi_device_simple = {0};
+
+		static void eve_spi_post_transfer_callback(void)
+		{
+			gpio_set_level(EVE_CS, 1); /* tell EVE to stop listen */
+			#if defined (EVE_DMA)
+				EVE_dma_busy = 0;
+			#endif
+			}
+
+		void EVE_init_spi(void)
+		{
+			spi_bus_config_t buscfg = {0};
+			spi_device_interface_config_t devcfg = {0};
+			gpio_config_t io_cfg = {0};
+
+			io_cfg.intr_type = GPIO_PIN_INTR_DISABLE;
+			io_cfg.mode = GPIO_MODE_OUTPUT;
+			io_cfg.pin_bit_mask = BIT(EVE_PDN) | BIT(EVE_CS);
+//			io_cfg.pull_down_en = 0,
+//			io_cfg.pull_up_en = 0
+			gpio_config(&io_cfg);
+
+			gpio_set_level(EVE_CS, 1);
+			gpio_set_level(EVE_PDN, 0);
+
+			buscfg.mosi_io_num = EVE_MOSI;
+			buscfg.miso_io_num = EVE_MISO;
+			buscfg.sclk_io_num = EVE_SCK;
+			buscfg.quadwp_io_num = -1;
+			buscfg.quadhd_io_num = -1;
+			buscfg.max_transfer_sz= 4088;
+
+			devcfg.clock_speed_hz = 16 * 1000 * 1000;	//Clock = 16 MHz
+			devcfg.mode = 0;							//SPI mode 0
+			devcfg.spics_io_num = -1;					//CS pin operated by app
+			devcfg.queue_size = 3;						// we need only one transaction in the que
+			devcfg.address_bits = 24;
+			devcfg.command_bits = 0;					//command operated by app
+			devcfg.post_cb = (transaction_cb_t)eve_spi_post_transfer_callback;
+
+			spi_bus_initialize(HSPI_HOST, &buscfg, 2);
+			spi_bus_add_device(HSPI_HOST, &devcfg, &EVE_spi_device);
+
+			devcfg.address_bits = 0;
+			devcfg.post_cb = 0;
+			devcfg.clock_speed_hz = 10 * 1000 * 1000;	//Clock = 10 MHz
+			spi_bus_add_device(HSPI_HOST, &devcfg, &EVE_spi_device_simple);
+		}
+
+		#if defined (EVE_DMA)
+
+		uint32_t EVE_dma_buffer[1025];
+		volatile uint16_t EVE_dma_buffer_index;
+		volatile uint8_t EVE_dma_busy = 0;
+
+		void EVE_init_dma(void)
+		{
+		}
+
+		void EVE_start_dma_transfer(void)
+		{
+			spi_transaction_t EVE_spi_transaction = {0};
+			gpio_set_level(EVE_CS, 0); /* make EVE listen */
+			EVE_spi_transaction.tx_buffer = (uint8_t *) &EVE_dma_buffer[1];
+			EVE_spi_transaction.length = (EVE_dma_buffer_index-1) * 4 * 8;
+			EVE_spi_transaction.addr = 0x00b02578; // WRITE + REG_CMDB_WRITE;
+//			EVE_spi_transaction.flags = 0;
+//			EVE_spi_transaction.cmd = 0;
+//			EVE_spi_transaction.rxlength = 0;
+			spi_device_queue_trans(EVE_spi_device, &EVE_spi_transaction, portMAX_DELAY);
+			EVE_dma_busy = 42;
+		}
+
 		#endif /* DMA */
-		#endif /* STM32 */
+		#endif /* ESP32 */
 
     #endif /* __GNUC__ */
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
 
     #if defined (__TI_ARM__)
 
@@ -249,6 +346,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
         #endif /* __MSP432P401R__ */
 	#endif /* __TI_ARM__ */
 #else
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
 
 /* Arduino */
 
@@ -301,6 +401,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			}
 		#endif
 	#endif
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
 
 	#if defined (ARDUINO_NUCLEO_F446RE)
 		#include "EVE_target.h"
@@ -386,6 +489,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			}
 		#endif
 	#endif
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
 
 	#if defined (ESP32)
 	/* note: this is using the ESP-IDF driver as the Arduino class and driver does not allow DMA for SPI */

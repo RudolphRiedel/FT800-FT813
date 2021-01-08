@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2021-01-06
+@date    2021-01-08
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -66,6 +66,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added DMA to ARDUINO_NUCLEO_F446RE target
 - added DMA to Arduino-ESP32 target
 - Bugfix: the generic Arduino target was missing EVE_cs_set() / EVE_cs_clear()
+- added a native ESP32 target with DMA
 
 */
 
@@ -747,64 +748,103 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 
-	/* danger, not working yet! */
-
 		#if defined (ESP_PLATFORM)
 
 		#include "driver/spi_master.h"
 		#include "driver/gpio.h"
+		#include "freertos/task.h"
 
-		spi_device_handle_t EVE_SPI_DEVICE_HANDLE;
+		#define EVE_CS 		GPIO_NUM_13
+		#define EVE_PDN		GPIO_NUM_12
+		#define EVE_SCK		GPIO_NUM_18
+		#define EVE_MISO	GPIO_NUM_19
+		#define EVE_MOSI	GPIO_NUM_23
 
-		void EVE_init_spi(void)
+		extern spi_device_handle_t EVE_spi_device;
+		extern spi_device_handle_t EVE_spi_device_simple;
+
+		#define EVE_DMA
+
+		void DELAY_MS(uint16_t ms);
+
+		void EVE_init_spi(void);
+
+		static inline void EVE_cs_set(void)
 		{
-			esp_err_t ret;
+			spi_device_acquire_bus(EVE_spi_device_simple, portMAX_DELAY);
+			gpio_set_level(EVE_CS, 0);
+		}
 
-			//set cs and pd pins as output
-			gpio_config_t io_cfg = {
-				.intr_type = GPIO_PIN_INTR_DISABLE,
-				.mode = GPIO_MODE_OUTPUT,
-				.pin_bit_mask = BIT(EVE_PDN) | BIT(EVE_CS),
-				.pull_down_en = 0,
-				.pull_up_en = 0
-				};
-
-			ret = gpio_config(&io_cfg);
-			if(ret)
-			{
-//				ESP_LOGE("EVE_SPI_Init()", "could not set io config, error = 0x%x", ret);
-			}
-
+		static inline void EVE_cs_clear(void)
+		{
 			gpio_set_level(EVE_CS, 1);
+			spi_device_release_bus(EVE_spi_device_simple);
+		}
+
+		static inline void EVE_pdn_set(void)
+		{
 			gpio_set_level(EVE_PDN, 0);
+		}
 
-			spi_bus_config_t buscfg = {
-				.miso_io_num = EVE_MISO,
-				.mosi_io_num = EVE_MOSI,
-				.sclk_io_num = EVE_SCK,
-				.quadhd_io_num = -1,
-				.quadwp_io_num = -1
-				};
-			spi_device_interface_config_t devcfg = {
-				.clock_speed_hz = 8 * 1000 * 1000, 	//Clock = 8 MHz
-				.mode = 0,							//SPI mode 0
-				.spics_io_num = -1,					//CS pin operated by app
-				.queue_size = 7,
-				.address_bits = 0,					//address operated by app
-				.command_bits = 0					//command operated by app
-				};
+		static inline void EVE_pdn_clear(void)
+		{
+			gpio_set_level(EVE_PDN, 1);
+		}
 
-			//Initialize SPI bus
-			ret = spi_bus_initialize(EVE_SPI_HOST, &buscfg, EVE_DMA_CHN);
-			if(ret) {
-//				ESP_LOGE("EVE_SPI_Init()", "could not initialize SPI bus, error = 0x%x", ret);
-			}
+		#if defined (EVE_DMA)
+			extern uint32_t EVE_dma_buffer[1025];
+			extern volatile uint16_t EVE_dma_buffer_index;
+			extern volatile uint8_t EVE_dma_busy;
 
-			//Add EVE to SPI
-			ret = spi_bus_add_device(EVE_SPI_HOST, &devcfg, &EVE_SPI_DEVICE_HANDLE);
-			if(ret) {
-//				ESP_LOGE("EVE_SPI_Init()", "could not add SPI device, error = 0x%x", ret);
-			}
+			void EVE_init_dma(void);
+			void EVE_start_dma_transfer(void);
+		#endif
+
+		static inline void spi_transmit(uint8_t data)
+		{
+			spi_transaction_t trans = {0};
+			trans.length = 8;
+			trans.rxlength = 0;
+			trans.flags = SPI_TRANS_USE_TXDATA;
+			trans.tx_data[0] = data;
+			spi_device_polling_transmit(EVE_spi_device_simple, &trans);
+		}
+
+		static inline void spi_transmit_32(uint32_t data)
+		{
+			spi_transaction_t trans = {0};
+			trans.length = 32;
+			trans.rxlength = 0;
+			trans.flags = 0;
+			trans.tx_buffer = &data;
+			spi_device_polling_transmit(EVE_spi_device_simple, &trans);
+		}
+
+		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+		static inline void spi_transmit_burst(uint32_t data)
+		{
+			#if defined (EVE_DMA)
+				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+			#else
+				spi_transmit_32(data);
+			#endif
+		}
+
+		static inline uint8_t spi_receive(uint8_t data)
+		{
+			spi_transaction_t trans = {0};
+			trans.length = 8;
+			trans.rxlength = 8;
+			trans.flags = (SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA);
+			trans.tx_data[0] = data;
+			spi_device_polling_transmit(EVE_spi_device_simple, &trans);
+
+			return trans.rx_data[0];
+		}
+
+		static inline uint8_t fetch_flash_byte(const uint8_t *data)
+		{
+			return *data;
 		}
 
 	#endif /* ESP_PLATFORM */
