@@ -28,10 +28,12 @@ I have reports of successfully using it with:
 - MSP430
 - MSP432
 - some PICs
+- ATxmega128A1
+
 
 ## Displays
 
-The TFTs I have tested myself so far:
+The TFTs tested so far:
 
 - FT810CB-HY50HD http://www.hotmcu.com/5-graphical-lcd-touchscreen-800x480-spi-ft810-p-286.html
 - FT811CB-HY50HD  http://www.hotmcu.com/5-graphical-lcd-capacitive-touch-screen-800x480-spi-ft811-p-301.html
@@ -54,6 +56,7 @@ The TFTs I have tested myself so far:
 - CFAF320240F-035T https://www.crystalfontz.com/product/cfaf320240f035ttsa11-320x240-eve-tft-lcd-display-kit
 - CFAF480128A0-039TC
 - CFAF800480E0-050SC https://www.crystalfontz.com/product/cfaf800480e1050sca11-800x480-eve-accelerated-tft
+- GEN4-FT813-50CTP-CLB https://4dsystems.com.au/gen4-ft813-50ctp-clb
 
 ## This is version 5
 
