@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2021-01-10
+@date    2021-01-21
 @author  Rudolph Riedel
 
 @section info
@@ -142,6 +142,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - changed EVE_memRead8(), EVE_memRead16() and EVE_memRead32() to use spi_transmit_32() for the initial address+zero byte transfer
  This speeds up ESP32/ESP8266 by several µs, has no measureable effect for ATSAMD51 and is a little slower for AVR.
 - Bugfix: not sure why but setting private_block_write() to static broke it, without "static" it works
+- Bugfix: EVE_cmd_flashspirx() was using CMD_FLASHREAD
 
 
 */
@@ -699,7 +700,7 @@ void EVE_cmd_flashsource(uint32_t ptr)
 /* note: raw direct access, not really useful for anything */
 void EVE_cmd_flashspirx(uint32_t dest, uint32_t num)
 {
-	EVE_begin_cmd(CMD_FLASHREAD);
+	EVE_begin_cmd(CMD_FLASHSPIRX);
 	spi_transmit_32(dest);
 	spi_transmit_32(num);
 	EVE_cs_clear();
