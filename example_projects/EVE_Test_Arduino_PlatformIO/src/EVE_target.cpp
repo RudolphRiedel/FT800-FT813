@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions
 @version 5.0
-@date    2021-01-08
+@date    2021-02-06
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -42,6 +42,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added DMA to Arduino-ESP32 target
 - added a native ESP32 target with DMA
 - added an experimental ARDUINO_TEENSY41 target with DMA support - I do not have any Teensy to test this with
+
 
  */
 
@@ -565,35 +566,35 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 
-	#if defined (ARDUINO_TEENSY41)
+	#if defined (ARDUINO_TEENSY41)	/* note: this is mostly untested */
 		#include "EVE_target.h"
 
 		#if defined (EVE_DMA)
-			uint32_t EVE_dma_buffer[1025];
-			volatile uint16_t EVE_dma_buffer_index;
-			volatile uint8_t EVE_dma_busy = 0;
+		uint32_t EVE_dma_buffer[1025];
+		volatile uint16_t EVE_dma_buffer_index;
+		volatile uint8_t EVE_dma_busy = 0;
 
-			EventResponder EVE_spi_event;
+		EventResponder EVE_spi_event;
 
-			/* Callback for end-of-DMA-transfer */
-			void dma_callback(EventResponderRef event_responder)
-			{
-				EVE_dma_busy = 0;
-				EVE_cs_clear();
-			}
+		/* Callback for end-of-DMA-transfer */
+		void dma_callback(EventResponderRef event_responder)
+		{
+			EVE_dma_busy = 0;
+			EVE_cs_clear();
+		}
 
-			void EVE_init_dma(void)
-			{
-				EVE_spi_event.attachImmediate(&dma_callback);
-			}
+		void EVE_init_dma(void)
+		{
+			EVE_spi_event.attachImmediate(&dma_callback);
+		}
 
-			void EVE_start_dma_transfer(void)
-			{
-				EVE_cs_set();
-				EVE_dma_busy = 42;
-				SPI.transfer( ((uint8_t *) &EVE_dma_buffer[0])+1, NULL, (((EVE_dma_buffer_index)*4)-1), EVE_spi_event);
-			}
+		void EVE_start_dma_transfer(void)
+		{
+			EVE_cs_set();
+			EVE_dma_busy = 42;
+			SPI.transfer( ((uint8_t *) &EVE_dma_buffer[0])+1, NULL, (((EVE_dma_buffer_index)*4)-1), EVE_spi_event);
+		}
 		#endif
-	#endif
+	#endif /* Teensy 4.1 */
 
 #endif

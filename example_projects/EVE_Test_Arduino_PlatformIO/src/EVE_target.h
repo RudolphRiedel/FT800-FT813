@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2021-01-08
+@date    2021-02-06
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -67,7 +67,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added DMA to Arduino-ESP32 target
 - Bugfix: the generic Arduino target was missing EVE_cs_set() / EVE_cs_clear()
 - added a native ESP32 target with DMA
+- missing note: Robert S. added an AVR XMEGA target by pull-request on Github
 - added an experimental ARDUINO_TEENSY41 target with DMA support - I do not have any Teensy to test this with
+
 
 */
 
@@ -189,7 +191,86 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 	#if defined (__GNUC__)
 
-		#if	defined (__AVR__)
+		#if	defined (__AVR_XMEGA__)
+
+		#include <avr/io.h>
+		#include <avr/pgmspace.h>
+		#ifndef F_CPU
+			#define F_CPU 32000000UL
+		#endif		
+		#include <util/delay.h>
+
+		#define DELAY_MS(ms) _delay_ms(ms)
+		
+		
+		#define EVE_CS_PORT 	PORTC
+		#define EVE_CS_PIN	    PIN4_bm
+		#define EVE_PDN_PORT    PORTC
+		#define EVE_PDN_PIN     PIN1_bm
+		#define EVE_SPI	        SPIC		// the used SPI port
+
+		static inline void EVE_pdn_set(void)
+		{
+			EVE_PDN_PORT.OUTCLR = EVE_PDN_PIN;	/* Power-Down low */	
+		}
+
+		static inline void EVE_pdn_clear(void)
+		{
+			EVE_PDN_PORT.OUTSET = EVE_PDN_PIN;	/* Power-Down high */
+		}
+
+		static inline void EVE_cs_set(void)
+		{
+			EVE_CS_PORT.OUTCLR = EVE_CS_PIN;		/* cs low */
+		}
+
+		static inline void EVE_cs_clear(void)
+		{
+			EVE_CS_PORT.OUTSET= EVE_CS_PIN;	/* cs high */
+		}
+
+		static inline void spi_transmit(uint8_t data)
+		{
+			EVE_SPI.DATA = data;
+			while(!(EVE_SPI.STATUS & 0x80)); // wait for transmit complete
+		}
+
+		static inline void spi_transmit_32(uint32_t data)
+		{
+			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data >> 8));
+			spi_transmit((uint8_t)(data >> 16));
+			spi_transmit((uint8_t)(data >> 24));
+		}
+
+		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+		static inline void spi_transmit_burst(uint32_t data)
+		{
+			spi_transmit_32(data);
+		}
+
+		static inline uint8_t spi_receive(uint8_t data)
+		{
+			EVE_SPI.DATA = data;
+			while(!(EVE_SPI.STATUS & 0x80)); // wait for transmit complete
+			return EVE_SPI.DATA;
+		}
+
+		static inline uint8_t fetch_flash_byte(const uint8_t *data)
+		{
+			#if defined (__AVR_HAVE_ELPM__)	/* we have an AVR with more than 64kB FLASH memory */
+			return(pgm_read_byte_far(data));
+			#else
+			return(pgm_read_byte_near(data));
+			#endif
+		}
+
+		#endif /* XMEGA */
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
+		#if	defined (__AVR__) && ! defined (__AVR_XMEGA__)
 
 			#include <avr/io.h>
 			#include <avr/pgmspace.h>
@@ -1298,8 +1379,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 
-	#elif defined (ARDUINO_TEENSY41)
-	/* note: this is totally untested */
+		#elif defined (ARDUINO_TEENSY41)	/* note: this is mostly untested */
 
 		#define EVE_CS 		8
 		#define EVE_PDN		9
@@ -1307,12 +1387,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		#define EVE_DMA
 
 		#if defined (EVE_DMA)
-			extern uint32_t EVE_dma_buffer[1025];
-			extern volatile uint16_t EVE_dma_buffer_index;
-			extern volatile uint8_t EVE_dma_busy;
+		extern uint32_t EVE_dma_buffer[1025];
+		extern volatile uint16_t EVE_dma_buffer_index;
+		extern volatile uint8_t EVE_dma_busy;
 
-			void EVE_init_dma(void);
-			void EVE_start_dma_transfer(void);
+		void EVE_init_dma(void);
+		void EVE_start_dma_transfer(void);
 		#endif
 
 		static inline void EVE_cs_set(void)
@@ -1342,9 +1422,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		static inline void spi_transmit_burst(uint32_t data)
 		{
 			#if defined (EVE_DMA)
-				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+			EVE_dma_buffer[EVE_dma_buffer_index++] = data;
 			#else
-				spi_transmit_32(data);
+			spi_transmit_32(data);
 			#endif
 		}
 

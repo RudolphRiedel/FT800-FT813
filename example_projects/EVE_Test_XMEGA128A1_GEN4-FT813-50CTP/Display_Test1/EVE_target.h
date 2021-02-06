@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2021-01-08
+@date    2021-02-06
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -67,6 +67,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added DMA to Arduino-ESP32 target
 - Bugfix: the generic Arduino target was missing EVE_cs_set() / EVE_cs_clear()
 - added a native ESP32 target with DMA
+- missing note: Robert S. added an AVR XMEGA target by pull-request on Github
+- added an experimental ARDUINO_TEENSY41 target with DMA support - I do not have any Teensy to test this with
+
 
 */
 
@@ -1366,6 +1369,68 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			spi_device_polling_transmit(EVE_spi_device_simple, &trans);
 
 			return trans.rx_data[0];
+		}
+
+		static inline uint8_t fetch_flash_byte(const uint8_t *data)
+		{
+			return *data;
+		}
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
+		#elif defined (ARDUINO_TEENSY41)	/* note: this is mostly untested */
+
+		#define EVE_CS 		8
+		#define EVE_PDN		9
+
+		#define EVE_DMA
+
+		#if defined (EVE_DMA)
+		extern uint32_t EVE_dma_buffer[1025];
+		extern volatile uint16_t EVE_dma_buffer_index;
+		extern volatile uint8_t EVE_dma_busy;
+
+		void EVE_init_dma(void);
+		void EVE_start_dma_transfer(void);
+		#endif
+
+		static inline void EVE_cs_set(void)
+		{
+			digitalWrite(EVE_CS, LOW); /* make EVE listen */
+		}
+
+		static inline void EVE_cs_clear(void)
+		{
+			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listen */
+		}
+
+		static inline void spi_transmit(uint8_t data)
+		{
+			SPI.transfer(data);
+		}
+
+		static inline void spi_transmit_32(uint32_t data)
+		{
+			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data >> 8));
+			spi_transmit((uint8_t)(data >> 16));
+			spi_transmit((uint8_t)(data >> 24));
+		}
+
+		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+		static inline void spi_transmit_burst(uint32_t data)
+		{
+			#if defined (EVE_DMA)
+			EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+			#else
+			spi_transmit_32(data);
+			#endif
+		}
+
+		static inline uint8_t spi_receive(uint8_t data)
+		{
+			return SPI.transfer(data);
 		}
 
 		static inline uint8_t fetch_flash_byte(const uint8_t *data)
