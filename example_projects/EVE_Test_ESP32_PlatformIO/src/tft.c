@@ -1,8 +1,8 @@
 /*
 @file    tft.c / tft.cpp
 @brief   TFT handling functions for EVE_Test project
-@version 1.15
-@date    2020-12-28
+@version 1.16
+@date    2021-02-21
 @author  Rudolph Riedel
 
 @section History
@@ -67,13 +67,16 @@
 - moved "display_list_size = EVE_memRead16(REG_CMD_DL);" from TFT_display() to TFT_touch() to speed up the display
  refresh for non-DMA targets
 
+1.16
+-disabled the UTF-8 font example code, can be re-enabled if desired by changing the "#define TEST_UTF8 0" to "#define TEST_UTF8 1"
+
  */
 
 #include "EVE.h"
 #include "tft_data.h"
 
 
-#define TEST_UTF8 1
+#define TEST_UTF8 0
 
 
 /* some pre-definded colors */
