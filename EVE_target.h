@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2021-02-06
+@date    2021-03-07
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -69,6 +69,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added a native ESP32 target with DMA
 - missing note: Robert S. added an AVR XMEGA target by pull-request on Github
 - added an experimental ARDUINO_TEENSY41 target with DMA support - I do not have any Teensy to test this with
+- added a target for the Raspberry Pi Pico - RP2040
 
 
 */
@@ -930,6 +931,93 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		}
 
 	#endif /* ESP_PLATFORM */
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
+		#if defined (RP2040)
+		/* note: set in platformio.ini by "build_flags = -D RP2040" */
+
+		#include <stdio.h>
+		#include "pico/stdlib.h"
+		#include "hardware/spi.h"
+
+		#define EVE_CS 		5
+		#define EVE_PDN		6
+		#define EVE_SCK		2
+		#define EVE_MOSI	3
+		#define EVE_MISO	4
+		#define EVE_SPI spi0
+
+//		#define EVE_DMA
+
+		#define DELAY_MS(ms) sleep_ms(ms)
+
+//		void EVE_init_spi(void);
+
+		static inline void EVE_cs_set(void)
+		{
+			gpio_put(EVE_CS, 0);  // active low
+		}
+
+		static inline void EVE_cs_clear(void)
+		{
+			gpio_put(EVE_CS, 1);  // active high
+		}
+
+		static inline void EVE_pdn_set(void)
+		{
+			gpio_put(EVE_PDN, 0);
+		}
+
+		static inline void EVE_pdn_clear(void)
+		{
+			gpio_put(EVE_PDN, 1);
+		}
+
+		#if defined (EVE_DMA)
+			extern uint32_t EVE_dma_buffer[1025];
+			extern volatile uint16_t EVE_dma_buffer_index;
+			extern volatile uint8_t EVE_dma_busy;
+
+			void EVE_init_dma(void);
+			void EVE_start_dma_transfer(void);
+		#endif
+
+		static inline void spi_transmit(uint8_t data)
+		{
+			spi_write_blocking(EVE_SPI, &data, 1);
+		}
+
+		static inline void spi_transmit_32(uint32_t data)
+		{
+			spi_write_blocking(EVE_SPI, (uint8_t *) &data, 4);
+		}
+
+		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+		static inline void spi_transmit_burst(uint32_t data)
+		{
+			#if defined (EVE_DMA)
+				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+			#else
+				spi_transmit_32(data);
+			#endif
+		}
+
+		static inline uint8_t spi_receive(uint8_t data)
+		{
+			uint8_t result;
+
+			spi_write_read_blocking(EVE_SPI, &data, &result, 1);
+			return result;
+		}
+
+		static inline uint8_t fetch_flash_byte(const uint8_t *data)
+		{
+			return *data;
+		}
+
+	#endif /* RP2040 */
 
 	#endif /* __GNUC__ */
 
