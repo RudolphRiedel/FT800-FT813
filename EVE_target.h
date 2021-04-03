@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2021-03-07
+@date    2021-04-03
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -70,6 +70,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - missing note: Robert S. added an AVR XMEGA target by pull-request on Github
 - added an experimental ARDUINO_TEENSY41 target with DMA support - I do not have any Teensy to test this with
 - added a target for the Raspberry Pi Pico - RP2040
+- added a target for Arduino-BBC_MICROBIT_V2
 
 
 */
@@ -1529,6 +1530,52 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 
+		#elif defined (ARDUINO_BBC_MICROBIT_V2)	/* note: this is mostly untested */
+
+		#define EVE_CS 		12
+		#define EVE_PDN		16
+
+		static inline void EVE_cs_set(void)
+		{
+			digitalWrite(EVE_CS, LOW); /* make EVE listen */
+		}
+
+		static inline void EVE_cs_clear(void)
+		{
+			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listen */
+		}
+
+		static inline void spi_transmit(uint8_t data)
+		{
+			SPI.transfer(data);
+		}
+
+		static inline void spi_transmit_32(uint32_t data)
+		{
+			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data >> 8));
+			spi_transmit((uint8_t)(data >> 16));
+			spi_transmit((uint8_t)(data >> 24));
+		}
+
+		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+		static inline void spi_transmit_burst(uint32_t data)
+		{
+			spi_transmit_32(data);
+		}
+
+		static inline uint8_t spi_receive(uint8_t data)
+		{
+			return SPI.transfer(data);
+		}
+
+		static inline uint8_t fetch_flash_byte(const uint8_t *data)
+		{
+			return *data;
+		}
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
 	#else		/* generic functions for other Arduino architectures */
 		#define EVE_CS 		9
 		#define EVE_PDN		8
