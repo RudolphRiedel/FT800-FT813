@@ -2,14 +2,14 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2020-11-27
+@date    2021-04-04
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2020 Rudolph Riedel
+Copyright (c) 2016-2021 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -60,6 +60,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - moved the profile for the RiTFT50 over to the one for the RiTFT70
 - added a profile for the VM816C50A-D from Bridgetek
 - added a profile for PH800480T024-IFC03 and PH800480T013-IFC05 from PowerTip
+- added profiles for EVE4_40G and EVE4_101G from Matrix Orbital
+- added profiles for the EVE4 series modules from Riverdi
 
 */
 
@@ -83,6 +85,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE_RiTFT43
 	#define EVE_RiTFT50
 	#define EVE_RiTFT70
+	#define EVE_RVT35H
+	#define EVE_RVT43H
+	#define EVE_RVT50H
+	#define EVE_RVT70H
+	#define EVE_RVT101H
 	#define EVE_EVE2_29
 	#define EVE_EVE2_35
 	#define EVE_EVE2_35G
@@ -104,6 +111,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE_EVE3_70G
 	#define EVE_EVE3x_39
 	#define EVE_EVE3x_39G
+	#define EVE_EVE4_40G
+	#define EVE_EVE4_101G
 	#define EVE_NHD_35
 	#define EVE_NHD_43
 	#define EVE_NHD_43_800480
@@ -170,7 +179,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
-#define BT81X_ENABLE
 #endif
 
 
@@ -240,6 +248,29 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #endif
 
 
+/* untested */
+/* RVT35HHBxxxxx 320x240 3.5" Riverdi, various options, BT817 */
+#if defined (EVE_RVT35H)
+#define EVE_HSIZE	(320L)
+#define EVE_VSIZE	(240L)
+
+#define EVE_VSYNC0	(0L)
+#define EVE_VSYNC1	(4L)
+#define EVE_VOFFSET	(12L)
+#define EVE_VCYCLE	(260L)
+#define EVE_HSYNC0	(0L)
+#define EVE_HSYNC1	(4L)
+#define EVE_HOFFSET (43L)
+#define EVE_HCYCLE 	(371L)
+#define EVE_PCLK	(12L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD	(0L)
+#define EVE_TOUCH_RZTHRESH (1200L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 4
+#endif
+
 /* ----------- 480 x 272 ----------- */
 
 /* untested */
@@ -282,7 +313,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
-#define BT81X_ENABLE
 #endif
 
 
@@ -297,7 +327,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
-#define BT81X_ENABLE
 #define EVE_HAS_GT911
 #endif
 
@@ -313,7 +342,30 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
-#define BT81X_ENABLE
+#endif
+
+
+/* untested */
+/* RVT43HLBxxxxx 480x272 4.3" Riverdi, various options, BT817 */
+#if defined (EVE_RVT43H)
+#define EVE_HSIZE	(480L)
+#define EVE_VSIZE	(272L)
+
+#define EVE_VSYNC0	(0L)
+#define EVE_VSYNC1	(4L)
+#define EVE_VOFFSET	(12L)
+#define EVE_VCYCLE	(292L)
+#define EVE_HSYNC0	(0L)
+#define EVE_HSYNC1	(4L)
+#define EVE_HOFFSET (43L)
+#define EVE_HCYCLE 	(531L)
+#define EVE_PCLK	(7L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD	(0L)
+#define EVE_TOUCH_RZTHRESH (1200L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 4
 #endif
 
 
@@ -532,6 +584,28 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_GEN 3
 #endif
 
+/* untested */
+/* RVT50HQBxxxxx 800x480 5.0" Riverdi, various options, BT817 */
+#if defined (EVE_RVT50H)
+#define EVE_HSIZE	(800L)
+#define EVE_VSIZE	(480L)
+
+#define EVE_VSYNC0	(0L)
+#define EVE_VSYNC1	(4L)
+#define EVE_VOFFSET	(8L)
+#define EVE_VCYCLE	(496L)
+#define EVE_HSYNC0	(0L)
+#define EVE_HSYNC1	(4L)
+#define EVE_HOFFSET (8L)
+#define EVE_HCYCLE 	(816L)
+#define EVE_PCLK	(3L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD	(0L)
+#define EVE_TOUCH_RZTHRESH (1200L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 4
+#endif
 
 /* untested */
 /* NHD-5.0-800480FT-CxXx-xxx 800x480 5.0" Newhaven, resistive or capacitive, FT81x */
@@ -641,6 +715,30 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_GEN 2
 #endif
 
+/* untested */
+/* RVT70HSBxxxxx 1024x600 7.0" Riverdi, various options, BT817 */
+#if defined (EVE_RVT70H)
+#define EVE_HSIZE	(1024L)
+#define EVE_VSIZE	(600L)
+
+#define EVE_VSYNC0	(0L)
+#define EVE_VSYNC1	(10L)
+#define EVE_VOFFSET	(23L)
+#define EVE_VCYCLE	(635L)
+#define EVE_HSYNC0	(0L)
+#define EVE_HSYNC1	(70L)
+#define EVE_HOFFSET (160L)
+#define EVE_HCYCLE 	(1344L)
+#define EVE_PCLK	(1L) /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
+#define EVE_PCLK_FREQ (51000000L) /* EVE_PCLK needs to be set to 1 for this to take effect */
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD	(0L)
+#define EVE_TOUCH_RZTHRESH (1200L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 4
+#endif
+
 
 #if defined (BT817_TEST1)
 #define EVE_HSIZE	(1024L)	/* Thd Length of visible part of line (in PCLKs) - display width */
@@ -660,8 +758,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_CSPREAD	(0L)	/* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
 #define EVE_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
 #define EVE_HAS_CRYSTAL
-#define FT81X_ENABLE
-#define BT81X_ENABLE
 #define EVE_GEN 4
 //#define EVE_PCLK_FREQ (51000000L)	/* 51MHz - value for EVE_cmd_pclkfreq */
 #endif
@@ -714,7 +810,55 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 /* ----------- 1280 x 800 ------------ */
 
+/* untested */
+/* note: timing parameters from Matrix Orbital, does not use the second pll, 58,64 FPS */
+/* EVE4-101G 1280x800 10.1" Matrix Orbital, capacitive touch, BT817 */
+#if defined (EVE_EVE4_101G)
+#define EVE_HSIZE	(1280L)	/* Thd Length of visible part of line (in PCLKs) - display width */
+#define EVE_VSIZE	(800L)	/* Tvd Number of visible lines (in lines) - display height */
+#define EVE_VSYNC0	(11L)	/* Tvf Vertical Front Porch */
+#define EVE_VSYNC1	(12L)	/* Tvf + Tvp Vertical Front Porch plus Vsync Pulse width */
+#define EVE_VOFFSET	(22L)	/* Tvf + Tvp + Tvb Number of non-visible lines (in lines) */
+#define EVE_VCYCLE	(823L)	/* Tv Total number of lines (visible and non-visible) (in lines) */
+#define EVE_HSYNC0	(78L)	/* Thf Horizontal Front Porch */
+#define EVE_HSYNC1	(80L)	/* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
+#define EVE_HOFFSET (158L)	/* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
+#define EVE_HCYCLE 	(1440L)	/* Th Total length of line (visible and non-visible) (in PCLKs) */
+#define EVE_PCLK	(1L)	/* 1 = use second PLL for pixel-clock in BT817 / BT818 */
+#define EVE_PCLK_FREQ (71000000L)	/* 71MHz - value for EVE_cmd_pclkfreq */
+#define EVE_PCLKPOL (0L)	/* PCLK polarity (0 = rising edge, 1 = falling edge) */
+#define EVE_SWIZZLE (3L)	/* Defines the arrangement of the RGB pins */
+#define EVE_CSPREAD	(0L)	/* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
+#define EVE_TOUCH_RZTHRESH (1200L)	/* touch-sensitivity */
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 4
+#define EVE_HAS_GT911
+#endif
 
+
+/* untested */
+/* RVT101HVBxxxxx 1280x600 7.0" Riverdi, various options, BT817 */
+#if defined (EVE_RVT101H)
+#define EVE_HSIZE	(1280L)
+#define EVE_VSIZE	(800L)
+
+#define EVE_VSYNC0	(0L)
+#define EVE_VSYNC1	(10L)
+#define EVE_VOFFSET	(23L)
+#define EVE_VCYCLE	(838L)
+#define EVE_HSYNC0	(0L)
+#define EVE_HSYNC1	(20L)
+#define EVE_HOFFSET (88L)
+#define EVE_HCYCLE 	(1440L)
+#define EVE_PCLK	(1L) /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
+#define EVE_PCLK_FREQ (72000000L) /* EVE_PCLK needs to be set to 1 for this to take effect */
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD	(0L)
+#define EVE_TOUCH_RZTHRESH (1200L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 4
+#endif
 
 /* ----------- non-standard ----------- */
 
@@ -878,6 +1022,30 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_GEN 2
 #endif
 
+/* untested */
+/* note: timing parameters from Matrix Orbital, does not use the second pll, 58,64 FPS */
+/* EVE4-40G 720x720 4.0" Matrix Orbital, capacitive touch, BT817 */
+#if defined (EVE_EVE4_40G)
+#define EVE_HSIZE	(720L)
+#define EVE_VSIZE	(720L)
+
+#define EVE_VSYNC0	(16)
+#define EVE_VSYNC1	(18L)
+#define EVE_VOFFSET	(35L)
+#define EVE_VCYCLE	(756L)
+#define EVE_HSYNC0	(46L)
+#define EVE_HSYNC1	(48L)
+#define EVE_HOFFSET	(91)
+#define EVE_HCYCLE 	(812L)
+#define EVE_PCLK	(2L)
+#define EVE_PCLKPOL	(1L)
+#define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(0L)
+#define EVE_TOUCH_RZTHRESH (1200L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 4
+#define EVE_HAS_GT911
+#endif
 
 /* ------ Common Timings ------ */
 

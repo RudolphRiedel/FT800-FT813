@@ -297,7 +297,7 @@ void touch_calibrate(void)
 }
 
 
-void initStaticBackground()
+void initStaticBackground(void)
 {
 	EVE_cmd_dl(CMD_DLSTART); /* Start the display list */
 

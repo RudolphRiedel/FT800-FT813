@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2021-01-21
+@date    2021-04-04
 @author  Rudolph Riedel
 
 @section info
@@ -20,7 +20,7 @@ Copyright (c) 2016-2021 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
-sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conions:
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
@@ -143,7 +143,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
  This speeds up ESP32/ESP8266 by several µs, has no measureable effect for ATSAMD51 and is a little slower for AVR.
 - Bugfix: not sure why but setting private_block_write() to static broke it, without "static" it works
 - Bugfix: EVE_cmd_flashspirx() was using CMD_FLASHREAD
-
+- fixed a warning in EVE_init() when compiling for EVE4
 
 */
 
@@ -1316,16 +1316,14 @@ uint8_t EVE_init(void)
 	/* nothing is being displayed yet... the pixel clock is still 0x00 */
 
 	#if EVE_GEN > 3
-	uint32_t frequency;
-
 	#if defined (EVE_PCLK_FREQ)
+	uint32_t frequency;
 	frequency = EVE_cmd_pclkfreq(EVE_PCLK_FREQ, 0); /* setup the second PLL for the pixel-clock according to the define in EVE_config.h for the display, as close a match as possible */
 	if(frequency == 0) /* this failed for some reason so we return with an error */
 	{
 		return 0;
 	}
 	#endif
-
 	#endif
 
 	EVE_memWrite8(REG_GPIO, 0x80); /* enable the DISP signal to the LCD panel, it is set to output in REG_GPIO_DIR by default */
