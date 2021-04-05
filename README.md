@@ -19,6 +19,7 @@ I have used it so far with:
 - ATSAMC21E18A (DMA)
 - ATSAME51J19A (DMA)
 - ESP32 (DMA)
+- RP2040 (DMA) - Raspberry Pi Pico
 
 I have reports of successfully using it with:
 
@@ -29,7 +30,6 @@ I have reports of successfully using it with:
 - MSP432
 - some PICs
 - ATxmega128A1
-
 
 ## Displays
 
