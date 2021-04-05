@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2021-04-03
+@date    2021-04-05
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -71,6 +71,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added an experimental ARDUINO_TEENSY41 target with DMA support - I do not have any Teensy to test this with
 - added a target for the Raspberry Pi Pico - RP2040
 - added a target for Arduino-BBC_MICROBIT_V2
+- activated DMA for the Raspberry Pi Pico - RP2040
 
 
 */
@@ -939,7 +940,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		#if defined (RP2040)
 		/* note: set in platformio.ini by "build_flags = -D RP2040" */
 
-		#include <stdio.h>
 		#include "pico/stdlib.h"
 		#include "hardware/spi.h"
 
@@ -950,11 +950,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		#define EVE_MISO	4
 		#define EVE_SPI spi0
 
-//		#define EVE_DMA
+		#define EVE_DMA
 
 		#define DELAY_MS(ms) sleep_ms(ms)
 
-//		void EVE_init_spi(void);
+		void EVE_init_spi(void);
 
 		static inline void EVE_cs_set(void)
 		{
