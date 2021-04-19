@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2021-04-04
+@date    2021-04-19
 @author  Rudolph Riedel
 
 @section info
@@ -144,6 +144,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - Bugfix: not sure why but setting private_block_write() to static broke it, without "static" it works
 - Bugfix: EVE_cmd_flashspirx() was using CMD_FLASHREAD
 - fixed a warning in EVE_init() when compiling for EVE4
+- renamed internal function EVE_begin_cmd() to eve_begin_cmd() and made it static
+- changed all the EVE_start_command() calls to eve_begin_cmd() calls following the report on Github from
+  Michael Wachs that these are identical - they weren't prior to V5
+- removed EVE_start_command()
+
 
 */
 
@@ -373,13 +378,8 @@ void EVE_cmd_execute(void)
 }
 
 
-/*----------------------------------------------------------------------------------------------------------------------------*/
-/*---- commands and functions that are meant to be used outside of display-lists ---------------------------------------------*/
-/*----------------------------------------------------------------------------------------------------------------------------*/
-
-
-/* begin a co-processor command, this is used for non-display-list commands */
-void EVE_begin_cmd(uint32_t command)
+/* begin a co-processor command, this is used for non-display-list and non-burst-mode commands */
+static void eve_begin_cmd(uint32_t command)
 {
 	uint32_t ftAddress;
 
@@ -387,7 +387,7 @@ void EVE_begin_cmd(uint32_t command)
 	EVE_cs_set();
 	spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
 	spi_transmit((uint8_t)(ftAddress >> 8)); /* send middle address byte */
-	spi_transmit((uint8_t)(ftAddress));      /* send low address byte */
+	spi_transmit((uint8_t)(ftAddress)); /* send low address byte */
 	spi_transmit_32(command);
 }
 
@@ -457,7 +457,7 @@ void block_transfer(const uint8_t *data, uint32_t len)
 /* note: this looks exactly the same as EVE_cmd_flashupdate() but it needs the flash to be empty */
 void EVE_cmd_flashprogram(uint32_t dest, uint32_t src, uint32_t num)
 {
-	EVE_begin_cmd(CMD_FLASHPROGRAM);
+	eve_begin_cmd(CMD_FLASHPROGRAM);
 	spi_transmit_32(dest);
 	spi_transmit_32(src);
 	spi_transmit_32(num);
@@ -469,7 +469,7 @@ void EVE_cmd_flashprogram(uint32_t dest, uint32_t src, uint32_t num)
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void EVE_cmd_fontcache(uint32_t font, int32_t ptr, uint32_t num)
 {
-	EVE_begin_cmd(CMD_FONTCACHE);
+	eve_begin_cmd(CMD_FONTCACHE);
 	spi_transmit_32(font);
 	spi_transmit_32(ptr);
 	spi_transmit_32(num);
@@ -483,7 +483,7 @@ void EVE_cmd_fontcachequery(uint32_t *total, int32_t *used)
 {
 	uint16_t cmdoffset;
 
-	EVE_begin_cmd(CMD_FONTCACHEQUERY);
+	eve_begin_cmd(CMD_FONTCACHEQUERY);
 	spi_transmit_32(0);
 	spi_transmit_32(0);
 	EVE_cs_clear();
@@ -506,7 +506,7 @@ void EVE_cmd_getimage(uint32_t *source, uint32_t *fmt, uint32_t *width, uint32_t
 {
 	uint16_t cmdoffset;
 
-	EVE_begin_cmd(CMD_GETIMAGE);
+	eve_begin_cmd(CMD_GETIMAGE);
 	spi_transmit_32(0);
 	spi_transmit_32(0);
 	spi_transmit_32(0);
@@ -542,7 +542,7 @@ void EVE_cmd_getimage(uint32_t *source, uint32_t *fmt, uint32_t *width, uint32_t
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void EVE_cmd_linetime(uint32_t dest)
 {
-	EVE_begin_cmd(CMD_LINETIME);
+	eve_begin_cmd(CMD_LINETIME);
 	spi_transmit_32(dest);
 	EVE_cs_clear();
 	while (EVE_busy());
@@ -551,7 +551,7 @@ void EVE_cmd_linetime(uint32_t dest)
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void EVE_cmd_newlist(uint32_t adr)
 {
-	EVE_begin_cmd(CMD_NEWLIST);
+	eve_begin_cmd(CMD_NEWLIST);
 	spi_transmit_32(adr);
 	EVE_cs_clear();
 	while (EVE_busy());
@@ -565,7 +565,7 @@ uint32_t EVE_cmd_pclkfreq(uint32_t ftarget, int32_t rounding)
 {
 	uint16_t cmdoffset;
 
-	EVE_begin_cmd(CMD_PCLKFREQ);
+	eve_begin_cmd(CMD_PCLKFREQ);
 	spi_transmit_32(ftarget);
 	spi_transmit_32(rounding);
 	spi_transmit_32(0);
@@ -581,7 +581,7 @@ uint32_t EVE_cmd_pclkfreq(uint32_t ftarget, int32_t rounding)
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void EVE_cmd_wait(uint32_t us)
 {
-	EVE_begin_cmd(CMD_WAIT);
+	eve_begin_cmd(CMD_WAIT);
 	spi_transmit_32(us);
 	EVE_cs_clear();
 	while (EVE_busy());
@@ -616,7 +616,7 @@ void EVE_cmd_clearcache(void)
 /* this is added for conveniance, using EVE_cmd_dl(CMD_FLASHATTACH); followed by EVE_cmd_execute(); would work as well */
 void EVE_cmd_flashattach(void)
 {
-	EVE_begin_cmd(CMD_FLASHATTACH);
+	eve_begin_cmd(CMD_FLASHATTACH);
 	EVE_cs_clear();
 	while (EVE_busy());
 }
@@ -626,7 +626,7 @@ void EVE_cmd_flashattach(void)
 /* this is added for conveniance, using EVE_cmd_dl(CMD_FLASHDETACH); followed by EVE_cmd_execute(); would work as well */
 void EVE_cmd_flashdetach(void)
 {
-	EVE_begin_cmd(CMD_FLASHDETACH);
+	eve_begin_cmd(CMD_FLASHDETACH);
 	EVE_cs_clear();
 	while (EVE_busy());
 }
@@ -636,7 +636,7 @@ void EVE_cmd_flashdetach(void)
 /* this is added for conveniance, using EVE_cmd_dl(CMD_FLASHERASE); followed by EVE_cmd_execute(); would work as well */
 void EVE_cmd_flasherase(void)
 {
-	EVE_begin_cmd(CMD_FLASHERASE);
+	eve_begin_cmd(CMD_FLASHERASE);
 	EVE_cs_clear();
 	while (EVE_busy());
 }
@@ -647,7 +647,7 @@ uint32_t EVE_cmd_flashfast(void)
 {
 	uint16_t cmdoffset;
 
-	EVE_begin_cmd(CMD_FLASHFAST);
+	eve_begin_cmd(CMD_FLASHFAST);
 	spi_transmit_32(0);
 	EVE_cs_clear();
 
@@ -663,7 +663,7 @@ uint32_t EVE_cmd_flashfast(void)
 /* this is added for conveniance, using EVE_cmd_dl(CMD_FLASHSPIDESEL); followed by EVE_cmd_execute(); would work as well */
 void EVE_cmd_flashspidesel(void)
 {
-	EVE_begin_cmd(CMD_FLASHSPIDESEL);
+	eve_begin_cmd(CMD_FLASHSPIDESEL);
 	EVE_cs_clear();
 	while (EVE_busy());
 }
@@ -676,7 +676,7 @@ void EVE_cmd_flashspidesel(void)
 /* note: the src pointer is relative to the flash so the first address is 0x00000000 not 0x800000 */
 void EVE_cmd_flashread(uint32_t dest, uint32_t src, uint32_t num)
 {
-	EVE_begin_cmd(CMD_FLASHREAD);
+	eve_begin_cmd(CMD_FLASHREAD);
 	spi_transmit_32(dest);
 	spi_transmit_32(src);
 	spi_transmit_32(num);
@@ -688,7 +688,7 @@ void EVE_cmd_flashread(uint32_t dest, uint32_t src, uint32_t num)
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void EVE_cmd_flashsource(uint32_t ptr)
 {
-	EVE_begin_cmd(CMD_FLASHSOURCE);
+	eve_begin_cmd(CMD_FLASHSOURCE);
 	spi_transmit_32(ptr);
 	EVE_cs_clear();
 	while (EVE_busy());
@@ -700,7 +700,7 @@ void EVE_cmd_flashsource(uint32_t ptr)
 /* note: raw direct access, not really useful for anything */
 void EVE_cmd_flashspirx(uint32_t dest, uint32_t num)
 {
-	EVE_begin_cmd(CMD_FLASHSPIRX);
+	eve_begin_cmd(CMD_FLASHSPIRX);
 	spi_transmit_32(dest);
 	spi_transmit_32(num);
 	EVE_cs_clear();
@@ -713,7 +713,7 @@ void EVE_cmd_flashspirx(uint32_t dest, uint32_t num)
 /* note: raw direct access, not really useful for anything */
 void EVE_cmd_flashspitx(uint32_t num, const uint8_t *data)
 {
-	EVE_begin_cmd(CMD_FLASHSPITX);
+	eve_begin_cmd(CMD_FLASHSPITX);
 	spi_transmit_32(num);
 	EVE_cs_clear();
 	block_transfer(data, num);
@@ -727,7 +727,7 @@ void EVE_cmd_flashspitx(uint32_t num, const uint8_t *data)
 /* note: the address ptr is relative to the flash so the first address is 0x00000000 not 0x800000 */
 void EVE_cmd_flashupdate(uint32_t dest, uint32_t src, uint32_t num)
 {
-	EVE_begin_cmd(CMD_FLASHUPDATE);
+	eve_begin_cmd(CMD_FLASHUPDATE);
 	spi_transmit_32(dest);
 	spi_transmit_32(src);
 	spi_transmit_32(num);
@@ -744,7 +744,7 @@ void EVE_cmd_flashupdate(uint32_t dest, uint32_t src, uint32_t num)
 /* note: on AVR controllers this expects the data to be located in the controllers flash memory */
 void EVE_cmd_flashwrite(uint32_t ptr, uint32_t num, const uint8_t *data)
 {
-	EVE_begin_cmd(CMD_FLASHWRITE);
+	eve_begin_cmd(CMD_FLASHWRITE);
 	spi_transmit_32(ptr);
 	spi_transmit_32(num);
 	EVE_cs_clear();
@@ -758,7 +758,7 @@ void EVE_cmd_flashwrite(uint32_t ptr, uint32_t num, const uint8_t *data)
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void EVE_cmd_inflate2(uint32_t ptr, uint32_t options, const uint8_t *data, uint32_t len)
 {
-	EVE_begin_cmd(CMD_INFLATE2);
+	eve_begin_cmd(CMD_INFLATE2);
 	spi_transmit_32(ptr);
 	spi_transmit_32(options);
 	EVE_cs_clear();
@@ -787,7 +787,7 @@ void EVE_cmd_getprops(uint32_t *pointer, uint32_t *width, uint32_t *height)
 {
 	uint16_t cmdoffset;
 
-	EVE_begin_cmd(CMD_GETPROPS);
+	eve_begin_cmd(CMD_GETPROPS);
 	spi_transmit_32(0);
 	spi_transmit_32(0);
 	spi_transmit_32(0);
@@ -816,7 +816,7 @@ uint32_t EVE_cmd_getptr(void)
 {
 	uint16_t cmdoffset;
 
-	EVE_begin_cmd(CMD_GETPTR);
+	eve_begin_cmd(CMD_GETPTR);
 	spi_transmit_32(0);
 
 	EVE_cs_clear();
@@ -831,7 +831,7 @@ uint32_t EVE_cmd_getptr(void)
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void EVE_cmd_inflate(uint32_t ptr, const uint8_t *data, uint32_t len)
 {
-	EVE_begin_cmd(CMD_INFLATE);
+	eve_begin_cmd(CMD_INFLATE);
 	spi_transmit_32(ptr);
 	EVE_cs_clear();
 	if(data)
@@ -844,7 +844,7 @@ void EVE_cmd_inflate(uint32_t ptr, const uint8_t *data, uint32_t len)
 /* this is meant to be called outside display-list building, does not support cmd-burst */
 void EVE_cmd_interrupt(uint32_t ms)
 {
-	EVE_begin_cmd(CMD_INTERRUPT);
+	eve_begin_cmd(CMD_INTERRUPT);
 	spi_transmit_32(ms);
 	EVE_cs_clear();
 }
@@ -853,7 +853,7 @@ void EVE_cmd_interrupt(uint32_t ms)
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void EVE_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *data, uint32_t len)
 {
-	EVE_begin_cmd(CMD_LOADIMAGE);
+	eve_begin_cmd(CMD_LOADIMAGE);
 	spi_transmit_32(ptr);
 	spi_transmit_32(options);
 	EVE_cs_clear();
@@ -875,7 +875,7 @@ void EVE_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *data, uint
 /* this is meant to be called outside display-list building, does not support cmd-burst */
 void EVE_cmd_mediafifo(uint32_t ptr, uint32_t size)
 {
-	EVE_begin_cmd(CMD_MEDIAFIFO);
+	eve_begin_cmd(CMD_MEDIAFIFO);
 	spi_transmit_32(ptr);
 	spi_transmit_32(size);
 	EVE_cs_clear();
@@ -885,7 +885,7 @@ void EVE_cmd_mediafifo(uint32_t ptr, uint32_t size)
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void EVE_cmd_memcpy(uint32_t dest, uint32_t src, uint32_t num)
 {
-	EVE_begin_cmd(CMD_MEMCPY);
+	eve_begin_cmd(CMD_MEMCPY);
 	spi_transmit_32(dest);
 	spi_transmit_32(src);
 	spi_transmit_32(num);
@@ -900,7 +900,7 @@ uint32_t EVE_cmd_memcrc(uint32_t ptr, uint32_t num)
 {
 	uint16_t cmdoffset;
 
-	EVE_begin_cmd(CMD_MEMCRC);
+	eve_begin_cmd(CMD_MEMCRC);
 	spi_transmit_32(ptr);
 	spi_transmit_32(num);
 	spi_transmit_32(0);
@@ -916,7 +916,7 @@ uint32_t EVE_cmd_memcrc(uint32_t ptr, uint32_t num)
 /* this is meant to be called outside display-list building, does not support cmd-burst */
 void EVE_cmd_memset(uint32_t ptr, uint8_t value, uint32_t num)
 {
-	EVE_begin_cmd(CMD_MEMSET);
+	eve_begin_cmd(CMD_MEMSET);
 	spi_transmit_32(ptr);
 	spi_transmit_32((uint32_t) value);
 	spi_transmit_32(num);
@@ -929,7 +929,7 @@ void EVE_cmd_memset(uint32_t ptr, uint8_t value, uint32_t num)
 /*
 void EVE_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *data)
 {
-	EVE_begin_cmd(CMD_MEMWRITE);
+	eve_begin_cmd(CMD_MEMWRITE);
 	spi_transmit_32(dest);
 	spi_transmit_32(num);
 
@@ -949,7 +949,7 @@ void EVE_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *data)
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void EVE_cmd_memzero(uint32_t ptr, uint32_t num)
 {
-	EVE_begin_cmd(CMD_MEMZERO);
+	eve_begin_cmd(CMD_MEMZERO);
 	spi_transmit_32(ptr);
 	spi_transmit_32(num);
 	EVE_cs_clear();
@@ -961,7 +961,7 @@ void EVE_cmd_memzero(uint32_t ptr, uint32_t num)
 /* it does not wait for completion in order to allow the video to be paused or terminated by REG_PLAY_CONTROL */
 void EVE_cmd_playvideo(uint32_t options, const uint8_t *data, uint32_t len)
 {
-	EVE_begin_cmd(CMD_PLAYVIDEO);
+	eve_begin_cmd(CMD_PLAYVIDEO);
 	spi_transmit_32(options);
 	EVE_cs_clear();
 
@@ -987,7 +987,7 @@ uint32_t EVE_cmd_regread(uint32_t ptr)
 {
 	uint16_t cmdoffset;
 
-	EVE_begin_cmd(CMD_REGREAD);
+	eve_begin_cmd(CMD_REGREAD);
 	spi_transmit_32(ptr);
 	spi_transmit_32(0);
 	EVE_cs_clear();
@@ -1002,7 +1002,7 @@ uint32_t EVE_cmd_regread(uint32_t ptr)
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void EVE_cmd_setrotate(uint32_t r)
 {
-	EVE_begin_cmd(CMD_SETROTATE);
+	eve_begin_cmd(CMD_SETROTATE);
 	spi_transmit_32(r);
 	EVE_cs_clear();
 	while (EVE_busy());
@@ -1012,7 +1012,7 @@ void EVE_cmd_setrotate(uint32_t r)
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void EVE_cmd_snapshot(uint32_t ptr)
 {
-	EVE_begin_cmd(CMD_SNAPSHOT);
+	eve_begin_cmd(CMD_SNAPSHOT);
 	spi_transmit_32(ptr);
 	EVE_cs_clear();
 	while (EVE_busy());
@@ -1022,7 +1022,7 @@ void EVE_cmd_snapshot(uint32_t ptr)
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void EVE_cmd_snapshot2(uint32_t fmt, uint32_t ptr, int16_t x0, int16_t y0, int16_t w0, int16_t h0)
 {
-	EVE_begin_cmd(CMD_SNAPSHOT2);
+	eve_begin_cmd(CMD_SNAPSHOT2);
 	spi_transmit_32(fmt);
 	spi_transmit_32(ptr);
 
@@ -1044,7 +1044,7 @@ void EVE_cmd_snapshot2(uint32_t fmt, uint32_t ptr, int16_t x0, int16_t y0, int16
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void EVE_cmd_track(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t tag)
 {
-	EVE_begin_cmd(CMD_TRACK);
+	eve_begin_cmd(CMD_TRACK);
 
 	spi_transmit((uint8_t)(x0));
 	spi_transmit((uint8_t)(x0 >> 8));
@@ -1069,7 +1069,7 @@ void EVE_cmd_track(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t tag)
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
 void EVE_cmd_videoframe(uint32_t dest, uint32_t result_ptr)
 {
-	EVE_begin_cmd(CMD_VIDEOFRAME);
+	eve_begin_cmd(CMD_VIDEOFRAME);
 	spi_transmit_32(dest);
 	spi_transmit_32(result_ptr);
 	EVE_cs_clear();
@@ -1402,7 +1402,7 @@ void EVE_end_cmd_burst(void)
 	#endif
 }
 
-
+#if 0
 /* private function, begin a co-processor command, only used for non-burst commands */
 static void EVE_start_command(uint32_t command)
 {
@@ -1416,7 +1416,7 @@ static void EVE_start_command(uint32_t command)
 
 	spi_transmit_32(command);
 }
-
+#endif
 
 /* write a string to co-processor memory in context of a command: no chip-select, just plain SPI-transfers */
 static void private_string_write(const char *text)
@@ -1503,7 +1503,7 @@ void EVE_cmd_animframeram(int16_t x0, int16_t y0, uint32_t aoptr, uint32_t frame
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_ANIMFRAMERAM);
+		eve_begin_cmd(CMD_ANIMFRAMERAM);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -1531,7 +1531,7 @@ void EVE_cmd_animstartram(int32_t ch, uint32_t aoptr, uint32_t loop)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_ANIMSTARTRAM);
+		eve_begin_cmd(CMD_ANIMSTARTRAM);
 		spi_transmit_32(ch);
 		spi_transmit_32(aoptr);
 		spi_transmit_32(loop);
@@ -1553,7 +1553,7 @@ void EVE_cmd_apilevel(uint32_t level)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_APILEVEL);
+		eve_begin_cmd(CMD_APILEVEL);
 		spi_transmit_32(level);
 		EVE_cs_clear();
 	}
@@ -1571,7 +1571,7 @@ void EVE_cmd_calibratesub(uint16_t x0, uint16_t y0, uint16_t width, uint16_t hei
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_CALIBRATESUB);
+		eve_begin_cmd(CMD_CALIBRATESUB);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -1592,7 +1592,7 @@ void EVE_cmd_calllist(uint32_t adr)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_CALLLIST);
+		eve_begin_cmd(CMD_CALLLIST);
 		spi_transmit_32(adr);
 		EVE_cs_clear();
 	}
@@ -1610,7 +1610,7 @@ void EVE_cmd_hsf(uint32_t hsf)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_HSF);
+		eve_begin_cmd(CMD_HSF);
 		spi_transmit_32(hsf);
 		EVE_cs_clear();
 	}
@@ -1628,7 +1628,7 @@ void EVE_cmd_runanim(uint32_t waitmask, uint32_t play)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_RUNANIM);
+		eve_begin_cmd(CMD_RUNANIM);
 		spi_transmit_32(waitmask);
 		spi_transmit_32(play);
 		EVE_cs_clear();
@@ -1654,7 +1654,7 @@ void EVE_cmd_animdraw(int32_t ch)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_ANIMDRAW);
+		eve_begin_cmd(CMD_ANIMDRAW);
 		spi_transmit_32(ch);
 		EVE_cs_clear();
 	}
@@ -1672,7 +1672,7 @@ void EVE_cmd_animframe(int16_t x0, int16_t y0, uint32_t aoptr, uint32_t frame)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_ANIMFRAME);
+		eve_begin_cmd(CMD_ANIMFRAME);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -1699,7 +1699,7 @@ void EVE_cmd_animstart(int32_t ch, uint32_t aoptr, uint32_t loop)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_ANIMSTART);
+		eve_begin_cmd(CMD_ANIMSTART);
 
 		spi_transmit_32(ch);
 		spi_transmit_32(aoptr);
@@ -1722,7 +1722,7 @@ void EVE_cmd_animstop(int32_t ch)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_ANIMSTOP);
+		eve_begin_cmd(CMD_ANIMSTOP);
 		spi_transmit_32(ch);
 		EVE_cs_clear();
 	}
@@ -1740,7 +1740,7 @@ void EVE_cmd_animxy(int32_t ch, int16_t x0, int16_t y0)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_ANIMXY);
+		eve_begin_cmd(CMD_ANIMXY);
 		spi_transmit_32(ch);
 
 		spi_transmit((uint8_t)(x0));
@@ -1765,7 +1765,7 @@ void EVE_cmd_appendf(uint32_t ptr, uint32_t num)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_APPENDF);
+		eve_begin_cmd(CMD_APPENDF);
 		spi_transmit_32(ptr);
 		spi_transmit_32(num);
 		EVE_cs_clear();
@@ -1788,7 +1788,7 @@ uint16_t EVE_cmd_bitmap_transform(int32_t x0, int32_t y0, int32_t x1, int32_t y1
 	{
 		uint16_t cmdoffset;
 
-		EVE_start_command(CMD_BITMAP_TRANSFORM);
+		eve_begin_cmd(CMD_BITMAP_TRANSFORM);
 		spi_transmit_32(x0);
 		spi_transmit_32(y0);
 		spi_transmit_32(x1);
@@ -1837,7 +1837,7 @@ void EVE_cmd_fillwidth(uint32_t s)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_FILLWIDTH);
+		eve_begin_cmd(CMD_FILLWIDTH);
 		spi_transmit_32(s);
 		EVE_cs_clear();
 	}
@@ -1855,7 +1855,7 @@ void EVE_cmd_gradienta(int16_t x0, int16_t y0, uint32_t argb0, int16_t x1, int16
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_GRADIENTA);
+		eve_begin_cmd(CMD_GRADIENTA);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -1890,7 +1890,7 @@ void EVE_cmd_rotatearound(int32_t x0, int32_t y0, int32_t angle, int32_t scale)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_ROTATEAROUND);
+		eve_begin_cmd(CMD_ROTATEAROUND);
 		spi_transmit_32(x0);
 		spi_transmit_32(y0);
 		spi_transmit_32(angle);
@@ -1915,7 +1915,7 @@ void EVE_cmd_button_var(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t 
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_BUTTON);
+		eve_begin_cmd(CMD_BUTTON);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -1984,7 +1984,7 @@ void EVE_cmd_text_var(int16_t x0, int16_t y0, int16_t font, uint16_t options, co
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_TEXT);
+		eve_begin_cmd(CMD_TEXT);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -2048,7 +2048,7 @@ void EVE_cmd_toggle_var(int16_t x0, int16_t y0, int16_t w0, int16_t font, uint16
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_TOGGLE);
+		eve_begin_cmd(CMD_TOGGLE);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -2130,7 +2130,7 @@ void EVE_cmd_dl(uint32_t command)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(command);
+		eve_begin_cmd(command);
 		EVE_cs_clear();
 	}
 }
@@ -2146,7 +2146,7 @@ void EVE_cmd_append(uint32_t ptr, uint32_t num)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_APPEND);
+		eve_begin_cmd(CMD_APPEND);
 		spi_transmit_32(ptr);
 		spi_transmit_32(num);
 		EVE_cs_clear();
@@ -2166,7 +2166,7 @@ void EVE_cmd_bgcolor(uint32_t color)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_BGCOLOR);
+		eve_begin_cmd(CMD_BGCOLOR);
 		spi_transmit((uint8_t)(color));
 		spi_transmit((uint8_t)(color >> 8));
 		spi_transmit((uint8_t)(color >> 16));
@@ -2187,7 +2187,7 @@ void EVE_cmd_button(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t font
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_BUTTON);
+		eve_begin_cmd(CMD_BUTTON);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -2227,7 +2227,7 @@ void EVE_cmd_calibrate(void)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_CALIBRATE);
+		eve_begin_cmd(CMD_CALIBRATE);
 		spi_transmit_32(0);
 		EVE_cs_clear();
 	}
@@ -2238,7 +2238,7 @@ void EVE_cmd_clock(int16_t x0, int16_t y0, int16_t r0, uint16_t options, uint16_
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_CLOCK);
+		eve_begin_cmd(CMD_CLOCK);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -2278,7 +2278,7 @@ void EVE_cmd_dial(int16_t x0, int16_t y0, int16_t r0, uint16_t options, uint16_t
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_DIAL);
+		eve_begin_cmd(CMD_DIAL);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -2313,7 +2313,7 @@ void EVE_cmd_fgcolor(uint32_t color)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_FGCOLOR);
+		eve_begin_cmd(CMD_FGCOLOR);
 		spi_transmit((uint8_t)(color));
 		spi_transmit((uint8_t)(color >> 8));
 		spi_transmit((uint8_t)(color >> 16));
@@ -2334,7 +2334,7 @@ void EVE_cmd_gauge(int16_t x0, int16_t y0, int16_t r0, uint16_t options, uint16_
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_GAUGE);
+		eve_begin_cmd(CMD_GAUGE);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -2380,7 +2380,7 @@ void EVE_cmd_getmatrix(int32_t *get_a, int32_t *get_b, int32_t *get_c, int32_t *
 	{
 		uint16_t cmdoffset;
 
-		EVE_start_command(CMD_GETMATRIX);
+		eve_begin_cmd(CMD_GETMATRIX);
 		spi_transmit_32(0);
 		spi_transmit_32(0);
 		spi_transmit_32(0);
@@ -2423,7 +2423,7 @@ void EVE_cmd_gradcolor(uint32_t color)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_GRADCOLOR);
+		eve_begin_cmd(CMD_GRADCOLOR);
 		spi_transmit((uint8_t)(color));
 		spi_transmit((uint8_t)(color >> 8));
 		spi_transmit((uint8_t)(color >> 16));
@@ -2444,7 +2444,7 @@ void EVE_cmd_gradient(int16_t x0, int16_t y0, uint32_t rgb0, int16_t x1, int16_t
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_GRADIENT);
+		eve_begin_cmd(CMD_GRADIENT);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -2485,7 +2485,7 @@ void EVE_cmd_keys(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t font, 
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_KEYS);
+		eve_begin_cmd(CMD_KEYS);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -2523,7 +2523,7 @@ void EVE_cmd_number(int16_t x0, int16_t y0, int16_t font, uint16_t options, int3
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_NUMBER);
+		eve_begin_cmd(CMD_NUMBER);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -2554,7 +2554,7 @@ void EVE_cmd_progress(int16_t x0, int16_t y0, int16_t w0, int16_t h0, uint16_t o
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_PROGRESS);
+		eve_begin_cmd(CMD_PROGRESS);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -2595,7 +2595,7 @@ void EVE_cmd_romfont(uint32_t font, uint32_t romslot)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_ROMFONT);
+		eve_begin_cmd(CMD_ROMFONT);
 
 		spi_transmit((uint8_t)(font));
 		spi_transmit((uint8_t)(font >> 8));
@@ -2624,7 +2624,7 @@ void EVE_cmd_rotate(int32_t angle)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_ROTATE);
+		eve_begin_cmd(CMD_ROTATE);
 		spi_transmit_32(angle);
 		EVE_cs_clear();
 	}
@@ -2642,7 +2642,7 @@ void EVE_cmd_scale(int32_t sx, int32_t sy)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_SCALE);
+		eve_begin_cmd(CMD_SCALE);
 		spi_transmit_32(sx);
 		spi_transmit_32(sy);
 		EVE_cs_clear();
@@ -2662,7 +2662,7 @@ void EVE_cmd_scrollbar(int16_t x0, int16_t y0, int16_t w0, int16_t h0, uint16_t 
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_SCROLLBAR);
+		eve_begin_cmd(CMD_SCROLLBAR);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -2703,7 +2703,7 @@ void EVE_cmd_setbase(uint32_t base)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_SETBASE);
+		eve_begin_cmd(CMD_SETBASE);
 		spi_transmit_32(base);
 		EVE_cs_clear();
 	}
@@ -2721,7 +2721,7 @@ void EVE_cmd_setbitmap(uint32_t addr, uint16_t fmt, uint16_t width, uint16_t hei
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_SETBITMAP);
+		eve_begin_cmd(CMD_SETBITMAP);
 		spi_transmit_32(addr);
 
 		spi_transmit((uint8_t)(fmt));
@@ -2752,7 +2752,7 @@ void EVE_cmd_setfont(uint32_t font, uint32_t ptr)
 {
 	if(!cmd_burst)
 	{
-		EVE_begin_cmd(CMD_SETFONT);
+		eve_begin_cmd(CMD_SETFONT);
 		spi_transmit_32(font);
 		spi_transmit_32(ptr);
 		EVE_cs_clear();
@@ -2772,7 +2772,7 @@ void EVE_cmd_setfont2(uint32_t font, uint32_t ptr, uint32_t firstchar)
 {
 	if(!cmd_burst)
 	{
-		EVE_begin_cmd(CMD_SETFONT2);
+		eve_begin_cmd(CMD_SETFONT2);
 		spi_transmit_32(font);
 		spi_transmit_32(ptr);
 		spi_transmit_32(firstchar);
@@ -2794,7 +2794,7 @@ void EVE_cmd_setscratch(uint32_t handle)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_SETSCRATCH);
+		eve_begin_cmd(CMD_SETSCRATCH);
 		spi_transmit_32(handle);
 		EVE_cs_clear();
 	}
@@ -2812,7 +2812,7 @@ void EVE_cmd_sketch(int16_t x0, int16_t y0, uint16_t w0, uint16_t h0, uint32_t p
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_SKETCH);
+		eve_begin_cmd(CMD_SKETCH);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -2850,7 +2850,7 @@ void EVE_cmd_slider(int16_t x0, int16_t y0, int16_t w0, int16_t h0, uint16_t opt
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_SLIDER);
+		eve_begin_cmd(CMD_SLIDER);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -2891,7 +2891,7 @@ void EVE_cmd_spinner(int16_t x0, int16_t y0, uint16_t style, uint16_t scale)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_SPINNER);
+		eve_begin_cmd(CMD_SPINNER);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -2920,7 +2920,7 @@ void EVE_cmd_text(int16_t x0, int16_t y0, int16_t font, uint16_t options, const 
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_TEXT);
+		eve_begin_cmd(CMD_TEXT);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -2951,7 +2951,7 @@ void EVE_cmd_toggle(int16_t x0, int16_t y0, int16_t w0, int16_t font, uint16_t o
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_TOGGLE);
+		eve_begin_cmd(CMD_TOGGLE);
 
 		spi_transmit((uint8_t)(x0));
 		spi_transmit((uint8_t)(x0 >> 8));
@@ -2988,7 +2988,7 @@ void EVE_cmd_translate(int32_t tx, int32_t ty)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(CMD_TRANSLATE);
+		eve_begin_cmd(CMD_TRANSLATE);
 		spi_transmit_32(tx);
 		spi_transmit_32(ty);
 		EVE_cs_clear();
@@ -3008,7 +3008,7 @@ void EVE_color_rgb(uint32_t color)
 {
 	if(!cmd_burst)
 	{
-		EVE_start_command(DL_COLOR_RGB | color);
+		eve_begin_cmd(DL_COLOR_RGB | color);
 		EVE_cs_clear();
 	}
 }

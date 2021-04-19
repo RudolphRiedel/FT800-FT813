@@ -2,14 +2,14 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2020-10-29
+@date    2020-04-19
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2020 Rudolph Riedel
+Copyright (c) 2016-2021 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -108,7 +108,7 @@ void EVE_cmd_execute(void);
 
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
-/*---- commands and functions that to be used outside of display-lists -------------------------------------------------------*/
+/*---- commands and functions to be used outside of display-lists -------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------------------*/
 
 
