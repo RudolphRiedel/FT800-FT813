@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2021-04-19
+@date    2021-05-14
 @author  Rudolph Riedel
 
 @section info
@@ -148,6 +148,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - changed all the EVE_start_command() calls to eve_begin_cmd() calls following the report on Github from
   Michael Wachs that these are identical - they weren't prior to V5
 - removed EVE_start_command()
+- Bugfix: EVE_init() was only checking the first two bits of REG_CPURESET and ignored the bit for the audio-engine, not an issue but not correct either.
 
 
 */
@@ -1206,17 +1207,18 @@ uint8_t EVE_init(void)
 
 	EVE_cmdWrite(EVE_ACTIVE,0);	/* start EVE */
 
-	/* BRT AN033 BT81X_Series_Programming_Guide V1.2 had a small change to chapter 2.4 "Initialization Sequence during Boot Up" */
-	/* Send Host command �ACTIVE� and wait for at least 300 milliseconds. */
-	/* Ensure that there is no SPI access during this time. */
-	/* I asked Bridgetek for clarification why this has been made stricter. */
-	/* From observation with quite a few of different displays I do not agree that either the 300ms are necessary or that */
-	/* *reading* the SPI while EVE inits itself is causing any issues. */
-	/* But since BT815 at 72MHz need 42ms anyways before they start to answer, here is my compromise, a fixed 40ms delay */
-	/* to provide at least a short moment of silence for EVE */
+	/*
+	BRT AN033 BT81X_Series_Programming_Guide V1.2 added a delay of at least 300ms as a requirement after sending command ACTIVE.
+	Together with the sentence: "Ensure that there is no SPI access during this time."
+	AN033 BT81X_Series_Programming_Guide V2.0 removed this delay requirement again.
+	From observation of the startup-behavior of quite a number of displays, reading REG_ID immediately after
+	sending command ACTIVE is not an issue, but a BT815 running at 72MHzs needs about 42ms before it answers anyways. 
+	So I added a fixed delay of 40ms as a compromise, this provides a moment of silence on the SPI
+	without actually delaying the startup.
+	*/
 	DELAY_MS(40);
 
-	while(chipid != 0x7C) /* if chipid is not 0x7c, continue to read it until it is, EVE needs a moment for it's power on self-test and configuration */
+	while(chipid != 0x7C) /* if chipid is not 0x7c, continue to read it until it is, EVE needs a moment for its power on self-test and configuration */
 	{
 		DELAY_MS(1);
 		chipid = EVE_memRead8(REG_ID);
@@ -1228,7 +1230,7 @@ uint8_t EVE_init(void)
 	}
 
 	timeout = 0;
-	while (0x00 != (EVE_memRead8(REG_CPURESET) & 0x03)) /* check if EVE is in working status */
+	while (0x00 != (EVE_memRead8(REG_CPURESET) & 0x07)) /* check if EVE is in working status */
 	{
 		DELAY_MS(1);
 		timeout++;
