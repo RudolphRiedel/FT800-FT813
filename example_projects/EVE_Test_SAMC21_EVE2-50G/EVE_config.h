@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2021-04-04
+@date    2021-06-01
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -62,6 +62,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added a profile for PH800480T024-IFC03 and PH800480T013-IFC05 from PowerTip
 - added profiles for EVE4_40G and EVE4_101G from Matrix Orbital
 - added profiles for the EVE4 series modules from Riverdi
+- tuned the profile for the RVT101H a little
+- sorted the display-defines by chip
+- added a profile for the EVE4x-70G IPS from Matrix Orbital
 
 */
 
@@ -70,26 +73,19 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #ifndef EVE_CONFIG_H_
 #define EVE_CONFIG_H_
 
-
 /* select the settings for the TFT attached */
 #if 0
+/* F810 / F811 */
 	#define EVE_VM810C
-	#define EVE_ME812A
-	#define EVE_ME813A
-	#define EVE_VM816C50AD
 	#define EVE_FT810CB_HY50HD
 	#define EVE_FT811CB_HY50HD
+
+/* FT812 / F813 */
+	#define EVE_ME812A
+	#define EVE_ME813A
 	#define EVE_ET07
 	#define EVE_RVT50
 	#define EVE_RVT70
-	#define EVE_RiTFT43
-	#define EVE_RiTFT50
-	#define EVE_RiTFT70
-	#define EVE_RVT35H
-	#define EVE_RVT43H
-	#define EVE_RVT50H
-	#define EVE_RVT70H
-	#define EVE_RVT101H
 	#define EVE_EVE2_29
 	#define EVE_EVE2_35
 	#define EVE_EVE2_35G
@@ -101,18 +97,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE_EVE2_50G
 	#define EVE_EVE2_70
 	#define EVE_EVE2_70G
-	#define EVE_EVE3_35
-	#define EVE_EVE3_35G
-	#define EVE_EVE3_43
-	#define EVE_EVE3_43G
-	#define EVE_EVE3_50
-	#define EVE_EVE3_50G
-	#define EVE_EVE3_70
-	#define EVE_EVE3_70G
-	#define EVE_EVE3x_39
-	#define EVE_EVE3x_39G
-	#define EVE_EVE4_40G
-	#define EVE_EVE4_101G
 	#define EVE_NHD_35
 	#define EVE_NHD_43
 	#define EVE_NHD_43_800480
@@ -123,14 +107,41 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	#define EVE_CFAF320240F_035T
 	#define EVE_CFAF480128A0_039TC
 	#define EVE_CFAF800480E0_050SC
-	#define EVE_PAF90
-	#define EVE_SUNFLOWER
 	#define EVE_GEN4_FT81x_43
 	#define EVE_GEN4_FT812_50
 	#define EVE_GEN4_FT812_70
 	#define EVE_GEN4_FT813_50
 	#define EVE_GEN4_FT813_70
+	#define EVE_SUNFLOWER
 	#define EVE_PH800480
+
+/* BT815 / BT816 */
+	#define EVE_VM816C50AD
+	#define EVE_PAF90
+	#define EVE_RiTFT43
+	#define EVE_RiTFT50
+	#define EVE_RiTFT70
+	#define EVE_EVE3_35
+	#define EVE_EVE3_35G
+	#define EVE_EVE3_43
+	#define EVE_EVE3_43G
+	#define EVE_EVE3_50
+	#define EVE_EVE3_50G
+	#define EVE_EVE3_70
+	#define EVE_EVE3_70G
+	#define EVE_EVE3x_39
+	#define EVE_EVE3x_39G
+
+/* BT817 / BT818 */
+	#define EVE_RVT35H
+	#define EVE_RVT43H
+	#define EVE_RVT50H
+	#define EVE_RVT70H
+	#define EVE_RVT101H
+	#define EVE_EVE4_40G
+	#define EVE_EVE4_101G
+  #define EVE_EVE4_70G
+
 #endif
 
 #define EVE_EVE2_50G
@@ -740,6 +751,32 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #endif
 
 
+/* untested */
+/* EVE4x-70G IPS 1024x600 7" Matrix Orbital, capacitive touch, BT817 */
+#if defined (EVE_EVE4_70G)
+#define EVE_HSIZE (1024L)
+#define EVE_VSIZE (600L)
+
+#define EVE_VSYNC0 (0L)
+#define EVE_VSYNC1 (10L)
+#define EVE_VOFFSET (23L)
+#define EVE_VCYCLE (632L)
+#define EVE_HSYNC0 (0L)
+#define EVE_HSYNC1 (70L)
+#define EVE_HOFFSET (160L)
+#define EVE_HCYCLE (1344L)
+#define EVE_PCLK (1L) /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
+#define EVE_PCLK_FREQ (51000000L) /* 51MHz - value for EVE_cmd_pclkfreq -> 60 FPS */
+#define EVE_PCLKPOL (0L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (0L)
+#define EVE_TOUCH_RZTHRESH (1200L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 4
+#define EVE_HAS_GT911
+#endif
+
+
 #if defined (BT817_TEST1)
 #define EVE_HSIZE	(1024L)	/* Thd Length of visible part of line (in PCLKs) - display width */
 #define EVE_VSIZE	(600L)	/* Tvd Number of visible lines (in lines) - display height */
@@ -811,7 +848,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /* ----------- 1280 x 800 ------------ */
 
 /* untested */
-/* note: timing parameters from Matrix Orbital, does not use the second pll, 58,64 FPS */
 /* EVE4-101G 1280x800 10.1" Matrix Orbital, capacitive touch, BT817 */
 #if defined (EVE_EVE4_101G)
 #define EVE_HSIZE	(1280L)	/* Thd Length of visible part of line (in PCLKs) - display width */
@@ -837,7 +873,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 
 /* untested */
-/* RVT101HVBxxxxx 1280x600 7.0" Riverdi, various options, BT817 */
+/* RVT101HVBxxxxx 1280x800 7.0" Riverdi, various options, BT817 */
 #if defined (EVE_RVT101H)
 #define EVE_HSIZE	(1280L)
 #define EVE_VSIZE	(800L)
@@ -845,13 +881,13 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_VSYNC0	(0L)
 #define EVE_VSYNC1	(10L)
 #define EVE_VOFFSET	(23L)
-#define EVE_VCYCLE	(838L)
+#define EVE_VCYCLE	(830L)
 #define EVE_HSYNC0	(0L)
 #define EVE_HSYNC1	(20L)
 #define EVE_HOFFSET (88L)
 #define EVE_HCYCLE 	(1440L)
 #define EVE_PCLK	(1L) /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
-#define EVE_PCLK_FREQ (72000000L) /* EVE_PCLK needs to be set to 1 for this to take effect */
+#define EVE_PCLK_FREQ (71000000L) /* EVE_PCLK needs to be set to 1 for this to take effect */
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD	(0L)

@@ -57,6 +57,7 @@ The TFTs tested so far:
 - CFAF480128A0-039TC
 - CFAF800480E0-050SC https://www.crystalfontz.com/product/cfaf800480e1050sca11-800x480-eve-accelerated-tft
 - GEN4-FT813-50CTP-CLB https://4dsystems.com.au/gen4-ft813-50ctp-clb
+- RVT101HVBNWC00-B https://riverdi.com/product/rvt101hvbnwc00-b/
 
 ## This is version 5
 
@@ -145,3 +146,5 @@ This is optimised for speed so the training wheels are off.
 Originally the project went public in the German mikrocontroller.net forum, the thread contains some insight: https://www.mikrocontroller.net/topic/395608
 
 Feel free to add to the discussion with questions or remarks.
+
+New: Github has a discussions feature as well: https://github.com/RudolphRiedel/FT800-FT813/discussions
