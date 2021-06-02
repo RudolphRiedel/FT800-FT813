@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions
 @version 5.0
-@date    2021-02-06
+@date    2021-06-02
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -42,7 +42,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added DMA to Arduino-ESP32 target
 - added a native ESP32 target with DMA
 - added an experimental ARDUINO_TEENSY41 target with DMA support - I do not have any Teensy to test this with
-
+- added ARDUINO_TEENSY35 to the experimental ARDUINO_TEENSY41 target
 
  */
 
@@ -566,7 +566,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 
-	#if defined (ARDUINO_TEENSY41)	/* note: this is mostly untested */
+	#if defined (ARDUINO_TEENSY41) || (ARDUINO_TEENSY35) /* note: this is mostly untested */
 		#include "EVE_target.h"
 
 		#if defined (EVE_DMA)

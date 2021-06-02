@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2021-04-03
+@date    2021-06-02
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -71,6 +71,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added an experimental ARDUINO_TEENSY41 target with DMA support - I do not have any Teensy to test this with
 - added a target for the Raspberry Pi Pico - RP2040
 - added a target for Arduino-BBC_MICROBIT_V2
+- added ARDUINO_TEENSY35 to the experimental ARDUINO_TEENSY41 target
 
 
 */
@@ -1468,7 +1469,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 
-		#elif defined (ARDUINO_TEENSY41)	/* note: this is mostly untested */
+		#elif defined (ARDUINO_TEENSY41) || (ARDUINO_TEENSY35) /* note: this is mostly untested */
 
 		#define EVE_CS 		8
 		#define EVE_PDN		9
@@ -1533,7 +1534,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		#elif defined (ARDUINO_BBC_MICROBIT_V2)	/* note: this is mostly untested */
 
 		#define EVE_CS 		12
-		#define EVE_PDN		16
+		#define EVE_PDN		9
 
 		static inline void EVE_cs_set(void)
 		{

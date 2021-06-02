@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2021-04-05
+@date    2021-06-02
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -71,7 +71,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added an experimental ARDUINO_TEENSY41 target with DMA support - I do not have any Teensy to test this with
 - added a target for the Raspberry Pi Pico - RP2040
 - added a target for Arduino-BBC_MICROBIT_V2
-- activated DMA for the Raspberry Pi Pico - RP2040
+- added ARDUINO_TEENSY35 to the experimental ARDUINO_TEENSY41 target
 
 
 */
@@ -940,6 +940,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		#if defined (RP2040)
 		/* note: set in platformio.ini by "build_flags = -D RP2040" */
 
+		#include <stdio.h>
 		#include "pico/stdlib.h"
 		#include "hardware/spi.h"
 
@@ -950,11 +951,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		#define EVE_MISO	4
 		#define EVE_SPI spi0
 
-		#define EVE_DMA
+//		#define EVE_DMA
 
 		#define DELAY_MS(ms) sleep_ms(ms)
 
-		void EVE_init_spi(void);
+//		void EVE_init_spi(void);
 
 		static inline void EVE_cs_set(void)
 		{
@@ -1468,7 +1469,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 
-		#elif defined (ARDUINO_TEENSY41)	/* note: this is mostly untested */
+		#elif defined (ARDUINO_TEENSY41) || (ARDUINO_TEENSY35) /* note: this is mostly untested */
 
 		#define EVE_CS 		8
 		#define EVE_PDN		9
@@ -1533,7 +1534,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		#elif defined (ARDUINO_BBC_MICROBIT_V2)	/* note: this is mostly untested */
 
 		#define EVE_CS 		12
-		#define EVE_PDN		16
+		#define EVE_PDN		9
 
 		static inline void EVE_cs_set(void)
 		{

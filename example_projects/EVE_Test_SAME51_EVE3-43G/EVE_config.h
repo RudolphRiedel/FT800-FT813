@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2021-06-01
+@date    2021-06-02
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -65,6 +65,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - tuned the profile for the RVT101H a little
 - sorted the display-defines by chip
 - added a profile for the EVE4x-70G IPS from Matrix Orbital
+- added a profile for RiTFT35 from Riverdi
+- changed the clock-polarity for EVE_EVE4_70G
 
 */
 
@@ -76,71 +78,73 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /* select the settings for the TFT attached */
 #if 0
 /* F810 / F811 */
-	#define EVE_VM810C
-	#define EVE_FT810CB_HY50HD
-	#define EVE_FT811CB_HY50HD
+  #define EVE_VM810C
+  #define EVE_FT810CB_HY50HD
+  #define EVE_FT811CB_HY50HD
 
 /* FT812 / F813 */
-	#define EVE_ME812A
-	#define EVE_ME813A
-	#define EVE_ET07
-	#define EVE_RVT50
-	#define EVE_RVT70
-	#define EVE_EVE2_29
-	#define EVE_EVE2_35
-	#define EVE_EVE2_35G
-	#define EVE_EVE2_38
-	#define EVE_EVE2_38G
-	#define EVE_EVE2_43
-	#define EVE_EVE2_43G
-	#define EVE_EVE2_50
-	#define EVE_EVE2_50G
-	#define EVE_EVE2_70
-	#define EVE_EVE2_70G
-	#define EVE_NHD_35
-	#define EVE_NHD_43
-	#define EVE_NHD_43_800480
-	#define EVE_NHD_50
-	#define EVE_NHD_70
-	#define EVE_ADAM101
-	#define EVE_CFAF240400C1_030SC
-	#define EVE_CFAF320240F_035T
-	#define EVE_CFAF480128A0_039TC
-	#define EVE_CFAF800480E0_050SC
-	#define EVE_GEN4_FT81x_43
-	#define EVE_GEN4_FT812_50
-	#define EVE_GEN4_FT812_70
-	#define EVE_GEN4_FT813_50
-	#define EVE_GEN4_FT813_70
-	#define EVE_SUNFLOWER
-	#define EVE_PH800480
+  #define EVE_ME812A
+  #define EVE_ME813A
+  #define EVE_ET07
+  #define EVE_RVT50
+  #define EVE_RVT70
+  #define EVE_EVE2_29
+  #define EVE_EVE2_35
+  #define EVE_EVE2_35G
+  #define EVE_EVE2_38
+  #define EVE_EVE2_38G
+  #define EVE_EVE2_43
+  #define EVE_EVE2_43G
+  #define EVE_EVE2_50
+  #define EVE_EVE2_50G
+  #define EVE_EVE2_70
+  #define EVE_EVE2_70G
+  #define EVE_NHD_35
+  #define EVE_NHD_43
+  #define EVE_NHD_43_800480
+  #define EVE_NHD_50
+  #define EVE_NHD_70
+  #define EVE_ADAM101
+  #define EVE_CFAF240400C1_030SC
+  #define EVE_CFAF320240F_035T
+  #define EVE_CFAF480128A0_039TC
+  #define EVE_CFAF800480E0_050SC
+  #define EVE_GEN4_FT81x_43
+  #define EVE_GEN4_FT812_50
+  #define EVE_GEN4_FT812_70
+  #define EVE_GEN4_FT813_50
+  #define EVE_GEN4_FT813_70
+  #define EVE_SUNFLOWER
+  #define EVE_PH800480
 
 /* BT815 / BT816 */
-	#define EVE_VM816C50AD
-	#define EVE_PAF90
-	#define EVE_RiTFT43
-	#define EVE_RiTFT50
-	#define EVE_RiTFT70
-	#define EVE_EVE3_35
-	#define EVE_EVE3_35G
-	#define EVE_EVE3_43
-	#define EVE_EVE3_43G
-	#define EVE_EVE3_50
-	#define EVE_EVE3_50G
-	#define EVE_EVE3_70
-	#define EVE_EVE3_70G
-	#define EVE_EVE3x_39
-	#define EVE_EVE3x_39G
+  #define EVE_VM816C50AD
+  #define EVE_PAF90
+  #define EVE_RiTFT35
+  #define EVE_RiTFT43
+  #define EVE_RiTFT50
+  #define EVE_RiTFT70
+  #define EVE_EVE3_35
+  #define EVE_EVE3_35G
+  #define EVE_EVE3_43
+  #define EVE_EVE3_43G
+  #define EVE_EVE3_50
+  #define EVE_EVE3_50G
+  #define EVE_EVE3_70
+  #define EVE_EVE3_70G
+  #define EVE_EVE3x_39
+  #define EVE_EVE3x_39G
 
 /* BT817 / BT818 */
-	#define EVE_RVT35H
-	#define EVE_RVT43H
-	#define EVE_RVT50H
-	#define EVE_RVT70H
-	#define EVE_RVT101H
-	#define EVE_EVE4_40G
-	#define EVE_EVE4_101G
+  #define EVE_RVT35H
+  #define EVE_RVT43H
+  #define EVE_RVT50H
+  #define EVE_RVT70H
+  #define EVE_RVT101H
+  #define EVE_EVE4_40G
   #define EVE_EVE4_70G
+  #define EVE_EVE4_101G
+
 
 #endif
 
@@ -256,6 +260,30 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 2
+#endif
+
+
+/* untested */
+/* 320x240 3.5" Riverdi, various options, BT815/BT816 */
+#if defined (EVE_RiTFT35)
+#define EVE_HSIZE	(320L)
+#define EVE_VSIZE	(240L)
+
+#define EVE_VSYNC0	(0L)
+#define EVE_VSYNC1	(2L)
+#define EVE_VOFFSET	(13L)
+#define EVE_VCYCLE	(263L)
+#define EVE_HSYNC0	(0L)
+#define EVE_HSYNC1	(10L)
+#define EVE_HOFFSET (70L)
+#define EVE_HCYCLE 	(408L)
+#define EVE_PCLK	(11L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (2L)
+#define EVE_CSPREAD	(0L)
+#define EVE_TOUCH_RZTHRESH (1200L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 3
 #endif
 
 
@@ -767,7 +795,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_HCYCLE (1344L)
 #define EVE_PCLK (1L) /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
 #define EVE_PCLK_FREQ (51000000L) /* 51MHz - value for EVE_cmd_pclkfreq -> 60 FPS */
-#define EVE_PCLKPOL (0L)
+#define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (0L)
 #define EVE_TOUCH_RZTHRESH (1200L)
