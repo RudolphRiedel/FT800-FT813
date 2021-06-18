@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions
 @version 5.0
-@date    2021-06-02
+@date    2021-06-18
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -42,6 +42,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added DMA to Arduino-ESP32 target
 - added a native ESP32 target with DMA
 - added an experimental ARDUINO_TEENSY41 target with DMA support - I do not have any Teensy to test this with
+- added DMA for the Raspberry Pi Pico - RP2040
 - added ARDUINO_TEENSY35 to the experimental ARDUINO_TEENSY41 target
 
  */
@@ -229,7 +230,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			TickType_t ticksMS = pdMS_TO_TICKS(ms);
 			if(ticksMS < 2) ticksMS = 2;
 			vTaskDelay(ticksMS);
-		} 
+		}
 
 		spi_device_handle_t EVE_spi_device = {0};
 		spi_device_handle_t EVE_spi_device_simple = {0};
@@ -309,7 +310,75 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		#endif /* DMA */
 		#endif /* ESP32 */
 
-    #endif /* __GNUC__ */
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
+		#if defined (RP2040)
+		/* note: set in platformio.ini by "build_flags = -D RP2040" */
+
+		void EVE_init_spi(void)
+		{
+			// chip select is active-low -> initialized to high
+			gpio_init(EVE_CS);
+			gpio_set_dir(EVE_CS, GPIO_OUT);
+			gpio_put(EVE_CS, 1);
+
+			// power-down is active-low -> initialized to low
+			gpio_init(EVE_PDN);
+			gpio_set_dir(EVE_PDN, GPIO_OUT);
+			gpio_put(EVE_PDN, 0);
+
+			spi_init(EVE_SPI, 8000000);
+			gpio_set_function(EVE_MISO, GPIO_FUNC_SPI);
+			gpio_set_function(EVE_SCK, GPIO_FUNC_SPI);
+			gpio_set_function(EVE_MOSI, GPIO_FUNC_SPI);
+		}
+
+		#if defined (EVE_DMA)
+
+		#include "hardware/dma.h"
+		#include "hardware/irq.h"
+
+		uint32_t EVE_dma_buffer[1025];
+		volatile uint16_t EVE_dma_buffer_index;
+		volatile uint8_t EVE_dma_busy = 0;
+		int dma_tx;
+		dma_channel_config dma_tx_config;
+
+		static void EVE_DMA_handler(void)
+		{
+			dma_hw->ints0 = 1u << dma_tx; /* ack irq */
+			while((spi_get_hw(EVE_SPI)->sr & SPI_SSPSR_BSY_BITS) != 0); /* wait for the SPI to be done transmitting */
+			EVE_dma_busy = 0;
+			EVE_cs_clear();
+		}
+
+		void EVE_init_dma(void)
+		{
+			dma_tx = dma_claim_unused_channel(true);
+			dma_tx_config = dma_channel_get_default_config(dma_tx);
+			channel_config_set_transfer_data_size(&dma_tx_config, DMA_SIZE_8);
+			channel_config_set_dreq(&dma_tx_config, spi_get_index(EVE_SPI) ? DREQ_SPI1_TX : DREQ_SPI0_TX);
+			dma_channel_set_irq0_enabled (dma_tx, true);
+			irq_set_exclusive_handler(DMA_IRQ_0, EVE_DMA_handler);
+			irq_set_enabled(DMA_IRQ_0, true);
+		}
+
+		void EVE_start_dma_transfer(void)
+		{
+			EVE_cs_set();
+			dma_channel_configure(dma_tx, &dma_tx_config,
+				&spi_get_hw(EVE_SPI)->dr, // write address
+				((uint8_t *) &EVE_dma_buffer[0])+1, // read address
+				(((EVE_dma_buffer_index)*4)-1), // element count (each element is of size transfer_data_size)
+				true); // start transfer
+			EVE_dma_busy = 42;
+		}
+		#endif /* DMA */
+
+		#endif /* RP2040 */
+
+	#endif /* __GNUC__ */
 
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
@@ -427,7 +496,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			HAL_GPIO_Init(GPIOA, &gpio_init);
 
 			eve_spi_handle.Instance = EVE_SPI;
-			eve_spi_handle.Init.Mode = SPI_MODE_MASTER; 
+			eve_spi_handle.Init.Mode = SPI_MODE_MASTER;
 			eve_spi_handle.Init.Direction = SPI_DIRECTION_2LINES;
 			eve_spi_handle.Init.DataSize = SPI_DATASIZE_8BIT;
 			eve_spi_handle.Init.CLKPolarity = SPI_POLARITY_LOW;
