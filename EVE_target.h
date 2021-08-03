@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2021-06-18
+@date    2021-08-03
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -73,6 +73,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added a target for Arduino-BBC_MICROBIT_V2
 - activated DMA for the Raspberry Pi Pico - RP2040
 - added ARDUINO_TEENSY35 to the experimental ARDUINO_TEENSY41 target
+- transferred the little experimental STM32 code I had over from my experimental branch
 
 
 */
@@ -716,36 +717,42 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 
-		#if defined (STM32L073xx) || (STM32F1) || (STM32F207xx) || (STM32F3) || (STM32F4)
+		#if defined (STM32L0) || (STM32F0) || (STM32F1) || (STM32F3) || (STM32F4) || (STM32G4) /* set with "build_flags" in platformio.ini */
 
-		#if defined (STM32L073xx) /* set by PlatformIO board definition file nucleo_l073z.json */
+		#if defined (STM32L0) /* set with "build_flags = -D STM32L0" in platformio.ini */
 		#include "stm32l0xx.h"
 		#include "stm32l0xx_hal.h"
 		#include "stm32l0xx_ll_spi.h"
 		#endif
 
-		#if defined (STM32F1) /* set by PlatformIO board definition file genericSTM32F103C8.json */
+		#if defined (STM32F0) /* set with "build_flags = -D STM32F0" in platformio.ini */
+		#include "stm32f0xx.h"
+		#include "stm32f0xx_hal.h"
+		#include "stm32f0xx_ll_spi.h"
+		#endif
+
+		#if defined (STM32F1) /* set with "build_flags = -D STM32F1" in platformio.ini */
 		#include "stm32f1xx.h"
 		#include "stm32f1xx_hal.h"
 		#include "stm32f1xx_ll_spi.h"
 		#endif
 
-		#if defined (STM32F207xx) /* set by PlatformIO board definition file nucleo_f207zg.json */
-		#include "stm32f2xx.h"
-		#include "stm32f2xx_hal.h"
-		#include "stm32f2xx_ll_spi.h"
-		#endif
-
-		#if defined (STM32F3) /* set by PlatformIO board definition file genericSTM32F303CB.json */
+		#if defined (STM32F3) /* set with "build_flags = -D STM32F3" in platformio.ini */
 		#include "stm32f3xx.h"
 		#include "stm32f3xx_hal.h"
 		#include "stm32f3xx_ll_spi.h"
 		#endif
 
-		#if defined (STM32F4) /* set by PlatformIO board definition file genericSTM32F407VET6.json */
+		#if defined (STM32F4) /* set with "build_flags = -D STM32F4" in platformio.ini */
 		#include "stm32f4xx.h"
 		#include "stm32f4xx_hal.h"
 		#include "stm32f4xx_ll_spi.h"
+		#endif
+
+		#if defined (STM32G4) /* set with "build_flags = -D STM32G4" in platformio.ini */
+		#include "stm32g4xx.h"
+		#include "stm32g4xx_hal.h"
+		#include "stm32g4xx_ll_spi.h"
 		#endif
 
 

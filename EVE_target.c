@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions
 @version 5.0
-@date    2021-06-18
+@date    2021-08-03
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -44,6 +44,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added an experimental ARDUINO_TEENSY41 target with DMA support - I do not have any Teensy to test this with
 - added DMA for the Raspberry Pi Pico - RP2040
 - added ARDUINO_TEENSY35 to the experimental ARDUINO_TEENSY41 target
+- transferred the little experimental STM32 code I had over from my experimental branch
 
  */
 
@@ -182,7 +183,64 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 
-		#if defined (STM32L073xx) || (STM32F1) || (STM32F207xx) || (STM32F3) || (STM32F4)
+		#if defined (STM32L0) || (STM32F0) || (STM32F1) || (STM32F3) || (STM32F4) || (STM32G4) /* set with "build_flags" in platformio.ini */
+
+		#include "EVE_target.h"
+		#include "EVE_commands.h"
+
+		SPI_HandleTypeDef eve_spi_handle;
+
+#if 0
+		void EVE_init_spi(void)
+		{
+			__HAL_RCC_GPIOA_CLK_ENABLE();
+			__HAL_RCC_GPIOC_CLK_ENABLE();
+			__HAL_RCC_SPI1_CLK_ENABLE();
+
+			GPIO_InitTypeDef gpio_init;
+
+			/* we have CS on D9 of the Nucleo-64, this is PC7 */
+			gpio_init.Pin = EVE_CS;
+			gpio_init.Mode = GPIO_MODE_OUTPUT_PP;
+			gpio_init.Pull = GPIO_NOPULL;
+			gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
+			HAL_GPIO_Init(EVE_CS_PORT, &gpio_init);
+
+			EVE_cs_clear();
+
+			/* we have PDN on D8 of the Nucleo-64, this is PA9 */
+			gpio_init.Pin = EVE_PDN;
+			gpio_init.Mode = GPIO_MODE_OUTPUT_PP;
+			gpio_init.Pull = GPIO_NOPULL;
+			gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
+			HAL_GPIO_Init(EVE_PDN_PORT, &gpio_init);
+
+			EVE_pdn_set();
+
+			/* SPI1 GPIO Configuration: PA5 -> SPI1_SCK, PA6 -> SPI1_MISO, PA7 -> SPI1_MOSI */
+			gpio_init.Pin = GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
+			gpio_init.Mode = GPIO_MODE_AF_PP;
+			gpio_init.Pull = GPIO_NOPULL;
+			gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+			gpio_init.Alternate = GPIO_AF5_SPI1;
+			HAL_GPIO_Init(GPIOA, &gpio_init);
+
+			eve_spi_handle.Instance = EVE_SPI;
+			eve_spi_handle.Init.Mode = SPI_MODE_MASTER; 
+			eve_spi_handle.Init.Direction = SPI_DIRECTION_2LINES;
+			eve_spi_handle.Init.DataSize = SPI_DATASIZE_8BIT;
+			eve_spi_handle.Init.CLKPolarity = SPI_POLARITY_LOW;
+			eve_spi_handle.Init.CLKPhase = SPI_PHASE_1EDGE;
+			eve_spi_handle.Init.NSS = SPI_NSS_SOFT;
+			eve_spi_handle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+			eve_spi_handle.Init.FirstBit = SPI_FIRSTBIT_MSB;
+			eve_spi_handle.Init.TIMode = SPI_TIMODE_DISABLED;
+			eve_spi_handle.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLED;
+			eve_spi_handle.Init.CRCPolynomial = 3;
+			HAL_SPI_Init(&eve_spi_handle);
+			__HAL_SPI_ENABLE(&eve_spi_handle);
+		}
+#endif
 
 		#if defined (EVE_DMA)
 			uint32_t EVE_dma_buffer[1025];
@@ -193,29 +251,46 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 			void EVE_init_dma(void)
 			{
-
+				__HAL_RCC_DMA2_CLK_ENABLE();
+				eve_dma_handle.Instance = DMA2_Stream3;
+				eve_dma_handle.Init.Channel = DMA_CHANNEL_3;
+				eve_dma_handle.Init.Direction = DMA_MEMORY_TO_PERIPH;
+				eve_dma_handle.Init.PeriphInc = DMA_PINC_DISABLE;
+				eve_dma_handle.Init.MemInc = DMA_MINC_ENABLE;
+				eve_dma_handle.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+				eve_dma_handle.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+				eve_dma_handle.Init.Mode = DMA_NORMAL;
+				eve_dma_handle.Init.Priority = DMA_PRIORITY_HIGH;
+				eve_dma_handle.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+				HAL_DMA_Init(&eve_dma_handle);
+				__HAL_LINKDMA(&eve_spi_handle, hdmatx, eve_dma_handle);
+				HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 0, 0);
+				HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
 			}
 
 			void EVE_start_dma_transfer(void)
 			{
-
 				EVE_cs_set();
-				EVE_dma_busy = 42;
+				if(HAL_OK == HAL_SPI_Transmit_DMA(&eve_spi_handle, ((uint8_t *) &EVE_dma_buffer[0])+1, ((EVE_dma_buffer_index)*4)-1))
+				{
+					EVE_dma_busy = 42;
+				}
 			}
 
 			/* DMA-done-Interrupt-Handler */
-	#if 0
-			void some_name_handler()
+			void DMA2_Stream3_IRQHandler(void)
 			{
+				HAL_DMA_IRQHandler(&eve_dma_handle);
+			}
 
-
+			/* Callback for end-of-DMA-transfer */
+			void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
+			{
 				EVE_dma_busy = 0;
 				EVE_cs_clear();
-				EVE_cmd_start(); /* order the command co-processor to start processing its FIFO queue but do not wait for completion */
 			}
-	#endif
 
-	#endif /* DMA */
+		#endif /* DMA */
 	#endif /* STM32 */
 
 /*----------------------------------------------------------------------------------------------------------------*/
