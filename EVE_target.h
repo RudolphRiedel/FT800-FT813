@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2021-08-03
+@date    2021-08-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -74,6 +74,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - activated DMA for the Raspberry Pi Pico - RP2040
 - added ARDUINO_TEENSY35 to the experimental ARDUINO_TEENSY41 target
 - transferred the little experimental STM32 code I had over from my experimental branch
+- added S32K144 support including DMA
 
 
 */
@@ -1027,6 +1028,116 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		}
 
 	#endif /* RP2040 */
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
+		#if defined (CPU_S32K148) || (CPU_S32K144HFT0VLLT)
+
+		#if defined (CPU_S32K144HFT0VLLT)
+		#include "S32K144.h"
+		#endif
+
+		#if defined (CPU_S32K148)
+		#include "S32K148.h"
+		#endif
+
+		#include <stdint.h>
+
+		#define EVE_CS 5
+		#define EVE_CS_GPIO PTB
+
+		#define EVE_PDN 14
+		#define EVE_PDN_GPIO PTD
+
+		/* LPSPI0 on J2 header: PTB2 = SCK, PTB3 = MISO, PTB4 = MOSI */
+		#define EVE_SPI LPSPI0
+		#define EVE_SPI_INDEX PCC_LPSPI0_INDEX
+
+		//#define EVE_DELAY_1MS 15000	/* maybe ~1ms at 112MHz Core-Clock */
+		#define EVE_DELAY_1MS 5300	/* maybe ~1ms at 48MHz Core-Clock */
+
+
+		void DELAY_MS(uint16_t val);
+		void EVE_init_spi(void);
+
+		#define EVE_DMA
+
+
+		static inline void EVE_cs_set(void)
+		{
+			EVE_CS_GPIO->PCOR = (1 << EVE_CS); /* set CS low */
+		}
+
+		static inline void EVE_cs_clear(void)
+		{
+			EVE_CS_GPIO->PSOR = (1 << EVE_CS); /* set CS high */
+		}
+
+		static inline void EVE_pdn_set(void)
+		{
+			EVE_PDN_GPIO->PCOR = (1 << EVE_PDN); /* set PDN low */
+		}
+
+		static inline void EVE_pdn_clear(void)
+		{
+			EVE_PDN_GPIO->PSOR = (1 << EVE_PDN); /* set PDN high */
+		}
+
+		#if defined (EVE_DMA)
+			extern uint32_t EVE_dma_buffer[1025];
+			extern volatile uint16_t EVE_dma_buffer_index;
+			extern volatile uint8_t EVE_dma_busy;
+
+			#define EVE_DMA_CHANNEL 0
+			#define EVE_DMAMUX_CHCFG_SOURCE 15 /* this needs to be the EDMA_REQ_LPSPIx_TX */
+			#define EVE_DMA_IRQ  DMA0_IRQn
+			#define EVE_DMA_IRQHandler DMA0_IRQHandler
+
+			void EVE_init_dma(void);
+			void EVE_start_dma_transfer(void);
+		#endif
+
+		static inline void spi_transmit(uint8_t data)
+		{
+			EVE_SPI->SR |= LPSPI_SR_RDF_MASK; /* clear Receive Data Flag */
+			EVE_SPI->TDR = data; /* transmit data */
+			while((EVE_SPI->SR & LPSPI_SR_RDF_MASK) == 0);
+			(void) EVE_SPI->RDR; /* dummy read-access to clear Receive Data Flag */
+		}
+
+		static inline void spi_transmit_32(uint32_t data)
+		{
+			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data >> 8));
+			spi_transmit((uint8_t)(data >> 16));
+			spi_transmit((uint8_t)(data >> 24));
+		}
+
+		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+		static inline void spi_transmit_burst(uint32_t data)
+		{
+			#if defined (EVE_DMA)
+				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+			#else
+				spi_transmit_32(data);
+			#endif
+		}
+
+		static inline uint8_t spi_receive(uint8_t data)
+		{
+			EVE_SPI->SR |= LPSPI_SR_RDF_MASK; /* clear Receive Data Flag */
+			EVE_SPI->TDR = data; /* transmit data */
+			while((EVE_SPI->SR & LPSPI_SR_RDF_MASK) == 0);
+			return EVE_SPI->RDR;
+		}
+
+		static inline uint8_t fetch_flash_byte(const uint8_t *data)
+		{
+			return *data;
+		}
+
+		#endif /* S32K14x */
 
 	#endif /* __GNUC__ */
 

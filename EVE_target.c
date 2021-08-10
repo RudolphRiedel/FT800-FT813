@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions
 @version 5.0
-@date    2021-08-03
+@date    2021-08-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -45,6 +45,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added DMA for the Raspberry Pi Pico - RP2040
 - added ARDUINO_TEENSY35 to the experimental ARDUINO_TEENSY41 target
 - transferred the little experimental STM32 code I had over from my experimental branch
+- added S32K144 support including DMA
 
  */
 
@@ -452,6 +453,104 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		#endif /* DMA */
 
 		#endif /* RP2040 */
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+		#if defined (CPU_S32K148) || (CPU_S32K144HFT0VLLT)
+
+		void DELAY_MS(uint16_t val)
+		{
+			uint16_t counter;
+
+			while(val > 0)
+			{
+				for(counter=0; counter < EVE_DELAY_1MS;counter++)
+				{
+					__asm__ volatile ("nop");
+				}
+				val--;
+			}
+		}
+
+		void EVE_init_spi(void)
+		{
+			/* configure clock for LPSPI instance selected in EVE_target.h */
+			PCC->PCCn[EVE_SPI_INDEX] &= ~PCC_PCCn_CGC_MASK;  	/* disable clock */
+			PCC->PCCn[EVE_SPI_INDEX] &= ~PCC_PCCn_PCS_MASK;  	/* clear PCS field */
+			PCC->PCCn[EVE_SPI_INDEX] |= PCC_PCCn_PCS(6);     	/* PCS = 6 SPLLDIV2_CLK is selected */
+			PCC->PCCn[EVE_SPI_INDEX] |= PCC_PCCn_CGC_MASK;   	/* enable clock for LPSPIx */
+
+			/* configure LPSPI instance selected in EVE_target.h */
+			EVE_SPI->CR = LPSPI_CR_RST_MASK; /* software reset */
+			EVE_SPI->CR = 0x00000000; /* disable module for configuration */
+			EVE_SPI->CFGR1 = LPSPI_CFGR1_MASTER_MASK; /* master, mode 0 */
+			EVE_SPI->TCR = LPSPI_TCR_PRESCALE(0) | LPSPI_TCR_FRAMESZ(7); /* divide peripheral clock by 4, frame size is 8bit */
+			EVE_SPI->CCR = LPSPI_CCR_SCKDIV(4); /* SCK cycle is 4+2 = 6 cycles of the peripheral clock */
+			EVE_SPI->FCR = 0; /* RXWATER=0: Rx flags set when Rx FIFO >0, TXWATER=0: Tx flags set when Tx FIFO < 1 */
+			EVE_SPI->DER = 0x01; /* DMA TX request enabled */
+			EVE_SPI->CR |= LPSPI_CR_MEN_MASK; /* MEN = 1 Module is enabled */
+		}
+
+		#if defined (EVE_DMA)
+			uint32_t EVE_dma_buffer[1025];
+			volatile uint16_t EVE_dma_buffer_index;
+			volatile uint8_t EVE_dma_busy = 0;
+
+			void EVE_init_dma(void)
+			{
+				PCC->PCCn[PCC_DMAMUX_INDEX] |= PCC_PCCn_CGC_MASK; /* DMAMUX */
+				DMAMUX->CHCFG[EVE_DMA_CHANNEL] = 0;
+				DMAMUX->CHCFG[EVE_DMA_CHANNEL] |= DMAMUX_CHCFG_SOURCE(EVE_DMAMUX_CHCFG_SOURCE);
+				DMAMUX->CHCFG[EVE_DMA_CHANNEL] |= DMAMUX_CHCFG_ENBL_MASK;
+
+				S32_NVIC->ISER[(uint32_t)(EVE_DMA_IRQ) >> 5U] = (uint32_t)(1UL << ((uint32_t)(EVE_DMA_IRQ) & (uint32_t)0x1FU)); /* enable DMA IRQ */
+
+				DMA->TCD[EVE_DMA_CHANNEL].CSR = DMA_TCD_CSR_DREQ(1) | DMA_TCD_CSR_INTMAJOR(1); /* automatically clear ERQ bit after one major loop, irq when done */
+				DMA->TCD[EVE_DMA_CHANNEL].SOFF = DMA_TCD_SOFF_SOFF(1); /* add 1 after each transfer */
+				DMA->TCD[EVE_DMA_CHANNEL].ATTR = 0U; /* 8-bit source and destination transfer size */
+				DMA->TCD[EVE_DMA_CHANNEL].SLAST = 0U;
+				DMA->TCD[EVE_DMA_CHANNEL].DADDR = DMA_TCD_DADDR_DADDR((uint32_t) &EVE_SPI->TDR);
+				DMA->TCD[EVE_DMA_CHANNEL].DOFF = 0U; /* do not increase address after each transfer */
+				DMA->TCD[EVE_DMA_CHANNEL].DLASTSGA = 0U;
+				DMA->TCD[EVE_DMA_CHANNEL].NBYTES.MLNO = DMA_TCD_NBYTES_MLNO_NBYTES(1); /* transfer 1 byte per minor loop */
+			}
+
+			void EVE_start_dma_transfer(void)
+			{
+				uint8_t *bytes = ((uint8_t *) &EVE_dma_buffer[0])+1;
+				uint16_t length = (EVE_dma_buffer_index-1) * 4;
+
+				EVE_SPI->TCR |= LPSPI_TCR_RXMSK_MASK; /* disable LPSPI receive */
+				EVE_cs_set();
+
+				/* the first three bytes start from an unaligned address so these are send directly */
+				for(uint8_t index = 0; index < 3; index++)
+				{
+					EVE_SPI->SR |= LPSPI_SR_TDF_MASK; /* clear transmit data flag */
+					EVE_SPI->TDR = bytes[index]; /* transmit data */
+					while((EVE_SPI->SR & LPSPI_SR_TDF_MASK) == 0);
+				}
+
+				DMA->TCD[EVE_DMA_CHANNEL].SADDR = DMA_TCD_SADDR_SADDR((uint32_t) ((&EVE_dma_buffer[1])));
+				DMA->TCD[EVE_DMA_CHANNEL].CITER.ELINKNO = DMA_TCD_CITER_ELINKNO_CITER(length) | DMA_TCD_CITER_ELINKNO_ELINK(0);
+				DMA->TCD[EVE_DMA_CHANNEL].BITER.ELINKNO = DMA_TCD_BITER_ELINKNO_BITER(length) | DMA_TCD_BITER_ELINKNO_ELINK(0);
+				DMA->SERQ = EVE_DMA_CHANNEL; /* start DMA */
+				EVE_dma_busy = 42;
+			}
+
+			void EVE_DMA_IRQHandler(void)
+			{
+				/* the end of the DMA major loop */
+				DMA->CINT = DMA_CINT_CINT(EVE_DMA_CHANNEL); /* clear the flag */
+				while((EVE_SPI->SR & LPSPI_SR_TCF_MASK) == 0); /* wait for the SPI to be done transmitting */
+				EVE_cs_clear();
+				EVE_dma_busy = 0;
+				EVE_SPI->TCR &= ~LPSPI_TCR_RXMSK_MASK; /* enable LPSPI receive */
+			}
+
+		#endif /* DMA */
+
+		#endif /* S32K14x */
 
 	#endif /* __GNUC__ */
 
