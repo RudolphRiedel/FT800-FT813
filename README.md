@@ -75,7 +75,7 @@ The EVE_cmd_xxx_burst() functions are optimised for speed, these are pure data t
 
 ## Structure
 
-This library currently has six files that I hope are named to make clear what thsese do:
+This library currently has six files that I hope are named to make clear what these do:
 
 - EVE.h - this has all defines for FT81x / BT81x itself, so here are options, registers, commands and macros defined
 - EVE_commands.c - this has all the API functions that are to be called from an application
