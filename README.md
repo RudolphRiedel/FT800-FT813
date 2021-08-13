@@ -20,6 +20,7 @@ I have used it so far with:
 - ATSAME51J19A (DMA)
 - ESP32 (DMA)
 - RP2040 (DMA) - Raspberry Pi Pico
+- S32K144 (DMA)
 
 I have reports of successfully using it with:
 
@@ -71,6 +72,17 @@ As a side effect all commands are automatically started now.
 
 Second is that there are two sets of display-list building command functions now: EVE_cmd_xxx() and EVE_cmd_xxx_burst().
 The EVE_cmd_xxx_burst() functions are optimised for speed, these are pure data transfer functions and do not even check anymore if burst mode is active.
+
+## Structure
+
+This library currently has six files that I hope are named to make clear what thsese do:
+
+- EVE.h - this has all defines for FT81x / BT81x itself, so here are options, registers, commands and macros defined
+- EVE_commands.c - this has all the API functions that are to be called from an application
+- EVE_commands.h - this contains the prototypes for the functions in EVE_commands.c
+- EVE_config.h - this has all the parameters for the numerous supported display modules, here is definded which set of parameters is to be used
+- EVE_target.c - this has non-portable specific code for a number of supported controllers, mostly to support DMA
+- EVE_target.h - this has non-portable pin defines and code as "static inline" functions for all supported controllers
 
 ## Examples
 
