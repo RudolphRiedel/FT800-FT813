@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2021-06-02
+@date    2021-08-13
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -67,6 +67,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added a profile for the EVE4x-70G IPS from Matrix Orbital
 - added a profile for RiTFT35 from Riverdi
 - changed the clock-polarity for EVE_EVE4_70G
+- added a profile for CFAF800480Ex-050SC-A2 modules from Crystalfontz
 
 */
 
@@ -144,11 +145,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
   #define EVE_EVE4_40G
   #define EVE_EVE4_70G
   #define EVE_EVE4_101G
-
+  #define EVE_CFAF800480Ex_050SC_A2
 
 #endif
 
-#define EVE_EVE3_50G
+#define EVE_RVT70H
 
 
 /* display timing parameters below */
@@ -530,16 +531,33 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_HAS_GT911	/* special treatment required for out-of-spec touch-controller */
 #endif
 
+/* untested */
+/* Crystalfonts CFAF800480E1-050SC-A2 800x480 5.0" , BT817 capacitive touch */
+/* Crystalfonts CFAF800480E2-050SC-A2 800x480 5.0" , BT817 capacitive touch with overhanging glass bezel */
+/* this should also work with CFAF800480E2-050SN-A2 (no touch) and CFAF800480E2-050SR-A2 (resistive touch) */
+#if defined (EVE_CFAF800480Ex_050SC_A2)
+#define Resolution_800x480
+
+#define EVE_PCLK (1L) /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
+#define EVE_PCLK_FREQ (30000000L) /* EVE_PCLK needs to be set to 1 for this to take effect */
+#define EVE_PCLKPOL	(1L)
+#define EVE_SWIZZLE	(0L)
+#define EVE_CSPREAD	(0L)
+#define EVE_TOUCH_RZTHRESH (1200L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 4
+#define EVE_HAS_GT911 /* special treatment required for out-of-spec touch-controller */
+#endif
 
 /* untested */ /* Matrix Orbital EVE3 modules EVE3-50A, EVE3-70A : 800x480 5.0" and 7.0" resistive, or no touch, BT816 */
 /* PAF90B5WFNWC01 800x480 9.0" Panasys, BT815 */
 #if defined (EVE_EVE3_50) || defined (EVE_EVE3_70) || defined (EVE_PAF90)
 #define Resolution_800x480
 
-#define EVE_PCLK	(2L)
-#define EVE_PCLKPOL	(1L)
-#define EVE_SWIZZLE	(0L)
-#define EVE_CSPREAD	(0L)
+#define EVE_PCLK (2L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (0L)
 #define EVE_TOUCH_RZTHRESH (1600L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
@@ -550,10 +568,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #if defined (EVE_EVE3_50G) || defined (EVE_EVE3_70G)
 #define Resolution_800x480
 
-#define EVE_PCLK	(2L)
-#define EVE_PCLKPOL	(1L)
-#define EVE_SWIZZLE	(0L)
-#define EVE_CSPREAD	(0L)
+#define EVE_PCLK (2L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (0L)
 #define EVE_TOUCH_RZTHRESH (1200L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
@@ -779,7 +797,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #endif
 
 
-/* untested */
+/* untested but confirmed to be working */
 /* EVE4x-70G IPS 1024x600 7" Matrix Orbital, capacitive touch, BT817 */
 #if defined (EVE_EVE4_70G)
 #define EVE_HSIZE (1024L)
