@@ -1,0 +1,21 @@
+{
+  "name": "EVE Code Library",
+  "version": "0.1.0",
+  "description": "Code library for EVE2/EVE3/EVE4 graphics controller ICs from FTDI/Bridgetek",
+  "keywords": "EVE,Bridgetek",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RudolphRiedel/FT800-FT813"
+  },
+  "authors": [
+    {
+      "name": "Rudolph Riedel"
+    }
+  ],
+  "license": "MIT",
+  "platforms": "espressif32",
+  "build": {
+    "srcDir": "",
+    "srcFilter": "-<example_pics/> -<example_projects/>"
+  }
+}
