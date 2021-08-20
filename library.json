@@ -13,9 +13,10 @@
     }
   ],
   "license": "MIT",
+  "framework": "arduino",
   "platforms": "espressif32",
   "build": {
-    "srcDir": "",
-    "srcFilter": "-<example_pics/> -<example_projects/>"
+    "srcDir": "example_projects/EVE_Test_Arduino_PlatformIO/src",
+    "srcFilter": "+<*.h> +<*.cpp>"
   }
 }
