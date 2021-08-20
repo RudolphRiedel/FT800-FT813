@@ -1,6 +1,6 @@
 {
   "name": "EVE Code Library",
-  "version": "0.1.0",
+  "version": "5.0.0",
   "description": "Code library for EVE2/EVE3/EVE4 graphics controller ICs from FTDI/Bridgetek",
   "keywords": "EVE,Bridgetek",
   "repository": {
