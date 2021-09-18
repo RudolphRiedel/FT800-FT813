@@ -2,12 +2,11 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2021-05-14
+@date    2021-09-18
 @author  Rudolph Riedel
 
 @section info
 
-This file needs to be renamed to EVE_command.cpp for use with Arduino.
 At least for ATSAM I had the best result with -O2.
 The c-standard is C99.
 
@@ -149,7 +148,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
   Michael Wachs that these are identical - they weren't prior to V5
 - removed EVE_start_command()
 - Bugfix: EVE_init() was only checking the first two bits of REG_CPURESET and ignored the bit for the audio-engine, not an issue but not correct either.
-
+- fixed a few clang-tidy warnings
+- fixed a few cppcheck warnings
+- fixed a few CERT warnings
 
 */
 
@@ -221,7 +222,7 @@ void EVE_memWrite8(uint32_t ftAddress, uint8_t ftData8)
 	EVE_cs_set();
 	spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE);
 	spi_transmit((uint8_t)(ftAddress >> 8));
-	spi_transmit((uint8_t)(ftAddress));
+	spi_transmit((uint8_t)(ftAddress & 0x000000ff));
 	spi_transmit(ftData8);
 	EVE_cs_clear();
 }
@@ -232,8 +233,8 @@ void EVE_memWrite16(uint32_t ftAddress, uint16_t ftData16)
 	EVE_cs_set();
 	spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
 	spi_transmit((uint8_t)(ftAddress >> 8)); /* send middle address byte */
-	spi_transmit((uint8_t)(ftAddress)); /* send low address byte */
-	spi_transmit((uint8_t)(ftData16)); /* send data low byte */
+	spi_transmit((uint8_t)(ftAddress & 0x000000ff)); /* send low address byte */
+	spi_transmit((uint8_t)(ftData16 & 0x000000ff)); /* send data low byte */
 	spi_transmit((uint8_t)(ftData16 >> 8));  /* send data high byte */
 	EVE_cs_clear();
 }
@@ -244,11 +245,8 @@ void EVE_memWrite32(uint32_t ftAddress, uint32_t ftData32)
 	EVE_cs_set();
 	spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
 	spi_transmit((uint8_t)(ftAddress >> 8)); /* send middle address byte */
-	spi_transmit((uint8_t)(ftAddress)); /* send low address byte */
-	spi_transmit((uint8_t)(ftData32)); /* send data low byte */
-	spi_transmit((uint8_t)(ftData32 >> 8));
-	spi_transmit((uint8_t)(ftData32 >> 16));
-	spi_transmit((uint8_t)(ftData32 >> 24)); /* send data high byte */
+	spi_transmit((uint8_t)(ftAddress & 0x000000ff)); /* send low address byte */
+    spi_transmit_32(ftData32);
 	EVE_cs_clear();
 }
 
@@ -262,7 +260,7 @@ void EVE_memWrite_flash_buffer(uint32_t ftAddress, const uint8_t *data, uint32_t
 	EVE_cs_set();
 	spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE);
 	spi_transmit((uint8_t)(ftAddress >> 8));
-	spi_transmit((uint8_t)(ftAddress));
+	spi_transmit((uint8_t)(ftAddress & 0x000000ff));
 
 	len = (len + 3)&(~3);
 
@@ -283,7 +281,7 @@ void EVE_memWrite_sram_buffer(uint32_t ftAddress, const uint8_t *data, uint32_t 
 	EVE_cs_set();
 	spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE);
 	spi_transmit((uint8_t)(ftAddress >> 8));
-	spi_transmit((uint8_t)(ftAddress));
+	spi_transmit((uint8_t)(ftAddress & 0x000000ff));
 
 	len = (len + 3)&(~3);
 
@@ -336,7 +334,7 @@ uint8_t EVE_busy(void)
 		EVE_cs_set();
 		spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
 		spi_transmit((uint8_t)(ftAddress >> 8)); /* send middle address byte */
-		spi_transmit((uint8_t)(ftAddress)); /* send low address byte */
+		spi_transmit((uint8_t)(ftAddress & 0x000000ff)); /* send low address byte */
 
 		spi_transmit_32(CMD_FLASHATTACH);
 		spi_transmit_32(CMD_FLASHFAST);
@@ -348,14 +346,7 @@ uint8_t EVE_busy(void)
 		#endif
 	}
 
-	if(space != 0xffc)
-	{
-		return 1;
-	}
-	else
-	{
-		return 0;
-	}
+	return (space != 0xffc) ? 1 : 0;
 }
 
 
@@ -375,7 +366,7 @@ void EVE_cmd_start(void)
 /* wait for the co-processor to complete the FIFO queue */
 void EVE_cmd_execute(void)
 {
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -388,7 +379,7 @@ static void eve_begin_cmd(uint32_t command)
 	EVE_cs_set();
 	spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
 	spi_transmit((uint8_t)(ftAddress >> 8)); /* send middle address byte */
-	spi_transmit((uint8_t)(ftAddress)); /* send low address byte */
+	spi_transmit((uint8_t)(ftAddress & 0x000000ff)); /* send low address byte */
 	spi_transmit_32(command);
 }
 
@@ -406,8 +397,6 @@ void private_block_write(const uint8_t *data, uint16_t len)
 	{
 		spi_transmit(fetch_flash_byte(data+count));
 	}
-
-	len += padding;
 
 	while(padding > 0)
 	{
@@ -433,12 +422,12 @@ void block_transfer(const uint8_t *data, uint32_t len)
 		EVE_cs_set();
 		spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
 		spi_transmit((uint8_t)(ftAddress >> 8)); /* send middle address byte */
-		spi_transmit((uint8_t)(ftAddress)); /* send low address byte */
+		spi_transmit((uint8_t)(ftAddress & 0x000000ff)); /* send low address byte */
 		private_block_write(data,block_len);
 		EVE_cs_clear();
 		data += block_len;
 		bytes_left -= block_len;
-		while (EVE_busy());
+		while (EVE_busy()) {};
 	}
 }
 
@@ -546,7 +535,7 @@ void EVE_cmd_linetime(uint32_t dest)
 	eve_begin_cmd(CMD_LINETIME);
 	spi_transmit_32(dest);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 /* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
@@ -555,7 +544,7 @@ void EVE_cmd_newlist(uint32_t adr)
 	eve_begin_cmd(CMD_NEWLIST);
 	spi_transmit_32(adr);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -571,7 +560,7 @@ uint32_t EVE_cmd_pclkfreq(uint32_t ftarget, int32_t rounding)
 	spi_transmit_32(rounding);
 	spi_transmit_32(0);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 	cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
 	cmdoffset -= 4;
 	cmdoffset &= 0x0fff;
@@ -585,7 +574,7 @@ void EVE_cmd_wait(uint32_t us)
 	eve_begin_cmd(CMD_WAIT);
 	spi_transmit_32(us);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -602,14 +591,14 @@ void EVE_cmd_clearcache(void)
 {
 	EVE_cmd_dl(CMD_DLSTART);
 	EVE_cmd_dl(CMD_SWAP);
-	while (EVE_busy());
+	while (EVE_busy()) {};
 
 	EVE_cmd_dl(CMD_DLSTART);
 	EVE_cmd_dl(CMD_SWAP);
-	while (EVE_busy());
+	while (EVE_busy()) {};
 
 	EVE_cmd_dl(CMD_CLEARCACHE);
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -619,7 +608,7 @@ void EVE_cmd_flashattach(void)
 {
 	eve_begin_cmd(CMD_FLASHATTACH);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -629,7 +618,7 @@ void EVE_cmd_flashdetach(void)
 {
 	eve_begin_cmd(CMD_FLASHDETACH);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -639,7 +628,7 @@ void EVE_cmd_flasherase(void)
 {
 	eve_begin_cmd(CMD_FLASHERASE);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -652,7 +641,7 @@ uint32_t EVE_cmd_flashfast(void)
 	spi_transmit_32(0);
 	EVE_cs_clear();
 
-	while (EVE_busy());
+	while (EVE_busy()) {};
 	cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
 	cmdoffset -= 4;
 	cmdoffset &= 0x0fff;
@@ -666,7 +655,7 @@ void EVE_cmd_flashspidesel(void)
 {
 	eve_begin_cmd(CMD_FLASHSPIDESEL);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -682,7 +671,7 @@ void EVE_cmd_flashread(uint32_t dest, uint32_t src, uint32_t num)
 	spi_transmit_32(src);
 	spi_transmit_32(num);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -692,7 +681,7 @@ void EVE_cmd_flashsource(uint32_t ptr)
 	eve_begin_cmd(CMD_FLASHSOURCE);
 	spi_transmit_32(ptr);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -705,7 +694,7 @@ void EVE_cmd_flashspirx(uint32_t dest, uint32_t num)
 	spi_transmit_32(dest);
 	spi_transmit_32(num);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -733,7 +722,7 @@ void EVE_cmd_flashupdate(uint32_t dest, uint32_t src, uint32_t num)
 	spi_transmit_32(src);
 	spi_transmit_32(num);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -793,7 +782,7 @@ void EVE_cmd_getprops(uint32_t *pointer, uint32_t *width, uint32_t *height)
 	spi_transmit_32(0);
 	spi_transmit_32(0);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 	cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
 
 	if(pointer)
@@ -821,7 +810,7 @@ uint32_t EVE_cmd_getptr(void)
 	spi_transmit_32(0);
 
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 	cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
 	cmdoffset -= 4;
 	cmdoffset &= 0x0fff;
@@ -891,7 +880,7 @@ void EVE_cmd_memcpy(uint32_t dest, uint32_t src, uint32_t num)
 	spi_transmit_32(src);
 	spi_transmit_32(num);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -906,7 +895,7 @@ uint32_t EVE_cmd_memcrc(uint32_t ptr, uint32_t num)
 	spi_transmit_32(num);
 	spi_transmit_32(0);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 	cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
 	cmdoffset -= 4;
 	cmdoffset &= 0x0fff;
@@ -942,7 +931,7 @@ void EVE_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *data)
 	}
 
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 */
 
@@ -954,7 +943,7 @@ void EVE_cmd_memzero(uint32_t ptr, uint32_t num)
 	spi_transmit_32(ptr);
 	spi_transmit_32(num);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -992,7 +981,7 @@ uint32_t EVE_cmd_regread(uint32_t ptr)
 	spi_transmit_32(ptr);
 	spi_transmit_32(0);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 	cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
 	cmdoffset -= 4;
 	cmdoffset &= 0x0fff;
@@ -1006,7 +995,7 @@ void EVE_cmd_setrotate(uint32_t r)
 	eve_begin_cmd(CMD_SETROTATE);
 	spi_transmit_32(r);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -1016,7 +1005,7 @@ void EVE_cmd_snapshot(uint32_t ptr)
 	eve_begin_cmd(CMD_SNAPSHOT);
 	spi_transmit_32(ptr);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -1038,7 +1027,7 @@ void EVE_cmd_snapshot2(uint32_t fmt, uint32_t ptr, int16_t x0, int16_t y0, int16
 	spi_transmit((uint8_t)(h0 >> 8));
 
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -1063,7 +1052,7 @@ void EVE_cmd_track(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t tag)
 	spi_transmit(0);
 
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -1074,7 +1063,7 @@ void EVE_cmd_videoframe(uint32_t dest, uint32_t result_ptr)
 	spi_transmit_32(dest);
 	spi_transmit_32(result_ptr);
 	EVE_cs_clear();
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -1106,7 +1095,7 @@ uint8_t EVE_init_flash(void)
 	if(status == 1) /* FLASH_STATUS_DETACHED - no flash was found during init, no flash present or the detection failed, but have hope and let the BT81x have annother try */
 	{
 		EVE_cmd_dl(CMD_FLASHATTACH);
-		while (EVE_busy());
+		while (EVE_busy()) {};
 		status = EVE_memRead8(REG_FLASH_STATUS);
 		if(status != 2) /* still not in FLASH_STATUS_BASIC, time to give up */
 		{
@@ -1120,14 +1109,9 @@ uint8_t EVE_init_flash(void)
 
 		result = EVE_cmd_flashfast();
 
-		if(result == 0) /* cmd_flashfast was successful */
-		{
-			return 1;
-		}
-		else /* room for improvement, cmd_flashfast provided an error code but there is no way to return it without returning a value that is FALSE all the same */
-		{
-			return 0;
-		}
+		return (result == 0) ? 1 : 0;
+		/* result == 0 - cmd_flashfast was successful */
+		/* room for improvement, cmd_flashfast provided an error code but there is no way to return it without returning a value that is FALSE all the same */
 	}
 
 	if(status == 3) /* FLASH_STATUS_FULL - we are already there, why has this function been called? */
@@ -1258,10 +1242,10 @@ uint8_t EVE_init(void)
 		EVE_cs_set();
 		spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
 		spi_transmit((uint8_t)(ftAddress >> 8)); /* send middle address byte */
-		spi_transmit((uint8_t)(ftAddress)); /* send low address byte */
+		spi_transmit((uint8_t)(ftAddress & 0x000000ff)); /* send low address byte */
 		private_block_write(EVE_GT911_data, EVE_GT911_len);
 		EVE_cs_clear();
-		while (EVE_busy());
+		while (EVE_busy()) {};
 
 		EVE_memWrite8(REG_TOUCH_OVERSAMPLE, 0x0f); /* setup oversample to 0x0f as "hidden" in binary-blob for AN_336 */
 		EVE_memWrite16(REG_TOUCH_CONFIG, 0x05D0); /* write magic cookie as requested by AN_336 */
@@ -1372,7 +1356,7 @@ void EVE_start_cmd_burst(void)
 #if defined (EVE_DMA)
 	if(EVE_dma_busy)
 	{
-		while (EVE_busy()); /* this is a safe-guard to protect segmented display-list building with DMA from overlapping */
+		while (EVE_busy()) {}; /* this is a safe-guard to protect segmented display-list building with DMA from overlapping */
 	}
 #endif
 
@@ -1388,7 +1372,7 @@ void EVE_start_cmd_burst(void)
 		EVE_cs_set();
 		spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
 		spi_transmit((uint8_t)(ftAddress >> 8)); /* send middle address byte */
-		spi_transmit((uint8_t)(ftAddress)); /* send low address byte */
+		spi_transmit((uint8_t)(ftAddress & 0x000000ff)); /* send low address byte */
 	#endif
 }
 
@@ -1414,7 +1398,7 @@ static void EVE_start_command(uint32_t command)
 	EVE_cs_set();
 	spi_transmit((uint8_t)(ftAddress >> 16) | MEM_WRITE); /* send Memory Write plus high address byte */
 	spi_transmit((uint8_t)(ftAddress >> 8)); /* send middle address byte */
-	spi_transmit((uint8_t)(ftAddress)); /* send low address byte */
+	spi_transmit((uint8_t)(ftAddress & 0x000000ff)); /* send low address byte */
 
 	spi_transmit_32(command);
 }
@@ -1424,17 +1408,14 @@ static void EVE_start_command(uint32_t command)
 static void private_string_write(const char *text)
 {
 	uint8_t textindex = 0;
-	uint8_t padding = 0;
-	uint8_t *bytes = (uint8_t *) text; /* treat the array as bunch of bytes */
+	const uint8_t *bytes = (const uint8_t *) text; /* treat the array as bunch of bytes */
 
 	if(cmd_burst)
 	{
-		uint32_t calc;
-		uint8_t data;
-
 		for(textindex = 0; textindex < 249;)
 		{
-			calc = 0;
+			uint32_t calc = 0;
+			uint8_t data;
 
 			data = bytes[textindex++];
 			if(data == 0)
@@ -1473,6 +1454,8 @@ static void private_string_write(const char *text)
 	}
 	else
 	{
+		uint8_t padding = 0;
+
 		while(bytes[textindex] != 0)
 		{
 			spi_transmit(bytes[textindex]);
@@ -1486,7 +1469,6 @@ static void private_string_write(const char *text)
 		/* we need to transmit at least one 0x00 byte and up to four if the string happens to be 4-byte aligned already */
 		padding = textindex & 3;  /* 0, 1, 2 or 3 */
 		padding = 4-padding; /* 4, 3, 2 or 1 */
-		textindex += padding;
 
 		while(padding > 0)
 		{
@@ -1805,7 +1787,7 @@ uint16_t EVE_cmd_bitmap_transform(int32_t x0, int32_t y0, int32_t x1, int32_t y1
 		spi_transmit_32(ty2);
 		spi_transmit_32(0);
 		EVE_cs_clear();
-		while (EVE_busy());
+		while (EVE_busy()) {};
 		cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
 		cmdoffset -= 4;
 		cmdoffset &= 0x0fff;
@@ -1940,12 +1922,13 @@ void EVE_cmd_button_var(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t 
 		{
 			va_list arguments;
 			uint8_t counter;
-			uint32_t data;
 
 			va_start(arguments, num_args);
 
 			for(counter=0;counter<num_args;counter++)
 			{
+				uint32_t data;
+
 				data = (uint32_t) va_arg(arguments, int);
 				spi_transmit_32(data);
 			}
@@ -2004,12 +1987,13 @@ void EVE_cmd_text_var(int16_t x0, int16_t y0, int16_t font, uint16_t options, co
 		{
 			va_list arguments;
 			uint8_t counter;
-			uint32_t data;
 
 			va_start(arguments, num_args);
 
 			for(counter=0;counter<num_args;counter++)
 			{
+				uint32_t data;
+
 				data = (uint32_t) va_arg(arguments, int);
 				spi_transmit_32(data);
 			}
@@ -2027,7 +2011,6 @@ void EVE_cmd_text_var_burst(int16_t x0, int16_t y0, int16_t font, uint16_t optio
 	spi_transmit_burst((uint32_t) font + ((uint32_t) options << 16));
 	private_string_write(text);
 
-	#if EVE_GEN > 2
 	if(options & EVE_OPT_FORMAT)
 	{
 		va_list arguments;
@@ -2041,7 +2024,6 @@ void EVE_cmd_text_var_burst(int16_t x0, int16_t y0, int16_t font, uint16_t optio
 		}
 		va_end(arguments);
 	}
-	#endif
 }
 
 
@@ -2073,12 +2055,13 @@ void EVE_cmd_toggle_var(int16_t x0, int16_t y0, int16_t w0, int16_t font, uint16
 		{
 			va_list arguments;
 			uint8_t counter;
-			uint32_t data;
 
 			va_start(arguments, num_args);
 
 			for(counter=0;counter<num_args;counter++)
 			{
+				uint32_t data;
+
 				data = (uint32_t) va_arg(arguments, int);
 				spi_transmit_32(data);
 			}
@@ -2390,7 +2373,7 @@ void EVE_cmd_getmatrix(int32_t *get_a, int32_t *get_b, int32_t *get_c, int32_t *
 		spi_transmit_32(0);
 		spi_transmit_32(0);
 		EVE_cs_clear();
-		while (EVE_busy());
+		while (EVE_busy()) {};
 		cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
 
 		if(get_f)
@@ -3075,7 +3058,7 @@ void EVE_calibrate_manual(uint16_t height)
 
 		EVE_cmd_dl(DL_DISPLAY);
 		EVE_cmd_dl(CMD_SWAP);
-		while (EVE_busy());
+		while (EVE_busy()) {};
 
 		while(1)
 		{

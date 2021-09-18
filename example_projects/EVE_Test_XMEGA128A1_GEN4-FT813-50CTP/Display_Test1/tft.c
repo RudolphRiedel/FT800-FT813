@@ -1,8 +1,8 @@
 /*
 @file    tft.c / tft.cpp
 @brief   TFT handling functions for EVE_Test project
-@version 1.15
-@date    2020-12-28
+@version 1.17
+@date    2021-09-18
 @author  Rudolph Riedel
 
 @section History
@@ -67,13 +67,19 @@
 - moved "display_list_size = EVE_memRead16(REG_CMD_DL);" from TFT_display() to TFT_touch() to speed up the display
  refresh for non-DMA targets
 
+1.16
+- disabled the UTF-8 font example code, can be re-enabled if desired by changing the "#define TEST_UTF8 0" to "#define TEST_UTF8 1"
+
+1.17
+- replaced the UTF-8 font with a freshly generated one and adjusted the parameters for the .xfont file
+
  */
 
 #include "EVE.h"
 #include "tft_data.h"
 
 
-#define TEST_UTF8 1
+#define TEST_UTF8 0
 
 
 /* some pre-definded colors */
@@ -89,7 +95,7 @@
 #define BLACK	0x000000UL
 
 /* memory-map defines */
-#define MEM_FONT 0x000f6000
+#define MEM_FONT 0x000f7e00 /* the .xfont file for the UTF-8 font is copied here */
 #define MEM_LOGO 0x000f8000 /* start-address of logo, needs 6272 bytes of memory */
 #define MEM_PIC1 0x000fa000 /* start of 100x100 pixel test image, ARGB565, needs 20000 bytes of memory */
 
@@ -243,16 +249,6 @@ void touch_calibrate(void)
 	EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0x0000C783);
 #endif
 
-#if defined (EVE_GEN4_FT813_50)
-    EVE_memWrite32(REG_TOUCH_TRANSFORM_A, 0x00000000);
-    EVE_memWrite32(REG_TOUCH_TRANSFORM_B, 0x000104E4);
-    EVE_memWrite32(REG_TOUCH_TRANSFORM_C, 0xFFFE78AA);
-    EVE_memWrite32(REG_TOUCH_TRANSFORM_D, 0xFFFEF3E6);
-    EVE_memWrite32(REG_TOUCH_TRANSFORM_E, 0x00000321);
-    EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0x01DF8B98);
-#endif
-
-
 /* activate this if you are using a module for the first time or if you need to re-calibrate it */
 /* write down the numbers on the screen and either place them in one of the pre-defined blocks above or make a new block */
 #if 0
@@ -355,12 +351,12 @@ void initStaticBackground(void)
 	EVE_cmd_text(125, EVE_VSIZE - 35, 26, 0, "us");
 	EVE_cmd_text(125, EVE_VSIZE - 20, 26, 0, "us");
 
-	while (EVE_busy());
+	while (EVE_busy()) {};
 
 	num_dl_static = EVE_memRead16(REG_CMD_DL);
 
 	EVE_cmd_memcpy(MEM_DL_STATIC, EVE_RAM_DL, num_dl_static);
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -369,10 +365,9 @@ void TFT_init(void)
 	if(EVE_init() != 0)
 	{
 		tft_active = 1;
-		EVE_memWrite16(REG_PWM_HZ, 345);       /* set backlight frequency, range is from 250Hz to 10000Hz */
-		EVE_memWrite8(REG_PWM_DUTY, 0x80);	    /* setup backlight, range is from 0 = off to 0x80 = max */
+
+		EVE_memWrite8(REG_PWM_DUTY, 0x30);	/* setup backlight, range is from 0 = off to 0x80 = max */
 		touch_calibrate();
-		
 
 #if (TEST_UTF8 != 0) && (EVE_GEN > 2)	/* we need a BT81x for this */
 	#if 0
@@ -387,7 +382,7 @@ void TFT_init(void)
 	#endif
 
 		EVE_init_flash();
-		EVE_cmd_flashread(MEM_FONT, 216896, 4864); /* copy .xfont from FLASH to RAM_G, offset and length are from the .map file */
+		EVE_cmd_flashread(MEM_FONT, 84928, 320); /* copy .xfont from FLASH to RAM_G, offset and length are from the .map file */
 
 #endif // TEST_UTF8
 
@@ -435,11 +430,6 @@ void TFT_touch(void)
 				{
 					toggle_state = 0;
 				}
-				EVE_memWrite8(REG_VOL_SOUND, 0xFF); //set the volume to maximum
-				// EVE_memWrite16(REG_SOUND, (0x6C<< 8) | 0x41); // C8 MIDI note on xylophone
-				EVE_memWrite16(REG_SOUND, 0x56);
-				EVE_memWrite8(REG_PLAY, 1); // play the sound
-				
 			}
 			break;
 	}

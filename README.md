@@ -75,7 +75,7 @@ The EVE_cmd_xxx_burst() functions are optimised for speed, these are pure data t
 
 ## Structure
 
-This library currently has six files that I hope are named to make clear what these do:
+This library currently has nine files that I hope are named to make clear what these do:
 
 - EVE.h - this has all defines for FT81x / BT81x itself, so here are options, registers, commands and macros defined
 - EVE_commands.c - this has all the API functions that are to be called from an application
@@ -83,6 +83,9 @@ This library currently has six files that I hope are named to make clear what th
 - EVE_config.h - this has all the parameters for the numerous supported display modules, here is definded which set of parameters is to be used
 - EVE_target.c - this has non-portable specific code for a number of supported controllers, mostly to support DMA
 - EVE_target.h - this has non-portable pin defines and code as "static inline" functions for all supported controllers
+- EVE_target.cpp - this is for Arduino C++ targets
+- EVE_cpp_wrapper.cpp - this is for Arduino C++ targets
+- EVE_cpp_wrapper.h - this is for Arduino C++ targets
 
 ## Examples
 
@@ -116,7 +119,7 @@ while (EVE_busy());
 
 This does the same as the first example but faster.
 The trailing EVE_start_cmd_burst() either sets chip-select to low and sends out the three byte address.  
-Or if DMA is available for the target you are compiling for with support code in EVE_target.c and EVE_target.h, it writes the address to EVE_dma_buffer and sets EVE_dma_buffer_index to 1.
+Or if DMA is available for the target you are compiling for with support code in EVE_target.c / EVE_target.cpp and EVE_target.h, it writes the address to EVE_dma_buffer and sets EVE_dma_buffer_index to 1.
 
 Note the trailing "_burst" in the following functions, these are special versions of these commands that can only be used within an EVE_start_cmd_burst()/EVE_end_cmd_bust() pair.
 These functions are optimised to push out data and nothing else.

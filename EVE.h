@@ -52,10 +52,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 */
 
-#pragma once
+#ifndef EVE_H
+#define EVE_H
 
-#ifndef EVE_H_
-#define EVE_H_
+#pragma once
 
 #include "EVE_target.h"
 #include "EVE_config.h"
@@ -72,9 +72,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 
 /* Memory buffer sizes */
-#define EVE_RAM_G_SIZE   1024*1024L
-#define EVE_CMDFIFO_SIZE 4*1024L
-#define EVE_RAM_DL_SIZE  8*1024L
+#define EVE_RAM_G_SIZE   (1024*1024UL)
+#define EVE_CMDFIFO_SIZE (4*1024UL)
+#define EVE_RAM_DL_SIZE  (8*1024UL)
 
 
 #define DL_CLEAR      0x26000000 /* requires OR'd arguments */
@@ -728,4 +728,4 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 #endif /*  EVE_GEN > 3 */
 
-#endif /* EVE_H_ */
+#endif /* EVE_H */

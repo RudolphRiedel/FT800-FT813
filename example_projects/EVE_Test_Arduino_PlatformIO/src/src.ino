@@ -1,12 +1,13 @@
 /*
 @file    src.ino
 @brief   Main file for Arduino EVE test-code
-@version 2.6
-@date    2021-01-06
+@version 2.7
+@date    2021-09-18
 @author  Rudolph Riedel
 */
 
 #include <Arduino.h>
+#include <SPI.h>
 
 #include "EVE_target.h"
 #include "EVE_commands.h"
@@ -30,6 +31,8 @@ void setup()
 #endif
 
 	TFT_init();
+
+//SPI.beginTransaction(SPISettings(20000000, MSBFIRST, SPI_MODE0));
 
 #if defined (ESP8266)
 	SPI.setFrequency(16000000);

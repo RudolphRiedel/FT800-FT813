@@ -1,8 +1,8 @@
 /*
 @file    tft.c / tft.cpp
 @brief   TFT handling functions for EVE_Test project
-@version 1.16
-@date    2021-02-21
+@version 1.17
+@date    2021-09-18
 @author  Rudolph Riedel
 
 @section History
@@ -68,7 +68,10 @@
  refresh for non-DMA targets
 
 1.16
--disabled the UTF-8 font example code, can be re-enabled if desired by changing the "#define TEST_UTF8 0" to "#define TEST_UTF8 1"
+- disabled the UTF-8 font example code, can be re-enabled if desired by changing the "#define TEST_UTF8 0" to "#define TEST_UTF8 1"
+
+1.17
+- replaced the UTF-8 font with a freshly generated one and adjusted the parameters for the .xfont file
 
  */
 
@@ -92,7 +95,7 @@
 #define BLACK	0x000000UL
 
 /* memory-map defines */
-#define MEM_FONT 0x000f6000
+#define MEM_FONT 0x000f7e00 /* the .xfont file for the UTF-8 font is copied here */
 #define MEM_LOGO 0x000f8000 /* start-address of logo, needs 6272 bytes of memory */
 #define MEM_PIC1 0x000fa000 /* start of 100x100 pixel test image, ARGB565, needs 20000 bytes of memory */
 
@@ -348,12 +351,12 @@ void initStaticBackground(void)
 	EVE_cmd_text(125, EVE_VSIZE - 35, 26, 0, "us");
 	EVE_cmd_text(125, EVE_VSIZE - 20, 26, 0, "us");
 
-	while (EVE_busy());
+	while (EVE_busy()) {};
 
 	num_dl_static = EVE_memRead16(REG_CMD_DL);
 
 	EVE_cmd_memcpy(MEM_DL_STATIC, EVE_RAM_DL, num_dl_static);
-	while (EVE_busy());
+	while (EVE_busy()) {};
 }
 
 
@@ -379,7 +382,7 @@ void TFT_init(void)
 	#endif
 
 		EVE_init_flash();
-		EVE_cmd_flashread(MEM_FONT, 216896, 4864); /* copy .xfont from FLASH to RAM_G, offset and length are from the .map file */
+		EVE_cmd_flashread(MEM_FONT, 84928, 320); /* copy .xfont from FLASH to RAM_G, offset and length are from the .map file */
 
 #endif // TEST_UTF8
 

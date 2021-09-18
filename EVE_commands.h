@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2020-04-19
+@date    2020-09-18
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -81,10 +81,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 */
 
-#pragma once
+#ifndef EVE_COMMANDS_H
+#define EVE_COMMANDS_H
 
-#ifndef EVE_COMMANDS_H_
-#define EVE_COMMANDS_H_
+#pragma once
 
 #include "EVE.h"
 
@@ -317,4 +317,4 @@ void EVE_color_rgb_burst(uint32_t color);
 void EVE_calibrate_manual(uint16_t height);
 
 
-#endif /* EVE_COMMANDS_H_ */
+#endif /* EVE_COMMANDS_H */

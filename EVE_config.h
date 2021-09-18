@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2021-08-13
+@date    2021-09-18
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -71,10 +71,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 */
 
-#pragma once
+#ifndef EVE_CONFIG_H
+#define EVE_CONFIG_H
 
-#ifndef EVE_CONFIG_H_
-#define EVE_CONFIG_H_
+#pragma once
 
 /* select the settings for the TFT attached */
 #if 0
@@ -149,7 +149,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 #endif
 
-#define EVE_RVT70H
+#define EVE_RiTFT43
 
 
 /* display timing parameters below */

@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2021-08-10
+@date    2021-09-18
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -75,12 +75,13 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added ARDUINO_TEENSY35 to the experimental ARDUINO_TEENSY41 target
 - transferred the little experimental STM32 code I had over from my experimental branch
 - added S32K144 support including DMA
-
+- modified the Arduino targets to use C++ wrapper functions
+- fixed a few CERT warnings
 
 */
 
-#ifndef EVE_TARGET_H_
-#define EVE_TARGET_H_
+#ifndef EVE_TARGET_H
+#define EVE_TARGET_H
 
 /* While the following lines make things a lot easier like automatically compiling the code for the target you are compiling for, */
 /* a few things are expected to be taken care of beforehand. */
@@ -159,12 +160,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			static inline void spi_transmit(uint8_t data)
 			{
 				SPDR = data; /* start transmission */
-				while(!(SPSR & (1<<SPIF))); /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
+				while(!(SPSR & (1<<SPIF))) {}; /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
 			}
 
 			static inline void spi_transmit_32(uint32_t data)
 			{
-				spi_transmit((uint8_t)(data));
+				spi_transmit((uint8_t)(data & 0x000000ff));
 				spi_transmit((uint8_t)(data >> 8));
 				spi_transmit((uint8_t)(data >> 16));
 				spi_transmit((uint8_t)(data >> 24));
@@ -179,7 +180,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			static inline uint8_t spi_receive(uint8_t data)
 			{
 				SPDR = data; /* start transmission */
-				while(!(SPSR & (1<<SPIF))); /* wait for transmission to complete - 1us @ 8MHz SPI-CLock */
+				while(!(SPSR & (1<<SPIF))) {}; /* wait for transmission to complete - 1us @ 8MHz SPI-CLock */
 				return SPDR;
 			}
 
@@ -238,12 +239,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		static inline void spi_transmit(uint8_t data)
 		{
 			EVE_SPI.DATA = data;
-			while(!(EVE_SPI.STATUS & 0x80)); // wait for transmit complete
+			while(!(EVE_SPI.STATUS & 0x80)) {}; // wait for transmit complete
 		}
 
 		static inline void spi_transmit_32(uint32_t data)
 		{
-			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data & 0x000000ff));
 			spi_transmit((uint8_t)(data >> 8));
 			spi_transmit((uint8_t)(data >> 16));
 			spi_transmit((uint8_t)(data >> 24));
@@ -258,7 +259,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		static inline uint8_t spi_receive(uint8_t data)
 		{
 			EVE_SPI.DATA = data;
-			while(!(EVE_SPI.STATUS & 0x80)); // wait for transmit complete
+			while(!(EVE_SPI.STATUS & 0x80)) {}; // wait for transmit complete
 			return EVE_SPI.DATA;
 		}
 
@@ -314,7 +315,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			{
 #if 1
 				SPDR = data; /* start transmission */
-				while(!(SPSR & (1<<SPIF))); /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
+				while(!(SPSR & (1<<SPIF))) {}; /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
 #endif
 
 #if 0
@@ -342,7 +343,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 			static inline void spi_transmit_32(uint32_t data)
 			{
-				spi_transmit((uint8_t)(data));
+				spi_transmit((uint8_t)(data & 0x000000ff));
 				spi_transmit((uint8_t)(data >> 8));
 				spi_transmit((uint8_t)(data >> 16));
 				spi_transmit((uint8_t)(data >> 24));
@@ -358,7 +359,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			{
 #if 1
 				SPDR = data; /* start transmission */
-				while(!(SPSR & (1<<SPIF))); /* wait for transmission to complete - 1us @ 8MHz SPI-CLock */
+				while(!(SPSR & (1<<SPIF))) {}; /* wait for transmission to complete - 1us @ 8MHz SPI-CLock */
 				return SPDR;
 #endif
 
@@ -439,12 +440,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			{
 				CSIH0CTL0 = 0xC1; /* CSIH2PWR = 1;  CSIH2TXE=1; CSIH2RXE = 0; direct access mode  */
 				CSIH0TX0H = data;	/* start transmission */
-				while(CSIH0STR0 & 0x00080);	/* wait for transmission to complete - 800ns @ 10MHz SPI-Clock */
+				while(CSIH0STR0 & 0x00080) {};	/* wait for transmission to complete - 800ns @ 10MHz SPI-Clock */
 			}
 
 			static inline void spi_transmit_32(uint32_t data)
 			{
-				spi_transmit((uint8_t)(data));
+				spi_transmit((uint8_t)(data & 0x000000ff));
 				spi_transmit((uint8_t)(data >> 8));
 				spi_transmit((uint8_t)(data >> 16));
 				spi_transmit((uint8_t)(data >> 24));
@@ -460,7 +461,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 			{
 				CSIH0CTL0 = 0xE1; /* CSIH2PWR = 1;  CSIH2TXE=1; CSIH2RXE = 1; direct access mode  */
 				CSIH0TX0H = data;	/* start transmission */
-				while(CSIH0STR0 & 0x00080);	/* wait for transmission to complete - 800ns @ 10MHz SPI-Clock */
+				while(CSIH0STR0 & 0x00080) {};	/* wait for transmission to complete - 800ns @ 10MHz SPI-Clock */
 				return (uint8_t) CSIH0RX0H;
 			}
 
@@ -510,7 +511,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 			static inline void spi_transmit_32(uint32_t data)
 			{
-				spi_transmit((uint8_t)(data));
+				spi_transmit((uint8_t)(data & 0x000000ff));
 				spi_transmit((uint8_t)(data >> 8));
 				spi_transmit((uint8_t)(data >> 16));
 				spi_transmit((uint8_t)(data >> 24));
@@ -555,17 +556,24 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		#endif
 
 		#if defined (__SAME51J19A__) || (__SAMD51P20A__) || (__SAMD51J19A__) || (__SAMD51G18A__)
+#if 1
 		#define EVE_CS_PORT 1
 		#define EVE_CS PORT_PB01
 		#define EVE_PDN_PORT 1
 		#define EVE_PDN PORT_PB31
+#else
+		#define EVE_CS_PORT 0
+		#define EVE_CS PORT_PA00
+		#define EVE_PDN_PORT 0
+		#define EVE_PDN PORT_PA01
+#endif
+
 		#define EVE_SPI SERCOM5
 		#define EVE_SPI_DMA_TRIGGER SERCOM5_DMAC_ID_TX
 		#define EVE_DMA_CHANNEL 0
 		#define EVE_DMA
 		#define EVE_DELAY_1MS 20000	/* ~1ms at 120MHz Core-Clock and activated cache, according to my Logic-Analyzer */
 		#endif
-
 
 		#if defined (EVE_DMA)
 			extern uint32_t EVE_dma_buffer[1025];
@@ -602,13 +610,13 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		static inline void spi_transmit(uint8_t data)
 		{
 			EVE_SPI->SPI.DATA.reg = data;
-			while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0);
+			while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0) {};
 			(void) EVE_SPI->SPI.DATA.reg; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
 		}
 
 		static inline void spi_transmit_32(uint32_t data)
 		{
-			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data & 0x000000ff));
 			spi_transmit((uint8_t)(data >> 8));
 			spi_transmit((uint8_t)(data >> 16));
 			spi_transmit((uint8_t)(data >> 24));
@@ -627,7 +635,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		static inline uint8_t spi_receive(uint8_t data)
 		{
 			EVE_SPI->SPI.DATA.reg = data;
-			while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0);
+			while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0) {};
 			return EVE_SPI->SPI.DATA.reg;
 		}
 
@@ -684,12 +692,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		static inline void spi_transmit(uint8_t data)
 		{
 				SPI_DATA(SPI0) = (uint32_t) data;
-				while(SPI_STAT(SPI0) & SPI_STAT_TRANS);
+				while(SPI_STAT(SPI0) & SPI_STAT_TRANS) {};
 		}
 
 		static inline void spi_transmit_32(uint32_t data)
 		{
-			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data & 0x000000ff));
 			spi_transmit((uint8_t)(data >> 8));
 			spi_transmit((uint8_t)(data >> 16));
 			spi_transmit((uint8_t)(data >> 24));
@@ -704,7 +712,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		static inline uint8_t spi_receive(uint8_t data)
 		{
 				SPI_DATA(SPI0) = (uint32_t) data;
-				while(SPI_STAT(SPI0) & SPI_STAT_TRANS);
+				while(SPI_STAT(SPI0) & SPI_STAT_TRANS) {};
 				return (uint8_t) SPI_DATA(SPI0);
 		}
 
@@ -801,14 +809,14 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		static inline void spi_transmit(uint8_t data)
 		{
 			LL_SPI_TransmitData8(EVE_SPI, data);
-			while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
-			while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI));
+			while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI)) {};
+			while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI)) {};
 			LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXNE */
 		}
 
 		static inline void spi_transmit_32(uint32_t data)
 		{
-			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data & 0x000000ff));
 			spi_transmit((uint8_t)(data >> 8));
 			spi_transmit((uint8_t)(data >> 16));
 			spi_transmit((uint8_t)(data >> 24));
@@ -827,8 +835,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		static inline uint8_t spi_receive(uint8_t data)
 		{
 			LL_SPI_TransmitData8(EVE_SPI, data);
-			while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
-			while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI));
+			while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI)) {};
+			while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI)) {};
 			return LL_SPI_ReceiveData8(EVE_SPI);
 		}
 
@@ -1108,7 +1116,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline void spi_transmit_32(uint32_t data)
 		{
-			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data & 0x000000ff));
 			spi_transmit((uint8_t)(data >> 8));
 			spi_transmit((uint8_t)(data >> 16));
 			spi_transmit((uint8_t)(data >> 24));
@@ -1207,12 +1215,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 //            while (!(SPI_getInterruptStatus(EUSCI_B0_BASE,EUSCI_B_SPI_TRANSMIT_INTERRUPT)));
 
             UCB0TXBUF_SPI = data;
-            while(!(UCB0IFG_SPI & UCTXIFG)); /* wait for transmission to complete */
+            while(!(UCB0IFG_SPI & UCTXIFG)) {}; /* wait for transmission to complete */
         }
 
 		static inline void spi_transmit_32(uint32_t data)
 		{
-			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data & 0x000000ff));
 			spi_transmit((uint8_t)(data >> 8));
 			spi_transmit((uint8_t)(data >> 16));
 			spi_transmit((uint8_t)(data >> 24));
@@ -1235,7 +1243,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 //            return EUSCI_B_CMSIS(EUSCI_B0_BASE)->RXBUF;
 
             UCB0TXBUF_SPI = data;
-            while(!(UCB0IFG_SPI & UCTXIFG)); /* wait for transmission to complete */
+            while(!(UCB0IFG_SPI & UCTXIFG)) {}; /* wait for transmission to complete */
             return UCB0RXBUF_SPI;
          }
 
@@ -1256,38 +1264,40 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 	#include <Arduino.h>
 	#include <stdio.h>
-	#include <SPI.h>
+	#include "EVE_cpp_wrapper.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 	#if	defined (__AVR__)
 //	#if defined (ARDUINO_AVR_UNO)
 		#include <avr/pgmspace.h>
 
-		#define EVE_CS 		9
+		#define EVE_CS 		10
 		#define EVE_PDN		8
 
 		static inline void EVE_cs_set(void)
 		{
 			digitalWrite(EVE_CS, LOW); /* make EVE listen */
-//			PORTB &=~(1<<PORTB1); /* directly use pin 9 */
 		}
 
 		static inline void EVE_cs_clear(void)
 		{
 			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listen */
-//			PORTB |=(1<<PORTB1); /* directly use pin 9 */
 		}
 
 		static inline void spi_transmit(uint8_t data)
 		{
-		    SPDR = data;
-		    asm volatile("nop");
-    		while (!(SPSR & (1<<SPIF)));
+//			wrapper_spi_transmit(data);
+			SPDR = data;
+			asm volatile("nop");
+			while (!(SPSR & (1<<SPIF)));
 		}
 
 		static inline void spi_transmit_32(uint32_t data)
 		{
-			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data & 0x000000ff));
 			spi_transmit((uint8_t)(data >> 8));
 			spi_transmit((uint8_t)(data >> 16));
 			spi_transmit((uint8_t)(data >> 24));
@@ -1301,7 +1311,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline uint8_t spi_receive(uint8_t data)
 		{
-			return SPI.transfer(data);
+			return wrapper_spi_receive(data);
 		}
 
 		static inline uint8_t fetch_flash_byte(const uint8_t *data)
@@ -1317,7 +1327,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 
 	#elif defined (ARDUINO_METRO_M4)
-		#define EVE_CS 		9
+		#define EVE_CS 		10
 		#define EVE_PDN		8
 
 		#define EVE_DMA
@@ -1343,12 +1353,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline void spi_transmit(uint8_t data)
 		{
-			SPI.transfer(data);
+			wrapper_spi_transmit(data);
 		}
 
 		static inline void spi_transmit_32(uint32_t data)
 		{
-			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data & 0x000000ff));
 			spi_transmit((uint8_t)(data >> 8));
 			spi_transmit((uint8_t)(data >> 16));
 			spi_transmit((uint8_t)(data >> 24));
@@ -1366,7 +1376,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline uint8_t spi_receive(uint8_t data)
 		{
-			return SPI.transfer(data);
+			return wrapper_spi_receive(data);
 		}
 
 		static inline uint8_t fetch_flash_byte(const uint8_t *data)
@@ -1381,7 +1391,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		#include "stm32f4xx_hal.h"
 		#include "stm32f4xx_ll_spi.h"
 
-		#define EVE_CS 		9
+		#define EVE_CS 		10
 		#define EVE_PDN		8
 		#define EVE_SPI SPI1
 
@@ -1412,14 +1422,14 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		{
 //			SPI.transfer(data);
 			LL_SPI_TransmitData8(EVE_SPI, data);
-			while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
-			while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI));
+			while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI)) {};
+			while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI)) {};
 			LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXNE */
 		}
 
 		static inline void spi_transmit_32(uint32_t data)
 		{
-			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data & 0x000000ff));
 			spi_transmit((uint8_t)(data >> 8));
 			spi_transmit((uint8_t)(data >> 16));
 			spi_transmit((uint8_t)(data >> 24));
@@ -1439,8 +1449,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		{
 //			return SPI.transfer(data);
 			LL_SPI_TransmitData8(EVE_SPI, data);
-			while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
-			while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI));
+			while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI)) {};
+			while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI)) {};
 			return LL_SPI_ReceiveData8(EVE_SPI);
 		}
 
@@ -1468,12 +1478,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline void spi_transmit(uint8_t data)
 		{
-			SPI.write(data);
+			wrapper_spi_transmit(data);
 		}
 
 		static inline void spi_transmit_32(uint32_t data)
 		{
-			SPI.write32(__builtin_bswap32(data));
+			wrapper_spi_transmit_32(__builtin_bswap32(data));
 		}
 
 		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
@@ -1488,7 +1498,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline uint8_t spi_receive(uint8_t data)
 		{
-			return SPI.transfer(data);
+			return wrapper_spi_receive(data);
 		}
 
 		static inline uint8_t fetch_flash_byte(const uint8_t *data)
@@ -1589,7 +1599,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		#elif defined (ARDUINO_TEENSY41) || (ARDUINO_TEENSY35) /* note: this is mostly untested */
 
-		#define EVE_CS 		8
+		#define EVE_CS 		10
 		#define EVE_PDN		9
 
 		#define EVE_DMA
@@ -1615,12 +1625,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline void spi_transmit(uint8_t data)
 		{
-			SPI.transfer(data);
+			wrapper_spi_transmit(data);
 		}
 
 		static inline void spi_transmit_32(uint32_t data)
 		{
-			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data & 0x000000ff));
 			spi_transmit((uint8_t)(data >> 8));
 			spi_transmit((uint8_t)(data >> 16));
 			spi_transmit((uint8_t)(data >> 24));
@@ -1638,7 +1648,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline uint8_t spi_receive(uint8_t data)
 		{
-			return SPI.transfer(data);
+			return wrapper_spi_receive(data);
 		}
 
 		static inline uint8_t fetch_flash_byte(const uint8_t *data)
@@ -1652,7 +1662,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		#elif defined (ARDUINO_BBC_MICROBIT_V2)	/* note: this is mostly untested */
 
 		#define EVE_CS 		12
-		#define EVE_PDN		16
+		#define EVE_PDN		9
 
 		static inline void EVE_cs_set(void)
 		{
@@ -1666,12 +1676,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline void spi_transmit(uint8_t data)
 		{
-			SPI.transfer(data);
+			wrapper_spi_transmit(data);
 		}
 
 		static inline void spi_transmit_32(uint32_t data)
 		{
-			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data & 0x000000ff));
 			spi_transmit((uint8_t)(data >> 8));
 			spi_transmit((uint8_t)(data >> 16));
 			spi_transmit((uint8_t)(data >> 24));
@@ -1685,7 +1695,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline uint8_t spi_receive(uint8_t data)
 		{
-			return SPI.transfer(data);
+			return wrapper_spi_receive(data);
 		}
 
 		static inline uint8_t fetch_flash_byte(const uint8_t *data)
@@ -1711,12 +1721,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline void spi_transmit(uint8_t data)
 		{
-			SPI.transfer(data);
+			wrapper_spi_transmit(data);
 		}
 
 		static inline void spi_transmit_32(uint32_t data)
 		{
-			spi_transmit((uint8_t)(data));
+			spi_transmit((uint8_t)(data & 0x000000ff));
 			spi_transmit((uint8_t)(data >> 8));
 			spi_transmit((uint8_t)(data >> 16));
 			spi_transmit((uint8_t)(data >> 24));
@@ -1730,7 +1740,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		static inline uint8_t spi_receive(uint8_t data)
 		{
-			return SPI.transfer(data);
+			return wrapper_spi_receive(data);
 		}
 
 		static inline uint8_t fetch_flash_byte(const uint8_t *data)
@@ -1753,6 +1763,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 	{
 		digitalWrite(EVE_PDN, HIGH); /* power up */
 	}
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* Arduino */
 
