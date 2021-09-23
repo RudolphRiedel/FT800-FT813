@@ -59,6 +59,7 @@ The TFTs tested so far:
 - CFAF800480E0-050SC https://www.crystalfontz.com/product/cfaf800480e1050sca11-800x480-eve-accelerated-tft
 - GEN4-FT813-50CTP-CLB https://4dsystems.com.au/gen4-ft813-50ctp-clb
 - RVT101HVBNWC00-B https://riverdi.com/product/rvt101hvbnwc00-b/
+- RVT70HSBNWC00-B https://riverdi.com/product/rvt70hsbnwc00-b/
 
 ## This is version 5
 
