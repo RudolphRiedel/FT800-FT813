@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 5.0
-@date    2020-10-29
+@date    2021-09-25
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -49,6 +49,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - removed undocumented registers and commands
 - merged FT80x and FT81x definitions as FT81x is baseline now
 - removed the history from before 4.0
+- fixed typo: REG_AH_CYCLE_MAX -> REG_AH_HCYCLE_MAX
 
 */
 
@@ -720,11 +721,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 
 /* Registers for BT817 / BT818 */
-#define REG_UNDERRUN     0x0030260c
-#define REG_AH_CYCLE_MAX 0x00302610
-#define REG_PCLK_FREQ    0x00302614
-#define REG_PCLK_2X      0x00302618
-#define REG_ANIM_ACTIVE  0x0030902C
+#define REG_UNDERRUN      0x0030260c
+#define REG_AH_HCYCLE_MAX 0x00302610
+#define REG_PCLK_FREQ     0x00302614
+#define REG_PCLK_2X       0x00302618
+#define REG_ANIM_ACTIVE   0x0030902C
 
 #endif /*  EVE_GEN > 3 */
 
