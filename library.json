@@ -1,8 +1,8 @@
 {
-  "name": "EVE Code Library",
+  "name": "EmbeddedVideoEngine",
   "version": "5.0.0",
+  "keywords": "TFT, SPI, EVE2, EVE3, EVE4 ,Bridgetek, F81x, FT813, BT81x, BT815, BT817",
   "description": "Code library for EVE2/EVE3/EVE4 graphics controller ICs from FTDI/Bridgetek",
-  "keywords": "EVE,Bridgetek",
   "repository": {
     "type": "git",
     "url": "https://github.com/RudolphRiedel/FT800-FT813"
@@ -13,10 +13,6 @@
     }
   ],
   "license": "MIT",
-  "framework": "arduino",
-  "platforms": "espressif32",
-  "build": {
-    "srcDir": "example_projects/EVE_Test_Arduino_PlatformIO/src",
-    "srcFilter": "+<*.h> +<*.cpp>"
-  }
+  "frameworks": "arduino, espidf, stm32cube",
+  "platforms": "atmelavr, atmelsam, espressif32, espressif8266, ststm32, teensy, nordicnrf52"
 }
