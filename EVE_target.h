@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2021-09-18
+@date    2021-10-03
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -77,6 +77,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added S32K144 support including DMA
 - modified the Arduino targets to use C++ wrapper functions
 - fixed a few CERT warnings
+- added an Arduino XMC1100_XMC2GO target
 
 */
 
@@ -1663,6 +1664,53 @@ extern "C" {
 
 		#define EVE_CS 		12
 		#define EVE_PDN		9
+
+		static inline void EVE_cs_set(void)
+		{
+			digitalWrite(EVE_CS, LOW); /* make EVE listen */
+		}
+
+		static inline void EVE_cs_clear(void)
+		{
+			digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listen */
+		}
+
+		static inline void spi_transmit(uint8_t data)
+		{
+			wrapper_spi_transmit(data);
+		}
+
+		static inline void spi_transmit_32(uint32_t data)
+		{
+			spi_transmit((uint8_t)(data & 0x000000ff));
+			spi_transmit((uint8_t)(data >> 8));
+			spi_transmit((uint8_t)(data >> 16));
+			spi_transmit((uint8_t)(data >> 24));
+		}
+
+		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+		static inline void spi_transmit_burst(uint32_t data)
+		{
+			spi_transmit_32(data);
+		}
+
+		static inline uint8_t spi_receive(uint8_t data)
+		{
+			return wrapper_spi_receive(data);
+		}
+
+		static inline uint8_t fetch_flash_byte(const uint8_t *data)
+		{
+			return *data;
+		}
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
+		#elif defined (XMC1100_XMC2GO)
+
+		#define EVE_CS 		3
+		#define EVE_PDN		4
 
 		static inline void EVE_cs_set(void)
 		{
