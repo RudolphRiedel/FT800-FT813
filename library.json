@@ -1,0 +1,22 @@
+{
+  "name": "EVE Code Library",
+  "version": "5.0.0",
+  "description": "Code library for EVE2/EVE3/EVE4 graphics controller ICs from FTDI/Bridgetek",
+  "keywords": "EVE,Bridgetek",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RudolphRiedel/FT800-FT813"
+  },
+  "authors": [
+    {
+      "name": "Rudolph Riedel"
+    }
+  ],
+  "license": "MIT",
+  "framework": "arduino",
+  "platforms": "espressif32",
+  "build": {
+    "srcDir": "example_projects/EVE_Test_Arduino_PlatformIO/src",
+    "srcFilter": "+<*.h> +<*.cpp>"
+  }
+}
