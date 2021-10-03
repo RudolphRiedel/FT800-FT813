@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2021-09-18
+@date    2021-10-03
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -68,6 +68,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added a profile for RiTFT35 from Riverdi
 - changed the clock-polarity for EVE_EVE4_70G
 - added a profile for CFAF800480Ex-050SC-A2 modules from Crystalfontz
+- removed the define for the selected configuration to allow setting the define in the build-enviroment instead
+- added an error message if no valid define was setup and therefore no set of parameters is configured
 
 */
 
@@ -148,8 +150,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
   #define EVE_CFAF800480Ex_050SC_A2
 
 #endif
-
-#define EVE_RiTFT43
 
 
 /* display timing parameters below */
@@ -1173,5 +1173,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_HCYCLE 	(928L)	/* Th Total length of line (visible and non-visible) (in PCLKs) */
 #endif
 
+#if !defined (EVE_HSIZE)
+#error "Please add a define for the desired display to your build-enviroment, e.g. -DEVE_EVE3_50G"
+#endif
 
 #endif /* EVE_CONFIG_H */
