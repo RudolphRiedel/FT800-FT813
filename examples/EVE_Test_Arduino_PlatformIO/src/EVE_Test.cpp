@@ -1,8 +1,8 @@
 /*
-@file    src.ino
-@brief   Main file for Arduino EVE test-code
-@version 2.7
-@date    2021-09-18
+@file    EVE_Test.cpp
+@brief   Main file for PlatformIO/Arduino EVE test-code
+@version 2.8
+@date    2021-10-03
 @author  Rudolph Riedel
 */
 
