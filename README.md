@@ -140,7 +140,9 @@ For Arduino I am using PlatformIO with Visual Studio Code.
 
 The platform the code is compiled for is automatically detected thru compiler flags in EVE_target.h.
 
-- Select the TFT attached by enabling one of the pre-defined setups in EVE_config.h
+The desired TFT is selected by adding a define for it to the build-enviroment, e.g. -DEVE_EVE3_50G
+There is a list of available options at the start of EVE_config.h sorted by chipset.
+
 - Provide the pins used for Chip-Select and Power-Down in EVE_target.h for the target configuration you are using
 
 When compiling for AVR you need to provide the clock it is running at in order to make the _delay_ms() calls used to initialise the TFT work with the intended timing.
