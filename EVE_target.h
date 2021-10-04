@@ -1330,8 +1330,11 @@ extern "C" {
 /*----------------------------------------------------------------------------------------------------------------*/
 
 	#elif defined (ARDUINO_METRO_M4)
-		#define EVE_CS 		10
-		#define EVE_PDN		8
+
+		#if !defined (EVE_CS)
+			#define EVE_CS 		10
+		 	#define EVE_PDN		8
+		#endif
 
 		#define EVE_DMA
 
