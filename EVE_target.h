@@ -1275,8 +1275,10 @@ extern "C" {
 //	#if defined (ARDUINO_AVR_UNO)
 		#include <avr/pgmspace.h>
 
+#if !defined (EVE_CS)
 		#define EVE_CS 		10
 		#define EVE_PDN		8
+#endif
 
 		static inline void EVE_cs_set(void)
 		{
