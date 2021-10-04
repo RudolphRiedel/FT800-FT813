@@ -1275,10 +1275,10 @@ extern "C" {
 //	#if defined (ARDUINO_AVR_UNO)
 		#include <avr/pgmspace.h>
 
-#if !defined (EVE_CS)
-		#define EVE_CS 		10
-		#define EVE_PDN		8
-#endif
+		#if !defined (EVE_CS)
+			#define EVE_CS 		10
+			#define EVE_PDN		8
+		#endif
 
 		static inline void EVE_cs_set(void)
 		{
@@ -1397,9 +1397,11 @@ extern "C" {
 		#include "stm32f4xx_hal.h"
 		#include "stm32f4xx_ll_spi.h"
 
-		#define EVE_CS 		10
-		#define EVE_PDN		8
-		#define EVE_SPI SPI1
+		#if !defined (EVE_CS)
+			#define EVE_CS 		10
+		 	#define EVE_PDN		8
+			#define EVE_SPI SPI1
+		#endif
 
 		void EVE_init_spi(void);
 
@@ -1469,8 +1471,11 @@ extern "C" {
 /*----------------------------------------------------------------------------------------------------------------*/
 
 	#elif defined (ESP8266)
-		#define EVE_CS 		D2	// D2 on D1 mini
-		#define EVE_PDN		D1	// D1 on D1 mini
+
+		#if !defined (EVE_CS)
+			#define EVE_CS 		D2	// D2 on D1 mini
+			#define EVE_PDN		D1	// D1 on D1 mini
+		#endif
 
 		static inline void EVE_cs_set(void)
 		{
@@ -1519,11 +1524,13 @@ extern "C" {
 	/* note: this is using the ESP-IDF driver as the Arduino class and driver does not allow DMA for SPI */
 		#include "driver/spi_master.h"
 
-		#define EVE_CS 		13
-		#define EVE_PDN		12
-		#define EVE_SCK		18
-		#define EVE_MISO	19
-		#define EVE_MOSI	23
+		#if !defined (EVE_CS)
+			#define EVE_CS 		13
+			#define EVE_PDN		12
+			#define EVE_SCK		18
+			#define EVE_MISO	19
+			#define EVE_MOSI	23
+		#endif
 
 		#define EVE_DMA
 
@@ -1605,8 +1612,10 @@ extern "C" {
 
 		#elif defined (ARDUINO_TEENSY41) || (ARDUINO_TEENSY35) /* note: this is mostly untested */
 
-		#define EVE_CS 		10
-		#define EVE_PDN		9
+		#if !defined (EVE_CS)
+			#define EVE_CS 		10
+		 	#define EVE_PDN		9
+		#endif
 
 		#define EVE_DMA
 
@@ -1667,8 +1676,10 @@ extern "C" {
 
 		#elif defined (ARDUINO_BBC_MICROBIT_V2)	/* note: this is mostly untested */
 
-		#define EVE_CS 		12
-		#define EVE_PDN		9
+		#if !defined (EVE_CS)
+			#define EVE_CS 		12
+		 	#define EVE_PDN		9
+		#endif
 
 		static inline void EVE_cs_set(void)
 		{
@@ -1714,8 +1725,10 @@ extern "C" {
 
 		#elif defined (XMC1100_XMC2GO)
 
-		#define EVE_CS 		3
-		#define EVE_PDN		4
+		#if !defined (EVE_CS)
+			#define EVE_CS 		3
+		 	#define EVE_PDN		4
+		#endif
 
 		static inline void EVE_cs_set(void)
 		{
@@ -1759,8 +1772,11 @@ extern "C" {
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 	#else		/* generic functions for other Arduino architectures */
-		#define EVE_CS 		9
-		#define EVE_PDN		8
+
+		#if !defined (EVE_CS)
+			#define EVE_CS 		10
+			#define EVE_PDN		8
+		#endif
 
 		static inline void EVE_cs_set(void)
 		{
