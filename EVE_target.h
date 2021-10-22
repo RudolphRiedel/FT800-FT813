@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2021-10-03
+@date    2021-10-22
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -78,6 +78,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - modified the Arduino targets to use C++ wrapper functions
 - fixed a few CERT warnings
 - added an Arduino XMC1100_XMC2GO target
+- changed ATSAM defines so that they can be defined outside the module
 
 */
 
@@ -545,34 +546,32 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 		#include "sam.h"
 
 		#if defined (__SAMC21E18A__) || (__SAMC21J18A__)
-		#define EVE_CS_PORT 0
-		#define EVE_CS PORT_PA05
-		#define EVE_PDN_PORT 0
-		#define EVE_PDN PORT_PA03
-		#define EVE_SPI SERCOM0
-		#define EVE_SPI_DMA_TRIGGER SERCOM0_DMAC_ID_TX
-		#define EVE_DMA_CHANNEL 0
-		#define EVE_DMA
+		#if !defined (EVE_CS)
+			#define EVE_CS_PORT 0
+			#define EVE_CS PORT_PA05
+			#define EVE_PDN_PORT 0
+			#define EVE_PDN PORT_PA03
+			#define EVE_SPI SERCOM0
+			#define EVE_SPI_DMA_TRIGGER SERCOM0_DMAC_ID_TX
+			#define EVE_DMA_CHANNEL 0
+//			#define EVE_DMA
+		#endif
+
 		#define EVE_DELAY_1MS 8000	/* ~1ms at 48MHz Core-Clock */
 		#endif
 
 		#if defined (__SAME51J19A__) || (__SAMD51P20A__) || (__SAMD51J19A__) || (__SAMD51G18A__)
-#if 1
-		#define EVE_CS_PORT 1
-		#define EVE_CS PORT_PB01
-		#define EVE_PDN_PORT 1
-		#define EVE_PDN PORT_PB31
-#else
-		#define EVE_CS_PORT 0
-		#define EVE_CS PORT_PA00
-		#define EVE_PDN_PORT 0
-		#define EVE_PDN PORT_PA01
-#endif
+		#if !defined (EVE_CS)
+			#define EVE_CS_PORT 0
+			#define EVE_CS PORT_PA00
+			#define EVE_PDN_PORT 0
+			#define EVE_PDN PORT_PA01
+			#define EVE_SPI SERCOM5
+			#define EVE_SPI_DMA_TRIGGER SERCOM5_DMAC_ID_TX
+			#define EVE_DMA_CHANNEL 0
+//			#define EVE_DMA
+		#endif
 
-		#define EVE_SPI SERCOM5
-		#define EVE_SPI_DMA_TRIGGER SERCOM5_DMAC_ID_TX
-		#define EVE_DMA_CHANNEL 0
-		#define EVE_DMA
 		#define EVE_DELAY_1MS 20000	/* ~1ms at 120MHz Core-Clock and activated cache, according to my Logic-Analyzer */
 		#endif
 
