@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2021-10-22
+@date    2021-10-26
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -79,6 +79,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - fixed a few CERT warnings
 - added an Arduino XMC1100_XMC2GO target
 - changed ATSAM defines so that they can be defined outside the module
+- started to add a target for NXPs K32L2B3
 
 */
 
@@ -1147,7 +1148,137 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 		#endif /* S32K14x */
 
-	#endif /* __GNUC__ */
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+		#if defined (CPU_K32L2B31VLH0A)
+
+		#include <stdint.h>
+		#include "K32L2B31A.h"
+		#include "fsl_gpio.h"
+		#include "fsl_spi.h"
+
+		#define EVE_CS 4
+		#define EVE_CS_GPIO GPIOD
+		#define EVE_PDN 2
+		#define EVE_PDN_GPIO GPIOD
+		#define EVE_SPI SPI1
+		#define EVE_DELAY_1MS 8000	/* ~1ms at 48MHz Core-Clock */
+
+
+		static inline void DELAY_MS(uint16_t val)
+		{
+			uint16_t counter;
+
+			while(val > 0)
+			{
+				for(counter=0; counter < EVE_DELAY_1MS;counter++)
+				{
+					__asm__ volatile ("nop");
+				}
+				val--;
+			}
+		}
+
+		//void DELAY_MS(uint16_t val);
+		//void EVE_init_spi(void);
+		//#define EVE_DMA
+
+
+		static inline void EVE_cs_set(void)
+		{
+			GPIO_PortClear(EVE_CS_GPIO, 1u << EVE_CS); /* set CS low */
+		}
+
+		static inline void EVE_cs_clear(void)
+		{
+			GPIO_PortSet(EVE_CS_GPIO, 1u << EVE_CS); /* set CS high */
+		}
+
+		static inline void EVE_pdn_set(void)
+		{
+			GPIO_PortClear(EVE_PDN_GPIO, 1u << EVE_PDN); /* set PDN low */
+		}
+
+		static inline void EVE_pdn_clear(void)
+		{
+			GPIO_PortSet(EVE_PDN_GPIO, 1u << EVE_PDN); /* set PDN high */
+		}
+
+		#if defined (EVE_DMA)
+			extern uint32_t EVE_dma_buffer[1025];
+			extern volatile uint16_t EVE_dma_buffer_index;
+			extern volatile uint8_t EVE_dma_busy;
+
+			#define EVE_DMA_CHANNEL 0
+			#define EVE_DMAMUX_CHCFG_SOURCE 15 /* this needs to be the EDMA_REQ_LPSPIx_TX */
+			#define EVE_DMA_IRQ  DMA0_IRQn
+			#define EVE_DMA_IRQHandler DMA0_IRQHandler
+
+			void EVE_init_dma(void);
+			void EVE_start_dma_transfer(void);
+		#endif
+
+		static inline void spi_transmit(uint8_t data)
+		{
+#if 1
+			while((EVE_SPI->S & SPI_S_SPTEF_MASK) == 0) {}
+			EVE_SPI->DL = data;
+			while((EVE_SPI->S & SPI_S_SPTEF_MASK) == 0) {}
+			while((EVE_SPI->S & SPI_S_SPRF_MASK) == 0) {}
+			(void) EVE_SPI->DL;
+#else
+			while((SPI_GetStatusFlags(EVE_SPI) & kSPI_TxBufferEmptyFlag) == 0) {}
+			SPI_WriteData(EVE_SPI, data);
+			while((SPI_GetStatusFlags(EVE_SPI) & kSPI_TxBufferEmptyFlag) == 0) {}
+			while((SPI_GetStatusFlags(EVE_SPI) & kSPI_RxBufferFullFlag) == 0U)  {}
+			(void) SPI_ReadData(EVE_SPI);
+#endif
+		}
+
+		static inline void spi_transmit_32(uint32_t data)
+		{
+			spi_transmit((uint8_t)(data & 0x000000ff));
+			spi_transmit((uint8_t)(data >> 8));
+			spi_transmit((uint8_t)(data >> 16));
+			spi_transmit((uint8_t)(data >> 24));
+		}
+
+		/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+		static inline void spi_transmit_burst(uint32_t data)
+		{
+			#if defined (EVE_DMA)
+				EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+			#else
+				spi_transmit_32(data);
+			#endif
+		}
+
+		static inline uint8_t spi_receive(uint8_t data)
+		{
+#if 0
+			while((EVE_SPI->S & SPI_S_SPTEF_MASK) == 0) {}
+			EVE_SPI->DL = data;
+			while((EVE_SPI->S & SPI_S_SPTEF_MASK) == 0) {}
+			while((EVE_SPI->S & SPI_S_SPRF_MASK) == 0) {}
+			return EVE_SPI->DL;
+#else
+			while((SPI_GetStatusFlags(EVE_SPI) & kSPI_TxBufferEmptyFlag) == 0) {}
+			SPI_WriteData(EVE_SPI, data);
+			while((SPI_GetStatusFlags(EVE_SPI) & kSPI_TxBufferEmptyFlag) == 0) {}
+			while((SPI_GetStatusFlags(EVE_SPI) & kSPI_RxBufferFullFlag) == 0U)  {}
+			return SPI_ReadData(EVE_SPI);
+#endif
+		}
+
+		static inline uint8_t fetch_flash_byte(const uint8_t *data)
+		{
+			return *data;
+		}
+
+		#endif /* K32L2B3 */
+
+
+		#endif /* __GNUC__ */
 
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
