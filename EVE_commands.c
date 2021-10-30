@@ -153,6 +153,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - fixed a few CERT warnings
 - converted all TABs to SPACEs
 - made EVE_TOUCH_RZTHRESH in EVE_init() optional to a) remove it from EVE_config.h and b) make it configureable externally
+- changed EVE_init() to write 1200U to REG_TOUCH_RZTHRESH if EVE_TOUCH_RZTHRESH is not defined
 
 */
 
@@ -1290,6 +1291,8 @@ uint8_t EVE_init(void)
     EVE_memWrite8(REG_TOUCH_MODE, EVE_TMODE_CONTINUOUS); /* enable touch */
     #if defined(EVE_TOUCH_RZTHRESH)
         EVE_memWrite16(REG_TOUCH_RZTHRESH, EVE_TOUCH_RZTHRESH); /* configure the sensitivity of resistive touch */
+    #else
+        EVE_memWrite16(REG_TOUCH_RZTHRESH, 1200U); /* set a reasonable default value if none is given */
     #endif
 
     /* disable Audio for now */
