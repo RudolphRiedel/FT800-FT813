@@ -128,6 +128,15 @@
   <armgcc.compiler.symbols.DefSymbols>
     <ListValues>
       <Value>DEBUG</Value>
+      <Value>EVE_EVE3_43G</Value>
+      <Value>EVE_CS_PORT=1</Value>
+      <Value>EVE_CS=PORT_PB01</Value>
+      <Value>EVE_PDN_PORT=1</Value>
+      <Value>EVE_PDN=PORT_PB31</Value>
+      <Value>EVE_SPI=SERCOM5</Value>
+      <Value>EVE_SPI_DMA_TRIGGER=SERCOM5_DMAC_ID_TX</Value>
+      <Value>EVE_DMA_CHANNEL=0</Value>
+      <Value>EVE_DMA</Value>
     </ListValues>
   </armgcc.compiler.symbols.DefSymbols>
   <armgcc.compiler.directories.IncludePaths>
@@ -178,22 +187,22 @@
       <SubType>compile</SubType>
       <CustomCompilationSetting Condition="'$(Configuration)' == 'Debug'">-Wno-pedantic</CustomCompilationSetting>
     </Compile>
-    <Compile Include="EVE.h">
+    <Compile Include="EmbeddedVideoEngine\EVE.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="EVE_commands.c">
+    <Compile Include="EmbeddedVideoEngine\EVE_commands.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="EVE_commands.h">
+    <Compile Include="EmbeddedVideoEngine\EVE_commands.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="EVE_config.h">
+    <Compile Include="EmbeddedVideoEngine\EVE_config.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="EVE_target.c">
+    <Compile Include="EmbeddedVideoEngine\EVE_target.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="EVE_target.h">
+    <Compile Include="EmbeddedVideoEngine\EVE_target.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="main.c">
@@ -214,6 +223,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Device_Startup\" />
+    <Folder Include="EmbeddedVideoEngine" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Device_Startup\same51j19a_flash.ld">

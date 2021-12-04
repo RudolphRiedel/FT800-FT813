@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2021-10-30
+@date    2021-12-04
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -81,6 +81,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - changed ATSAM defines so that they can be defined outside the module
 - started to add a target for NXPs K32L2B3
 - converted all TABs to SPACEs
+- added a few lines for STM32H7
+- made the pin defines for all targets that have one optional
+- split the ATSAMC21 and ATSAMx51 targets into separate sections
 
 */
 
@@ -136,10 +139,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
                 }
             }
 
-            #define EVE_CS_PORT PORTB
-            #define EVE_CS      (1<<PB5)
-            #define EVE_PDN_PORT    PORTB
-            #define EVE_PDN     (1<<PB4)
+            #if !defined (EVE_CS)
+                #define EVE_CS_PORT PORTB
+                #define EVE_CS      (1<<PB5)
+                #define EVE_PDN_PORT    PORTB
+                #define EVE_PDN     (1<<PB4)
+            #endif
 
             static inline void EVE_pdn_set(void)
             {
@@ -212,13 +217,14 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
         #include <util/delay.h>
 
         #define DELAY_MS(ms) _delay_ms(ms)
-        
-        
-        #define EVE_CS_PORT     PORTC
-        #define EVE_CS_PIN      PIN4_bm
-        #define EVE_PDN_PORT    PORTC
-        #define EVE_PDN_PIN     PIN1_bm
-        #define EVE_SPI         SPIC        // the used SPI port
+
+        #if !defined (EVE_CS)
+            #define EVE_CS_PORT     PORTC
+            #define EVE_CS          PIN4_bm
+            #define EVE_PDN_PORT    PORTC
+            #define EVE_PDN_PIN     PIN1_bm
+            #define EVE_SPI         SPIC    /* the SPI port to use */
+        #endif
 
         static inline void EVE_pdn_set(void)
         {
@@ -232,12 +238,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
         static inline void EVE_cs_set(void)
         {
-            EVE_CS_PORT.OUTCLR = EVE_CS_PIN;        /* cs low */
+            EVE_CS_PORT.OUTCLR = EVE_CS;    /* cs low */
         }
 
         static inline void EVE_cs_clear(void)
         {
-            EVE_CS_PORT.OUTSET= EVE_CS_PIN; /* cs high */
+            EVE_CS_PORT.OUTSET= EVE_CS;     /* cs high */
         }
 
         static inline void spi_transmit(uint8_t data)
@@ -283,129 +289,127 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
         #if defined (__AVR__) && ! defined (__AVR_XMEGA__)
 
-            #include <avr/io.h>
-            #include <avr/pgmspace.h>
-            #define F_CPU 16000000UL
-            #include <util/delay.h>
+        #include <avr/io.h>
+        #include <avr/pgmspace.h>
+        #define F_CPU 16000000UL
+        #include <util/delay.h>
 
-            #define DELAY_MS(ms) _delay_ms(ms)
+        #define DELAY_MS(ms) _delay_ms(ms)
 
+        #if !defined (EVE_CS)
             #define EVE_CS_PORT PORTB
             #define EVE_CS      (1<<PB5)
             #define EVE_PDN_PORT    PORTB
             #define EVE_PDN     (1<<PB4)
+        #endif
 
-            static inline void EVE_pdn_set(void)
-            {
-                EVE_PDN_PORT &= ~EVE_PDN;   /* Power-Down low */
-            }
+        static inline void EVE_pdn_set(void)
+        {
+            EVE_PDN_PORT &= ~EVE_PDN;   /* Power-Down low */
+        }
 
-            static inline void EVE_pdn_clear(void)
-            {
-                EVE_PDN_PORT |= EVE_PDN;    /* Power-Down high */
-            }
+        static inline void EVE_pdn_clear(void)
+        {
+            EVE_PDN_PORT |= EVE_PDN;    /* Power-Down high */
+        }
 
-            static inline void EVE_cs_set(void)
-            {
-                EVE_CS_PORT &= ~EVE_CS; /* cs low */
-            }
+        static inline void EVE_cs_set(void)
+        {
+            EVE_CS_PORT &= ~EVE_CS; /* cs low */
+        }
 
-            static inline void EVE_cs_clear(void)
-            {
-                EVE_CS_PORT |= EVE_CS;  /* cs high */
-            }
+        static inline void EVE_cs_clear(void)
+        {
+            EVE_CS_PORT |= EVE_CS;  /* cs high */
+        }
 
-            static inline void spi_transmit(uint8_t data)
-            {
+        static inline void spi_transmit(uint8_t data)
+        {
 #if 1
-                SPDR = data; /* start transmission */
-                while(!(SPSR & (1<<SPIF))) {}; /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
-#endif
+            SPDR = data; /* start transmission */
+            while(!(SPSR & (1<<SPIF))) {}; /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
+#else
+        /* software-spi example */
+            uint8_t spiIndex  = 0x80;
+            uint8_t k;
 
-#if 0
-                uint8_t spiIndex  = 0x80;
-                uint8_t k;
-
-                for(k = 0; k <8; k++) // Output each bit of spiOutByte
+            for(k = 0; k <8; k++) // Output each bit of spiOutByte
+            {
+                if(data & spiIndex) // Output MOSI Bit
                 {
-                    if(data & spiIndex) // Output MOSI Bit
-                    {
-                        PORTC |= (1<<PORTC1);
-                    }
-                    else
-                    {
-                        PORTC &= ~(1<<PORTC1);
-                    }
-
-                    PORTA |= (1<<PORTA1); // toggle SCK
-                    PORTA &= ~(1<<PORTA1);
-
-                    spiIndex >>= 1;
+                    PORTC |= (1<<PORTC1);
                 }
+                else
+                {
+                    PORTC &= ~(1<<PORTC1);
+                }
+
+                PORTA |= (1<<PORTA1); // toggle SCK
+                PORTA &= ~(1<<PORTA1);
+
+                spiIndex >>= 1;
+            }
 #endif
-            }
+        }
 
-            static inline void spi_transmit_32(uint32_t data)
-            {
-                spi_transmit((uint8_t)(data & 0x000000ff));
-                spi_transmit((uint8_t)(data >> 8));
-                spi_transmit((uint8_t)(data >> 16));
-                spi_transmit((uint8_t)(data >> 24));
-            }
+        static inline void spi_transmit_32(uint32_t data)
+        {
+            spi_transmit((uint8_t)(data & 0x000000ff));
+            spi_transmit((uint8_t)(data >> 8));
+            spi_transmit((uint8_t)(data >> 16));
+            spi_transmit((uint8_t)(data >> 24));
+        }
 
-            /* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
-            static inline void spi_transmit_burst(uint32_t data)
-            {
-                spi_transmit_32(data);
-            }
+        /* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+        static inline void spi_transmit_burst(uint32_t data)
+        {
+            spi_transmit_32(data);
+        }
 
-            static inline uint8_t spi_receive(uint8_t data)
-            {
+        static inline uint8_t spi_receive(uint8_t data)
+        {
 #if 1
-                SPDR = data; /* start transmission */
-                while(!(SPSR & (1<<SPIF))) {}; /* wait for transmission to complete - 1us @ 8MHz SPI-CLock */
-                return SPDR;
-#endif
+            SPDR = data; /* start transmission */
+            while(!(SPSR & (1<<SPIF))) {}; /* wait for transmission to complete - 1us @ 8MHz SPI-CLock */
+            return SPDR;
+#else
+            uint8_t spiIndex  = 0x80;
+            uint8_t spiInByte = 0;
+            uint8_t k;
 
-#if 0
-                uint8_t spiIndex  = 0x80;
-                uint8_t spiInByte = 0;
-                uint8_t k;
-
-                for(k = 0; k <8; k++) // Output each bit of spiOutByte
-                {
-                    if(data & spiIndex) // Output MOSI Bit
-                    {
-                        PORTC |= (1<<PORTC1);
-                    }
-                    else
-                    {
-                        PORTC &= ~(1<<PORTC1);
-                    }
-
-                    PORTA |= (1<<PORTA1); // toggle SCK
-                    PORTA &= ~(1<<PORTA1);
-
-                    if(PINC & (1<<PORTC0))
-                    {
-                        spiInByte |= spiIndex;
-                    }
-
-                    spiIndex >>= 1;
-                }
-                return spiInByte;
-#endif
-
-            }
-
-            static inline uint8_t fetch_flash_byte(const uint8_t *data)
+            for(k = 0; k <8; k++) // Output each bit of spiOutByte
             {
-                #if defined (__AVR_HAVE_ELPM__) /* we have an AVR with more than 64kB FLASH memory */
-                    return(pgm_read_byte_far(data));
-                #else
-                    return(pgm_read_byte_near(data));
-                #endif
+                if(data & spiIndex) // Output MOSI Bit
+                {
+                    PORTC |= (1<<PORTC1);
+                }
+                else
+                {
+                    PORTC &= ~(1<<PORTC1);
+                }
+
+                PORTA |= (1<<PORTA1); // toggle SCK
+                PORTA &= ~(1<<PORTA1);
+
+                if(PINC & (1<<PORTC0))
+                {
+                    spiInByte |= spiIndex;
+                }
+
+                spiIndex >>= 1;
             }
+            return spiInByte;
+#endif
+        }
+
+        static inline uint8_t fetch_flash_byte(const uint8_t *data)
+        {
+            #if defined (__AVR_HAVE_ELPM__) /* we have an AVR with more than 64kB FLASH memory */
+                return(pgm_read_byte_far(data));
+            #else
+                return(pgm_read_byte_near(data));
+            #endif
+        }
 
         #endif /* AVR */
 
@@ -414,65 +418,65 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
         #if defined (__v851__)
 
-            #include <stdint.h>
-            #include "rh850_regs.h"
-            #include "os.h"
+        #include <stdint.h>
+        #include "rh850_regs.h"
+        #include "os.h"
 
-            #define DELAY_MS(ms)    OS_Wait(ms * 1000)
+        #define DELAY_MS(ms)    OS_Wait(ms * 1000)
 
-            static inline void EVE_pdn_set(void)
-            {
-                P0 &= ~(1u<<6);
-            }
+        static inline void EVE_pdn_set(void)
+        {
+            P0 &= ~(1u<<6);
+        }
 
-            static inline void EVE_pdn_clear(void)
-            {
-                P0 |= (1u<<6);
-            }
+        static inline void EVE_pdn_clear(void)
+        {
+            P0 |= (1u<<6);
+        }
 
-            static inline void EVE_cs_set(void)
-            {
-                P8 &= ~(1u<<2); /* manually set chip-select to low */
-            }
+        static inline void EVE_cs_set(void)
+        {
+            P8 &= ~(1u<<2); /* manually set chip-select to low */
+        }
 
-            static inline void EVE_cs_clear(void)
-            {
-                P8 |= (1u<<2);  /* manually set chip-select to high */
-            }
+        static inline void EVE_cs_clear(void)
+        {
+            P8 |= (1u<<2);  /* manually set chip-select to high */
+        }
 
-            static inline void spi_transmit(uint8_t data)
-            {
-                CSIH0CTL0 = 0xC1; /* CSIH2PWR = 1;  CSIH2TXE=1; CSIH2RXE = 0; direct access mode  */
-                CSIH0TX0H = data;   /* start transmission */
-                while(CSIH0STR0 & 0x00080) {};  /* wait for transmission to complete - 800ns @ 10MHz SPI-Clock */
-            }
+        static inline void spi_transmit(uint8_t data)
+        {
+            CSIH0CTL0 = 0xC1; /* CSIH2PWR = 1;  CSIH2TXE=1; CSIH2RXE = 0; direct access mode  */
+            CSIH0TX0H = data;   /* start transmission */
+            while(CSIH0STR0 & 0x00080) {};  /* wait for transmission to complete - 800ns @ 10MHz SPI-Clock */
+        }
 
-            static inline void spi_transmit_32(uint32_t data)
-            {
-                spi_transmit((uint8_t)(data & 0x000000ff));
-                spi_transmit((uint8_t)(data >> 8));
-                spi_transmit((uint8_t)(data >> 16));
-                spi_transmit((uint8_t)(data >> 24));
-            }
+        static inline void spi_transmit_32(uint32_t data)
+        {
+            spi_transmit((uint8_t)(data & 0x000000ff));
+            spi_transmit((uint8_t)(data >> 8));
+            spi_transmit((uint8_t)(data >> 16));
+            spi_transmit((uint8_t)(data >> 24));
+        }
 
-            /* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
-            static inline void spi_transmit_burst(uint32_t data)
-            {
-                spi_transmit_32(data);
-            }
+        /* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+        static inline void spi_transmit_burst(uint32_t data)
+        {
+            spi_transmit_32(data);
+        }
 
-            static inline uint8_t spi_receive(uint8_t data)
-            {
-                CSIH0CTL0 = 0xE1; /* CSIH2PWR = 1;  CSIH2TXE=1; CSIH2RXE = 1; direct access mode  */
-                CSIH0TX0H = data;   /* start transmission */
-                while(CSIH0STR0 & 0x00080) {};  /* wait for transmission to complete - 800ns @ 10MHz SPI-Clock */
-                return (uint8_t) CSIH0RX0H;
-            }
+        static inline uint8_t spi_receive(uint8_t data)
+        {
+            CSIH0CTL0 = 0xE1; /* CSIH2PWR = 1;  CSIH2TXE=1; CSIH2RXE = 1; direct access mode  */
+            CSIH0TX0H = data;   /* start transmission */
+            while(CSIH0STR0 & 0x00080) {};  /* wait for transmission to complete - 800ns @ 10MHz SPI-Clock */
+            return (uint8_t) CSIH0RX0H;
+        }
 
-            static inline uint8_t fetch_flash_byte(const uint8_t *data)
-            {
-                return *data;
-            }
+        static inline uint8_t fetch_flash_byte(const uint8_t *data)
+        {
+            return *data;
+        }
 
         #endif /* RH850 */
 
@@ -481,73 +485,72 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
         #if defined (__TRICORE__)
 
-            #include "types.h"
-            #include "os.h"
-            #include "dio.h"
-            #include "spi.h"
+        #include "types.h"
+        #include "os.h"
+        #include "dio.h"
+        #include "spi.h"
 
-            #define DELAY_MS(ms) OS_Wait(ms * 1000)
+        #define DELAY_MS(ms) OS_Wait(ms * 1000)
 
-            static inline void EVE_pdn_set(void)
-            {
-                HW_DIO_SetSync(IO_DIO_DIGOUT_PD_TFT, 0);/* Power-Down low */
-            }
+        static inline void EVE_pdn_set(void)
+        {
+            HW_DIO_SetSync(IO_DIO_DIGOUT_PD_TFT, 0);/* Power-Down low */
+        }
 
-            static inline void EVE_pdn_clear(void)
-            {
-                HW_DIO_SetSync(IO_DIO_DIGOUT_PD_TFT, 1);/* Power-Down high */
-            }
+        static inline void EVE_pdn_clear(void)
+        {
+            HW_DIO_SetSync(IO_DIO_DIGOUT_PD_TFT, 1);/* Power-Down high */
+        }
 
-            static inline void EVE_cs_set(void)
-            {
-                HW_DIO_SetSync(IO_DIO_DIGOUT_CS_TFT, 0); /* manually set chip-select to low */
-            }
+        static inline void EVE_cs_set(void)
+        {
+            HW_DIO_SetSync(IO_DIO_DIGOUT_CS_TFT, 0); /* manually set chip-select to low */
+        }
 
-            static inline void EVE_cs_clear(void)
-            {
-                HW_DIO_SetSync(IO_DIO_DIGOUT_CS_TFT, 1);  /* manually set chip-select to high */
-            }
+        static inline void EVE_cs_clear(void)
+        {
+            HW_DIO_SetSync(IO_DIO_DIGOUT_CS_TFT, 1);  /* manually set chip-select to high */
+        }
 
-            static inline void spi_transmit(uint8_t data)
-            {
-                SPI_ReceiveByte(data);
-            }
+        static inline void spi_transmit(uint8_t data)
+        {
+            SPI_ReceiveByte(data);
+        }
 
-            static inline void spi_transmit_32(uint32_t data)
-            {
-                spi_transmit((uint8_t)(data & 0x000000ff));
-                spi_transmit((uint8_t)(data >> 8));
-                spi_transmit((uint8_t)(data >> 16));
-                spi_transmit((uint8_t)(data >> 24));
-            }
+        static inline void spi_transmit_32(uint32_t data)
+        {
+            spi_transmit((uint8_t)(data & 0x000000ff));
+            spi_transmit((uint8_t)(data >> 8));
+            spi_transmit((uint8_t)(data >> 16));
+            spi_transmit((uint8_t)(data >> 24));
+        }
 
-            /* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
-            static inline void spi_transmit_burst(uint32_t data)
-            {
-                spi_transmit_32(data);
-            }
+        /* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+        static inline void spi_transmit_burst(uint32_t data)
+        {
+            spi_transmit_32(data);
+        }
 
-            static inline uint8_t spi_receive(uint8_t data)
-            {
-                return SPI_ReceiveByte(data);
-            }
+        static inline uint8_t spi_receive(uint8_t data)
+        {
+            return SPI_ReceiveByte(data);
+        }
 
-            static inline uint8_t fetch_flash_byte(const uint8_t *data)
-            {
-                return *data;
-            }
+        static inline uint8_t fetch_flash_byte(const uint8_t *data)
+        {
+            return *data;
+        }
 
         #endif /* __TRICORE__ */
 
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 
-        #if defined (__SAMC21E18A__) || (__SAMC21J18A__) || (__SAME51J19A__) || (__SAMD51P20A__) || (__SAMD51J19A__) || (__SAMD51G18A__)
-        /* note: target as set by AtmelStudio, valid  are all from the same family, ATSAMC2x and ATSAMx5x use the same SERCOM units */
+        #if defined (__SAMC21E18A__) || (__SAMC21J18A__)
+        /* note: target as set by AtmelStudio, valid  are all from the same family */
 
         #include "sam.h"
 
-        #if defined (__SAMC21E18A__) || (__SAMC21J18A__)
         #if !defined (EVE_CS)
             #define EVE_CS_PORT 0
             #define EVE_CS PORT_PA05
@@ -560,9 +563,85 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
         #endif
 
         #define EVE_DELAY_1MS 8000  /* ~1ms at 48MHz Core-Clock */
+
+        #if defined (EVE_DMA)
+            extern uint32_t EVE_dma_buffer[1025];
+            extern volatile uint16_t EVE_dma_buffer_index;
+            extern volatile uint8_t EVE_dma_busy;
+
+            void EVE_init_dma(void);
+            void EVE_start_dma_transfer(void);
         #endif
 
+        void DELAY_MS(uint16_t val);
+
+        static inline void EVE_pdn_set(void)
+        {
+            PORT->Group[EVE_PDN_PORT].OUTCLR.reg = EVE_PDN;
+        }
+
+        static inline void EVE_pdn_clear(void)
+        {
+            PORT->Group[EVE_PDN_PORT].OUTSET.reg = EVE_PDN;
+        }
+
+        static inline void EVE_cs_set(void)
+        {
+            PORT->Group[EVE_CS_PORT].OUTCLR.reg = EVE_CS;
+        }
+
+        static inline void EVE_cs_clear(void)
+        {
+            PORT->Group[EVE_CS_PORT].OUTSET.reg = EVE_CS;
+        }
+
+        static inline void spi_transmit(uint8_t data)
+        {
+            EVE_SPI->SPI.DATA.reg = data;
+            while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0) {};
+            (void) EVE_SPI->SPI.DATA.reg; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
+        }
+
+        static inline void spi_transmit_32(uint32_t data)
+        {
+            spi_transmit((uint8_t)(data & 0x000000ff));
+            spi_transmit((uint8_t)(data >> 8));
+            spi_transmit((uint8_t)(data >> 16));
+            spi_transmit((uint8_t)(data >> 24));
+        }
+
+        /* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+        static inline void spi_transmit_burst(uint32_t data)
+        {
+            #if defined (EVE_DMA)
+                EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+            #else
+                spi_transmit_32(data);
+            #endif
+        }
+
+        static inline uint8_t spi_receive(uint8_t data)
+        {
+            EVE_SPI->SPI.DATA.reg = data;
+            while((EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC) == 0) {};
+            return EVE_SPI->SPI.DATA.reg;
+        }
+
+        static inline uint8_t fetch_flash_byte(const uint8_t *data)
+        {
+            return *data;
+        }
+
+        #endif /* SAMC2x */
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
         #if defined (__SAME51J19A__) || (__SAMD51P20A__) || (__SAMD51J19A__) || (__SAMD51G18A__)
+        /* note: target as set by AtmelStudio, valid  are all from the same family */
+
+        #include "sam.h"
+
         #if !defined (EVE_CS)
             #define EVE_CS_PORT 0
             #define EVE_CS PORT_PA00
@@ -575,7 +654,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
         #endif
 
         #define EVE_DELAY_1MS 20000 /* ~1ms at 120MHz Core-Clock and activated cache, according to my Logic-Analyzer */
-        #endif
 
         #if defined (EVE_DMA)
             extern uint32_t EVE_dma_buffer[1025];
@@ -646,7 +724,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
             return *data;
         }
 
-        #endif /* SAMC2x / SAMx5x */
+        #endif /* SAMx5x */
 
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
@@ -728,7 +806,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 
-        #if defined (STM32L0) || (STM32F0) || (STM32F1) || (STM32F3) || (STM32F4) || (STM32G4) /* set with "build_flags" in platformio.ini */
+        /* set with "build_flags" in platformio.ini or as defines in your build environment */
+        #if defined (STM32L0) || (STM32F0) || (STM32F1) || (STM32F3) || (STM32F4) || (STM32G4) || (STM32H7)
 
         #if defined (STM32L0) /* set with "build_flags = -D STM32L0" in platformio.ini */
         #include "stm32l0xx.h"
@@ -766,16 +845,23 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
         #include "stm32g4xx_ll_spi.h"
         #endif
 
+        #if defined (STM32H7) /* set with "build_flags = -D STM32H7" in platformio.ini */
+        #include "stm32h7xx.h"
+        #include "stm32h7xx_hal.h"
+        #include "stm32h7xx_ll_spi.h"
+        #endif
 
-        #define EVE_CS_PORT GPIOD
-        #define EVE_CS GPIO_PIN_12
-        #define EVE_PDN_PORT GPIOD
-        #define EVE_PDN GPIO_PIN_13
-        #define EVE_SPI SPI1
-        #define EVE_DMA_INSTANCE DMA2
-        #define EVE_DMA_CHANNEL 3
-        #define EVE_DMA_STREAM 3
-//      #define EVE_DMA     /* do not activate, it is not working yet */
+        #if !defined (EVE_CS)
+            #define EVE_CS_PORT GPIOD
+            #define EVE_CS GPIO_PIN_12
+            #define EVE_PDN_PORT GPIOD
+            #define EVE_PDN GPIO_PIN_13
+            #define EVE_SPI SPI1
+            #define EVE_DMA_INSTANCE DMA2
+            #define EVE_DMA_CHANNEL 3
+            #define EVE_DMA_STREAM 3
+    //      #define EVE_DMA     /* do not activate, it is not working yet */
+        #endif
 
         #if defined (EVE_DMA)
             extern uint32_t EVE_dma_buffer[1025];
@@ -808,6 +894,15 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
             HAL_GPIO_WritePin(EVE_CS_PORT, EVE_CS, GPIO_PIN_RESET);
         }
 
+    #if defined (STM32H7)
+        static inline void spi_transmit(uint8_t data)
+        {
+            LL_SPI_TransmitData8(EVE_SPI, data);
+            while(!LL_SPI_IsActiveFlag_TXP(EVE_SPI)) {};
+            while(!LL_SPI_IsActiveFlag_RXWNE(EVE_SPI)) {};
+            LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXWNE */
+        }
+    #else
         static inline void spi_transmit(uint8_t data)
         {
             LL_SPI_TransmitData8(EVE_SPI, data);
@@ -815,6 +910,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
             while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI)) {};
             LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXNE */
         }
+    #endif
 
         static inline void spi_transmit_32(uint32_t data)
         {
@@ -834,6 +930,15 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
             #endif
         }
 
+    #if defined (STM32H7)
+        static inline uint8_t spi_receive(uint8_t data)
+        {
+            LL_SPI_TransmitData8(EVE_SPI, data);
+            while(!LL_SPI_IsActiveFlag_TXP(EVE_SPI)) {};
+            while(!LL_SPI_IsActiveFlag_RXWNE(EVE_SPI)) {};
+            return LL_SPI_ReceiveData8(EVE_SPI);
+        }
+    #else
         static inline uint8_t spi_receive(uint8_t data)
         {
             LL_SPI_TransmitData8(EVE_SPI, data);
@@ -841,6 +946,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
             while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI)) {};
             return LL_SPI_ReceiveData8(EVE_SPI);
         }
+    #endif
 
         static inline uint8_t fetch_flash_byte(const uint8_t *data)
         {
@@ -858,11 +964,13 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
         #include "driver/gpio.h"
         #include "freertos/task.h"
 
-        #define EVE_CS      GPIO_NUM_13
-        #define EVE_PDN     GPIO_NUM_12
-        #define EVE_SCK     GPIO_NUM_18
-        #define EVE_MISO    GPIO_NUM_19
-        #define EVE_MOSI    GPIO_NUM_23
+        #if !defined (EVE_CS)
+            #define EVE_CS      GPIO_NUM_13
+            #define EVE_PDN     GPIO_NUM_12
+            #define EVE_SCK     GPIO_NUM_18
+            #define EVE_MISO    GPIO_NUM_19
+            #define EVE_MOSI    GPIO_NUM_23
+        #endif
 
         extern spi_device_handle_t EVE_spi_device;
         extern spi_device_handle_t EVE_spi_device_simple;
@@ -962,14 +1070,15 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
         #include "pico/stdlib.h"
         #include "hardware/spi.h"
 
-        #define EVE_CS      5
-        #define EVE_PDN     6
-        #define EVE_SCK     2
-        #define EVE_MOSI    3
-        #define EVE_MISO    4
-        #define EVE_SPI spi0
-
-        #define EVE_DMA
+        #if !defined (EVE_CS)
+            #define EVE_CS      5
+            #define EVE_PDN     6
+            #define EVE_SCK     2
+            #define EVE_MOSI    3
+            #define EVE_MISO    4
+            #define EVE_SPI spi0
+            #define EVE_DMA
+        #endif
 
         #define DELAY_MS(ms) sleep_ms(ms)
 
@@ -1054,25 +1163,25 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
         #include <stdint.h>
 
-        #define EVE_CS 5
-        #define EVE_CS_GPIO PTB
+        #if !defined (EVE_CS)
+            #define EVE_CS 5
+            #define EVE_CS_GPIO PTB
 
-        #define EVE_PDN 14
-        #define EVE_PDN_GPIO PTD
+            #define EVE_PDN 14
+            #define EVE_PDN_GPIO PTD
 
-        /* LPSPI0 on J2 header: PTB2 = SCK, PTB3 = MISO, PTB4 = MOSI */
-        #define EVE_SPI LPSPI0
-        #define EVE_SPI_INDEX PCC_LPSPI0_INDEX
+            /* LPSPI0 on J2 header: PTB2 = SCK, PTB3 = MISO, PTB4 = MOSI */
+            #define EVE_SPI LPSPI0
+            #define EVE_SPI_INDEX PCC_LPSPI0_INDEX
 
-        //#define EVE_DELAY_1MS 15000   /* maybe ~1ms at 112MHz Core-Clock */
-        #define EVE_DELAY_1MS 5300  /* maybe ~1ms at 48MHz Core-Clock */
+            //#define EVE_DELAY_1MS 15000   /* maybe ~1ms at 112MHz Core-Clock */
+            #define EVE_DELAY_1MS 5300  /* maybe ~1ms at 48MHz Core-Clock */
 
+            #define EVE_DMA
+        #endif
 
         void DELAY_MS(uint16_t val);
         void EVE_init_spi(void);
-
-        #define EVE_DMA
-
 
         static inline void EVE_cs_set(void)
         {
@@ -1158,13 +1267,14 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
         #include "fsl_gpio.h"
         #include "fsl_spi.h"
 
-        #define EVE_CS 4
-        #define EVE_CS_GPIO GPIOD
-        #define EVE_PDN 2
-        #define EVE_PDN_GPIO GPIOD
-        #define EVE_SPI SPI1
-        #define EVE_DELAY_1MS 8000  /* ~1ms at 48MHz Core-Clock */
-
+        #if !defined (EVE_CS)
+            #define EVE_CS 4
+            #define EVE_CS_GPIO GPIOD
+            #define EVE_PDN 2
+            #define EVE_PDN_GPIO GPIOD
+            #define EVE_SPI SPI1
+            #define EVE_DELAY_1MS 8000  /* ~1ms at 48MHz Core-Clock */
+        #endif
 
         static inline void DELAY_MS(uint16_t val)
         {
@@ -1183,7 +1293,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
         //void DELAY_MS(uint16_t val);
         //void EVE_init_spi(void);
         //#define EVE_DMA
-
 
         static inline void EVE_cs_set(void)
         {
@@ -1279,7 +1388,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
         #endif /* K32L2B3 */
 
 
-        #endif /* __GNUC__ */
+    #endif /* __GNUC__ */
 
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
@@ -1292,14 +1401,16 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
         #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
         #include <stdint.h>
 
-        #define RIVERDI_PORT GPIO_PORT_P1
-        #define RIVERDI_SIMO BIT6   // P1.6
-        #define RIVERDI_SOMI BIT7   // P1.7
-        #define RIVERDI_CLK BIT5    // P1.5
-        #define EVE_CS_PORT         GPIO_PORT_P5
-        #define EVE_CS              GPIO_PIN0           //P5.0
-        #define EVE_PDN_PORT        GPIO_PORT_P5
-        #define EVE_PDN             GPIO_PIN1           //P5.1
+        #if !defined (EVE_CS)
+            #define RIVERDI_PORT GPIO_PORT_P1
+            #define RIVERDI_SIMO BIT6   // P1.6
+            #define RIVERDI_SOMI BIT7   // P1.7
+            #define RIVERDI_CLK BIT5    // P1.5
+            #define EVE_CS_PORT         GPIO_PORT_P5
+            #define EVE_CS              GPIO_PIN0           //P5.0
+            #define EVE_PDN_PORT        GPIO_PORT_P5
+            #define EVE_PDN             GPIO_PIN1           //P5.1
+        #endif
 
         void EVE_SPI_Init(void);
 

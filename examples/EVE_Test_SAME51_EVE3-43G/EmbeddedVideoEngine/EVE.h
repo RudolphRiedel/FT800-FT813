@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 5.0
-@date    2021-09-25
+@date    2021-10-30
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -50,6 +50,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - merged FT80x and FT81x definitions as FT81x is baseline now
 - removed the history from before 4.0
 - fixed typo: REG_AH_CYCLE_MAX -> REG_AH_HCYCLE_MAX
+- re-arranged the host commands, removed EVE_CLKINT for BT817/BT818, removed FT80x EVE_CLK36M and EVE_CLK48M
+- added EVE_OPT_OVERLAY
 
 */
 
@@ -61,6 +63,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #include "EVE_target.h"
 #include "EVE_config.h"
 #include "EVE_commands.h"
+
 
 /* Memory */
 #define EVE_RAM_G         0x00000000
@@ -96,77 +99,77 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_ACTIVE       0x00 /* place FT8xx in active state */
 #define EVE_STANDBY      0x41 /* place FT8xx in Standby (clk running) */
 #define EVE_SLEEP        0x42 /* place FT8xx in Sleep (clk off) */
-#define EVE_PWRDOWN      0x50 /* place FT8xx in Power Down (core off) */
 #define EVE_CLKEXT       0x44 /* select external clock source */
-#define EVE_CLKINT       0x48 /* select internal clock source */
-#define EVE_CORERST      0x68 /* reset core - all registers default and processors reset */
-#define EVE_CLK48M       0x62 /* select 48MHz PLL output */
-#define EVE_CLK36M       0x61 /* select 36MHz PLL output */
+#if EVE_GEN < 4
+#define EVE_CLKINT       0x48 /* select internal clock source, not a valid option for BT817 / BT818 */
+#endif
+#define EVE_PWRDOWN      0x50 /* place FT8xx in Power Down (core off) */
 #define EVE_CLKSEL       0x61 /* configure system clock */
 #define EVE_RST_PULSE    0x68 /* reset core - all registers default and processors reset */
+#define EVE_CORERST      0x68 /* reset core - all registers default and processors reset */
 #define EVE_PINDRIVE     0x70 /* setup drive strength for various pins */
 #define EVE_PIN_PD_STATE 0x71 /* setup how pins behave during power down */
 
 
 /* Graphic command defines */
-#define EVE_NEVER                0UL
-#define EVE_LESS                 1UL
-#define EVE_LEQUAL               2UL
-#define EVE_GREATER              3UL
-#define EVE_GEQUAL               4UL
-#define EVE_EQUAL                5UL
-#define EVE_NOTEQUAL             6UL
-#define EVE_ALWAYS               7UL
+#define EVE_NEVER      0UL
+#define EVE_LESS       1UL
+#define EVE_LEQUAL     2UL
+#define EVE_GREATER    3UL
+#define EVE_GEQUAL     4UL
+#define EVE_EQUAL      5UL
+#define EVE_NOTEQUAL   6UL
+#define EVE_ALWAYS     7UL
 
 
 /* Bitmap formats */
-#define EVE_ARGB1555             0UL
-#define EVE_L1                   1UL
-#define EVE_L4                   2UL
-#define EVE_L8                   3UL
-#define EVE_RGB332               4UL
-#define EVE_ARGB2                5UL
-#define EVE_ARGB4                6UL
-#define EVE_RGB565               7UL
-#define EVE_PALETTED             8UL
-#define EVE_TEXT8X8              9UL
-#define EVE_TEXTVGA              10UL
-#define EVE_BARGRAPH             11UL
+#define EVE_ARGB1555   0UL
+#define EVE_L1         1UL
+#define EVE_L4         2UL
+#define EVE_L8         3UL
+#define EVE_RGB332     4UL
+#define EVE_ARGB2      5UL
+#define EVE_ARGB4      6UL
+#define EVE_RGB565     7UL
+#define EVE_PALETTED   8UL
+#define EVE_TEXT8X8    9UL
+#define EVE_TEXTVGA    10UL
+#define EVE_BARGRAPH   11UL
 
 
 /* Bitmap filter types */
-#define EVE_NEAREST              0UL
-#define EVE_BILINEAR             1UL
+#define EVE_NEAREST    0UL
+#define EVE_BILINEAR   1UL
 
 
 /* Bitmap wrap types */
-#define EVE_BORDER               0UL
-#define EVE_REPEAT               1UL
+#define EVE_BORDER     0UL
+#define EVE_REPEAT     1UL
 
 
 /* Stencil defines */
-#define EVE_KEEP                 1UL
-#define EVE_REPLACE              2UL
-#define EVE_INCR                 3UL
-#define EVE_DECR                 4UL
-#define EVE_INVERT               5UL
+#define EVE_KEEP       1UL
+#define EVE_REPLACE    2UL
+#define EVE_INCR       3UL
+#define EVE_DECR       4UL
+#define EVE_INVERT     5UL
 
 
 /* Graphics display list swap defines */
-#define EVE_DLSWAP_DONE          0UL
-#define EVE_DLSWAP_LINE          1UL
-#define EVE_DLSWAP_FRAME         2UL
+#define EVE_DLSWAP_DONE   0UL
+#define EVE_DLSWAP_LINE   1UL
+#define EVE_DLSWAP_FRAME  2UL
 
 
 /* Interrupt bits */
-#define EVE_INT_SWAP             0x01
-#define EVE_INT_TOUCH            0x02
-#define EVE_INT_TAG              0x04
-#define EVE_INT_SOUND            0x08
-#define EVE_INT_PLAYBACK         0x10
-#define EVE_INT_CMDEMPTY         0x20
-#define EVE_INT_CMDFLAG          0x40
-#define EVE_INT_CONVCOMPLETE     0x80
+#define EVE_INT_SWAP          0x01
+#define EVE_INT_TOUCH         0x02
+#define EVE_INT_TAG           0x04
+#define EVE_INT_SOUND         0x08
+#define EVE_INT_PLAYBACK      0x10
+#define EVE_INT_CMDEMPTY      0x20
+#define EVE_INT_CMDFLAG       0x40
+#define EVE_INT_CONVCOMPLETE  0x80
 
 
 /* Touch mode */
@@ -238,9 +241,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 
 /* Audio sample type defines */
-#define EVE_LINEAR_SAMPLES       0UL	/* 8bit signed samples */
-#define EVE_ULAW_SAMPLES         1UL	/* 8bit ulaw samples */
-#define EVE_ADPCM_SAMPLES        2UL	/* 4bit ima adpcm samples */
+#define EVE_LINEAR_SAMPLES       0UL /* 8bit signed samples */
+#define EVE_ULAW_SAMPLES         1UL /* 8bit ulaw samples */
+#define EVE_ADPCM_SAMPLES        2UL /* 4bit ima adpcm samples */
 
 
 /* Synthesized sound */
@@ -604,9 +607,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /* EVE Generation 3: BT815 / BT816 definitions -----------------*/
 #if EVE_GEN > 2
 
-#define EVE_GLFORMAT 31UL	/* used with BITMAP_LAYOUT to indicate bitmap-format is specified by BITMAP_EXT_FORMAT */
+#define EVE_GLFORMAT 31UL /* used with BITMAP_LAYOUT to indicate bitmap-format is specified by BITMAP_EXT_FORMAT */
 
-#define DL_BITMAP_EXT_FORMAT	0x2E000000 /* requires OR'd arguments */
+#define DL_BITMAP_EXT_FORMAT 0x2E000000 /* requires OR'd arguments */
 
 /* Extended Bitmap formats */
 #define EVE_COMPRESSED_RGBA_ASTC_4x4_KHR   37808UL
@@ -630,28 +633,29 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_RAM_FLASH_POSTBLOB  0x801000UL
 
 #define EVE_OPT_FLASH  64UL
+#define EVE_OPT_OVERLAY 128UL
 #define EVE_OPT_FORMAT 4096UL
 #define EVE_OPT_FILL   8192UL
 
 
 /* Commands for BT815 / BT816 */
 #define CMD_BITMAP_TRANSFORM 0xFFFFFF21
-#define CMD_SYNC             0xFFFFFF42		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_SYNC) */
-#define CMD_FLASHERASE       0xFFFFFF44		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHERASE) */
+#define CMD_SYNC             0xFFFFFF42 /* does not need a dedicated function, just use EVE_cmd_dl(CMD_SYNC) */
+#define CMD_FLASHERASE       0xFFFFFF44 /* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHERASE) */
 #define CMD_FLASHWRITE       0xFFFFFF45
 #define CMD_FLASHREAD        0xFFFFFF46
 #define CMD_FLASHUPDATE      0xFFFFFF47
-#define CMD_FLASHDETACH      0xFFFFFF48		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHDETACH) */
-#define CMD_FLASHATTACH      0xFFFFFF49		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHATTACH) */
+#define CMD_FLASHDETACH      0xFFFFFF48 /* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHDETACH) */
+#define CMD_FLASHATTACH      0xFFFFFF49 /* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHATTACH) */
 #define CMD_FLASHFAST        0xFFFFFF4A
-#define CMD_FLASHSPIDESEL    0xFFFFFF4B		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHSPIDESEL) */
+#define CMD_FLASHSPIDESEL    0xFFFFFF4B /* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHSPIDESEL) */
 #define CMD_FLASHSPITX       0xFFFFFF4C
 #define CMD_FLASHSPIRX       0xFFFFFF4D
 #define CMD_FLASHSOURCE      0xFFFFFF4E
-#define CMD_CLEARCACHE       0xFFFFFF4F		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_CLEARCACHE) */
+#define CMD_CLEARCACHE       0xFFFFFF4F /* does not need a dedicated function, just use EVE_cmd_dl(CMD_CLEARCACHE) */
 #define CMD_INFLATE2         0xFFFFFF50
 #define CMD_ROTATEAROUND     0xFFFFFF51
-#define CMD_RESETFONTS       0xFFFFFF52		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_RESETFONTS) */
+#define CMD_RESETFONTS       0xFFFFFF52 /* does not need a dedicated function, just use EVE_cmd_dl(CMD_RESETFONTS) */
 #define CMD_ANIMSTART        0xFFFFFF53
 #define CMD_ANIMSTOP         0xFFFFFF54
 #define CMD_ANIMXY           0xFFFFFF55
@@ -660,7 +664,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define CMD_FILLWIDTH        0xFFFFFF58
 #define CMD_APPENDF          0xFFFFFF59
 #define CMD_ANIMFRAME        0xFFFFFF5A
-#define CMD_VIDEOSTARTF      0xFFFFFF5F		/* does not need a dedicated function, just use EVE_cmd_dl(CMD_VIDEOSTARTF) */
+#define CMD_VIDEOSTARTF      0xFFFFFF5F /* does not need a dedicated function, just use EVE_cmd_dl(CMD_VIDEOSTARTF) */
 
 
 /* Registers for BT815 / BT816 */
@@ -705,7 +709,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define CMD_APILEVEL       0xFFFFFF63
 #define CMD_CALIBRATESUB   0xFFFFFF60
 #define CMD_CALLLIST       0xFFFFFF67
-#define CMD_ENDLIST        0xFFFFFF69	/* does not need a dedicated function, just use EVE_cmd_dl(CMD_ENDLIST) */
+#define CMD_ENDLIST        0xFFFFFF69 /* does not need a dedicated function, just use EVE_cmd_dl(CMD_ENDLIST) */
 #define CMD_FLASHPROGRAM   0xFFFFFF70
 #define CMD_FONTCACHE      0xFFFFFF6B
 #define CMD_FONTCACHEQUERY 0xFFFFFF6C
@@ -714,9 +718,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define CMD_LINETIME       0xFFFFFF5E
 #define CMD_NEWLIST        0xFFFFFF68
 #define CMD_PCLKFREQ       0xFFFFFF6A
-#define CMD_RETURN         0xFFFFFF66	/* does not need a dedicated function, just use EVE_cmd_dl(CMD_RETURN) */
+#define CMD_RETURN         0xFFFFFF66 /* does not need a dedicated function, just use EVE_cmd_dl(CMD_RETURN) */
 #define CMD_RUNANIM        0xFFFFFF6F
-#define CMD_TESTCARD       0xFFFFFF61	/* does not need a dedicated function, just use EVE_cmd_dl(CMD_TESTCARD) */
+#define CMD_TESTCARD       0xFFFFFF61 /* does not need a dedicated function, just use EVE_cmd_dl(CMD_TESTCARD) */
 #define CMD_WAIT           0xFFFFFF65
 
 
