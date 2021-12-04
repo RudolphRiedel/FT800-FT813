@@ -75,7 +75,7 @@
 
  */
 
-#include "EVE.h"
+#include "EmbeddedVideoEngine/EVE.h"
 #include "tft_data.h"
 
 

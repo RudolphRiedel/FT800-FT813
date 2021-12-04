@@ -117,6 +117,8 @@
   <armgcc.compiler.symbols.DefSymbols>
     <ListValues>
       <Value>DEBUG</Value>
+      <Value>EVE_EVE2_50G</Value>
+      <Value>EVE_DMA</Value>
     </ListValues>
   </armgcc.compiler.symbols.DefSymbols>
   <armgcc.compiler.directories.IncludePaths>
@@ -167,22 +169,22 @@
       <SubType>compile</SubType>
       <CustomCompilationSetting Condition="'$(Configuration)' == 'Debug'">-Wno-pedantic</CustomCompilationSetting>
     </Compile>
-    <Compile Include="EVE.h">
+    <Compile Include="EmbeddedVideoEngine\EVE.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="EVE_commands.c">
+    <Compile Include="EmbeddedVideoEngine\EVE_commands.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="EVE_commands.h">
+    <Compile Include="EmbeddedVideoEngine\EVE_commands.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="EVE_config.h">
+    <Compile Include="EmbeddedVideoEngine\EVE_config.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="EVE_target.c">
+    <Compile Include="EmbeddedVideoEngine\EVE_target.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="EVE_target.h">
+    <Compile Include="EmbeddedVideoEngine\EVE_target.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="main.c">
@@ -203,6 +205,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Device_Startup\" />
+    <Folder Include="EmbeddedVideoEngine" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Device_Startup\samc21e18a_flash.ld">
