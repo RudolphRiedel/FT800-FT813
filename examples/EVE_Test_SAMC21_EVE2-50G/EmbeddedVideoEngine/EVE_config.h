@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2021-30-10
+@date    2021-12-27
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -72,6 +72,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added an error message if no valid define was setup and therefore no set of parameters is configured
 - converted all TABs to SPACEs
 - removed EVE_TOUCH_RZTHRESH as it only applies to resistive touch screens and as EVE_init() still writes it if the define exists in can be configured thru project options
+- added EVE_Display_Parameters_t to be used with an additional init function, still not sure how to procede exactly
 
 */
 
@@ -153,6 +154,30 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
   #define EVE_FT811CB_HY50HD
 
 #endif
+
+
+typedef struct
+{
+    uint16_t hsize; /* valid range: 12 bits / 0-4095, Thd, length of the visible part of a line (in PCLKs) - active display width */
+    uint16_t vsize; /* valid range: 12 bits / 0-4095, Tvd, number of visible lines (in lines) - active display height */
+    uint16_t hsync0; /* valid range: 12 bits / 0-4095, Thf, Horizontal Front Porch */
+    uint16_t hsync1;  /* valid range: 12 bits / 0-4095, Tvf + Tvp, Vertical Front Porch plus Vsync Pulse width */
+    uint16_t hoffset; /* valid range: 12 bits / 0-4095, Thf + Thp + Thb, length of non-visible part of line (in PCLK cycles) */
+    uint16_t hcycle; /* valid range: 12 bits / 0-4095, Th, total length of line (visible and non-visible) (in PCLKs) */
+    uint16_t vsync0; /* valid range: 12 bits / 0-4095, Tvf, Vertical Front Porch */
+    uint16_t vsync1; /* valid range: 12 bits / 0-4095, Tvf + Tvp, Vertical Front Porch plus Vsync Pulse width */
+    uint16_t voffset;  /* valid range: 12 bits / 0-4095, Tvf + Tvp + Tvb Number of non-visible lines (in lines) */
+    uint16_t vcycle; /* valid range: 12 bits / 0-4095, Tv, total number of lines (visible and non-visible) (in lines) */
+    uint8_t swizzle; /* 4 bits, controls the arrangement of the output colour pins */
+    uint8_t pclkpol; /* 1 bit, 0 = rising edge, 1 = falling edge */
+    uint8_t cspread; /* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
+    uint8_t pclk; /* pixel-clock divider, 0 = no PCLK output, 1 = use second PLL for pixel-clock in BT817 / BT818 */
+    uint32_t pclk_freq; /* frequency in Hz for BT817 / BT818 to be used with EVE_cmd_pclkfreq() in order to write REG_PCLK_FREQ */
+    uint8_t pwm_duty; /* valid range: 0-128, backlight PWM level, 0 = off, 128 = max */
+    bool has_crystal;
+    bool has_gt911;
+} EVE_Display_Parameters_t;
+
 
 
 /* display timing parameters below */

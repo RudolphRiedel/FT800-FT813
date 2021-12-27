@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2020-09-18
+@date    2021-12-27
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -78,6 +78,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added prototypes for EVE_cmd_runanim(), EVE_cmd_runanim_burst()
 - added prototype for EVE_cmd_wait()
 - removed the history from before 4.0
+- added an enum with return codes to have the functions return something more meaningfull
+- finally removed EVE_cmd_start() after setting it to deprecatd with the first 5.0 release
+- renamed EVE_cmd_execute() to EVE_execute_cmd() to be more consistent, this is is not an EVE command
 
 */
 
@@ -87,6 +90,25 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #pragma once
 
 #include "EVE.h"
+
+
+enum
+{
+    E_OK = 0,
+    E_NOT_OK,
+    EVE_FAIL_CHIPID_TIMEOUT,
+    EVE_FAIL_RESET_TIMEOUT,
+    EVE_FAIL_PCLK_FREQ,
+    EVE_FAIL_FLASH_STATUS_INIT,
+    EVE_FAIL_FLASH_STATUS_DETACHED,
+    EVE_FAIL_FLASHFAST_NOT_SUPPORTED,
+    EVE_FAIL_FLASHFAST_NO_HEADER_DETECTED,
+    EVE_FAIL_FLASHFAST_SECTOR0_FAILED,
+    EVE_FAIL_FLASHFAST_BLOB_MISMATCH,
+    EVE_FAIL_FLASHFAST_SPEED_TEST,
+    EVE_IS_BUSY
+};
+
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
 /*---- helper functions ------------------------------------------------------------------------------------------------------*/
@@ -103,8 +125,7 @@ void EVE_memWrite32(uint32_t ftAddress, uint32_t ftData32);
 void EVE_memWrite_flash_buffer(uint32_t ftAddress, const uint8_t *data, uint32_t len);
 void EVE_memWrite_sram_buffer(uint32_t ftAddress, const uint8_t *data, uint32_t len);
 uint8_t EVE_busy(void);
-void EVE_cmd_start(void);
-void EVE_cmd_execute(void);
+void EVE_execute_cmd(void);
 
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
@@ -167,7 +188,7 @@ void EVE_cmd_videoframe(uint32_t dest, uint32_t result_ptr);
 
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
-/*------------- patching and initialisation ----------------------------------------------------------------------------------*/
+/*------------- patching and initialization ----------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------------------*/
 
 #if EVE_GEN > 2

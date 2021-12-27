@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2021-10-30
+@date    2021-12-27
 @author  Rudolph Riedel
 
 @section info
@@ -154,6 +154,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - converted all TABs to SPACEs
 - made EVE_TOUCH_RZTHRESH in EVE_init() optional to a) remove it from EVE_config.h and b) make it configureable externally
 - changed EVE_init() to write 1200U to REG_TOUCH_RZTHRESH if EVE_TOUCH_RZTHRESH is not defined
+- changed EVE_init() to return E_OK = 0x00 in case of success and more meaningfull values in case of failure
+- changed EVE_busy() to return EVE_IS_BUSY if EVE is busy and E_OK = 0x00 if EVE is not busy - no real change in functionality
+- finally removed EVE_cmd_start() after setting it to deprecatd with the first 5.0 release
+- renamed EVE_cmd_execute() to EVE_execute_cmd() to be more consistent, this is is not an EVE command
+- changed EVE_init_flash() to return E_OK in case of success and more meaningfull values in case of failure
 
 */
 
@@ -297,9 +302,12 @@ void EVE_memWrite_sram_buffer(uint32_t ftAddress, const uint8_t *data, uint32_t 
 }
 
 
-/* Check if the graphics processor completed executing the current command list. */
-/* REG_CMDB_SPACE == 0xffc -> command fifo is empty */
-/* (REG_CMDB_SPACE & 0x03) != 0 -> we have a co-processor fault */
+/**
+ * @brief Check if the co-processor completed executing the current command list.
+ * 
+ * @return returns E_OK in case EVE is not busy (REG_CMDB_SPACE has the value 0xffc),
+ * returns EVE_IS_BUSY if a DMA transfer is active or REG_CMDB_SPACE has a value smaller than 0xffc
+ */
 uint8_t EVE_busy(void)
 {
     uint16_t space;
@@ -307,12 +315,13 @@ uint8_t EVE_busy(void)
     #if defined (EVE_DMA)
     if(EVE_dma_busy)
     {
-        return 1;
+        return EVE_IS_BUSY;
     }
     #endif
 
     space = EVE_memRead16(REG_CMDB_SPACE);
 
+    /* (REG_CMDB_SPACE & 0x03) != 0 -> we have a co-processor fault */
     if((space & 0x3) != 0) /* we have a co-processor fault, make EVE play with us again */
     {
         #if EVE_GEN > 2
@@ -349,25 +358,14 @@ uint8_t EVE_busy(void)
         #endif
     }
 
-    return (space != 0xffc) ? 1 : 0;
+    return (space != 0xffc) ? EVE_IS_BUSY : E_OK;
 }
 
 
-/* deprecated, with using REG_CMDB_WRITE commands will be automatically excecuted on the rising edge of chip select */
-/* order the command co-processor to start processing its FIFO queue and do not wait for completion */
-void EVE_cmd_start(void)
-{
-#if defined (EVE_DMA)
-    if(EVE_dma_busy)
-    {
-        return; /* just do nothing if a dma transfer is in progress */
-    }
-#endif
-}
-
-
-/* wait for the co-processor to complete the FIFO queue */
-void EVE_cmd_execute(void)
+/**
+ * @brief Wait for the co-processor to complete the FIFO queue.
+ */
+void EVE_execute_cmd(void)
 {
     while (EVE_busy()) {};
 }
@@ -481,7 +479,7 @@ void EVE_cmd_fontcachequery(uint32_t *total, int32_t *used)
     spi_transmit_32(0);
     EVE_cs_clear();
     while (EVE_busy());
-    cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
+    cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the co-processor write pointer */
 
     if(total)
     {
@@ -507,7 +505,7 @@ void EVE_cmd_getimage(uint32_t *source, uint32_t *fmt, uint32_t *width, uint32_t
     spi_transmit_32(0);
     EVE_cs_clear();
     while (EVE_busy());
-    cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
+    cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the co-processor write pointer */
 
     if(palette)
     {
@@ -564,7 +562,7 @@ uint32_t EVE_cmd_pclkfreq(uint32_t ftarget, int32_t rounding)
     spi_transmit_32(0);
     EVE_cs_clear();
     while (EVE_busy()) {};
-    cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
+    cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the co-processor write pointer */
     cmdoffset -= 4;
     cmdoffset &= 0x0fff;
     return (EVE_memRead32(EVE_RAM_CMD + cmdoffset));
@@ -645,7 +643,7 @@ uint32_t EVE_cmd_flashfast(void)
     EVE_cs_clear();
 
     while (EVE_busy()) {};
-    cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
+    cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the co-processor write pointer */
     cmdoffset -= 4;
     cmdoffset &= 0x0fff;
     return (EVE_memRead32(EVE_RAM_CMD + cmdoffset));
@@ -786,7 +784,7 @@ void EVE_cmd_getprops(uint32_t *pointer, uint32_t *width, uint32_t *height)
     spi_transmit_32(0);
     EVE_cs_clear();
     while (EVE_busy()) {};
-    cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
+    cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the co-processor write pointer */
 
     if(pointer)
     {
@@ -814,7 +812,7 @@ uint32_t EVE_cmd_getptr(void)
 
     EVE_cs_clear();
     while (EVE_busy()) {};
-    cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
+    cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the co-processor write pointer */
     cmdoffset -= 4;
     cmdoffset &= 0x0fff;
     return (EVE_memRead32(EVE_RAM_CMD + cmdoffset));
@@ -899,7 +897,7 @@ uint32_t EVE_cmd_memcrc(uint32_t ptr, uint32_t num)
     spi_transmit_32(0);
     EVE_cs_clear();
     while (EVE_busy()) {};
-    cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
+    cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the co-processor write pointer */
     cmdoffset -= 4;
     cmdoffset &= 0x0fff;
     return (EVE_memRead32(EVE_RAM_CMD + cmdoffset));
@@ -985,7 +983,7 @@ uint32_t EVE_cmd_regread(uint32_t ptr)
     spi_transmit_32(0);
     EVE_cs_clear();
     while (EVE_busy()) {};
-    cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
+    cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the co-processor write pointer */
     cmdoffset -= 4;
     cmdoffset &= 0x0fff;
     return (EVE_memRead32(EVE_RAM_CMD + cmdoffset));
@@ -1071,12 +1069,18 @@ void EVE_cmd_videoframe(uint32_t dest, uint32_t result_ptr)
 
 
 /*----------------------------------------------------------------------------------------------------------------------------*/
-/*------------- patching and initialisation ----------------------------------------------------------------------------------*/
+/*------------- patching and initialization ----------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------------------*/
 
 #if EVE_GEN > 2
 
-/* switch the FLASH attached to a BT815/BT816 to full-speed mode, returns 0 for failing to do so */
+/**
+ * @brief EVE flash initialization for BT81x, switches the FLASH attached to a BT81x to full-speed mode
+ * 
+ * @return returns E_OK in case of success, EVE_FAIL_FLASH_STATUS_INIT if the status remains init,
+ * EVE_FAIL_FLASH_STATUS_DETACHED if no flash chip was found, a number of different values for failures with cmd_flashfast
+ * and E_NOT_OK if a not supported status is returned in REG_FLASH_STATUS.
+ */
 uint8_t EVE_init_flash(void)
 {
     uint8_t timeout = 0;
@@ -1091,7 +1095,7 @@ uint8_t EVE_init_flash(void)
         timeout++;
         if(timeout > 100) /* 100ms and still in init, lets call quits now and exit with an error */
         {
-            return 0;
+            return EVE_FAIL_FLASH_STATUS_INIT;
         }
     }
 
@@ -1102,7 +1106,7 @@ uint8_t EVE_init_flash(void)
         status = EVE_memRead8(REG_FLASH_STATUS);
         if(status != 2) /* still not in FLASH_STATUS_BASIC, time to give up */
         {
-            return 0;
+            return EVE_FAIL_FLASH_STATUS_DETACHED;
         }
     }
 
@@ -1112,17 +1116,31 @@ uint8_t EVE_init_flash(void)
 
         result = EVE_cmd_flashfast();
 
-        return (result == 0) ? 1 : 0;
-        /* result == 0 - cmd_flashfast was successful */
-        /* room for improvement, cmd_flashfast provided an error code but there is no way to return it without returning a value that is FALSE all the same */
+        switch(result)
+        {
+            case 0x0000:
+                return E_OK;
+            case 0xE001:
+                return EVE_FAIL_FLASHFAST_NOT_SUPPORTED;
+            case 0xE002:
+                return EVE_FAIL_FLASHFAST_NO_HEADER_DETECTED;
+            case 0xE003:
+                return EVE_FAIL_FLASHFAST_SECTOR0_FAILED;
+            case 0xE004:
+                return EVE_FAIL_FLASHFAST_BLOB_MISMATCH;
+            case 0xE005:
+                return EVE_FAIL_FLASHFAST_SPEED_TEST;
+            default: /* we have an unknown error, so just return failure */
+                return E_NOT_OK;
+        }
     }
 
     if(status == 3) /* FLASH_STATUS_FULL - we are already there, why has this function been called? */
     {
-        return 1;
+        return E_OK;
     }
 
-    return 0;
+    return E_NOT_OK; /* REG_FLASH_STATUS returned a value other than 0/1/2/3 */
 }
 
 #endif /* EVE_GEN > 2 */
@@ -1130,7 +1148,6 @@ uint8_t EVE_init_flash(void)
 
 /* FT811 / FT813 binary-blob from FTDIs AN_336 to patch the touch-engine for Goodix GT911 / GT9271 touch controllers */
 #if defined (EVE_HAS_GT911)
-
 #if defined (__AVR__)
 #include <avr/pgmspace.h>
 #else
@@ -1169,7 +1186,11 @@ const uint8_t EVE_GT911_data[1184] PROGMEM =
 #endif
 
 
-/* init, has to be executed with the SPI setup to 11 MHz or less as required by FT8xx / BT8xx */
+/**
+ * @brief EVE chip initialization, has to be executed with the SPI setup to 11 MHz or less as required by FT8xx / BT8xx
+ * 
+ * @return returns E_OK in case of success
+ */
 uint8_t EVE_init(void)
 {
     uint8_t chipid = 0;
@@ -1212,7 +1233,7 @@ uint8_t EVE_init(void)
         timeout++;
         if(timeout > 400)
         {
-            return 0;
+            return EVE_FAIL_CHIPID_TIMEOUT;
         }
     }
 
@@ -1223,7 +1244,7 @@ uint8_t EVE_init(void)
         timeout++;
         if(timeout > 50) /* experimental, 10 was the lowest value to get the BT815 started with, the touch-controller was the last to get out of reset */
         {
-            return 0;
+            return EVE_FAIL_RESET_TIMEOUT;
         }
     }
 
@@ -1314,7 +1335,7 @@ uint8_t EVE_init(void)
     frequency = EVE_cmd_pclkfreq(EVE_PCLK_FREQ, 0); /* setup the second PLL for the pixel-clock according to the define in EVE_config.h for the display, as close a match as possible */
     if(frequency == 0) /* this failed for some reason so we return with an error */
     {
-        return 0;
+        return EVE_FAIL_PCLK_FREQ;
     }
     #endif
     #endif
@@ -1343,7 +1364,7 @@ uint8_t EVE_init(void)
     EVE_init_dma(); /* prepare DMA */
     #endif
 
-    return 1;
+    return E_OK;
 }
 
 
@@ -1795,7 +1816,7 @@ uint16_t EVE_cmd_bitmap_transform(int32_t x0, int32_t y0, int32_t x1, int32_t y1
         spi_transmit_32(0);
         EVE_cs_clear();
         while (EVE_busy()) {};
-        cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
+        cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the co-processor write pointer */
         cmdoffset -= 4;
         cmdoffset &= 0x0fff;
         return (EVE_memRead32(EVE_RAM_CMD + cmdoffset));
@@ -2381,7 +2402,7 @@ void EVE_cmd_getmatrix(int32_t *get_a, int32_t *get_b, int32_t *get_c, int32_t *
         spi_transmit_32(0);
         EVE_cs_clear();
         while (EVE_busy()) {};
-        cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the graphics processor write pointer */
+        cmdoffset = EVE_memRead16(REG_CMD_WRITE);  /* read the co-processor write pointer */
 
         if(get_f)
         {

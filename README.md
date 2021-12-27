@@ -147,7 +147,7 @@ There is a list of available options at the start of EVE_config.h sorted by chip
 
 When compiling for AVR you need to provide the clock it is running at in order to make the _delay_ms() calls used to initialise the TFT work with the intended timing.
 For other plattforms you need to provide a DELAY_MS(ms) function that works at least between 1ms and 56ms and is not performing these delays shorter than requested.
-The DELAY_MS(ms) is only used during initialisation of the FT8xx/BT8xx.
+The DELAY_MS(ms) is only used during initialization of the FT8xx/BT8xx.
 See EVE_target.h for examples.
 
 In Addition you need to initialise the pins used for Chip-Select and PowerDown in your hardware correctly to output.

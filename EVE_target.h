@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2021-12-04
+@date    2021-12-27
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -84,6 +84,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added a few lines for STM32H7
 - made the pin defines for all targets that have one optional
 - split the ATSAMC21 and ATSAMx51 targets into separate sections
+- updated the explanation of how DMA works
 
 */
 
@@ -111,9 +112,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
   EVE_init() calls EVE_init_dma() which sets up the DMA channel and enables an IRQ for end of DMA.
   EVE_start_cmd_burst() resets the DMA buffer instead of transferring the first bytes by SPI.
   EVE_end_cmd_burst() just calls EVE_start_dma_transfer() which triggers the transfer of the SPI buffer by DMA.
-  EVE_cmd_start() just instantly returns if there is an active DMA transfer.
   EVE_busy() does nothing but to report that EVE is busy if there is an active DMA transfer.
-  At the end of the DMA transfer an IRQ is executed which clears the DMA active state, calls EVE_cs_clear() and EVE_cmd_start().
+  At the end of the DMA transfer an IRQ is executed which clears the DMA active state and calls EVE_cs_clear() by which the
+  command buffer is executed by the command co-processor.
 
 */
 
@@ -641,6 +642,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
         /* note: target as set by AtmelStudio, valid  are all from the same family */
 
         #include "sam.h"
+        #include <stdbool.h>
 
         #if !defined (EVE_CS)
             #define EVE_CS_PORT 0
