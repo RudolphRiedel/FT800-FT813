@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2021-12-27
+@date    2022-02-20
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -73,6 +73,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - converted all TABs to SPACEs
 - removed EVE_TOUCH_RZTHRESH as it only applies to resistive touch screens and as EVE_init() still writes it if the define exists in can be configured thru project options
 - added EVE_Display_Parameters_t to be used with an additional init function, still not sure how to procede exactly
+- split the settings for EVE_RiTFT70 and EVE_RiTFT50 after a report for the EVE_RiTFT70 not working properly and confirmation
+ that the provided alternative parameters do work, the EVE_RiTFT50 however are confirmed to be working with the IOT5
 
 */
 
@@ -617,28 +619,44 @@ typedef struct
 #endif
 
 
-/* untested */
+/* untested but confirmed to be working */
 /* RVT50xQBxxxxx 800x480 5.0" Riverdi, various options, BT815/BT816 */
-/* RVT70xQBxxxxx 800x480 7.0" Riverdi, various options, BT815/BT816 */
-#if defined (EVE_RiTFT70) || defined (EVE_RiTFT50)
-#define EVE_HSIZE   (800L)  /* Thd Length of visible part of line (in PCLKs) - display width */
-#define EVE_VSIZE   (480L)  /* Tvd Number of visible lines (in lines) - display height */
+/* not working properly? try the EVE_RiTFT70 profile */
+#if defined (EVE_RiTFT50)
+#define EVE_HSIZE   (800L)
+#define EVE_VSIZE   (480L)
 
-#define EVE_VSYNC0  (0L)    /* Tvf Vertical Front Porch */
-#define EVE_VSYNC1  (10L)   /* Tvf + Tvp Vertical Front Porch plus Vsync Pulse width */
-#define EVE_VOFFSET (23L)   /* Tvf + Tvp + Tvb Number of non-visible lines (in lines) */
-#define EVE_VCYCLE  (525L)  /* Tv Total number of lines (visible and non-visible) (in lines) */
-#define EVE_HSYNC0  (0L)    /* Thf Horizontal Front Porch */
-#define EVE_HSYNC1  (10L)   /* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
-#define EVE_HOFFSET (46L)   /* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
-#define EVE_HCYCLE  (1056L) /* Th Total length of line (visible and non-visible) (in PCLKs) */
-#define EVE_PCLK    (2L)    /* 72MHz / REG_PCLK = PCLK frequency 30 MHz */
-#define EVE_PCLKPOL (1L)    /* PCLK polarity (0 = rising edge, 1 = falling edge) */
-#define EVE_SWIZZLE (0L)    /* Defines the arrangement of the RGB pins of the FT800 */
+#define EVE_VSYNC0  (0L)
+#define EVE_VSYNC1  (10L)
+#define EVE_VOFFSET (23L)
+#define EVE_VCYCLE  (525L)
+#define EVE_HSYNC0  (0L)
+#define EVE_HSYNC1  (10L)
+#define EVE_HOFFSET (46L)
+#define EVE_HCYCLE  (1056L)
+#define EVE_PCLK    (2L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (1L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
 #endif
+
+
+/* untested but confirmed to be working */
+/* RVT70xQBxxxxx 800x480 7.0" Riverdi, various options, BT815/BT816 */
+/* not working properly? try the EVE_RiTFT50 profile */
+#if defined (EVE_RiTFT70)
+#define Resolution_800x480
+
+#define EVE_PCLK    (2L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (1L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 3
+#endif
+
 
 /* untested */
 /* RVT50HQBxxxxx 800x480 5.0" Riverdi, various options, BT817 */
