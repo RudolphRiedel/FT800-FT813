@@ -2,14 +2,14 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2022-02-20
+@date    2022-03-19
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2021 Rudolph Riedel
+Copyright (c) 2016-2022 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -75,6 +75,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added EVE_Display_Parameters_t to be used with an additional init function, still not sure how to procede exactly
 - split the settings for EVE_RiTFT70 and EVE_RiTFT50 after a report for the EVE_RiTFT70 not working properly and confirmation
  that the provided alternative parameters do work, the EVE_RiTFT50 however are confirmed to be working with the IOT5
+- commented out EVE_Display_Parameters_t for now
 
 */
 
@@ -158,6 +159,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #endif
 
 
+#if 0
 typedef struct
 {
     uint16_t hsize; /* valid range: 12 bits / 0-4095, Thd, length of the visible part of a line (in PCLKs) - active display width */
@@ -179,7 +181,7 @@ typedef struct
     bool has_crystal;
     bool has_gt911;
 } EVE_Display_Parameters_t;
-
+#endif
 
 
 /* display timing parameters below */
