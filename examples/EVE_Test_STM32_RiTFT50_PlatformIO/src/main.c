@@ -25,11 +25,11 @@ This is missing everything to make this a demo:
 #endif
 
 #if defined (STM32F1) /* set with "build_flags = -D STM32F1" in platformio.ini */
-	#include "stm32f1xx.h"
+    #include "stm32f1xx.h"
 #endif
 
 #if defined (STM32F3) /* set with "build_flags = -D STM32F3" in platformio.ini */
-	#include "stm32f3xx.h"
+    #include "stm32f3xx.h"
 #endif
 
 #if defined (STM32F4) /* set in platformio.ini */
@@ -105,39 +105,39 @@ volatile uint8_t system_tick = 0;
 
 void SysTick_Handler(void) /* the HAL definition for this is inconsistent across STM32 families, so we roll our own */ 
 {
-	system_tick = 42;
+    system_tick = 42;
 }
 
 
 
 int main(void)
 {
-	uint8_t display_delay = 0;
+    uint8_t display_delay = 0;
 
-	HAL_Init();
-//	SystemClock_Config();
-	HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/200U); /*Configure the SysTick to have interrupts in 5ms time basis*/
+    HAL_Init();
+//  SystemClock_Config();
+    HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/200U); /*Configure the SysTick to have interrupts in 5ms time basis*/
 
-//	EVE_init_spi();
-//	EVE_init_dma();
+//  EVE_init_spi();
+//  EVE_init_dma();
 
-	TFT_init();
-	
-	while(1)
-	{
-		if(system_tick)
-		{
-			system_tick = 0;
+    TFT_init();
+    
+    while(1)
+    {
+        if(system_tick)
+        {
+            system_tick = 0;
 
-			TFT_touch();
+            TFT_touch();
 
-			display_delay++;
-			if(display_delay > 3)
-			{
-				display_delay = 0;
+            display_delay++;
+            if(display_delay > 3)
+            {
+                display_delay = 0;
 
-				TFT_display();
-			}
-		}
-	}
+                TFT_display();
+            }
+        }
+    }
 }

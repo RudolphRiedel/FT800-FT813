@@ -1,63 +1,11 @@
 /*
 @file    tft.c / tft.cpp
 @brief   TFT handling functions for EVE_Test project
-@version 1.18
-@date    2021-12-27
+@version 1.19
+@date    2022-03-19
 @author  Rudolph Riedel
 
 @section History
-
-1.0
-- initial release
-
-1.1
-- added a simple .png image that is drawn beneath the clock just as example of how it could be done
-
-1.2
-- replaced the clock with a scrolling line-strip
-- moved the .png image over to the font-test section to make room
-- added a scrolling bar display
-- made scrolling depending on the state of the on/off button
-- reduced the precision of VERTEX2F to 1 Pixel with VERTEXT_FORMAT() (FT81x only) to avoid some pointless "*16" multiplications
-
-1.3
-- adapted to release 3 of Ft8xx library with EVE_ and ft_ prefixes changed to EVE_
-- removed "while (EVE_busy());" lines after EVE_cmd_execute() since it does that by itself now
-- removed "EVE_cmd_execute();" line after EVE_cmd_loadimage(MEM_PIC1, EVE_OPT_NODL, pngpic, pngpic_size); as EVE_cmd_loadimage() executes itself now
-
-1.4
-- added num_profile_a and num_profile_b for simple profiling
-- utilised EVE_cmd_start()
-- some general cleanup and house-keeping to make it fit for release
-
-1.5
-- simplified the example layout a lot and made it to scale with all display-sizes
-
-1.6
-- a bit of house-keeping after trying a couple of things
-
-1.7
-- added a display for the amount of bytes generated in the display-list by the command co-pro
-
-1.8
-- moved the color settings from EVE_config.h to here
-
-1.9
-- changed FT8_ prefixes to EVE_
-
-1.10
-- some cleanup
-
-1.11
-- updated to be more similar to what I am currently using in projects
-
-1.12
-- minor cleanup, switched from EVE_get_touch_tag(1); to EVE_memRead8(REG_TOUCH_TAG);
-- added some more sets of calibration data from my displays
-
-1.13
-- adapted to V5
-- new logo
 
 1.14
 - added example code for BT81x that demonstrates how to write a flash-image from the microcontrollers memory
@@ -76,6 +24,11 @@
 1.18
 - several minor changes
 
+1.19
+- removed most of the history
+- changed a couple of "while (EVE_busy()) {};" lines to "EVE_execute_cmd();"
+- renamed PINK to MAGENTA
+
  */
 
 #include "EmbeddedVideoEngine/EVE.h"
@@ -92,7 +45,7 @@
 #define BLUE    0x0000ffUL
 #define BLUE_1  0x5dade2L
 #define YELLOW  0xffff00UL
-#define PINK    0xff00ffUL
+#define MAGENTA 0xff00ffUL
 #define PURPLE  0x800080UL
 #define WHITE   0xffffffUL
 #define BLACK   0x000000UL
@@ -263,7 +216,7 @@ void touch_calibrate(void)
     EVE_cmd_calibrate();
     EVE_cmd_dl(DL_DISPLAY);
     EVE_cmd_dl(CMD_SWAP);
-    while (EVE_busy()) {};
+    EVE_execute_cmd();
 
     uint32_t touch_a, touch_b, touch_c, touch_d, touch_e, touch_f;
 
@@ -296,7 +249,7 @@ void touch_calibrate(void)
 
     EVE_cmd_dl(DL_DISPLAY); /* instruct the co-processor to show the list */
     EVE_cmd_dl(CMD_SWAP); /* make this list active */
-    while (EVE_busy()) {};
+    EVE_execute_cmd();
 
     while(1);
 #endif
@@ -354,12 +307,12 @@ void initStaticBackground(void)
     EVE_cmd_text(105, EVE_VSIZE - 35, 26, 0, "us");
     EVE_cmd_text(105, EVE_VSIZE - 20, 26, 0, "us");
 
-    while (EVE_busy()) {};
+    EVE_execute_cmd();
 
     num_dl_static = EVE_memRead16(REG_CMD_DL);
 
     EVE_cmd_memcpy(MEM_DL_STATIC, EVE_RAM_DL, num_dl_static);
-    while (EVE_busy()) {};
+    EVE_execute_cmd();
 }
 
 
@@ -391,7 +344,7 @@ void TFT_init(void)
         EVE_cmd_flashread(MEM_FONT, 84928, 320); /* copy .xfont from FLASH to RAM_G, offset and length are from the .map file */
     }
 
-#endif // TEST_UTF8
+#endif /* TEST_UTF8 */
 
         EVE_cmd_inflate(MEM_LOGO, logo, sizeof(logo)); /* load logo into gfx-memory and de-compress it */
         EVE_cmd_loadimage(MEM_PIC1, EVE_OPT_NODL, pic, sizeof(pic));
@@ -427,7 +380,7 @@ void TFT_touch(void)
                 toggle_lock = 0;
                 break;
 
-            case 10: /* use button on top as on/off radio-switch */
+            case 10: /* use button on top as on/off toggle-switch */
                 if(0 == toggle_lock)
                 {
                     toggle_lock = 42;
@@ -452,7 +405,6 @@ void TFT_touch(void)
 void TFT_display(void)
 {
     static int32_t rotate = 0;
-    
 
     if(tft_active != 0)
     {
