@@ -26,22 +26,22 @@ The library code itself is downloaded from my Github repository by PlatformIO.
 
 This is an example for Arduino and it builds for a number of different boards:
 
-Environment                Status    Duration
--------------------------  --------  ------------
-uno                        SUCCESS   00:00:00.624
-avr_pro                    SUCCESS   00:00:00.624
-nano328                    SUCCESS   00:00:00.600
-mega2560                   SUCCESS   00:00:00.611
-adafruit_metro_m4          SUCCESS   00:00:02.959
-samd21_m0-mini             SUCCESS   00:00:01.464
-ESP32                      SUCCESS   00:00:01.186
-ESP8266_d1_mini            SUCCESS   00:00:00.965
-nucleo_f446re              SUCCESS   00:00:02.181
-teensy41                   SUCCESS   00:00:01.011
-adafruit_feather_nrf52840  SUCCESS   00:00:01.239
-bbcmicrobit_v2             SUCCESS   00:00:00.808
-teensy35                   SUCCESS   00:00:01.018
-xmc1100_xmc2go             SUCCESS   00:00:01.028
+|Environment|Status|
+|---|---|
+|Uno|SUCCESS|
+|avr_pro|SUCCESS|
+|nano328|SUCCESS|
+|mega2560|SUCCESS|
+|adafruit_metro_m4|SUCCESS|
+|samd21_m0-mini|SUCCESS|
+|ESP32 |SUCCESS|
+|ESP8266_d1_mini|SUCCESS|
+|nucleo_f446re|SUCCESS|
+|teensy41|SUCCESS|
+|adafruit_feather_nrf52840|SUCCESS|
+|bbcmicrobit_v2|SUCCESS|
+|teensy35|SUCCESS|
+|xmc1100_xmc2go|SUCCESS|
 
 These all share a single "EVE_Test.cpp" which contains the setup() and loop() functions.
 
@@ -66,17 +66,17 @@ I am using a fork ( https://github.com/glingy/platform-atmelsam/tree/feat-cmsis-
 This is a non-functional example.
 It builds for several STM32 across almost all families:
 
-Environment    Status    Duration
--------------  --------  ------------
-STM32L073      SUCCESS   00:00:02.550
-STM32F030      SUCCESS   00:00:02.729
-STM32F103      SUCCESS   00:00:02.823
-STM32F303      SUCCESS   00:00:03.365
-STM32F446      SUCCESS   00:00:04.227
-STM32G474      SUCCESS   00:00:03.997
-STM32G431      SUCCESS   00:00:03.746
-nucleo_f439zi  SUCCESS   00:00:04.228
-nucleo_h743zi  SUCCESS   00:00:05.772
+|Environment|Status|
+|---|---|
+|STM32L073|SUCCESS|
+|STM32F030|SUCCESS|
+|STM32F103|SUCCESS|
+|STM32F303|SUCCESS|
+|STM32F446|SUCCESS|
+|STM32G474|SUCCESS|
+|STM32G431|SUCCESS|
+|nucleo_f439zi|SUCCESS|
+|nucleo_h743zi|SUCCESS|
 
 These all share a single "main.c" with the functions SysTick_Handler() and main().
 It builds the complete EVE code including hardware agnostic SPI functions due to use
