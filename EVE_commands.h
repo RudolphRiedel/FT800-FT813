@@ -2,14 +2,14 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2021-12-27
+@date    2022-04-23
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2021 Rudolph Riedel
+Copyright (c) 2016-2022 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -81,6 +81,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added an enum with return codes to have the functions return something more meaningfull
 - finally removed EVE_cmd_start() after setting it to deprecatd with the first 5.0 release
 - renamed EVE_cmd_execute() to EVE_execute_cmd() to be more consistent, this is is not an EVE command
+- added the return-value of EVE_FIFO_HALF_EMPTY to EVE_busy() to indicate there is more than 2048 bytes available
 
 */
 
@@ -106,7 +107,8 @@ enum
     EVE_FAIL_FLASHFAST_SECTOR0_FAILED,
     EVE_FAIL_FLASHFAST_BLOB_MISMATCH,
     EVE_FAIL_FLASHFAST_SPEED_TEST,
-    EVE_IS_BUSY
+    EVE_IS_BUSY,
+	EVE_FIFO_HALF_EMPTY
 };
 
 

@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2021-12-27
+@date    2022-04-23
 @author  Rudolph Riedel
 
 @section info
@@ -15,7 +15,7 @@ The c-standard is C99.
 
 MIT License
 
-Copyright (c) 2016-2021 Rudolph Riedel
+Copyright (c) 2016-2022 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -159,6 +159,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - finally removed EVE_cmd_start() after setting it to deprecatd with the first 5.0 release
 - renamed EVE_cmd_execute() to EVE_execute_cmd() to be more consistent, this is is not an EVE command
 - changed EVE_init_flash() to return E_OK in case of success and more meaningfull values in case of failure
+- added the return-value of EVE_FIFO_HALF_EMPTY to EVE_busy() to indicate there is more than 2048 bytes available
 
 */
 
@@ -305,8 +306,9 @@ void EVE_memWrite_sram_buffer(uint32_t ftAddress, const uint8_t *data, uint32_t 
 /**
  * @brief Check if the co-processor completed executing the current command list.
  * 
- * @return returns E_OK in case EVE is not busy (REG_CMDB_SPACE has the value 0xffc),
- * returns EVE_IS_BUSY if a DMA transfer is active or REG_CMDB_SPACE has a value smaller than 0xffc
+ * @return returns E_OK in case EVE is not busy (no DMA transfer active and REG_CMDB_SPACE has the value 0xffc, meaning the CMD-FIFO is empty),
+ * returns EVE_FIFO_HALF_EMPTY if no DMA transfer is active and REG_CMDB_SPACE shows more than 2048 bytes available,
+ * returns EVE_IS_BUSY if a DMA transfer is active or REG_CMDB_SPACE has a value smaller than 0xffc,
  */
 uint8_t EVE_busy(void)
 {
@@ -357,8 +359,19 @@ uint8_t EVE_busy(void)
 
         #endif
     }
-
-    return (space != 0xffc) ? EVE_IS_BUSY : E_OK;
+	
+	if(space == 0xffc)
+	{
+		return E_OK;
+	}
+	else if(space > 0x800)
+	{
+		return EVE_FIFO_HALF_EMPTY;
+	}
+	else
+	{
+		return EVE_IS_BUSY;
+	}
 }
 
 

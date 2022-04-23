@@ -72,7 +72,7 @@ FT810, FT811, FT812, FT813, BT815, BT816, BT817 and BT818 can use the exact same
 As a side effect all commands are automatically started now. 
 
 Second is that there are two sets of display-list building command functions now: EVE_cmd_xxx() and EVE_cmd_xxx_burst().
-The EVE_cmd_xxx_burst() functions are optimised for speed, these are pure data transfer functions and do not even check anymore if burst mode is active.
+The EVE_cmd_xxx_burst() functions are optimized for speed, these are pure data transfer functions and do not even check anymore if burst mode is active.
 
 ## Structure
 
@@ -119,19 +119,78 @@ while (EVE_busy());
 ````
 
 This does the same as the first example but faster.
-The trailing EVE_start_cmd_burst() either sets chip-select to low and sends out the three byte address.  
+The preceding EVE_start_cmd_burst() either sets chip-select to low and sends out the three byte address.  
 Or if DMA is available for the target you are compiling for with support code in EVE_target.c / EVE_target.cpp and EVE_target.h, it writes the address to EVE_dma_buffer and sets EVE_dma_buffer_index to 1.
 
 Note the trailing "_burst" in the following functions, these are special versions of these commands that can only be used within an EVE_start_cmd_burst()/EVE_end_cmd_bust() pair.
-These functions are optimised to push out data and nothing else.
+These functions are optimized to push out data and nothing else.
 
-The final EVE_end_cmd_bust() either pulls back the chip-select to high.  
+The final EVE_end_cmd_burst() either pulls back the chip-select to high.  
 Or if we have DMA it calls EVE_start_dma_transfer() to start pushing out the buffer in the background.
 
 As we have 7 commands for EVE in these simple examples, the second one has the address overhead removed from six commands and therefore needs to transfer 18 bytes less over SPI.  
-So even with a small 8-bit controller that does not support DMA this is a usefull optimisation for building display lists.
+So even with a small 8-bit controller that does not support DMA this is a usefull optimization for building display lists.
 
 Using DMA has one caveat: we need to limit the transfer to <4k as we are writing to the FIFO of EVEs command co-processor. This is usually not an issue though as we can shorten the display list generation with previously generated snippets that we attach to the current list with CMD_APPEND. And when we use widgets like CMD_BUTTON or CMD_CLOCK the generated display list grows by a larger amount than what we need to put into the command-FIFO so we likely reach the 8k limit of the display-list before we hit the 4k limit of the command-FIFO.
+It is possible to use two or more DMA transfers to the FIFO to build a single display list, either to get around the 4k limit of the FIFO or in order to distribute the workload better of the time necessary between two display renewals.
+
+You could for example do this, spread over three consecutive calls:
+````
+EVE_start_cmd_burst();
+EVE_cmd_dl_burst(CMD_DLSTART);
+EVE_cmd_dl_burst(DL_CLEAR_RGB | WHITE);
+EVE_end_cmd_burst();
+````
+
+````
+EVE_start_cmd_burst();
+EVE_cmd_dl_burst(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
+EVE_color_rgb_burst(BLACK);
+EVE_end_cmd_burst();
+````
+
+````
+EVE_start_cmd_burst();
+EVE_cmd_text_burst(5, 15, 28, 0, "Hello there!");
+EVE_cmd_dl_burst(DL_DISPLAY);
+EVE_cmd_dl_burst(CMD_SWAP);
+EVE_end_cmd_burst();
+````
+
+But you need to check with EVE_busy() before each of these blocks.
+Maybe similar like this never compiled pseudo-code:
+
+thread_1ms_update_display()
+{
+    static uint8_t state = 0;
+    static uint8_t count = 0;
+
+    count++;
+
+    if(EVE_busy() == E_OK)
+    {
+        switch(state)
+        {
+            case 0:
+                update_first();
+                state = 1;
+                break;
+            case 1:
+                update_second();
+                state = 2;
+                break;
+            case 2:
+                if(counter > 19)
+                {
+                    update_last_swap_list();
+                    count = 0;
+                    state = 0;
+                }
+                break;
+        }
+    }
+}
+
 
 ## Remarks
 
@@ -145,19 +204,19 @@ There is a list of available options at the start of EVE_config.h sorted by chip
 
 - Provide the pins used for Chip-Select and Power-Down in EVE_target.h for the target configuration you are using
 
-When compiling for AVR you need to provide the clock it is running at in order to make the _delay_ms() calls used to initialise the TFT work with the intended timing.
+When compiling for AVR you need to provide the clock it is running at in order to make the _delay_ms() calls used to initialize the TFT work with the intended timing.
 For other plattforms you need to provide a DELAY_MS(ms) function that works at least between 1ms and 56ms and is not performing these delays shorter than requested.
 The DELAY_MS(ms) is only used during initialization of the FT8xx/BT8xx.
 See EVE_target.h for examples.
 
-In Addition you need to initialise the pins used for Chip-Select and PowerDown in your hardware correctly to output.
+In Addition you need to initialize the pins used for Chip-Select and Power-Down in your hardware correctly to output.
 Plus setup the SPI accordingly, mode-0, 8-bit, MSB-first, not more than 11MHz for the init.
 A couple of targets already have a function EVE_init_spi() in EVE_target.c.
 
 A word of "warning", you have to take a little care yourself to for example not send more than 4kB at once to the command co-processor
 or to not generate display lists that are longer than 8kB.
 My library does not check and re-check the command-FIFO on every step.
-This is optimised for speed so the training wheels are off.
+This is optimized for speed, so the training wheels are off.
 
 ## Post questions here
 

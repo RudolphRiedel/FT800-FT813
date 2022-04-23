@@ -2,14 +2,14 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2021-12-27
+@date    2022-04-23
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2021 Rudolph Riedel
+Copyright (c) 2016-2022 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -85,6 +85,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - made the pin defines for all targets that have one optional
 - split the ATSAMC21 and ATSAMx51 targets into separate sections
 - updated the explanation of how DMA works
+- added a TMS320F28335 target
+- added more defines for ATSAMC21 and ATSAMx51 - chip crises...
 
 */
 
@@ -132,7 +134,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
                 while(val > 0)
                 {
-                    for(counter=0; counter < 2000;counter++) // maybe ~1ms at 16MHz clock
+                    for(counter=0; counter < 2000;counter++) /* maybe ~1ms at 16MHz clock */
                     {
                         __asm__ volatile ("nop");
                     }
@@ -250,7 +252,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
         static inline void spi_transmit(uint8_t data)
         {
             EVE_SPI.DATA = data;
-            while(!(EVE_SPI.STATUS & 0x80)) {}; // wait for transmit complete
+            while(!(EVE_SPI.STATUS & 0x80)) {}; /* wait for transmit complete */
         }
 
         static inline void spi_transmit_32(uint32_t data)
@@ -270,7 +272,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
         static inline uint8_t spi_receive(uint8_t data)
         {
             EVE_SPI.DATA = data;
-            while(!(EVE_SPI.STATUS & 0x80)) {}; // wait for transmit complete
+            while(!(EVE_SPI.STATUS & 0x80)) {}; /* wait for transmit complete */
             return EVE_SPI.DATA;
         }
 
@@ -330,13 +332,13 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
             SPDR = data; /* start transmission */
             while(!(SPSR & (1<<SPIF))) {}; /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
 #else
-        /* software-spi example */
+            /* software-spi example */
             uint8_t spiIndex  = 0x80;
             uint8_t k;
 
-            for(k = 0; k <8; k++) // Output each bit of spiOutByte
+            for(k = 0; k <8; k++) /* Output each bit of spiOutByte */
             {
-                if(data & spiIndex) // Output MOSI Bit
+                if(data & spiIndex) /* Output MOSI Bit */
                 {
                     PORTC |= (1<<PORTC1);
                 }
@@ -345,7 +347,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
                     PORTC &= ~(1<<PORTC1);
                 }
 
-                PORTA |= (1<<PORTA1); // toggle SCK
+                PORTA |= (1<<PORTA1); /* toggle SCK */
                 PORTA &= ~(1<<PORTA1);
 
                 spiIndex >>= 1;
@@ -378,9 +380,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
             uint8_t spiInByte = 0;
             uint8_t k;
 
-            for(k = 0; k <8; k++) // Output each bit of spiOutByte
+            for(k = 0; k <8; k++) /* Output each bit of spiOutByte */
             {
-                if(data & spiIndex) // Output MOSI Bit
+                if(data & spiIndex) /* Output MOSI Bit */
                 {
                     PORTC |= (1<<PORTC1);
                 }
@@ -389,7 +391,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
                     PORTC &= ~(1<<PORTC1);
                 }
 
-                PORTA |= (1<<PORTA1); // toggle SCK
+                PORTA |= (1<<PORTA1); /* toggle SCK */
                 PORTA &= ~(1<<PORTA1);
 
                 if(PINC & (1<<PORTC0))
@@ -547,7 +549,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 
-        #if defined (__SAMC21E18A__) || (__SAMC21J18A__)
+         #if defined (__SAMC21E18A__) || (__SAMC21J18A__) || (__SAMC21J17A__) || (__SAMC21J16A__)
         /* note: target as set by AtmelStudio, valid  are all from the same family */
 
         #include "sam.h"
@@ -638,11 +640,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 
-        #if defined (__SAME51J19A__) || (__SAMD51P20A__) || (__SAMD51J19A__) || (__SAMD51G18A__)
+        #if defined (__SAME51J19A__) || (__SAME51J18A__) || (__SAMD51P20A__) || (__SAMD51J19A__) || (__SAMD51G18A__)
         /* note: target as set by AtmelStudio, valid  are all from the same family */
 
         #include "sam.h"
-        #include <stdbool.h>
 
         #if !defined (EVE_CS)
             #define EVE_CS_PORT 0
@@ -1088,12 +1089,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
         static inline void EVE_cs_set(void)
         {
-            gpio_put(EVE_CS, 0);  // active low
+            gpio_put(EVE_CS, 0);
         }
 
         static inline void EVE_cs_clear(void)
         {
-            gpio_put(EVE_CS, 1);  // active high
+            gpio_put(EVE_CS, 1);
         }
 
         static inline void EVE_pdn_set(void)
@@ -1405,13 +1406,13 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
         #if !defined (EVE_CS)
             #define RIVERDI_PORT GPIO_PORT_P1
-            #define RIVERDI_SIMO BIT6   // P1.6
-            #define RIVERDI_SOMI BIT7   // P1.7
-            #define RIVERDI_CLK BIT5    // P1.5
+            #define RIVERDI_SIMO BIT6   /* P1.6 */
+            #define RIVERDI_SOMI BIT7   /* P1.7 */
+            #define RIVERDI_CLK BIT5    /* P1.5 */
             #define EVE_CS_PORT         GPIO_PORT_P5
-            #define EVE_CS              GPIO_PIN0           //P5.0
+            #define EVE_CS              GPIO_PIN0     /* P5.0 */
             #define EVE_PDN_PORT        GPIO_PORT_P5
-            #define EVE_PDN             GPIO_PIN1           //P5.1
+            #define EVE_PDN             GPIO_PIN1     /* P5.1 */
         #endif
 
         void EVE_SPI_Init(void);
@@ -1422,7 +1423,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
             while(val > 0)
             {
-                for(counter=0; counter < 8000;counter++) // ~1ms at 48MHz Core-Clock
+                for(counter=0; counter < 8000;counter++) /* ~1ms at 48MHz Core-Clock */
                 {
                     __nop();
                 }
@@ -1501,6 +1502,95 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
     #endif /* __TI_ARM */
 #endif
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
+/* this is for TIs C2000 compiled with their ti-cgt-c2000 compiler which does not define this many symbols */
+#if defined (__TMS320C28XX__)
+
+    /* the designated target actually is a TMS320F28335 */
+    /* credit for this goes to David Sakal-Sega */
+	/* note: the SPI unit of the TMS320F28335 does not support DMA, using one of the UARTs in SPI mode would allow DMA */
+
+    #include <stdint.h>
+    #include <DSP2833x_Device.h>
+
+    typedef uint_least8_t uint8_t;  /* this architecture does not actually know what a byte is, uint_least8_t is 16 bits wide */
+
+    /* 150MHz -> 6.67ns per cycle, 5 cycles for the loop itself and 8 NOPs -> 1ms / (6.67ns * 13) = 11532 */
+    #define EVE_DELAY_1MS 12000
+
+    static inline void DELAY_MS(uint16_t val)
+    {
+        uint16_t counter;
+
+        while(val > 0)
+        {
+            for(counter=0; counter < EVE_DELAY_1MS;counter++)
+            {
+                asm(" RPT #7 || NOP");
+            }
+            val--;
+        }
+    }
+
+    static inline void EVE_pdn_set(void)
+    {
+        GpioDataRegs.GPACLEAR.bit.GPIO14 = 1; /* Power-Down low */
+    }
+
+    static inline void EVE_pdn_clear(void)
+    {
+        GpioDataRegs.GPASET.bit.GPIO14 = 1; /* Power-Down high */
+    }
+
+    static inline void EVE_cs_set(void)
+    {
+        GpioDataRegs.GPACLEAR.bit.GPIO19 = 1; /* CS low */
+    }
+
+    static inline void EVE_cs_clear(void)
+    {
+        asm(" RPT #60 || NOP"); /* wait 60 cycles to make sure CS is not going high too early */ 
+        GpioDataRegs.GPASET.bit.GPIO19 = 1; /* CS high */
+    }
+
+    static inline void spi_transmit(uint8_t data)
+    {
+        SpiaRegs.SPITXBUF = (data & 0xFF) << 8; /* start transfer, looks odd with data = uint8_t but uint8_t actually is 16 bits wide on this controller */
+        while(SpiaRegs.SPISTS.bit.INT_FLAG == 0); /* wait for transmission to complete */
+        (void) SpiaRegs.SPIRXBUF; /* dummy read to clear the flags */
+    }
+
+    static inline void spi_transmit_32(uint32_t data)
+    {
+        spi_transmit((uint8_t)(data & 0x000000ff));
+        spi_transmit((uint8_t)(data >> 8));
+        spi_transmit((uint8_t)(data >> 16));
+        spi_transmit((uint8_t)(data >> 24));
+    }
+
+    /* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+    static inline void spi_transmit_burst(uint32_t data)
+    {
+        spi_transmit_32(data);
+    }
+
+    static inline uint8_t spi_receive(uint8_t data)
+    {
+        SpiaRegs.SPITXBUF = (data & 0xFF) << 8; /* start transfer */
+        while(SpiaRegs.SPISTS.bit.INT_FLAG == 0); /* wait for transmission to complete */
+        return (SpiaRegs.SPIRXBUF & 0x00FF); /* data is right justified in SPIRXBUF */
+    }
+
+    static inline uint8_t fetch_flash_byte(const uint8_t *data)
+    {
+        return *data;
+    }
+
+#endif
+
 
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/

@@ -2,14 +2,14 @@
 @file    EVE_target.c
 @brief   target specific functions for plain C targets
 @version 5.0
-@date    2021-12-04
+@date    2022-04-23
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2021 Rudolph Riedel
+Copyright (c) 2016-2022 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -49,6 +49,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - split up this file in EVE_target.c for the plain C targets and EVE_target.cpp for the Arduino C++ targets
 - converted all TABs to SPACEs
 - split the ATSAMC21 and ATSAMx51 targets into separate sections
+- added more defines for ATSAMC21 and ATSAMx51 - chip crises...
 
  */
 
@@ -62,7 +63,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 
-        #if defined (__SAMC21E18A__) || (__SAMC21J18A__)
+        #if defined (__SAMC21E18A__) || (__SAMC21J18A__) || (__SAMC21J17A__) || (__SAMC21J16A__)
         /* note: target as set by AtmelStudio, valid  are all from the same family */
 
         void DELAY_MS(uint16_t val)
@@ -136,7 +137,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
 
-        #if defined (__SAME51J19A__) || (__SAMD51P20A__) || (__SAMD51J19A__) || (__SAMD51G18A__)
+        #if defined (__SAME51J19A__) || (__SAME51J18A__) || (__SAMD51P20A__) || (__SAMD51J19A__) || (__SAMD51G18A__)
         /* note: target as set by AtmelStudio, valid  are all from the same family */
 
         void DELAY_MS(uint16_t val)
