@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2022-04-23
+@date    2022-05-02
 @author  Rudolph Riedel
 
 @section info
@@ -160,6 +160,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - renamed EVE_cmd_execute() to EVE_execute_cmd() to be more consistent, this is is not an EVE command
 - changed EVE_init_flash() to return E_OK in case of success and more meaningfull values in case of failure
 - added the return-value of EVE_FIFO_HALF_EMPTY to EVE_busy() to indicate there is more than 2048 bytes available
+- minor cleanup, less break and else statements
 
 */
 
@@ -359,19 +360,16 @@ uint8_t EVE_busy(void)
 
         #endif
     }
-	
-	if(space == 0xffc)
-	{
-		return E_OK;
-	}
-	else if(space > 0x800)
-	{
-		return EVE_FIFO_HALF_EMPTY;
-	}
-	else
-	{
-		return EVE_IS_BUSY;
-	}
+
+    if(space == 0xffc)
+    {
+        return E_OK;
+    }
+    if(space > 0x800)
+    {
+        return EVE_FIFO_HALF_EMPTY;
+    }
+    return EVE_IS_BUSY;
 }
 
 
@@ -1161,10 +1159,11 @@ uint8_t EVE_init_flash(void)
 
 /* FT811 / FT813 binary-blob from FTDIs AN_336 to patch the touch-engine for Goodix GT911 / GT9271 touch controllers */
 #if defined (EVE_HAS_GT911)
+
 #if defined (__AVR__)
-#include <avr/pgmspace.h>
+    #include <avr/pgmspace.h>
 #else
-#define PROGMEM
+    #define PROGMEM
 #endif
 
 const uint16_t EVE_GT911_len = 1184;
@@ -1453,43 +1452,26 @@ static void private_string_write(const char *text)
 
     if(cmd_burst)
     {
-        for(textindex = 0; textindex < 249;)
+        textindex = 0;
+        uint32_t calc = 0;
+        uint8_t byteindex = 0;
+        uint8_t data;
+
+        do
         {
-            uint32_t calc = 0;
-            uint8_t data;
-
             data = bytes[textindex++];
-            if(data == 0)
+            calc += (uint32_t) (data) << (8 * byteindex);
+            byteindex++;
+            if(byteindex > 3)
             {
                 spi_transmit_burst(calc);
-                break;
+                calc = 0;
+                byteindex = 0;
             }
-            calc += (uint32_t) (data);
+        } while (data != 0 && textindex < 249 );
 
-            data = bytes[textindex++];
-            if(data == 0)
-            {
-                spi_transmit_burst(calc);
-                break;
-            }
-            calc += ((uint32_t) data) << 8;
-
-            data = bytes[textindex++];
-            if(data == 0)
-            {
-                spi_transmit_burst(calc);
-                break;
-            }
-            calc += ((uint32_t) data) << 16;
-
-            data = bytes[textindex++];
-            if(data == 0)
-            {
-                spi_transmit_burst(calc);
-                break;
-            }
-            calc += ((uint32_t) data) << 24;
-
+        if(byteindex > 0)
+        {
             spi_transmit_burst(calc);
         }
     }
@@ -1497,14 +1479,10 @@ static void private_string_write(const char *text)
     {
         uint8_t padding = 0;
 
-        while(bytes[textindex] != 0)
+        while((bytes[textindex] != 0) && (textindex < 249)) /* either leave on Zero or when the string is too long */
         {
             spi_transmit(bytes[textindex]);
             textindex++;
-            if(textindex > 249) /* there appears to be no end for the "string", so leave */
-            {
-                break;
-            }
         }
 
         /* we need to transmit at least one 0x00 byte and up to four if the string happens to be 4-byte aligned already */
