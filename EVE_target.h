@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-04-23
+@date    2022-07-30
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -87,6 +87,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - updated the explanation of how DMA works
 - added a TMS320F28335 target
 - added more defines for ATSAMC21 and ATSAMx51 - chip crises...
+- added a GD32C103 target - not 100% working, yet
 
 */
 
@@ -1390,6 +1391,85 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
         #endif /* K32L2B3 */
 
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
+        #if defined (GD32C103)
+        /* note: set in platformio.ini by "build_flags = -D GD32C103" */
+
+       #include "gd32c10x.h"
+
+        static inline void DELAY_MS(uint16_t val)
+        {
+            uint16_t counter;
+
+            while(val > 0)
+            {
+                for(counter=0; counter < 20000;counter++) /* maybe ~1ms at 120MHz Core-Clock */
+                {
+                    __asm__ volatile ("nop");
+                }
+                val--;
+            }
+        }
+
+        static inline void EVE_pdn_set(void)
+        {
+            gpio_bit_reset(GPIOA,GPIO_PIN_3);
+        }
+
+        static inline void EVE_pdn_clear(void)
+        {
+            gpio_bit_set(GPIOA,GPIO_PIN_3);
+        }
+
+        static inline void EVE_cs_set(void)
+        {
+            gpio_bit_reset(GPIOA,GPIO_PIN_4);
+        }
+
+        static inline void EVE_cs_clear(void)
+        {
+            gpio_bit_set(GPIOA,GPIO_PIN_4);
+        }
+
+        static inline void spi_transmit(uint8_t data)
+        {
+            SPI_DATA(SPI0) = (uint32_t) data;
+            while(SPI_STAT(SPI0) & SPI_STAT_TRANS) {};
+        }
+
+        static inline void spi_transmit_32(uint32_t data)
+        {
+            spi_transmit((uint8_t)(data & 0x000000ff));
+            spi_transmit((uint8_t)(data >> 8));
+            spi_transmit((uint8_t)(data >> 16));
+            spi_transmit((uint8_t)(data >> 24));
+        }
+
+        /* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+        static inline void spi_transmit_burst(uint32_t data)
+        {
+            spi_transmit_32(data);
+        }
+
+        static inline uint8_t spi_receive(uint8_t data)
+        {
+            SPI_DATA(SPI0) = (uint32_t) data;
+            while(SPI_STAT(SPI0) & SPI_STAT_TRANS) {};
+            while(0 == (SPI_STAT(SPI0) & SPI_STAT_RBNE)) {};
+            return (uint8_t) SPI_DATA(SPI0);
+        }
+
+        static inline uint8_t fetch_flash_byte(const uint8_t *data)
+        {
+            return *data;
+        }
+
+    #endif /* GD32C103 */
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
 
     #endif /* __GNUC__ */
 
