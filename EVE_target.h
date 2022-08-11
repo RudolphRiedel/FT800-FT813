@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-07-30
+@date    2022-08-11
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -23,33 +23,6 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMA
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 @section History
-
-4.0
-- still 4.0 for EVE itself, switched to hardware-SPI on SAMC21
-- minor maintenance
-- added DMA to SAMC21 branch
-- started testing things with a BT816
-- added a block for the SAME51J18A
-- started to add support for Imagecraft AVR
-- moved all target specific lines from EVE_config.h to EVE_target.h
-- cleaned up history
-- added support for MSP432 - it compiles with Code Composer Studio but is for the most part untested...
-- wrote a couple lines of explanation on how DMA is to be used
-- replaced the dummy read of the SPI data register with a var for ATSAMC21 and ATSAME51 with "(void) REG_SERCOM0_SPI_DATA;"
-- added support for RISC-V, more specifically the GD32VF103 that is on the Sipeed Longan Nano - not tested with a display yet but it looks very good with the Logic-Analyzer
-- added support for STM32F407 by adding code supplied by User "mokka" on MikroController.net and modifying it by replacing the HAL functions with direct register accesses
-- added comment lines to separate the various targets visually
-- reworked ATSAMC21 support code to use defines for ports, pins and SERCOM, plus changed the "legacy register definitions" to more current ones
-- changed ATSAME51 support code to the new "template" as well
-- bugifx: STM32F407 support was neither working or compiling, also changed it to STM32F4 as it should support the whole family now
-- bugifx: second attempt to fix STM32F4 support, thanks again to user "mokka" on MikroController.net
-- combined ATSAMC21 and ATSAME51 targets into one block since these were using the same code anyways
-- moved the very basic DELAY_MS() function for ATSAM to EVE_target.c and therefore removed the unneceesary inlining for this function
-- expanded the STM32F4 section with lines for STM32L073, STM32F1, STM32F207 and STM32F3
-- forgot to add the "#include <Arduino.h>" line I found to be necessary for ESP32/Arduino
-- started to implement DMA support for STM32
-- added a few more controllers as examples from the ATSAMC2x and ATSAMx5x family trees
-- measured the delay for ATSAME51 again and changed EVE_DELAY_1MS to 20000 for use with 120MHz core-clock and activated cache
 
 5.0
 - replaced spi_transmit_async() with spi_transmit_burst()
@@ -88,6 +61,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added a TMS320F28335 target
 - added more defines for ATSAMC21 and ATSAMx51 - chip crises...
 - added a GD32C103 target - not 100% working, yet
+- added a RP2040 Arduino target using wizio-pico
+- modified the WIZIOPICO target for Arduino RP2040 to also work with ArduinoCore-mbed
+- removed the 4.0 history
+- fixed the GD32C103 target, as a first step it works without DMA now
 
 */
 
@@ -1399,6 +1376,16 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
        #include "gd32c10x.h"
 
+        #if !defined (EVE_CS)
+            #define EVE_CS_PORT GPIOA
+            #define EVE_CS GPIO_PIN_4
+            #define EVE_PDN_PORT GPIOA
+            #define EVE_PDN GPIO_PIN_3
+            #define EVE_SPI SPI0
+//            #define EVE_SPI_DMA_TRIGGER SERCOM0_DMAC_ID_TX
+//            #define EVE_DMA_CHANNEL 0
+        #endif
+
         static inline void DELAY_MS(uint16_t val)
         {
             uint16_t counter;
@@ -1415,28 +1402,29 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
         static inline void EVE_pdn_set(void)
         {
-            gpio_bit_reset(GPIOA,GPIO_PIN_3);
+            gpio_bit_reset(EVE_PDN_PORT,EVE_PDN);
         }
 
         static inline void EVE_pdn_clear(void)
         {
-            gpio_bit_set(GPIOA,GPIO_PIN_3);
+            gpio_bit_set(EVE_PDN_PORT,EVE_PDN);
         }
 
         static inline void EVE_cs_set(void)
         {
-            gpio_bit_reset(GPIOA,GPIO_PIN_4);
+            gpio_bit_reset(EVE_CS_PORT,EVE_CS);
         }
 
         static inline void EVE_cs_clear(void)
         {
-            gpio_bit_set(GPIOA,GPIO_PIN_4);
+            gpio_bit_set(EVE_CS_PORT,EVE_CS);
         }
 
         static inline void spi_transmit(uint8_t data)
         {
-            SPI_DATA(SPI0) = (uint32_t) data;
-            while(SPI_STAT(SPI0) & SPI_STAT_TRANS) {};
+            SPI_DATA(EVE_SPI) = (uint32_t) data;
+            while(SPI_STAT(EVE_SPI) & SPI_STAT_TRANS) {};
+            (void) SPI_DATA(EVE_SPI); /* dummy read to clear the flags */
         }
 
         static inline void spi_transmit_32(uint32_t data)
@@ -1455,10 +1443,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
         static inline uint8_t spi_receive(uint8_t data)
         {
-            SPI_DATA(SPI0) = (uint32_t) data;
-            while(SPI_STAT(SPI0) & SPI_STAT_TRANS) {};
-            while(0 == (SPI_STAT(SPI0) & SPI_STAT_RBNE)) {};
-            return (uint8_t) SPI_DATA(SPI0);
+            SPI_DATA(EVE_SPI) = (uint32_t) data;
+            while(SPI_STAT(EVE_SPI) & SPI_STAT_TRANS) {};
+            while(0 == (SPI_STAT(EVE_SPI) & SPI_STAT_RBNE)) {};
+            return (uint8_t) SPI_DATA(EVE_SPI);
         }
 
         static inline uint8_t fetch_flash_byte(const uint8_t *data)
@@ -1677,8 +1665,13 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 #if defined (ARDUINO)
 
+    #include <stdint.h>
+
+#if defined (PICOPI)
+    #include <stdbool.h> /* only included to fix a bug in Common.h from https://github.com/arduino/ArduinoCore-API */
+#endif
+
     #include <Arduino.h>
-    #include <stdio.h>
     #include "EVE_cpp_wrapper.h"
 
 #ifdef __cplusplus
@@ -2185,7 +2178,79 @@ extern "C" {
 
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
-    #else       /* generic functions for other Arduino architectures */
+
+        #elif defined (WIZIOPICO) || (PICOPI)
+        /* note: set in platformio.ini by "build_flags = -D WIZIOPICO" */
+
+        #include "hardware/pio.h"
+        #include "hardware/spi.h"
+
+        #if !defined (EVE_CS)
+            #define EVE_CS      5
+            #define EVE_PDN     6
+            #define EVE_SCK     2
+            #define EVE_MOSI    3
+            #define EVE_MISO    4
+            #define EVE_SPI spi0
+        #endif
+
+        void EVE_init_spi(void);
+
+        static inline void EVE_cs_set(void)
+        {
+            gpio_put(EVE_CS, 0);
+        }
+
+        static inline void EVE_cs_clear(void)
+        {
+            gpio_put(EVE_CS, 1);
+        }
+
+        #if defined (EVE_DMA)
+            extern uint32_t EVE_dma_buffer[1025];
+            extern volatile uint16_t EVE_dma_buffer_index;
+            extern volatile uint8_t EVE_dma_busy;
+
+            void EVE_init_dma(void);
+            void EVE_start_dma_transfer(void);
+        #endif
+
+        static inline void spi_transmit(uint8_t data)
+        {
+            spi_write_blocking(EVE_SPI, &data, 1);
+        }
+
+        static inline void spi_transmit_32(uint32_t data)
+        {
+            spi_write_blocking(EVE_SPI, (uint8_t *) &data, 4);
+        }
+
+        /* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+        static inline void spi_transmit_burst(uint32_t data)
+        {
+            #if defined (EVE_DMA)
+                EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+            #else
+                spi_transmit_32(data);
+            #endif
+        }
+
+        static inline uint8_t spi_receive(uint8_t data)
+        {
+            uint8_t result;
+
+            spi_write_read_blocking(EVE_SPI, &data, &result, 1);
+            return result;
+        }
+
+        static inline uint8_t fetch_flash_byte(const uint8_t *data)
+        {
+            return *data;
+        }
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+        #else   /* generic functions for other Arduino architectures */
 
         #if !defined (EVE_CS)
             #define EVE_CS      10

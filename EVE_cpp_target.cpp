@@ -2,7 +2,7 @@
 @file    EVE_target.cpp
 @brief   target specific functions for C++ targets, so far only Arduino targets
 @version 5.0
-@date    2021-10-30
+@date    2022-08-07
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -37,6 +37,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added ARDUINO_TEENSY35 to the ARDUINO_TEENSY41 target
 - split up this file in EVE_target.c for the plain C targets and EVE_target.cpp for the Arduino C++ targets
 - converted all TABs to SPACEs
+- copied over the SPI and DMA support functions for the RP2040 baremetall target to be used under Arduino
+- modified the WIZIOPICO target for Arduino RP2040 to also work with ArduinoCore-mbed
 
  */
 
@@ -286,5 +288,75 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
         }
         #endif
     #endif /* Teensy 4.1 */
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
+        #if defined (WIZIOPICO) || (PICOPI)
+        /* note: set in platformio.ini by "build_flags = -D WIZIOPICO" */
+        #include "EVE_target.h"
+        #include "EVE_commands.h"
+
+        void EVE_init_spi(void)
+        {
+            gpio_set_function(EVE_MISO, GPIO_FUNC_SPI);
+            gpio_set_function(EVE_SCK, GPIO_FUNC_SPI);
+            gpio_set_function(EVE_MOSI, GPIO_FUNC_SPI);
+            #if defined (WIZIOPICO)
+                spi_init(EVE_SPI, 8000000);
+            #else
+/* trap:
+    ArduinoCore-mbed/cores/arduino/mbed/targets/TARGET_RASPBERRYPI/TARGET_RP2040/pico-sdk/rp2_common/hardware_spi/include/hardware/spi.h 
+    is not the same as:
+    pico-sdk/src/rp2_common/hardware_spi/include/hardware/spi.h 
+    The function spi_init() was renamed to _spi_init().
+*/
+                _spi_init(EVE_SPI, 8000000);
+            #endif
+        }
+
+        #if defined (EVE_DMA)
+
+        #include "hardware/dma.h"
+        #include "hardware/irq.h"
+
+        uint32_t EVE_dma_buffer[1025];
+        volatile uint16_t EVE_dma_buffer_index;
+        volatile uint8_t EVE_dma_busy = 0;
+        int dma_tx;
+        dma_channel_config dma_tx_config;
+
+        static void EVE_DMA_handler(void)
+        {
+            dma_hw->ints0 = 1u << dma_tx; /* ack irq */
+            while((spi_get_hw(EVE_SPI)->sr & SPI_SSPSR_BSY_BITS) != 0); /* wait for the SPI to be done transmitting */
+            EVE_dma_busy = 0;
+            EVE_cs_clear();
+        }
+
+        void EVE_init_dma(void)
+        {
+            dma_tx = dma_claim_unused_channel(true);
+            dma_tx_config = dma_channel_get_default_config(dma_tx);
+            channel_config_set_transfer_data_size(&dma_tx_config, DMA_SIZE_8);
+            channel_config_set_dreq(&dma_tx_config, spi_get_index(EVE_SPI) ? DREQ_SPI1_TX : DREQ_SPI0_TX);
+            dma_channel_set_irq0_enabled (dma_tx, true);
+            irq_set_exclusive_handler(DMA_IRQ_0, EVE_DMA_handler);
+            irq_set_enabled(DMA_IRQ_0, true);
+        }
+
+        void EVE_start_dma_transfer(void)
+        {
+            EVE_cs_set();
+            dma_channel_configure(dma_tx, &dma_tx_config,
+                &spi_get_hw(EVE_SPI)->dr, /* write address */
+                ((uint8_t *) &EVE_dma_buffer[0])+1, /* read address */
+                (((EVE_dma_buffer_index)*4)-1), /* element count (each element is of size transfer_data_size) */
+                true); /* start transfer */
+            EVE_dma_busy = 42;
+        }
+        #endif /* DMA */
+
+        #endif /* WIZIOPICO */
 
 #endif

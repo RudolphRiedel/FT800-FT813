@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2022-03-19
+@date    2022-08-01
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -23,33 +23,6 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMA
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 @section History
-
-4.0
-- renamed from EVE_config.h to EVE_config.h
-- renamed EVE_81X_ENABLE to FT81X_ENABLE
-- added a fictitious BT81x entry under the made-up name EVE_EVE3_70G, just to see the project compile with additional BT81x includes and functions
-- added profiles for the BT81x 4.3", 5" and 7" modules from Riverdi - the only tested is the 4.3" with a RVT43ULBNWC00
-- moved all target specific lines from EVE_config.h to EVE_target.h
-- cleaned up history
-- added profiles for EVE3-35G, EVE3-43G, EVE3-50G
-- added a profile for the CFAF800480E0-050SC from Crystalfontz
-- changed EVE_RiTFT50 to use the RVT70 config instead of the RVT50 config since RVT50 uses a different HOFFSET value
-- added EVE_PAF90, a profile for the PAF90B5WFNWC01 from Panasys
-- added EVE_EVE3_35, EVE_EVE3_43, EVE_EVE3_50 and EVE_EVE3_70 - the resistive touch BT816 versions of the EVE3 series
-- added a profile for the Sunflower Arduino Shield
-- looked into adding Gameduino3 / Gameduino3X profiles but there are no documented timing parameters for these panels
-- added a profile for the MikroElektronika ConnectEVE module
-- added a profile for the CFAF240400C0-030SC from Crystalfontz
-- added a profile for the CFAF480128A0-039TC from Crystalfontz
-- added a profile for the CFAF320240F-035T from Crystalfontz
-- condensed several equal timing sets into fewer profiles
-- added 4D Systems GEN4-FT81x-xx profiles
-- removed parameter: EVE_CSPREAD - left on default=1 for all displays now
-- adjusted several PCLK settings to bring the frame-rates closer to 60Hz
-- sorted displays by resolution
-- added profiles for EVE3x-39A/EVE3x-39G
-- updated EVE3x-39A/EVE3x-39G profiles
-- added EVE_NHD_43_800480 for the NHD-4.3-800480FT-CSXP-CTP from Newhaven
 
 5.0
 - re-added the EVE_CSPREAD parameters to all profiles
@@ -76,6 +49,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - split the settings for EVE_RiTFT70 and EVE_RiTFT50 after a report for the EVE_RiTFT70 not working properly and confirmation
  that the provided alternative parameters do work, the EVE_RiTFT50 however are confirmed to be working with the IOT5
 - commented out EVE_Display_Parameters_t for now
+- removed the 4.0 history
+- added EVE_TYPE_BAR, EVE_HSIZE_VISIBLE and EVE_VSIZE_VISIBLE defines to the bar-type display configurations
+- changed the timings for EVE3x-39A and EVE3x-39G to what Matrix Orbital is using in their library
+- changed the timings for EVE2_38A and EVE2_38G to what Matrix Orbital is using in their library
+- added profiles for EVE_EVE3x_38A and EVE_EVE3x_38G
+
 
 */
 
@@ -105,6 +84,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
   #define EVE_RiTFT43
   #define EVE_RiTFT50
   #define EVE_RiTFT70
+  #define EVE_EVE3_29
   #define EVE_EVE3_35
   #define EVE_EVE3_35G
   #define EVE_EVE3_43
@@ -113,6 +93,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
   #define EVE_EVE3_50G
   #define EVE_EVE3_70
   #define EVE_EVE3_70G
+  #define EVE_EVE3x_38
+  #define EVE_EVE3x_38G
   #define EVE_EVE3x_39
   #define EVE_EVE3x_39G
 
@@ -951,6 +933,7 @@ typedef struct
 /* ----------- non-standard ----------- */
 
 /* untested */
+/* timings are from here: https://github.com/MatrixOrbital/EVE2-Library/blob/master/Eve2_81x.c */
 /* EVE2-29A 320x102 2.9" 1U Matrix Orbital, non-touch, FT812 */
 #if defined (EVE_EVE2_29)
 #define EVE_HSIZE   (320L)
@@ -969,6 +952,35 @@ typedef struct
 #define EVE_PCLK    (9L)
 #define EVE_CSPREAD (1L)
 #define EVE_GEN 2
+#define EVE_TYPE_BAR
+#define EVE_HSIZE_VISIBLE   (320L)
+#define EVE_VSIZE_VISIBLE   (102L)
+#endif
+
+
+/* untested */
+/* timings are from here: https://github.com/MatrixOrbital/EVE2-Library/blob/master/Eve2_81x.c */
+/* EVE3-29A 320x102 2.9" 1U Matrix Orbital, non-touch, BT816 */
+#if defined (EVE_EVE3_29)
+#define EVE_HSIZE   (320L)
+#define EVE_VSIZE   (102L)
+
+#define EVE_VSYNC0  (0L)
+#define EVE_VSYNC1  (2L)
+#define EVE_VOFFSET (156L)
+#define EVE_VCYCLE  (262L)
+#define EVE_HSYNC0  (0L)
+#define EVE_HSYNC1  (10L)
+#define EVE_HOFFSET (70L)
+#define EVE_HCYCLE  (408L)
+#define EVE_PCLKPOL (0L)
+#define EVE_SWIZZLE (0L)
+#define EVE_PCLK    (11L)
+#define EVE_CSPREAD (1L)
+#define EVE_GEN 3
+#define EVE_TYPE_BAR
+#define EVE_HSIZE_VISIBLE   (320L)
+#define EVE_VSIZE_VISIBLE   (102L)
 #endif
 
 
@@ -994,6 +1006,7 @@ typedef struct
 
 
 /* EVE2-38A 480x116 3.8" 1U Matrix Orbital, resistive touch, FT812 */
+/* timings are from here: https://github.com/MatrixOrbital/EVE2-Library/blob/master/Eve2_81x.c */
 #if defined (EVE_EVE2_38)
 #define EVE_HSIZE   (480L)
 #define EVE_VSIZE   (272L)
@@ -1005,16 +1018,20 @@ typedef struct
 #define EVE_HSYNC0  (0L)
 #define EVE_HSYNC1  (41L)
 #define EVE_HOFFSET (43L)
-#define EVE_HCYCLE  (548L)
+#define EVE_HCYCLE  (524L)
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_PCLK    (6L)
 #define EVE_CSPREAD (1L)
 #define EVE_GEN 2
+#define EVE_TYPE_BAR
+#define EVE_HSIZE_VISIBLE   (480L)
+#define EVE_VSIZE_VISIBLE   (116L)
 #endif
 
 
 /* EVE2-38G 480x116 3.8" 1U Matrix Orbital, capacitive touch, FT813 */
+/* timings are from here: https://github.com/MatrixOrbital/EVE2-Library/blob/master/Eve2_81x.c */
 #if defined (EVE_EVE2_38G)
 #define EVE_HSIZE   (480L)
 #define EVE_VSIZE   (272L)
@@ -1026,29 +1043,85 @@ typedef struct
 #define EVE_HSYNC0  (0L)
 #define EVE_HSYNC1  (41L)
 #define EVE_HOFFSET (43L)
-#define EVE_HCYCLE  (548L)
+#define EVE_HCYCLE  (524L)
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_PCLK    (6L)
 #define EVE_CSPREAD (1L)
 #define EVE_GEN 2
 #define EVE_HAS_GT911   /* special treatment required for out-of-spec touch-controller */
+#define EVE_TYPE_BAR
+#define EVE_HSIZE_VISIBLE   (480L)
+#define EVE_VSIZE_VISIBLE   (116L)
 #endif
 
 
 /* untested */
+/* EVE3x-38A 480x116 3.8" 1U Matrix Orbital, resistive touch, BT816 */
+/* timings are from here: https://github.com/MatrixOrbital/EVE2-Library/blob/master/Eve2_81x.c */
+#if defined (EVE_EVE3x_38)
+#define EVE_HSIZE   (480L)
+#define EVE_VSIZE   (272L)
+
+#define EVE_VSYNC0  (152L)
+#define EVE_VSYNC1  (10L)
+#define EVE_VOFFSET (12L)
+#define EVE_VCYCLE  (292L)
+#define EVE_HSYNC0  (0L)
+#define EVE_HSYNC1  (41L)
+#define EVE_HOFFSET (43L)
+#define EVE_HCYCLE  (524L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_PCLK    (7L)
+#define EVE_CSPREAD (1L)
+#define EVE_GEN 3
+#define EVE_HSIZE_VISIBLE   (480L)
+#define EVE_VSIZE_VISIBLE   (116L)
+#endif
+
+
+/* untested */
+/* EVE3-38G 480x116 3.8" 1U Matrix Orbital, capacitive touch, BT815 */
+/* timings are from here: https://github.com/MatrixOrbital/EVE2-Library/blob/master/Eve2_81x.c */
+#if defined (EVE_EVE3x_38G)
+#define EVE_HSIZE   (480L)
+#define EVE_VSIZE   (272L)
+
+#define EVE_VSYNC0  (152L)
+#define EVE_VSYNC1  (10L)
+#define EVE_VOFFSET (12L)
+#define EVE_VCYCLE  (292L)
+#define EVE_HSYNC0  (0L)
+#define EVE_HSYNC1  (41L)
+#define EVE_HOFFSET (43L)
+#define EVE_HCYCLE  (524L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_PCLK    (6L)
+#define EVE_CSPREAD (1L)
+#define EVE_GEN 3
+#define EVE_HAS_GT911   /* special treatment required for out-of-spec touch-controller */
+#define EVE_TYPE_BAR
+#define EVE_HSIZE_VISIBLE   (480L)
+#define EVE_VSIZE_VISIBLE   (116L)
+#endif
+
+
+/* untested */
+/* timings are from here: https://github.com/MatrixOrbital/EVE2-Library/blob/master/Eve2_81x.c */
 /* EVE3x-39A 480x128 3.9" 1U Matrix Orbital, resistive touch, BT816 */
 #if defined (EVE_EVE3x_39)
 #define EVE_HSIZE   (480L)
 #define EVE_VSIZE   (272L)
 
-#define EVE_VSYNC0  (8L)
-#define EVE_VSYNC1  (11L)
-#define EVE_VOFFSET (15L)
+#define EVE_VSYNC0  (7L)
+#define EVE_VSYNC1  (8L)
+#define EVE_VOFFSET (12L)
 #define EVE_VCYCLE  (288L)
-#define EVE_HSYNC0  (44L)
-#define EVE_HSYNC1  (28L)
-#define EVE_HOFFSET (44L)
+#define EVE_HSYNC0  (0L)
+#define EVE_HSYNC1  (44L)
+#define EVE_HOFFSET (16L)
 #define EVE_HCYCLE  (524L)
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
@@ -1056,22 +1129,26 @@ typedef struct
 #define EVE_CSPREAD (1L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
+#define EVE_TYPE_BAR
+#define EVE_HSIZE_VISIBLE   (480L)
+#define EVE_VSIZE_VISIBLE   (128L)
 #endif
 
 
 /* untested */
+/* timings are from here: https://github.com/MatrixOrbital/EVE2-Library/blob/master/Eve2_81x.c */
 /* EVE3x-39G 480x128 3.9" 1U Matrix Orbital, capacitive touch, BT815 */
 #if defined (EVE_EVE3x_39G)
 #define EVE_HSIZE   (480L)
 #define EVE_VSIZE   (272L)
 
-#define EVE_VSYNC0  (8L)
-#define EVE_VSYNC1  (11L)
-#define EVE_VOFFSET (15L)
+#define EVE_VSYNC0  (7L)
+#define EVE_VSYNC1  (8L)
+#define EVE_VOFFSET (12L)
 #define EVE_VCYCLE  (288L)
-#define EVE_HSYNC0  (44L)
-#define EVE_HSYNC1  (28L)
-#define EVE_HOFFSET (44L)
+#define EVE_HSYNC0  (0L)
+#define EVE_HSYNC1  (44L)
+#define EVE_HOFFSET (16L)
 #define EVE_HCYCLE  (524L)
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
@@ -1080,6 +1157,9 @@ typedef struct
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
 #define EVE_HAS_GT911
+#define EVE_TYPE_BAR
+#define EVE_HSIZE_VISIBLE   (480L)
+#define EVE_VSIZE_VISIBLE   (128L)
 #endif
 
 
@@ -1101,6 +1181,9 @@ typedef struct
 #define EVE_PCLK    (7L)
 #define EVE_CSPREAD (0L)
 #define EVE_GEN 2
+#define EVE_TYPE_BAR
+#define EVE_HSIZE_VISIBLE   (480L)
+#define EVE_VSIZE_VISIBLE   (128L)
 #endif
 
 /* untested */

@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2022-04-23
+@date    2022-08-07
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -23,31 +23,6 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMA
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 @section History
-
-4.0
-- changed FT8_ prefixes to EVE_
-- added EVE_cmd_flashsource()
-- added prototype for EVE_init_flash() - not functional yet
-- added protoypes for EVE_cmd_flashwrite(), EVE_cmd_flashread(), EVE_cmd_flashupdate(), EVE_cmd_flashfast(), EVE_cmd_flashspitx() and EVE_cmd_flashspirx()
-- added prototypes for EVE_cmd_inflate2(), EVE_cmd_rotatearound(), EVE_cmd_animstart(), EVE_cmd_animstop(), EVE_cmd_animxy(),
-	EVE_cmd_animdraw(), EVE_cmd_animframe(), EVE_cmd_gradienta(), EVE_cmd_fillwidth() and EVE_cmd_appendf()
-- added a paramter to EVE_get_touch_tag() to allow multi-touch
-- expanded EVE_cmdWrite() from command only to command+parameter
-- changed the prototype for EVE_cmd_getptr(), it returns the memory-address directly now
-- changed the prototype for EVE_cmd_memcrc(), it returns the crc32 directly now
-- changed the prototype for EVE_cmd_regread(), it returns the 32 bit value directly now
-- changed cmd_getprops() and cmd_getmatrix(), these return structures now
-- added EVE_cmd_text_var() after struggeling with varargs, this function adds a single paramter for string conversion if EVE_OPT_FORMAT is given
-- changed EVE_cmd_text_var() to a varargs function with the number of arguments as additional argument
-- added EVE_cmd_button_var() and EVE_cmd_toggle_var() functions
-- added prototype for EVE_calibrate_manual()
-- added prototypes EVE_cmd_flasherase(), EVE_cmd_flashattach(), EVE_cmd_flashdetach() and EVE_cmd_flashspidesel()
-- added an include for "EVE.h" in order to reduce the necessary includes in the main project file, only including "EVE_commands.h" is fine now
-- changed EVE_cmd_getprops() again, inspired by BRTs AN_025, changed the name to EVE_LIB_GetProps() and got rid of the returning data-structure
-- replaced EVE_cmd_getmatrix() with an earlier implementation again, looks like it is supposed to write, not read
-- added function EVE_color_rgb()
-- marked EVE_get_touch_tag() as deprecated
-- changed the "len" parameter for loadimage, inflate, inflate2 and EVE_memWrite_flash_buffer() to uint32_t
 
 5.0
 - added prototype for EVE_cmd_plkfreq()
@@ -82,6 +57,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - finally removed EVE_cmd_start() after setting it to deprecatd with the first 5.0 release
 - renamed EVE_cmd_execute() to EVE_execute_cmd() to be more consistent, this is is not an EVE command
 - added the return-value of EVE_FIFO_HALF_EMPTY to EVE_busy() to indicate there is more than 2048 bytes available
+- removed the 4.0 history
+- added parameter width to EVE_calibrate_manual()
 
 */
 
@@ -210,8 +187,6 @@ void EVE_start_cmd_burst(void);
 void EVE_end_cmd_burst(void);
 
 
-
-
 /* EVE4: BT817 / BT818 */
 #if EVE_GEN > 3
 
@@ -337,7 +312,6 @@ void EVE_color_rgb_burst(uint32_t color);
 /*-------- special purpose functions ------------------- --------------------------------------------------------------------*/
 /*---------------------------------------------------------------------------------------------------------------------------*/
 
-void EVE_calibrate_manual(uint16_t height);
-
+void EVE_calibrate_manual(uint16_t width, uint16_t height);
 
 #endif /* EVE_COMMANDS_H */

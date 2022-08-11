@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2022-05-06
+@date    2022-08-07
 @author  Rudolph Riedel
 
 @section info
@@ -30,69 +30,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 
 @section History
-
-4.0
-- renamed from EVE_commands.c to EVE_commands.c
-- changed FT8_ prefixes to EVE_
-- apparently BT815 supports Goodix touch-controller directly, so changed EVE_init() accordingly
-- added EVE_cmd_flashsource()
-- added EVE_init_flash() - empty for now
-- added EVE_cmd_flashwrite(), EVE_cmd_flashread(), EVE_cmd_flashupdate(), EVE_cmd_flashfast(), EVE_cmd_flashspitx(), EVE_cmd_flashspirx()
-- changed block_transfer() that is used by EVE_cmd_inflate() and EVE_cmd_loadimage() to transfer the data in chunks of
-  a maximum of 3840 bytes instead of 4000 bytes.
-  The new EVE_cmd_flashwrite() uses block_transfer() as well and it needs the data in multiples of 256 bytes.
-  Breaking the data down to any number should be ok, as long as the total is a multiple of 256 - but better safe than sorry...
-- Bugfix, sort of: in order to add padding bytes for 4-byte alignment spi_flash_write() was reading up to 3 bytes past the supplied buffer, now 1, 2 or 3 zero-bytes are send
-- extended the maximum timeout in EVE_init() to 400ms as at least according to the datasheets "The boot-up may take up to 300ms to complete"
-- tried to fill in EVE_init_flash() - nothing to test it with, yet
-- added DMA
-- reworked all commands that support burst to use spi_transmit() in non burst mode and spi_transmit_async() when burst is active
-- added a conditional reset to the init for the BT816 test-config
-- implemented EVE_cmd_inflate2()
-- made EVE_cmd_loadimage() aware of EVE_OPT_FLASH when compiled for BT81x
-- implemented EVE_cmd_rotatearound(), EVE_cmd_animstart(), EVE_cmd_animstop(), EVE_cmd_animxy(), EVE_cmd_animdraw(),
-    EVE_cmd_animframe(), EVE_cmd_gradienta(), EVE_cmd_fillwidth() and EVE_cmd_appendf()
-- upgraded EVE_get_touch_tag() to multi-touch
-- made a few changes to EVE_write_string(), the char * is cast into a uint8_t pointer now since regardless what the string is encoded like
-  it needs to be send over SPI as a sequence of bytes
-  also it will leave the loop now after 249 bytes without detecting a zero to terminate the string
-- sped up EVE_write_string() at the cost of a few bytes more code by moving the if(cmd_burst) out of the loops
-- broke up a potentially endless loop at the end of EVE_init() - it had close to zero chance to fail this far through the init and I never saw it fail
-- expanded EVE_cmdWrite() from command only to command+parameter
-- EVE_init() sets BT81x to 72MHz now
-- sped up EVE_cmd_dl() for burst operations by avoiding a call to EVE_start_cmd()
-- sped up EVE_cmd_text() and EVE_cmd_number() for burst operations a little by avoiding a call to EVE_start_cmd()
-- removed a redundant #include "EVE_config.h", EVE.h already includes it
-- changed EVE_cmd_getptr(), it includes execution now and directly returns the end memory address of data inflated by EVE_cmd_inflate()
-- changed EVE_cmd_memcrc(), it includes execution now and directly returns the calculated crc32
-- changed EVE_cmd_regread(), it includes execution now and directly returns the 32 bit value
-- rewrote EVE_cmd_getprops(), it returns a struct now with pointer, width and height
-- rewrote EVE_cmd_getmatrix(), it returns a struct now with matrix coefficent a...f
-- added EVE_cmd_text_var() after struggeling with varargs, this function adds a single paramter for string conversion if EVE_OPT_FORMAT is given
-- "optimized" EVE_init() to only read REG_ID in the loop and to use DELAY_MS(1); before reading REG_ID
-- added waiting for REG_CPURESET to be 0x00 to EVE_init() to follow the initialization sequence more strictly, turned out that the touch-controller needs 10+ms extra
-- added updating of REG_FREQUENCY to 72MHz for BT81x to EVE_init(), the programming guide states that it must be updated if the hosts selects an alternative frequency
-- rephrased the comment for the meta-commands into a warning and put it in front of each function, do not use these functions for several objects at once
-- changed EVE_cmd_text_var() to a varargs function with the number of arguments as additional argument
-- added EVE_cmd_button_var() and EVE_cmd_toggle_var() functions
-- added EVE_calibrate_manual()
-- removed the second updating of REG_FREQUENCY for BT81x in EVE_init() that I overlooked earlier
-- added a couple lines of comments to the EVE3 flash commands
-- reworked EVE_busy() to match the coprocessor fault recovery for BT81x as described in the BT81x programming guide
-- added EVE_cmd_flasherase(), EVE_cmd_flashattach(), EVE_cmd_flashdetach() and EVE_cmd_flashspidesel()
-- sent it thru Cppcheck and removed a couple of "issues" with severity "style"
-- bugifx: EVE_cmd_flasherase(), EVE_cmd_flashattach(), EVE_cmd_flashdetach() and EVE_cmd_flashspidesel() were missing a EVE_cs_clear();
-- changed block_transfer() to use 32bit for the number of bytes to be transferred
-- minor housekeeping, no functional changes
-- Bugfix: EVE_get_touch_tag() failed to compile for FT80x as there is only one REG_TOUCH_TAG
-- removed include for "EVE_target.h" since "EVE.h" already includes it now
-- changed EVE_cmd_getprops() again, inspired by BRTs AN_025, changed the name to EVE_LIB_GetProps() and got rid of the returning data-structure
-- replaced EVE_cmd_getmatrix() with an earlier implementation again, looks like it is supposed to write, not read.
-- added function EVE_color_rgb()
-- added a fixed 40ms delay in EVE_init() between ACTIVE and the first reading of 0x7c as a compromise to comply with AN033 V1.2
-- removed writing of REG_CSSPREAD from EVE_init() so it is per default activated now for all displays
-- changed the "len" parameter for loadimage, inflate, inflate2 and EVE_memWrite_flash_buffer() to uint32_t
-- quick workaround for FT813/GT911: in order to use multi-touch a much longer delay is necessary as the >55ms from AN_336
 
 5.0
 - added EVE_cmd_pclkfreq()
@@ -162,7 +99,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added the return-value of EVE_FIFO_HALF_EMPTY to EVE_busy() to indicate there is more than 2048 bytes available
 - minor cleanup, less break and else statements
 - added the burst code back into all the functions for which there is a _burst version, this allows to use the version without
-   the traling _burst in the name when exceution speed is not an issue - e.g. with all targets supporting DMA 
+    the traling _burst in the name when exceution speed is not an issue - e.g. with all targets supporting DMA 
+- removed the 4.0 history
+- added the optional parameter EVE_ROTATE as define to EVE_init() to allow for screen rotation during init
+    thanks for the idea to AndrejValand on Github!
+- added the optional parameter EVE_BACKLIGHT_PWM to EVE_init() to allow setting the backlight during init
+- modified EVE_calibrate_manual() to work better with bar type displays
 
 */
 
@@ -264,7 +206,7 @@ void EVE_memWrite32(uint32_t ftAddress, uint32_t ftData32)
 
 
 
-/* helper function, write a block of memory from the FLASH of the host controller to EVE */
+/* Helper function, write a block of memory from the FLASH of the host controller to EVE. */
 void EVE_memWrite_flash_buffer(uint32_t ftAddress, const uint8_t *data, uint32_t len)
 {
     uint32_t count;
@@ -285,7 +227,7 @@ void EVE_memWrite_flash_buffer(uint32_t ftAddress, const uint8_t *data, uint32_t
 }
 
 
-/* helper function, write a block of memory from the SRAM of the host controller to EVE */
+/* Helper function, write a block of memory from the SRAM of the host controller to EVE. */
 void EVE_memWrite_sram_buffer(uint32_t ftAddress, const uint8_t *data, uint32_t len)
 {
     uint32_t count;
@@ -306,13 +248,10 @@ void EVE_memWrite_sram_buffer(uint32_t ftAddress, const uint8_t *data, uint32_t 
 }
 
 
-/**
- * @brief Check if the co-processor completed executing the current command list.
- * 
- * @return returns E_OK in case EVE is not busy (no DMA transfer active and REG_CMDB_SPACE has the value 0xffc, meaning the CMD-FIFO is empty),
- * returns EVE_FIFO_HALF_EMPTY if no DMA transfer is active and REG_CMDB_SPACE shows more than 2048 bytes available,
- * returns EVE_IS_BUSY if a DMA transfer is active or REG_CMDB_SPACE has a value smaller than 0xffc,
- */
+/* Check if the co-processor completed executing the current command list. */
+/* Returns E_OK in case EVE is not busy (no DMA transfer active and REG_CMDB_SPACE has the value 0xffc, meaning the CMD-FIFO is empty. */
+/* Returns EVE_FIFO_HALF_EMPTY if no DMA transfer is active and REG_CMDB_SPACE shows more than 2048 bytes available. */
+/* Returns EVE_IS_BUSY if a DMA transfer is active or REG_CMDB_SPACE has a value smaller than 0xffc. */
 uint8_t EVE_busy(void)
 {
     uint16_t space;
@@ -375,16 +314,14 @@ uint8_t EVE_busy(void)
 }
 
 
-/**
- * @brief Wait for the co-processor to complete the FIFO queue.
- */
+/* Wait for the co-processor to complete the FIFO queue.*/
 void EVE_execute_cmd(void)
 {
     while (EVE_busy()) {};
 }
 
 
-/* begin a co-processor command, this is used for non-display-list and non-burst-mode commands */
+/* Begin a co-processor command, this is used for non-display-list and non-burst-mode commands.*/
 static void eve_begin_cmd(uint32_t command)
 {
     uint32_t ftAddress;
@@ -453,7 +390,7 @@ void block_transfer(const uint8_t *data, uint32_t len)
 /* BT817 / BT818 */
 #if EVE_GEN > 3
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 /* write "num" bytes from src in RAM_G to to the external flash on a BT81x board at address dest */
 /* note: dest must be 4096-byte aligned, src must be 4-byte aligned, num must be a multiple of 4096 */
 /* note: EVE will not do anything if the alignment requirements are not met */
@@ -470,7 +407,7 @@ void EVE_cmd_flashprogram(uint32_t dest, uint32_t src, uint32_t num)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 void EVE_cmd_fontcache(uint32_t font, int32_t ptr, uint32_t num)
 {
     eve_begin_cmd(CMD_FONTCACHE);
@@ -482,7 +419,7 @@ void EVE_cmd_fontcache(uint32_t font, int32_t ptr, uint32_t num)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 void EVE_cmd_fontcachequery(uint32_t *total, int32_t *used)
 {
     uint16_t cmdoffset;
@@ -505,7 +442,7 @@ void EVE_cmd_fontcachequery(uint32_t *total, int32_t *used)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 void EVE_cmd_getimage(uint32_t *source, uint32_t *fmt, uint32_t *width, uint32_t *height, uint32_t *palette)
 {
     uint16_t cmdoffset;
@@ -543,7 +480,7 @@ void EVE_cmd_getimage(uint32_t *source, uint32_t *fmt, uint32_t *width, uint32_t
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 void EVE_cmd_linetime(uint32_t dest)
 {
     eve_begin_cmd(CMD_LINETIME);
@@ -552,7 +489,7 @@ void EVE_cmd_linetime(uint32_t dest)
     while (EVE_busy()) {};
 }
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 void EVE_cmd_newlist(uint32_t adr)
 {
     eve_begin_cmd(CMD_NEWLIST);
@@ -562,7 +499,7 @@ void EVE_cmd_newlist(uint32_t adr)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 /* This command sets REG_PCLK_FREQ to generate the closest possible frequency to the one requested. */
 /* Returns the frequency achieved or zero if no frequency was found. */
 uint32_t EVE_cmd_pclkfreq(uint32_t ftarget, int32_t rounding)
@@ -582,7 +519,7 @@ uint32_t EVE_cmd_pclkfreq(uint32_t ftarget, int32_t rounding)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 void EVE_cmd_wait(uint32_t us)
 {
     eve_begin_cmd(CMD_WAIT);
@@ -598,7 +535,7 @@ void EVE_cmd_wait(uint32_t us)
 /* BT815 / BT816 */
 #if EVE_GEN > 2
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 /* this command clears the graphics systems flash cache and to do so it needs to be executed with empty display lists */
 /* note: looks like overkill to clear both display lists but this is taken from BRT sample code */
 void EVE_cmd_clearcache(void)
@@ -616,8 +553,8 @@ void EVE_cmd_clearcache(void)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
-/* this is added for conveniance, using EVE_cmd_dl(CMD_FLASHATTACH); followed by EVE_cmd_execute(); would work as well */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
+/* this is added for conveniance, using EVE_cmd_dl(CMD_FLASHATTACH); followed by EVE_execute_cmd(); would work as well */
 void EVE_cmd_flashattach(void)
 {
     eve_begin_cmd(CMD_FLASHATTACH);
@@ -626,8 +563,8 @@ void EVE_cmd_flashattach(void)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
-/* this is added for conveniance, using EVE_cmd_dl(CMD_FLASHDETACH); followed by EVE_cmd_execute(); would work as well */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
+/* this is added for conveniance, using EVE_cmd_dl(CMD_FLASHDETACH); followed by EVE_execute_cmd(); would work as well */
 void EVE_cmd_flashdetach(void)
 {
     eve_begin_cmd(CMD_FLASHDETACH);
@@ -636,8 +573,8 @@ void EVE_cmd_flashdetach(void)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
-/* this is added for conveniance, using EVE_cmd_dl(CMD_FLASHERASE); followed by EVE_cmd_execute(); would work as well */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
+/* this is added for conveniance, using EVE_cmd_dl(CMD_FLASHERASE); followed by EVE_execute_cmd(); would work as well */
 void EVE_cmd_flasherase(void)
 {
     eve_begin_cmd(CMD_FLASHERASE);
@@ -646,7 +583,7 @@ void EVE_cmd_flasherase(void)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 uint32_t EVE_cmd_flashfast(void)
 {
     uint16_t cmdoffset;
@@ -663,8 +600,8 @@ uint32_t EVE_cmd_flashfast(void)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
-/* this is added for conveniance, using EVE_cmd_dl(CMD_FLASHSPIDESEL); followed by EVE_cmd_execute(); would work as well */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
+/* this is added for conveniance, using EVE_cmd_dl(CMD_FLASHSPIDESEL); followed by EVE_execute_cmd(); would work as well */
 void EVE_cmd_flashspidesel(void)
 {
     eve_begin_cmd(CMD_FLASHSPIDESEL);
@@ -673,7 +610,7 @@ void EVE_cmd_flashspidesel(void)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 /* write "num" bytes from src in the external flash on a BT81x board to dest in RAM_G */
 /* note: src must be 64-byte aligned, dest must be 4-byte aligned, num must be a multiple of 4 */
 /* note: EVE will not do anything if the alignment requirements are not met */
@@ -689,7 +626,7 @@ void EVE_cmd_flashread(uint32_t dest, uint32_t src, uint32_t num)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 void EVE_cmd_flashsource(uint32_t ptr)
 {
     eve_begin_cmd(CMD_FLASHSOURCE);
@@ -699,7 +636,7 @@ void EVE_cmd_flashsource(uint32_t ptr)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 /* write "num" bytes from the BT81x SPI interface dest in RAM_G */
 /* note: raw direct access, not really useful for anything */
 void EVE_cmd_flashspirx(uint32_t dest, uint32_t num)
@@ -712,7 +649,7 @@ void EVE_cmd_flashspirx(uint32_t dest, uint32_t num)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 /* write "num" bytes from *data to the BT81x SPI interface */
 /* note: raw direct access, not really useful for anything */
 void EVE_cmd_flashspitx(uint32_t num, const uint8_t *data)
@@ -724,7 +661,7 @@ void EVE_cmd_flashspitx(uint32_t num, const uint8_t *data)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 /* write "num" bytes from src in RAM_G to to the external flash on a BT81x board at address dest */
 /* note: dest must be 4096-byte aligned, src must be 4-byte aligned, num must be a multiple of 4096 */
 /* note: EVE will not do anything if the alignment requirements are not met */
@@ -740,7 +677,7 @@ void EVE_cmd_flashupdate(uint32_t dest, uint32_t src, uint32_t num)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 /* write "num" bytes from *data to the external flash on a BT81x board at address ptr */
 /* note: ptr must be 256 byte aligned, num must be a multiple of 256 */
 /* note: EVE will not do anything if the alignment requirements are not met */
@@ -759,7 +696,7 @@ void EVE_cmd_flashwrite(uint32_t ptr, uint32_t num, const uint8_t *data)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 void EVE_cmd_inflate2(uint32_t ptr, uint32_t options, const uint8_t *data, uint32_t len)
 {
     eve_begin_cmd(CMD_INFLATE2);
@@ -779,7 +716,7 @@ void EVE_cmd_inflate2(uint32_t ptr, uint32_t options, const uint8_t *data, uint3
 #endif /* EVE_GEN > 2 */
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 /* get the properties of an image after a CMD_LOADIMAGE operation and write the values to the variables that are supplied by pointers
     uint32 pointer, width, height;
      EVE_LIB_GetProps(&pointer, &width, &height);
@@ -814,7 +751,7 @@ void EVE_cmd_getprops(uint32_t *pointer, uint32_t *width, uint32_t *height)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 /* address = EVE_cmd_getpr(); */
 uint32_t EVE_cmd_getptr(void)
 {
@@ -832,7 +769,7 @@ uint32_t EVE_cmd_getptr(void)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 void EVE_cmd_inflate(uint32_t ptr, const uint8_t *data, uint32_t len)
 {
     eve_begin_cmd(CMD_INFLATE);
@@ -845,7 +782,7 @@ void EVE_cmd_inflate(uint32_t ptr, const uint8_t *data, uint32_t len)
 }
 
 
-/* this is meant to be called outside display-list building, does not support cmd-burst */
+/* This is meant to be called outside display-list building, does not support cmd-burst.*/
 void EVE_cmd_interrupt(uint32_t ms)
 {
     eve_begin_cmd(CMD_INTERRUPT);
@@ -854,7 +791,7 @@ void EVE_cmd_interrupt(uint32_t ms)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 void EVE_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *data, uint32_t len)
 {
     eve_begin_cmd(CMD_LOADIMAGE);
@@ -876,7 +813,7 @@ void EVE_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *data, uint
 }
 
 
-/* this is meant to be called outside display-list building, does not support cmd-burst */
+/* This is meant to be called outside display-list building, does not support cmd-burst.*/
 void EVE_cmd_mediafifo(uint32_t ptr, uint32_t size)
 {
     eve_begin_cmd(CMD_MEDIAFIFO);
@@ -886,7 +823,7 @@ void EVE_cmd_mediafifo(uint32_t ptr, uint32_t size)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 void EVE_cmd_memcpy(uint32_t dest, uint32_t src, uint32_t num)
 {
     eve_begin_cmd(CMD_MEMCPY);
@@ -898,7 +835,7 @@ void EVE_cmd_memcpy(uint32_t dest, uint32_t src, uint32_t num)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 /* crc32 = EVE_cmd_memcrc(my_ptr_to_some_memory_region, some_amount_of_bytes); */
 uint32_t EVE_cmd_memcrc(uint32_t ptr, uint32_t num)
 {
@@ -917,7 +854,7 @@ uint32_t EVE_cmd_memcrc(uint32_t ptr, uint32_t num)
 }
 
 
-/* this is meant to be called outside display-list building, does not support cmd-burst */
+/* This is meant to be called outside display-list building, does not support cmd-burst.*/
 void EVE_cmd_memset(uint32_t ptr, uint8_t value, uint32_t num)
 {
     eve_begin_cmd(CMD_MEMSET);
@@ -928,7 +865,7 @@ void EVE_cmd_memset(uint32_t ptr, uint8_t value, uint32_t num)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 /* this is a pointless command, just use one of the EVE_memWrite* helper functions instead to directly write to EVEs memory */
 /*
 void EVE_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *data)
@@ -950,7 +887,7 @@ void EVE_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *data)
 */
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 void EVE_cmd_memzero(uint32_t ptr, uint32_t num)
 {
     eve_begin_cmd(CMD_MEMZERO);
@@ -961,7 +898,7 @@ void EVE_cmd_memzero(uint32_t ptr, uint32_t num)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command, does not support cmd-burst.*/
 /* it does not wait for completion in order to allow the video to be paused or terminated by REG_PLAY_CONTROL */
 void EVE_cmd_playvideo(uint32_t options, const uint8_t *data, uint32_t len)
 {
@@ -983,7 +920,7 @@ void EVE_cmd_playvideo(uint32_t options, const uint8_t *data, uint32_t len)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 /* regvalue = EVE_cmd_regread(ptr); */
 /* this seems to be completely pointless, there is no real use for it outside a display-list since the register could be read directly */
 /* and for what purpose would this be implemented to be used in a display list?? */
@@ -1003,7 +940,7 @@ uint32_t EVE_cmd_regread(uint32_t ptr)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 void EVE_cmd_setrotate(uint32_t r)
 {
     eve_begin_cmd(CMD_SETROTATE);
@@ -1013,7 +950,7 @@ void EVE_cmd_setrotate(uint32_t r)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 void EVE_cmd_snapshot(uint32_t ptr)
 {
     eve_begin_cmd(CMD_SNAPSHOT);
@@ -1023,7 +960,7 @@ void EVE_cmd_snapshot(uint32_t ptr)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 void EVE_cmd_snapshot2(uint32_t fmt, uint32_t ptr, int16_t x0, int16_t y0, int16_t w0, int16_t h0)
 {
     eve_begin_cmd(CMD_SNAPSHOT2);
@@ -1045,7 +982,7 @@ void EVE_cmd_snapshot2(uint32_t fmt, uint32_t ptr, int16_t x0, int16_t y0, int16
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 void EVE_cmd_track(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t tag)
 {
     eve_begin_cmd(CMD_TRACK);
@@ -1070,7 +1007,7 @@ void EVE_cmd_track(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t tag)
 }
 
 
-/* this is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst */
+/* This is meant to be called outside display-list building, it includes executing the command and waiting for completion, does not support cmd-burst.*/
 void EVE_cmd_videoframe(uint32_t dest, uint32_t result_ptr)
 {
     eve_begin_cmd(CMD_VIDEOFRAME);
@@ -1200,11 +1137,13 @@ const uint8_t EVE_GT911_data[1184] PROGMEM =
 #endif
 
 
-/**
- * @brief EVE chip initialization, has to be executed with the SPI setup to 11 MHz or less as required by FT8xx / BT8xx
- * 
- * @return returns E_OK in case of success
- */
+/* EVE chip initialization, has to be executed with the SPI setup to 11 MHz or less as required by FT8xx / BT8xx! */
+/* Takes no parameters but has a few optional parameters that are used by setting up defines. */
+/* EVE_TOUCH_RZTHRESH - configure the sensitivity of resistive touch, defaults to 1200. */
+/* EVE_ROTATE - set the screen rotation: bit0 = invert, bit2 = portrait, bit3 = mirrored */
+/* Note: if you use this you need a set of calibration values for the selected rotation since this rotates before calibration! */
+/* EVE_BACKLIGHT_PWM - configure the backlight pwm, defaults to 0x20 / 25% */
+/* Returns E_OK in case of success. */
 uint8_t EVE_init(void)
 {
     uint8_t chipid = 0;
@@ -1330,9 +1269,14 @@ uint8_t EVE_init(void)
         EVE_memWrite16(REG_TOUCH_RZTHRESH, 1200U); /* set a reasonable default value if none is given */
     #endif
 
+    #if defined(EVE_ROTATE)
+        EVE_memWrite8(REG_ROTATE, EVE_ROTATE & 0x07); /* bit0 = invert, bit2 = portrait, bit3 = mirrored */
+        /* reset default value is 0x0 - not inverted, landscape, not mirrored */
+    #endif
+
     /* disable Audio for now */
-    EVE_memWrite8(REG_VOL_PB, 0x00); /* turn recorded audio volume down */
-    EVE_memWrite8(REG_VOL_SOUND, 0x00); /* turn synthesizer volume off */
+    EVE_memWrite8(REG_VOL_PB, 0x00); /* turn recorded audio volume down, reset-default is 0xff */
+    EVE_memWrite8(REG_VOL_SOUND, 0x00); /* turn synthesizer volume down, reset-default is 0xff */
     EVE_memWrite16(REG_SOUND, 0x6000); /* set synthesizer to mute */
 
     /* write a basic display-list to get things started */
@@ -1357,10 +1301,14 @@ uint8_t EVE_init(void)
     EVE_memWrite8(REG_GPIO, 0x80); /* enable the DISP signal to the LCD panel, it is set to output in REG_GPIO_DIR by default */
     EVE_memWrite8(REG_PCLK, EVE_PCLK); /* now start clocking data to the LCD panel */
 
-    #if defined (EVE_ADAM101)
-    EVE_memWrite8(REG_PWM_DUTY, 0x60); /* turn on backlight to 25% for Glyn ADAM101 module, it uses inverted values */
+    #if defined (EVE_BACKLIGHT_PWM)
+    EVE_memWrite8(REG_PWM_DUTY, EVE_BACKLIGHT_PWM); /* set backlight to user requested level */
     #else
-    EVE_memWrite8(REG_PWM_DUTY, 0x20); /* turn on backlight to 25% for any other module */
+        #if defined (EVE_ADAM101)
+        EVE_memWrite8(REG_PWM_DUTY, 0x60); /* turn on backlight to 25% for Glyn ADAM101 module, it uses inverted values */
+        #else
+        EVE_memWrite8(REG_PWM_DUTY, 0x20); /* turn on backlight to 25% for any other module */
+        #endif
     #endif
 
     timeout = 0;
@@ -1386,11 +1334,9 @@ uint8_t EVE_init(void)
 /*-------- functions for display lists ---------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------------------*/
 
-/*
-These eliminate the overhead of transmitting the command-fifo address with every single command, just wrap a sequence of commands
-with these and the address is only transmitted once at the start of the block.
-Be careful to not use any functions in the sequence that do not address the command-fifo as for example any EVE_mem...() function.
-*/
+/* Begin a sequence of commands or prepare a DMA transfer if applicable. */
+/* Needs to be used with EVE_end_cmd_burst(). */
+/* Be careful to not use any functions in the sequence that do not address the command-fifo as for example any of EVE_mem...() functions. */
 void EVE_start_cmd_burst(void)
 {
     uint32_t ftAddress;
@@ -1419,6 +1365,8 @@ void EVE_start_cmd_burst(void)
 }
 
 
+/* End a sequence of commands or trigger a prepared DMA transfer if applicable. */
+/* Needs to be used with EVE_start_cmd_burst(). */
 void EVE_end_cmd_burst(void)
 {
     cmd_burst = 0;
@@ -1855,7 +1803,6 @@ void EVE_cmd_appendf_burst(uint32_t ptr, uint32_t num)
     spi_transmit_burst(ptr);
     spi_transmit_burst(num);
 }
-
 
 
 uint16_t EVE_cmd_bitmap_transform(int32_t x0, int32_t y0, int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t tx0, int32_t ty0, int32_t tx1, int32_t ty1, int32_t tx2, int32_t ty2)
@@ -3396,15 +3343,15 @@ void EVE_color_rgb_burst(uint32_t color)
 /*---------------------------------------------------------------------------------------------------------------------------*/
 
 
-/* this is meant to be called outside display-list building */
-/* this function displays an interactive calibration screen, calculates the calibration values and */
-/* writes the new values to the touch matrix registers of EVE */
-/* unlike the built-in cmd_calibrate() of EVE this also works with displays that are cut down from larger ones like EVE2-38A / EVE2-38G */
-/* the height is needed as parameter as EVE_VSIZE for the EVE2-38 is 272 but the visible size is only 116 */
-/* so the call would be EVE_calibrate_manual(116); for the EVE2-38A and EVE2-38G while for most other displays */
-/* using EVE_calibrate_manual(EVE_VSIZE) would work - but for normal displays the built-in cmd_calibrate would work as expected anyways */
-/* this code was taken from the MatrixOrbital EVE2-Library on Github, adapted and modified */
-void EVE_calibrate_manual(uint16_t height)
+/* This is meant to be called outside display-list building. */
+/* This function displays an interactive calibration screen, calculates the calibration values */
+/* and writes the new values to the touch matrix registers of EVE.*/
+/* Unlike the built-in cmd_calibrate() of EVE this also works with displays that are cut down from larger ones like EVE2-38A / EVE2-38G. */
+/* The dimensions are needed as parameter as EVE_VSIZE for the EVE2-38 is 272 but the visible size is only 116. */
+/* So the call would be EVE_calibrate_manual(EVE_HSIZE, 116); for the EVE2-38A and EVE2-38G while for most other displays */
+/* using EVE_calibrate_manual(EVE_VSIZE, EVE_VSIZE) would work - but for normal displays the built-in cmd_calibrate would work as expected anyways */
+/* This code was taken from the MatrixOrbital EVE2-Library on Github, adapted and modified */
+void EVE_calibrate_manual(uint16_t width, uint16_t height)
 {
     uint32_t displayX[3], displayY[3];
     uint32_t touchX[3], touchY[3];
@@ -3416,13 +3363,13 @@ void EVE_calibrate_manual(uint16_t height)
     uint8_t touch_lock = 1;
 
     /* these values determine where your calibration points will be drawn on your display */
-    displayX[0] = (EVE_HSIZE * 0.15);
+    displayX[0] = (width * 0.15);
     displayY[0] = (height * 0.15);
 
-    displayX[1] = (EVE_HSIZE * 0.85);
+    displayX[1] = (width * 0.85);
     displayY[1] = (height / 2);
 
-    displayX[2] = (EVE_HSIZE / 2);
+    displayX[2] = (width / 2);
     displayY[2] = (height * 0.85);
 
     while (count < 3)
@@ -3433,18 +3380,18 @@ void EVE_calibrate_manual(uint16_t height)
 
         /* draw Calibration Point on screen */
         EVE_cmd_dl(DL_COLOR_RGB | 0x0000ff);
-        EVE_cmd_dl(POINT_SIZE(20*16));
+        EVE_cmd_dl(POINT_SIZE(15*16));
         EVE_cmd_dl((DL_BEGIN | EVE_POINTS));
         EVE_cmd_dl(VERTEX2F((uint32_t)(displayX[count]) * 16, (uint32_t)((displayY[count])) * 16));
         EVE_cmd_dl(DL_END);
         EVE_cmd_dl(DL_COLOR_RGB | 0xffffff);
-        EVE_cmd_text((EVE_HSIZE/2), 50, 27, EVE_OPT_CENTER, "Please tap on the dot.");
+        EVE_cmd_text((width/2), 20, 26, EVE_OPT_CENTER, "tap on the dot");
         num[0] = count + 0x31; num[1] = 0; /* null terminated string of one character */
         EVE_cmd_text(displayX[count], displayY[count], 27, EVE_OPT_CENTER, num);
 
         EVE_cmd_dl(DL_DISPLAY);
         EVE_cmd_dl(CMD_SWAP);
-        while (EVE_busy()) {};
+        EVE_execute_cmd();
 
         while(1)
         {
