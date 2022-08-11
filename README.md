@@ -13,14 +13,15 @@ It contains code for and has been used with various micro-controllers and displa
 I have used it so far with:
 
 - 8-Bit AVR, specifically the 90CAN series
-- Arduino: Uno, mini-pro, ESP8266, ESP32 (DMA), Metro-M4 (DMA), STM32 Nucleo_F446RE (DMA)
+- Arduino: Uno, mini-pro, ESP8266, ESP32 (DMA), Metro-M4 (DMA), STM32 Nucleo_F446RE (DMA), XMC1100
 - Renesas F1L RH850
 - Infineon Aurix TC222
 - ATSAMC21E18A (DMA)
 - ATSAME51J19A (DMA)
 - ESP32 (DMA)
-- RP2040 (DMA) - Raspberry Pi Pico
+- RP2040 Baremetal / Arduino (DMA) - Raspberry Pi Pico
 - S32K144 (DMA)
+- GD32C103CBT6
 
 I have reports of successfully using it with:
 
@@ -31,6 +32,7 @@ I have reports of successfully using it with:
 - MSP432
 - some PICs
 - ATxmega128A1
+- TMS320F28335
 
 ## Displays
 
