@@ -19,9 +19,9 @@ I have used it so far with:
 - ATSAMC21E18A (DMA)
 - ATSAME51J19A (DMA)
 - ESP32 (DMA)
-- RP2040 Baremetal / Arduino (DMA) - Raspberry Pi Pico
+- RP2040 Baremetal (DMA) + Arduino (DMA) - Raspberry Pi Pico
 - S32K144 (DMA)
-- GD32C103CBT6
+- GD32C103CBT6 (DMA)
 
 I have reports of successfully using it with:
 

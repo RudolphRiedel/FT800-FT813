@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions for plain C targets
 @version 5.0
-@date    2022-04-23
+@date    2022-08-18
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -50,6 +50,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - converted all TABs to SPACEs
 - split the ATSAMC21 and ATSAMx51 targets into separate sections
 - added more defines for ATSAMC21 and ATSAMx51 - chip crises...
+- added DMA support for the GD32C103 target
 
  */
 
@@ -486,6 +487,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 /*----------------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------------------------------------------------------------------------*/
+
         #if defined (CPU_S32K148) || (CPU_S32K144HFT0VLLT)
 
         void DELAY_MS(uint16_t val)
@@ -581,6 +583,111 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
         #endif /* DMA */
 
         #endif /* S32K14x */
+
+/*----------------------------------------------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------------------------------------------*/
+
+        #if defined (GD32C103)
+
+        void DELAY_MS(uint16_t val)
+        {
+            uint16_t counter;
+
+            while(val > 0)
+            {
+                for(counter=0; counter < EVE_DELAY_1MS;counter++)
+                {
+                    __asm__ volatile ("nop");
+                }
+                val--;
+            }
+        }
+
+        void EVE_init_spi(void)
+        {
+             /* only two valid options, the SPI0 pins are either mapped to GPIOA (default), or GPIOB */ 
+            if(EVE_SPI_PORT == GPIOA)
+            {
+                rcu_periph_clock_enable(RCU_GPIOA);
+                gpio_init(GPIOA, GPIO_MODE_AF_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_5);
+                gpio_init(GPIOA, GPIO_MODE_AF_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_7);
+                gpio_init(GPIOA, GPIO_MODE_IN_FLOATING, GPIO_OSPEED_50MHZ, GPIO_PIN_6);
+            }
+            else
+            {
+                rcu_periph_clock_enable(RCU_GPIOB);
+                gpio_init(GPIOB, GPIO_MODE_AF_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_3);
+                gpio_init(GPIOB, GPIO_MODE_AF_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_5);
+                gpio_init(GPIOB, GPIO_MODE_IN_FLOATING, GPIO_OSPEED_50MHZ, GPIO_PIN_4);
+            }
+
+            rcu_periph_clock_enable(RCU_AF);
+            rcu_periph_clock_enable(RCU_SPI0);
+
+            spi_parameter_struct spi_init_struct;
+            spi_i2s_deinit(SPI0);
+            spi_struct_para_init(&spi_init_struct);
+
+            spi_init_struct.trans_mode           = SPI_TRANSMODE_FULLDUPLEX;
+            spi_init_struct.device_mode          = SPI_MASTER;
+            spi_init_struct.frame_size           = SPI_FRAMESIZE_8BIT;
+            spi_init_struct.clock_polarity_phase = SPI_CK_PL_LOW_PH_1EDGE;
+            spi_init_struct.nss                  = SPI_NSS_SOFT;
+            spi_init_struct.prescale             = SPI_PSC_16; /* SPI_PSC_16 -> 120MHz / 16 = 7.5MHz */
+            spi_init_struct.endian               = SPI_ENDIAN_MSB;
+            spi_init(SPI0, &spi_init_struct);
+            spi_enable(SPI0);
+        }
+
+        #if defined (EVE_DMA)
+            uint32_t EVE_dma_buffer[1025];
+            volatile uint16_t EVE_dma_buffer_index = 0;
+            volatile uint8_t EVE_dma_busy = 0;
+
+            void EVE_init_dma(void)
+            {
+                rcu_periph_clock_enable(RCU_DMA0);
+                nvic_irq_enable(DMA0_Channel2_IRQn,0,0);
+            }
+
+            void EVE_start_dma_transfer(void)
+            {
+                dma_parameter_struct dma_init_struct;
+
+                dma_deinit(DMA0, DMA_CH2);
+                DMA_CHCTL(DMA0, DMA_CH2) = DMA_CHCTL(DMA0, DMA_CH2) | DMA_CHXCTL_FTFIE; /* enable full transfer finish interrupt */
+
+                dma_struct_para_init(&dma_init_struct);
+                dma_init_struct.periph_addr  = (uint32_t)&SPI_DATA(SPI0);
+                dma_init_struct.memory_addr  = ((uint32_t) &EVE_dma_buffer[0]) + 1;
+                dma_init_struct.direction    = DMA_MEMORY_TO_PERIPHERAL;
+                dma_init_struct.memory_width = DMA_MEMORY_WIDTH_8BIT;
+                dma_init_struct.periph_width = DMA_PERIPHERAL_WIDTH_8BIT;
+                dma_init_struct.priority     = DMA_PRIORITY_LOW;
+                dma_init_struct.number       = (((EVE_dma_buffer_index)*4)-1);
+                dma_init_struct.periph_inc   = DMA_PERIPH_INCREASE_DISABLE;
+                dma_init_struct.memory_inc   = DMA_MEMORY_INCREASE_ENABLE;
+                dma_init(DMA0, DMA_CH2, &dma_init_struct); /* configure SPI0 transmit dma: DMA0-DMA_CH2 */
+
+                EVE_cs_set();
+
+                dma_channel_enable(DMA0, DMA_CH2);
+                spi_dma_enable(SPI0, SPI_DMA_TRANSMIT);
+                EVE_dma_busy = 42;
+            }
+
+            void DMA0_Channel2_IRQHandler(void)
+            {
+                if(dma_interrupt_flag_get(DMA0, DMA_CH2, DMA_FLAG_FTF))
+                {
+                    dma_interrupt_flag_clear(DMA0, DMA_CH2, DMA_INT_FLAG_G);
+                    while(SPI_STAT(SPI0) & SPI_STAT_TRANS) {};
+                    EVE_cs_clear();
+                    EVE_dma_busy = 0;
+                }
+            }
+        #endif /* DMA */
+        #endif /* GD32C103 */
 
     #endif /* __GNUC__ */
 

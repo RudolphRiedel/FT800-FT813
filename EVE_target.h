@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-08-11
+@date    2022-08-18
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -65,6 +65,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - modified the WIZIOPICO target for Arduino RP2040 to also work with ArduinoCore-mbed
 - removed the 4.0 history
 - fixed the GD32C103 target, as a first step it works without DMA now
+- added DMA support for the GD32C103 target
 
 */
 
@@ -1376,29 +1377,29 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
        #include "gd32c10x.h"
 
+        /* note: SPI0 is used */
+
         #if !defined (EVE_CS)
             #define EVE_CS_PORT GPIOA
             #define EVE_CS GPIO_PIN_4
             #define EVE_PDN_PORT GPIOA
             #define EVE_PDN GPIO_PIN_3
-            #define EVE_SPI SPI0
-//            #define EVE_SPI_DMA_TRIGGER SERCOM0_DMAC_ID_TX
-//            #define EVE_DMA_CHANNEL 0
+            #define EVE_SPI_PORT GPIOA
+            #define EVE_DELAY_1MS 20000  /* ~1ms at 120MHz Core-Clock */
         #endif
 
-        static inline void DELAY_MS(uint16_t val)
-        {
-            uint16_t counter;
+        #if defined (EVE_DMA)
+            extern uint32_t EVE_dma_buffer[1025];
+            extern volatile uint16_t EVE_dma_buffer_index;
+            extern volatile uint8_t EVE_dma_busy;
 
-            while(val > 0)
-            {
-                for(counter=0; counter < 20000;counter++) /* maybe ~1ms at 120MHz Core-Clock */
-                {
-                    __asm__ volatile ("nop");
-                }
-                val--;
-            }
-        }
+            void EVE_init_dma(void);
+            void EVE_start_dma_transfer(void);
+        #endif
+
+
+        void DELAY_MS(uint16_t val);
+        void EVE_init_spi(void);
 
         static inline void EVE_pdn_set(void)
         {
@@ -1422,9 +1423,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
         static inline void spi_transmit(uint8_t data)
         {
-            SPI_DATA(EVE_SPI) = (uint32_t) data;
-            while(SPI_STAT(EVE_SPI) & SPI_STAT_TRANS) {};
-            (void) SPI_DATA(EVE_SPI); /* dummy read to clear the flags */
+            SPI_DATA(SPI0) = (uint32_t) data;
+            while(SPI_STAT(SPI0) & SPI_STAT_TRANS) {};
+            (void) SPI_DATA(SPI0); /* dummy read to clear the flags */
         }
 
         static inline void spi_transmit_32(uint32_t data)
@@ -1438,15 +1439,19 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
         /* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
         static inline void spi_transmit_burst(uint32_t data)
         {
-            spi_transmit_32(data);
+            #if defined (EVE_DMA)
+                EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+            #else
+                spi_transmit_32(data);
+            #endif
         }
 
         static inline uint8_t spi_receive(uint8_t data)
         {
-            SPI_DATA(EVE_SPI) = (uint32_t) data;
-            while(SPI_STAT(EVE_SPI) & SPI_STAT_TRANS) {};
-            while(0 == (SPI_STAT(EVE_SPI) & SPI_STAT_RBNE)) {};
-            return (uint8_t) SPI_DATA(EVE_SPI);
+            SPI_DATA(SPI0) = (uint32_t) data;
+            while(SPI_STAT(SPI0) & SPI_STAT_TRANS) {};
+            while(0 == (SPI_STAT(SPI0) & SPI_STAT_RBNE)) {};
+            return (uint8_t) SPI_DATA(SPI0);
         }
 
         static inline uint8_t fetch_flash_byte(const uint8_t *data)
