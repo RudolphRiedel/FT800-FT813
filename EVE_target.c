@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions for plain C targets
 @version 5.0
-@date    2022-08-18
+@date    2022-09-18
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -51,6 +51,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - split the ATSAMC21 and ATSAMx51 targets into separate sections
 - added more defines for ATSAMC21 and ATSAMx51 - chip crises...
 - added DMA support for the GD32C103 target
+- fixed the ESP32 target to work with the ESP32-S3 as well
 
  */
 
@@ -359,8 +360,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
             io_cfg.intr_type = GPIO_PIN_INTR_DISABLE;
             io_cfg.mode = GPIO_MODE_OUTPUT;
             io_cfg.pin_bit_mask = BIT(EVE_PDN) | BIT(EVE_CS);
-//          io_cfg.pull_down_en = 0,
-//          io_cfg.pull_up_en = 0
             gpio_config(&io_cfg);
 
             gpio_set_level(EVE_CS, 1);
@@ -373,21 +372,21 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
             buscfg.quadhd_io_num = -1;
             buscfg.max_transfer_sz= 4088;
 
-            devcfg.clock_speed_hz = 16 * 1000 * 1000;   //Clock = 16 MHz
-            devcfg.mode = 0;                            //SPI mode 0
-            devcfg.spics_io_num = -1;                   //CS pin operated by app
-            devcfg.queue_size = 3;                      // we need only one transaction in the que
-            devcfg.address_bits = 24;
-            devcfg.command_bits = 0;                    //command operated by app
+            devcfg.clock_speed_hz = 16 * 1000 * 1000; /* clock = 16 MHz */
+            devcfg.mode = 0;                          /* SPI mode 0 */
+            devcfg.spics_io_num = -1;                 /* CS pin operated by app */
+            devcfg.queue_size = 3;                    /* we need only one transaction in the que */
+            devcfg.address_bits = 24;                 /* 24 bits for the address */
+            devcfg.command_bits = 0;                  /* command operated by app */
             devcfg.post_cb = (transaction_cb_t)eve_spi_post_transfer_callback;
 
-            spi_bus_initialize(HSPI_HOST, &buscfg, 2);
-            spi_bus_add_device(HSPI_HOST, &devcfg, &EVE_spi_device);
+            spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO);
+            spi_bus_add_device(SPI2_HOST, &devcfg, &EVE_spi_device);
 
             devcfg.address_bits = 0;
             devcfg.post_cb = 0;
-            devcfg.clock_speed_hz = 10 * 1000 * 1000;   //Clock = 10 MHz
-            spi_bus_add_device(HSPI_HOST, &devcfg, &EVE_spi_device_simple);
+            devcfg.clock_speed_hz = 10 * 1000 * 1000; /* clock = 10 MHz */
+            spi_bus_add_device(SPI2_HOST, &devcfg, &EVE_spi_device_simple);
         }
 
         #if defined (EVE_DMA)
@@ -406,10 +405,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
             gpio_set_level(EVE_CS, 0); /* make EVE listen */
             EVE_spi_transaction.tx_buffer = (uint8_t *) &EVE_dma_buffer[1];
             EVE_spi_transaction.length = (EVE_dma_buffer_index-1) * 4 * 8;
-            EVE_spi_transaction.addr = 0x00b02578; // WRITE + REG_CMDB_WRITE;
-//          EVE_spi_transaction.flags = 0;
-//          EVE_spi_transaction.cmd = 0;
-//          EVE_spi_transaction.rxlength = 0;
+            EVE_spi_transaction.addr = 0x00b02578; /* WRITE + REG_CMDB_WRITE; */
             spi_device_queue_trans(EVE_spi_device, &EVE_spi_transaction, portMAX_DELAY);
             EVE_dma_busy = 42;
         }

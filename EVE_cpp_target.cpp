@@ -2,14 +2,14 @@
 @file    EVE_target.cpp
 @brief   target specific functions for C++ targets, so far only Arduino targets
 @version 5.0
-@date    2022-08-07
+@date    2022-09-18
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2021 Rudolph Riedel
+Copyright (c) 2016-2022 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -39,6 +39,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - converted all TABs to SPACEs
 - copied over the SPI and DMA support functions for the RP2040 baremetall target to be used under Arduino
 - modified the WIZIOPICO target for Arduino RP2040 to also work with ArduinoCore-mbed
+- fixed the ESP32 target to work with the ESP32-S3 as well
 
  */
 
@@ -212,21 +213,21 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
             buscfg.quadhd_io_num = -1;
             buscfg.max_transfer_sz= 4088;
 
-            devcfg.clock_speed_hz = 16 * 1000 * 1000;   //Clock = 16 MHz
-            devcfg.mode = 0;                            //SPI mode 0
-            devcfg.spics_io_num = -1;                   //CS pin operated by app
-            devcfg.queue_size = 3;                      // we need only one transaction in the que
-            devcfg.address_bits = 24;
-            devcfg.command_bits = 0;                    //command operated by app
+            devcfg.clock_speed_hz = 16 * 1000 * 1000; /* clock = 16 MHz */
+            devcfg.mode = 0;                          /* SPI mode 0 */
+            devcfg.spics_io_num = -1;                 /* CS pin operated by app */
+            devcfg.queue_size = 3;                    /* we need only one transaction in the que */
+            devcfg.address_bits = 24;                 /* 24 bits for the address */
+            devcfg.command_bits = 0;                  /* command operated by app */
             devcfg.post_cb = (transaction_cb_t)eve_spi_post_transfer_callback;
 
-            spi_bus_initialize(HSPI_HOST, &buscfg, 2);
-            spi_bus_add_device(HSPI_HOST, &devcfg, &EVE_spi_device);
+            spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO);
+            spi_bus_add_device(SPI2_HOST, &devcfg, &EVE_spi_device);
 
             devcfg.address_bits = 0;
             devcfg.post_cb = 0;
-            devcfg.clock_speed_hz = 10 * 1000 * 1000;   //Clock = 10 MHz
-            spi_bus_add_device(HSPI_HOST, &devcfg, &EVE_spi_device_simple);
+            devcfg.clock_speed_hz = 10 * 1000 * 1000; /* Clock = 10 MHz */
+            spi_bus_add_device(SPI2_HOST, &devcfg, &EVE_spi_device_simple);
         }
 
         #if defined (EVE_DMA)
@@ -244,10 +245,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
                 digitalWrite(EVE_CS, LOW); /* make EVE listen */
                 EVE_spi_transaction.tx_buffer = (uint8_t *) &EVE_dma_buffer[1];
                 EVE_spi_transaction.length = (EVE_dma_buffer_index-1) * 4 * 8;
-                EVE_spi_transaction.addr = 0x00b02578; // WRITE + REG_CMDB_WRITE;
-//              EVE_spi_transaction.flags = 0;
-//              EVE_spi_transaction.cmd = 0;
-//              EVE_spi_transaction.rxlength = 0;
+                EVE_spi_transaction.addr = 0x00b02578; /* WRITE + REG_CMDB_WRITE; */
                 spi_device_queue_trans(EVE_spi_device, &EVE_spi_transaction, portMAX_DELAY);
                 EVE_dma_busy = 42;
             }
