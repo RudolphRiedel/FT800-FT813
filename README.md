@@ -62,6 +62,7 @@ The TFTs tested so far:
 - GEN4-FT813-50CTP-CLB https://4dsystems.com.au/gen4-ft813-50ctp-clb
 - RVT101HVBNWC00-B https://riverdi.com/product/rvt101hvbnwc00-b/
 - RVT70HSBNWC00-B https://riverdi.com/product/rvt70hsbnwc00-b/
+- RVT50HQBNWC00-B https://riverdi.com/product/rvt50hqbnwc00-b/
 
 ## This is version 5
 
