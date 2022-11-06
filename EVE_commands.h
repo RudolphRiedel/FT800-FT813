@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2022-10-31
+@date    2022-11-06
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -271,10 +271,12 @@ void EVE_cmd_button(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t font
 void EVE_cmd_button_burst(int16_t x0, int16_t y0, int16_t w0, int16_t h0, int16_t font, uint16_t options,
                           const char *text);
 void EVE_cmd_calibrate(void);
-void EVE_cmd_clock(int16_t x0, int16_t y0, int16_t r0, uint16_t options, uint16_t hours, uint16_t minutes,
-                   uint16_t seconds, uint16_t millisecs);
-void EVE_cmd_clock_burst(int16_t x0, int16_t y0, int16_t r0, uint16_t options, uint16_t hours, uint16_t minutes,
-                         uint16_t seconds, uint16_t millisecs);
+void EVE_cmd_clock(int16_t x0, int16_t y0, int16_t r0, uint16_t options,
+                    uint16_t hours, uint16_t mins,
+                    uint16_t secs, uint16_t msecs);
+void EVE_cmd_clock_burst(int16_t x0, int16_t y0, int16_t r0, uint16_t options,
+                    uint16_t hours, uint16_t mins,
+                    uint16_t secs, uint16_t msecs);
 void EVE_cmd_dial(int16_t x0, int16_t y0, int16_t r0, uint16_t options, uint16_t val);
 void EVE_cmd_dial_burst(int16_t x0, int16_t y0, int16_t r0, uint16_t options, uint16_t val);
 void EVE_cmd_fgcolor(uint32_t color);
