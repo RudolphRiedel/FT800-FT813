@@ -1,5 +1,5 @@
 /*
-@file    EVE_target_ICCAVR.h
+@file    EVE_target_GD32VF103.h
 @brief   target specific includes, definitions and functions
 @version 5.0
 @date    2022-11-10
@@ -30,18 +30,22 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 */
 
-#ifndef EVE_TARGET_ICCAVR_H
-#define EVE_TARGET_ICCAVR_H
+
+#ifndef EVE_TARGET_GD32VF103_H
+#define EVE_TARGET_GD32VF103_H
 
 #pragma once
 
 #if !defined (ARDUINO)
-#if defined (__IMAGECRAFT__)
-#if defined (_AVR)
+#if defined (__GNUC__)
 
-#include <iccioavr.h>
+#if defined (__riscv)
 
-#define EVE_DELAY_1MS 2000U /* maybe ~1ms at 16MHz clock */
+//#warning Compiling for GD32VF103CBT6
+
+#include "gd32vf103.h"
+
+#define EVE_DELAY_1MS 18000U /* ~1ms at 108MHz Core-Clock, according to my Logic-Analyzer */
 
 static inline void DELAY_MS(uint16_t val)
 {
@@ -54,37 +58,30 @@ static inline void DELAY_MS(uint16_t val)
     }
 }
 
-#if !defined (EVE_CS)
-    #define EVE_CS_PORT PORTB
-    #define EVE_CS      (1<<PB5)
-    #define EVE_PDN_PORT    PORTB
-    #define EVE_PDN     (1<<PB4)
-#endif
-
 static inline void EVE_pdn_set(void)
 {
-    EVE_PDN_PORT &= ~EVE_PDN;   /* Power-Down low */
+    gpio_bit_reset(GPIOB,GPIO_PIN_1);
 }
 
 static inline void EVE_pdn_clear(void)
 {
-    EVE_PDN_PORT |= EVE_PDN;    /* Power-Down high */
+    gpio_bit_set(GPIOB,GPIO_PIN_1);
 }
 
 static inline void EVE_cs_set(void)
 {
-    EVE_CS_PORT &= ~EVE_CS; /* cs low */
+    gpio_bit_reset(GPIOB,GPIO_PIN_0);
 }
 
 static inline void EVE_cs_clear(void)
 {
-    EVE_CS_PORT |= EVE_CS;  /* cs high */
+    gpio_bit_set(GPIOB,GPIO_PIN_0);
 }
 
 static inline void spi_transmit(uint8_t data)
 {
-    SPDR = data; /* start transmission */
-    while(!(SPSR & (1<<SPIF))) {} /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
+        SPI_DATA(SPI0) = (uint32_t) data;
+        while(SPI_STAT(SPI0) & SPI_STAT_TRANS) {};
 }
 
 static inline void spi_transmit_32(uint32_t data)
@@ -103,9 +100,9 @@ static inline void spi_transmit_burst(uint32_t data)
 
 static inline uint8_t spi_receive(uint8_t data)
 {
-    SPDR = data; /* start transmission */
-    while(!(SPSR & (1<<SPIF))) {} /* wait for transmission to complete - 1us @ 8MHz SPI-CLock */
-    return SPDR;
+        SPI_DATA(SPI0) = (uint32_t) data;
+        while(SPI_STAT(SPI0) & SPI_STAT_TRANS) {};
+        return (uint8_t) SPI_DATA(SPI0);
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *data)
@@ -113,7 +110,10 @@ static inline uint8_t fetch_flash_byte(const uint8_t *data)
     return *data;
 }
 
-#endif /* _AVR */
-#endif /* __IMAGECRAFT__ */
+#endif /* __riscv */
+
+#endif /* __GNUC__ */
+
 #endif /* !Arduino */
-#endif /* EVE_TARGET_ICCAVR_H */
+
+#endif /* EVE_TARGET_GD32VF103_H */

@@ -1,5 +1,5 @@
 /*
-@file    EVE_target_ICCAVR.h
+@file    EVE_target_GD32C103.h
 @brief   target specific includes, definitions and functions
 @version 5.0
 @date    2022-11-10
@@ -26,65 +26,72 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 5.0
 - extracted from EVE_target.h
-- made DELAY_MS() more MISRA-C compliant
 
 */
 
-#ifndef EVE_TARGET_ICCAVR_H
-#define EVE_TARGET_ICCAVR_H
+
+#ifndef EVE_TARGET_GD32C103_H
+#define EVE_TARGET_GD32C103_H
 
 #pragma once
 
 #if !defined (ARDUINO)
-#if defined (__IMAGECRAFT__)
-#if defined (_AVR)
+#if defined (__GNUC__)
 
-#include <iccioavr.h>
+#if defined (GD32C103)
+/* note: set in platformio.ini by "build_flags = -D GD32C103" */
 
-#define EVE_DELAY_1MS 2000U /* maybe ~1ms at 16MHz clock */
+#include "gd32c10x.h"
 
-static inline void DELAY_MS(uint16_t val)
-{
-    for (uint16_t loops = 0U; loops < val; loops++)
-    {
-        for (uint16_t counter = 0U; counter < EVE_DELAY_1MS; counter++)
-        {
-            __asm__ volatile("nop");
-        }
-    }
-}
+/* note: SPI0 is used */
 
 #if !defined (EVE_CS)
-    #define EVE_CS_PORT PORTB
-    #define EVE_CS      (1<<PB5)
-    #define EVE_PDN_PORT    PORTB
-    #define EVE_PDN     (1<<PB4)
+    #define EVE_CS_PORT GPIOA
+    #define EVE_CS GPIO_PIN_4
+    #define EVE_PDN_PORT GPIOA
+    #define EVE_PDN GPIO_PIN_3
+    #define EVE_SPI_PORT GPIOA
+    #define EVE_DELAY_1MS 20000U  /* ~1ms at 120MHz Core-Clock */
 #endif
+
+#if defined (EVE_DMA)
+    extern uint32_t EVE_dma_buffer[1025U];
+    extern volatile uint16_t EVE_dma_buffer_index;
+    extern volatile uint8_t EVE_dma_busy;
+
+    void EVE_init_dma(void);
+    void EVE_start_dma_transfer(void);
+#endif
+
+
+void DELAY_MS(uint16_t val);
+void EVE_init_spi(void);
 
 static inline void EVE_pdn_set(void)
 {
-    EVE_PDN_PORT &= ~EVE_PDN;   /* Power-Down low */
+    gpio_bit_reset(EVE_PDN_PORT,EVE_PDN);
 }
 
 static inline void EVE_pdn_clear(void)
 {
-    EVE_PDN_PORT |= EVE_PDN;    /* Power-Down high */
+    gpio_bit_set(EVE_PDN_PORT,EVE_PDN);
 }
 
 static inline void EVE_cs_set(void)
 {
-    EVE_CS_PORT &= ~EVE_CS; /* cs low */
+    gpio_bit_reset(EVE_CS_PORT,EVE_CS);
 }
 
 static inline void EVE_cs_clear(void)
 {
-    EVE_CS_PORT |= EVE_CS;  /* cs high */
+    gpio_bit_set(EVE_CS_PORT,EVE_CS);
 }
 
 static inline void spi_transmit(uint8_t data)
 {
-    SPDR = data; /* start transmission */
-    while(!(SPSR & (1<<SPIF))) {} /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
+    SPI_DATA(SPI0) = (uint32_t) data;
+    while(SPI_STAT(SPI0) & SPI_STAT_TRANS) {}
+    (void) SPI_DATA(SPI0); /* dummy read to clear the flags */
 }
 
 static inline void spi_transmit_32(uint32_t data)
@@ -98,14 +105,19 @@ static inline void spi_transmit_32(uint32_t data)
 /* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
 static inline void spi_transmit_burst(uint32_t data)
 {
-    spi_transmit_32(data);
+    #if defined (EVE_DMA)
+        EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+    #else
+        spi_transmit_32(data);
+    #endif
 }
 
 static inline uint8_t spi_receive(uint8_t data)
 {
-    SPDR = data; /* start transmission */
-    while(!(SPSR & (1<<SPIF))) {} /* wait for transmission to complete - 1us @ 8MHz SPI-CLock */
-    return SPDR;
+    SPI_DATA(SPI0) = (uint32_t) data;
+    while(SPI_STAT(SPI0) & SPI_STAT_TRANS) {}
+    while(0U == (SPI_STAT(SPI0) & SPI_STAT_RBNE)) {}
+    return (uint8_t) SPI_DATA(SPI0);
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *data)
@@ -113,7 +125,10 @@ static inline uint8_t fetch_flash_byte(const uint8_t *data)
     return *data;
 }
 
-#endif /* _AVR */
-#endif /* __IMAGECRAFT__ */
+#endif /* GD32C103 */
+
+#endif /* __GNUC__ */
+
 #endif /* !Arduino */
-#endif /* EVE_TARGET_ICCAVR_H */
+
+#endif /* EVE_TARGET_GD32C103_H */

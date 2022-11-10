@@ -1,5 +1,5 @@
 /*
-@file    EVE_target_ICCAVR.h
+@file    EVE_target_RP2040.h
 @brief   target specific includes, definitions and functions
 @version 5.0
 @date    2022-11-10
@@ -26,86 +26,93 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 5.0
 - extracted from EVE_target.h
-- made DELAY_MS() more MISRA-C compliant
 
 */
 
-#ifndef EVE_TARGET_ICCAVR_H
-#define EVE_TARGET_ICCAVR_H
+
+#ifndef EVE_TARGET_RP2040_H
+#define EVE_TARGET_RP2040_H
 
 #pragma once
 
 #if !defined (ARDUINO)
-#if defined (__IMAGECRAFT__)
-#if defined (_AVR)
+#if defined (__GNUC__)
 
-#include <iccioavr.h>
+#if defined (RP2040)
+/* note: set in platformio.ini by "build_flags = -D RP2040" */
 
-#define EVE_DELAY_1MS 2000U /* maybe ~1ms at 16MHz clock */
-
-static inline void DELAY_MS(uint16_t val)
-{
-    for (uint16_t loops = 0U; loops < val; loops++)
-    {
-        for (uint16_t counter = 0U; counter < EVE_DELAY_1MS; counter++)
-        {
-            __asm__ volatile("nop");
-        }
-    }
-}
+#include "pico/stdlib.h"
+#include "hardware/spi.h"
 
 #if !defined (EVE_CS)
-    #define EVE_CS_PORT PORTB
-    #define EVE_CS      (1<<PB5)
-    #define EVE_PDN_PORT    PORTB
-    #define EVE_PDN     (1<<PB4)
+    #define EVE_CS      5
+    #define EVE_PDN     6
+    #define EVE_SCK     2
+    #define EVE_MOSI    3
+    #define EVE_MISO    4
+    #define EVE_SPI spi0
+    #define EVE_DMA
 #endif
 
-static inline void EVE_pdn_set(void)
-{
-    EVE_PDN_PORT &= ~EVE_PDN;   /* Power-Down low */
-}
+#define DELAY_MS(ms) sleep_ms(ms)
 
-static inline void EVE_pdn_clear(void)
-{
-    EVE_PDN_PORT |= EVE_PDN;    /* Power-Down high */
-}
+void EVE_init_spi(void);
 
 static inline void EVE_cs_set(void)
 {
-    EVE_CS_PORT &= ~EVE_CS; /* cs low */
+    gpio_put(EVE_CS, 0U);
 }
 
 static inline void EVE_cs_clear(void)
 {
-    EVE_CS_PORT |= EVE_CS;  /* cs high */
+    gpio_put(EVE_CS, 1U);
 }
+
+static inline void EVE_pdn_set(void)
+{
+    gpio_put(EVE_PDN, 0U);
+}
+
+static inline void EVE_pdn_clear(void)
+{
+    gpio_put(EVE_PDN, 1U);
+}
+
+#if defined (EVE_DMA)
+    extern uint32_t EVE_dma_buffer[1025U];
+    extern volatile uint16_t EVE_dma_buffer_index;
+    extern volatile uint8_t EVE_dma_busy;
+
+    void EVE_init_dma(void);
+    void EVE_start_dma_transfer(void);
+#endif
 
 static inline void spi_transmit(uint8_t data)
 {
-    SPDR = data; /* start transmission */
-    while(!(SPSR & (1<<SPIF))) {} /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
+    spi_write_blocking(EVE_SPI, &data, 1U);
 }
 
 static inline void spi_transmit_32(uint32_t data)
 {
-    spi_transmit((uint8_t)(data & 0x000000ffUL));
-    spi_transmit((uint8_t)(data >> 8U));
-    spi_transmit((uint8_t)(data >> 16U));
-    spi_transmit((uint8_t)(data >> 24U));
+    spi_write_blocking(EVE_SPI, (uint8_t *) &data, 4U);
 }
 
 /* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
 static inline void spi_transmit_burst(uint32_t data)
 {
-    spi_transmit_32(data);
+    #if defined (EVE_DMA)
+        EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+    #else
+        spi_transmit_32(data);
+    #endif
 }
 
 static inline uint8_t spi_receive(uint8_t data)
 {
-    SPDR = data; /* start transmission */
-    while(!(SPSR & (1<<SPIF))) {} /* wait for transmission to complete - 1us @ 8MHz SPI-CLock */
-    return SPDR;
+    uint8_t result;
+
+    spi_write_read_blocking(EVE_SPI, &data, &result, 1U);
+    return result;
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *data)
@@ -113,7 +120,10 @@ static inline uint8_t fetch_flash_byte(const uint8_t *data)
     return *data;
 }
 
-#endif /* _AVR */
-#endif /* __IMAGECRAFT__ */
+#endif /* RP2040 */
+
+#endif /* __GNUC__ */
+
 #endif /* !Arduino */
-#endif /* EVE_TARGET_ICCAVR_H */
+
+#endif /* EVE_TARGET_RP2040_H */
