@@ -2,7 +2,7 @@
 @file    EVE_target_MSP432.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-24
+@date    2022-11-27
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -26,6 +26,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 5.0
 - extracted from EVE_target.h
+- basic maintenance: checked for violations of white space and indent rules
 
 */
 
@@ -60,9 +61,9 @@ void EVE_SPI_Init(void);
 
 static inline void DELAY_MS(uint16_t val)
 {
-    for (uint16_t loops = 0U; loops < val; loops++)
+    for (uint16_t loops = 0; loops < val; loops++)
     {
-        for (uint16_t counter = 0U; counter < EVE_DELAY_1MS; counter++)
+        for (uint16_t counter = 0; counter < EVE_DELAY_1MS; counter++)
         {
             __nop();
         }
@@ -99,7 +100,7 @@ static inline void spi_transmit(uint8_t data)
 //            while (!(SPI_getInterruptStatus(EUSCI_B0_BASE,EUSCI_B_SPI_TRANSMIT_INTERRUPT)));
 
     UCB0TXBUF_SPI = data;
-    while(!(UCB0IFG_SPI & UCTXIFG)) {} /* wait for transmission to complete */
+    while (!(UCB0IFG_SPI & UCTXIFG)) {} /* wait for transmission to complete */
 }
 
 static inline void spi_transmit_32(uint32_t data)
@@ -127,7 +128,7 @@ static inline uint8_t spi_receive(uint8_t data)
 //            return EUSCI_B_CMSIS(EUSCI_B0_BASE)->RXBUF;
 
     UCB0TXBUF_SPI = data;
-    while(!(UCB0IFG_SPI & UCTXIFG)) {} /* wait for transmission to complete */
+    while (!(UCB0IFG_SPI & UCTXIFG)) {} /* wait for transmission to complete */
     return UCB0RXBUF_SPI;
     }
 

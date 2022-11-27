@@ -2,7 +2,7 @@
 @file    EVE_target_Arduino_AVR.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-24
+@date    2022-11-27
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -26,6 +26,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 5.0
 - extracted from EVE_target.h
+- basic maintenance: checked for violations of white space and indent rules
 
 */
 
@@ -82,7 +83,7 @@ static inline void spi_transmit(uint8_t data)
     //          wrapper_spi_transmit(data);
     SPDR = data;
     asm volatile("nop");
-    while (!(SPSR & (1 << SPIF))) {}
+    while (!(SPSR & (1U << SPIF))) {}
 }
 
 static inline void spi_transmit_32(uint32_t data)

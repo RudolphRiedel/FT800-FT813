@@ -2,7 +2,7 @@
 @file    EVE_target_K32L2B31.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-10
+@date    2022-11-27
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -27,6 +27,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 5.0
 - extracted from EVE_target.h
 - made DELAY_MS() more MISRA-C compliant
+- basic maintenance: checked for violations of white space and indent rules
 
 */
 
@@ -57,9 +58,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 static inline void DELAY_MS(uint16_t val)
 {
-    for (uint16_t loops = 0U; loops < val; loops++)
+    for (uint16_t loops = 0; loops < val; loops++)
     {
-        for (uint16_t counter = 0U; counter < EVE_DELAY_1MS; counter++)
+        for (uint16_t counter = 0; counter < EVE_DELAY_1MS; counter++)
         {
             __asm__ volatile("nop");
         }
@@ -107,16 +108,16 @@ static inline void EVE_pdn_clear(void)
 static inline void spi_transmit(uint8_t data)
 {
 #if 1
-    while(0U == (EVE_SPI->S & SPI_S_SPTEF_MASK)) {}
+    while (0U == (EVE_SPI->S & SPI_S_SPTEF_MASK)) {}
     EVE_SPI->DL = data;
-    while(0U == (EVE_SPI->S & SPI_S_SPTEF_MASK)) {}
-    while(0U == (EVE_SPI->S & SPI_S_SPRF_MASK)) {}
+    while (0U == (EVE_SPI->S & SPI_S_SPTEF_MASK)) {}
+    while (0U == (EVE_SPI->S & SPI_S_SPRF_MASK)) {}
     (void) EVE_SPI->DL;
 #else
-    while(0U == (SPI_GetStatusFlags(EVE_SPI) & kSPI_TxBufferEmptyFlag)) {}
+    while (0U == (SPI_GetStatusFlags(EVE_SPI) & kSPI_TxBufferEmptyFlag)) {}
     SPI_WriteData(EVE_SPI, data);
-    while(0U == (SPI_GetStatusFlags(EVE_SPI) & kSPI_TxBufferEmptyFlag)) {}
-    while(0U == (SPI_GetStatusFlags(EVE_SPI) & kSPI_RxBufferFullFlag))  {}
+    while (0U == (SPI_GetStatusFlags(EVE_SPI) & kSPI_TxBufferEmptyFlag)) {}
+    while (0U == (SPI_GetStatusFlags(EVE_SPI) & kSPI_RxBufferFullFlag))  {}
     (void) SPI_ReadData(EVE_SPI);
 #endif
 }
@@ -142,16 +143,16 @@ static inline void spi_transmit_burst(uint32_t data)
 static inline uint8_t spi_receive(uint8_t data)
 {
 #if 0
-    while(0U == (EVE_SPI->S & SPI_S_SPTEF_MASK)) {}
+    while (0U == (EVE_SPI->S & SPI_S_SPTEF_MASK)) {}
     EVE_SPI->DL = data;
-    while(0U == (EVE_SPI->S & SPI_S_SPTEF_MASK)) {}
-    while(0U == (EVE_SPI->S & SPI_S_SPRF_MASK)) {}
+    while (0U == (EVE_SPI->S & SPI_S_SPTEF_MASK)) {}
+    while (0U == (EVE_SPI->S & SPI_S_SPRF_MASK)) {}
     return EVE_SPI->DL;
 #else
-    while(0U == (SPI_GetStatusFlags(EVE_SPI) & kSPI_TxBufferEmptyFlag)) {}
+    while (0U == (SPI_GetStatusFlags(EVE_SPI) & kSPI_TxBufferEmptyFlag)) {}
     SPI_WriteData(EVE_SPI, data);
-    while(0U == (SPI_GetStatusFlags(EVE_SPI) & kSPI_TxBufferEmptyFlag)) {}
-    while(0U == (SPI_GetStatusFlags(EVE_SPI) & kSPI_RxBufferFullFlag)) {}
+    while (0U == (SPI_GetStatusFlags(EVE_SPI) & kSPI_TxBufferEmptyFlag)) {}
+    while (0U == (SPI_GetStatusFlags(EVE_SPI) & kSPI_RxBufferFullFlag)) {}
     return SPI_ReadData(EVE_SPI);
 #endif
 }

@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2022-11-06
+@date    2022-11-27
 @author  Rudolph Riedel
 
 @section info
@@ -116,6 +116,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - modified EVE_calibrate_manual() to work better with bar type displays
 - fixed a large number of MISRA-C issues - mostly more casts for explicit type conversion and more brackets
 - changed the varargs versions of cmd_button, cmd_text and cmd_toggle to use an array of uint32_t values to comply with MISRA-C
+- basic maintenance: checked for violations of white space and indent rules
 
 */
 
@@ -130,12 +131,12 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 #include <stdio.h>
 #endif
 
-static volatile uint8_t cmd_burst = 0U; /* flag to indicate cmd-burst is active */
+static volatile uint8_t cmd_burst = 0; /* flag to indicate cmd-burst is active */
 
-/*----------------------------------------------------------------------------------------------------------------------------*/
-/*---- helper functions
- * ------------------------------------------------------------------------------------------------------*/
-/*----------------------------------------------------------------------------------------------------------------------------*/
+/* ##################################################################
+    helper functions
+##################################################################### */
+
 
 void EVE_cmdWrite(uint8_t command, uint8_t parameter)
 {
@@ -158,7 +159,7 @@ uint8_t EVE_memRead8(uint32_t ftAddress)
 
 uint16_t EVE_memRead16(uint32_t ftAddress)
 {
-    uint16_t data = 0U;
+    uint16_t data = 0;
     EVE_cs_set();
     spi_transmit_32(0UL + ((uint8_t)(ftAddress >> 16U) | MEM_READ) + (ftAddress & 0x0000ff00UL) + ((ftAddress & 0x000000ffUL) << 16U));
     data = ((uint16_t)spi_receive(0U));                 /* read low byte */
@@ -169,7 +170,7 @@ uint16_t EVE_memRead16(uint32_t ftAddress)
 
 uint32_t EVE_memRead32(uint32_t ftAddress)
 {
-    uint32_t data = 0U;
+    uint32_t data = 0;
     EVE_cs_set();
     spi_transmit_32(0UL + ((uint8_t)(ftAddress >> 16U) | MEM_READ) + (ftAddress & 0x0000ff00UL) + ((ftAddress & 0x000000ffUL) << 16U));
     data = ((uint32_t)spi_receive(0U)); /* read low byte */
@@ -221,7 +222,7 @@ void EVE_memWrite_flash_buffer(uint32_t ftAddress, const uint8_t *data, uint32_t
 
     uint32_t length = (len + 3U) & (~3U);
 
-    for (uint32_t count = 0U; count < length; count++)
+    for (uint32_t count = 0; count < length; count++)
     {
         spi_transmit(fetch_flash_byte(&data[count]));
     }
@@ -239,7 +240,7 @@ void EVE_memWrite_sram_buffer(uint32_t ftAddress, const uint8_t *data, uint32_t 
 
     uint32_t length = (len + 3U) & (~3U);
 
-    for (uint32_t count = 0U; count < length; count++)
+    for (uint32_t count = 0; count < length; count++)
     {
         spi_transmit(data[count]);
     }
@@ -339,7 +340,7 @@ void private_block_write(const uint8_t *data, uint16_t len)
     padding = 4U - padding;         /* 4, 3, 2 or 1 */
     padding &= 3U;                  /* 3, 2 or 1 */
 
-    for (uint16_t count = 0U; count < len; count++)
+    for (uint16_t count = 0; count < len; count++)
     {
         spi_transmit(fetch_flash_byte(&data[count]));
     }
@@ -376,10 +377,10 @@ void block_transfer(const uint8_t *data, uint32_t len)
     }
 }
 
-/*----------------------------------------------------------------------------------------------------------------------------*/
-/*---- co-processor commands that are not used in displays lists, these are not to be used with burst transfers
- * --------------*/
-/*----------------------------------------------------------------------------------------------------------------------------*/
+/* ##################################################################
+    co-processor commands that are not used in displays lists,
+    these are not to be used with burst transfers
+################################################################### */
 
 /* BT817 / BT818 */
 #if EVE_GEN > 3
@@ -834,11 +835,11 @@ void EVE_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *data)
     spi_transmit_32(dest);
     spi_transmit_32(num);
 
-    num = (num + 3U)&(~3U);
+    num = (num + 3U) & (~3U);
 
-    for(count=0U; count<len; count++)
+    for (count = 0; count<len; count++)
     {
-        spi_transmit(pgm_read_byte_far(data+count));
+        spi_transmit(pgm_read_byte_far(data + count));
     }
 
     EVE_cs_clear();
@@ -970,10 +971,9 @@ void EVE_cmd_videoframe(uint32_t dest, uint32_t result_ptr)
     EVE_execute_cmd();
 }
 
-/*----------------------------------------------------------------------------------------------------------------------------*/
-/*------------- patching and initialization
- * ----------------------------------------------------------------------------------*/
-/*----------------------------------------------------------------------------------------------------------------------------*/
+/* ##################################################################
+        patching and initialization
+#################################################################### */
 
 #if EVE_GEN > 2
 
@@ -986,7 +986,7 @@ void EVE_cmd_videoframe(uint32_t dest, uint32_t result_ptr)
  */
 uint8_t EVE_init_flash(void)
 {
-    uint8_t timeout = 0U;
+    uint8_t timeout = 0;
     uint8_t status;
     uint8_t ret_val = E_NOT_OK;
 
@@ -1135,8 +1135,8 @@ const uint8_t EVE_GT911_data[1184U] PROGMEM = {
 /* Returns E_OK in case of success. */
 uint8_t EVE_init(void)
 {
-    uint8_t chipid = 0U;
-    uint16_t timeout = 0U;
+    uint8_t chipid = 0;
+    uint16_t timeout = 0;
 
     EVE_pdn_set();
     DELAY_MS(6U); /* minimum time for power-down is 5ms */
@@ -1179,7 +1179,7 @@ uint8_t EVE_init(void)
         }
     }
 
-    timeout = 0U;
+    timeout = 0;
     while (0x00U != (EVE_memRead8(REG_CPURESET) & 7U)) /* check if EVE is in working status */
     {
         DELAY_MS(1U);
@@ -1302,7 +1302,7 @@ uint8_t EVE_init(void)
 #endif
 #endif
 
-    timeout = 0U;
+    timeout = 0;
     while (EVE_busy() != E_OK) /* just to be safe, should not even enter the loop */
     {
         DELAY_MS(1U);
@@ -1320,10 +1320,9 @@ uint8_t EVE_init(void)
     return E_OK;
 }
 
-/*----------------------------------------------------------------------------------------------------------------------------*/
-/*-------- functions for display lists
- * ---------------------------------------------------------------------------------------*/
-/*----------------------------------------------------------------------------------------------------------------------------*/
+/* ##################################################################
+    functions for display lists
+##################################################################### */
 
 /* Begin a sequence of commands or prepare a DMA transfer if applicable. */
 /* Needs to be used with EVE_end_cmd_burst(). */
@@ -1356,7 +1355,7 @@ void EVE_start_cmd_burst(void)
 /* Needs to be used with EVE_start_cmd_burst(). */
 void EVE_end_cmd_burst(void)
 {
-    cmd_burst = 0U;
+    cmd_burst = 0;
 
 #if defined(EVE_DMA)
     EVE_start_dma_transfer(); /* begin DMA transfer */
@@ -1386,8 +1385,8 @@ static void private_string_write(const char *text)
 
     if (0U == cmd_burst)
     {
-        uint8_t textindex = 0U;
-        uint8_t padding = 0U;
+        uint8_t textindex = 0;
+        uint8_t padding = 0;
 
         /* either leave on Zero or when the string is too long */
         while ((textindex < 249U) && (bytes[textindex] != 0U))
@@ -1409,9 +1408,9 @@ static void private_string_write(const char *text)
     }
     else
     {
-        uint8_t textindex = 0U;
-        uint32_t calc = 0U;
-        uint8_t byteindex = 0U;
+        uint8_t textindex = 0;
+        uint32_t calc = 0;
+        uint8_t byteindex = 0;
         uint8_t data;
 
         do
@@ -1423,8 +1422,8 @@ static void private_string_write(const char *text)
             if (byteindex > 3U)
             {
                 spi_transmit_burst(calc);
-                calc = 0U;
-                byteindex = 0U;
+                calc = 0;
+                byteindex = 0;
             }
         }
         while ((textindex < 249U) && (data != 0U));
@@ -1793,7 +1792,7 @@ uint16_t EVE_cmd_bitmap_transform(int32_t x0, int32_t y0, int32_t x1,
                                 int32_t tx0, int32_t ty0, int32_t tx1,
                                 int32_t ty1, int32_t tx2, int32_t ty2)
 {
-    uint16_t ret_val = 0U;
+    uint16_t ret_val = 0;
 
     if (0U == cmd_burst)
     {
@@ -1997,9 +1996,9 @@ void EVE_cmd_button_var(int16_t x0, int16_t y0, int16_t w0, int16_t h0,
 
         if ((options & EVE_OPT_FORMAT) != 0U)
         {
-            if(arguments != NULL)
+            if (arguments != NULL)
             {
-                for (uint8_t counter = 0U; counter < num_args; counter++)
+                for (uint8_t counter = 0; counter < num_args; counter++)
                 {
                     spi_transmit_32(arguments[counter]);
                 }
@@ -2017,9 +2016,9 @@ void EVE_cmd_button_var(int16_t x0, int16_t y0, int16_t w0, int16_t h0,
 
         if ((options & EVE_OPT_FORMAT) != 0U)
         {
-            if(arguments != NULL)
+            if (arguments != NULL)
             {
-                for (uint8_t counter = 0U; counter < num_args; counter++)
+                for (uint8_t counter = 0; counter < num_args; counter++)
                 {
                     spi_transmit_burst(arguments[counter]);
                 }
@@ -2047,9 +2046,9 @@ void EVE_cmd_button_var_burst(int16_t x0, int16_t y0, int16_t w0, int16_t h0,
 
     if ((options & EVE_OPT_FORMAT) != 0U)
     {
-        if(arguments != NULL)
+        if (arguments != NULL)
         {
-            for (uint8_t counter = 0U; counter < num_args; counter++)
+            for (uint8_t counter = 0; counter < num_args; counter++)
             {
                 spi_transmit_burst(arguments[counter]);
             }
@@ -2084,9 +2083,9 @@ void EVE_cmd_text_var(int16_t x0, int16_t y0, int16_t font,
 
         if ((options & EVE_OPT_FORMAT) != 0U)
         {
-            if(arguments != NULL)
+            if (arguments != NULL)
             {
-                for (uint8_t counter = 0U; counter < num_args; counter++)
+                for (uint8_t counter = 0; counter < num_args; counter++)
                 {
                     spi_transmit_32(arguments[counter]);
                 }
@@ -2103,9 +2102,9 @@ void EVE_cmd_text_var(int16_t x0, int16_t y0, int16_t font,
 
         if ((options & EVE_OPT_FORMAT) != 0U)
         {
-            if(arguments != NULL)
+            if (arguments != NULL)
             {
-                for (uint8_t counter = 0U; counter < num_args; counter++)
+                for (uint8_t counter = 0; counter < num_args; counter++)
                 {
                     spi_transmit_burst(arguments[counter]);
                 }
@@ -2130,9 +2129,9 @@ void EVE_cmd_text_var_burst(int16_t x0, int16_t y0, int16_t font,
 
     if ((options & EVE_OPT_FORMAT) != 0U)
     {
-        if(arguments != NULL)
+        if (arguments != NULL)
         {
-            for (uint8_t counter = 0U; counter < num_args; counter++)
+            for (uint8_t counter = 0; counter < num_args; counter++)
             {
                 spi_transmit_burst(arguments[counter]);
             }
@@ -2173,9 +2172,9 @@ void EVE_cmd_toggle_var(int16_t x0, int16_t y0, int16_t w0, int16_t font,
 
         if ((options & EVE_OPT_FORMAT) != 0U)
         {
-            if(arguments != NULL)
+            if (arguments != NULL)
             {
-                for (uint8_t counter = 0U; counter < num_args; counter++)
+                for (uint8_t counter = 0; counter < num_args; counter++)
                 {
                     spi_transmit_32(arguments[counter]);
                 }
@@ -2193,9 +2192,9 @@ void EVE_cmd_toggle_var(int16_t x0, int16_t y0, int16_t w0, int16_t font,
 
         if ((options & EVE_OPT_FORMAT) != 0U)
         {
-            if(arguments != NULL)
+            if (arguments != NULL)
             {
-                for (uint8_t counter = 0U; counter < num_args; counter++)
+                for (uint8_t counter = 0; counter < num_args; counter++)
                 {
                     spi_transmit_burst(arguments[counter]);
                 }
@@ -2222,9 +2221,9 @@ void EVE_cmd_toggle_var_burst(int16_t x0, int16_t y0, int16_t w0, int16_t font,
 
     if ((options & EVE_OPT_FORMAT) != 0U)
     {
-        if(arguments != NULL)
+        if (arguments != NULL)
         {
-            for (uint8_t counter = 0U; counter < num_args; counter++)
+            for (uint8_t counter = 0; counter < num_args; counter++)
             {
                 spi_transmit_burst(arguments[counter]);
             }
@@ -3414,10 +3413,9 @@ void EVE_color_rgb_burst(uint32_t color)
     spi_transmit_burst(DL_COLOR_RGB | (color & 0x00ffffffUL));
 }
 
-/*---------------------------------------------------------------------------------------------------------------------------*/
-/*-------- special purpose functions -------------------
- * --------------------------------------------------------------------*/
-/*---------------------------------------------------------------------------------------------------------------------------*/
+/* ##################################################################
+    special purpose functions
+##################################################################### */
 
 /* This is meant to be called outside display-list building. */
 /* This function displays an interactive calibration screen, calculates the calibration values */
@@ -3437,7 +3435,7 @@ void EVE_calibrate_manual(uint16_t width, uint16_t height)
     uint32_t touchValue;
     int32_t tmp, k;
     int32_t TransMatrix[6U];
-    uint8_t count = 0U;
+    uint8_t count = 0;
     char num[2U];
     uint8_t touch_lock = 1U;
 
@@ -3481,7 +3479,7 @@ void EVE_calibrate_manual(uint16_t width, uint16_t height)
             {
                 if ((touchValue & 0x80000000UL) != 0UL) /* check if we have no touch */
                 {
-                    touch_lock = 0U;
+                    touch_lock = 0;
                 }
             }
             else
@@ -3492,7 +3490,7 @@ void EVE_calibrate_manual(uint16_t width, uint16_t height)
                     touchY[count] = touchValue & 0x03FFU;         /* raw Touchscreen Y coordinate */
                     touch_lock = 1U;
                     count++;
-                    break; /* leave while(1) */
+                    break; /* leave for ( ; ; ) */
                 }
             }
         }

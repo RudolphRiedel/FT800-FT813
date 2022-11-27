@@ -2,7 +2,7 @@
 @file    EVE_target_Test.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-24
+@date    2022-11-27
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -26,6 +26,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 5.0
 - new target for software tests
+- basic maintenance: checked for violations of white space and indent rules
 
 */
 
@@ -81,7 +82,7 @@ struct
 
 static inline void DELAY_MS(uint16_t val)
 {
-    for (uint16_t counter = 0U; counter < EVE_DELAY_1MS; counter++)
+    for (uint16_t counter = 0; counter < EVE_DELAY_1MS; counter++)
     {
         __asm__ volatile("nop");
     }

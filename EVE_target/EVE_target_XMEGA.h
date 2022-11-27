@@ -2,7 +2,7 @@
 @file    EVE_target_XMEGA.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-09
+@date    2022-11-27
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -26,6 +26,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 5.0
 - extracted from EVE_target.h
+- basic maintenance: checked for violations of white space and indent rules
 
 */
 
@@ -79,7 +80,7 @@ static inline void EVE_cs_clear(void)
 static inline void spi_transmit(uint8_t data)
 {
     EVE_SPI.DATA = data;
-    while(!(EVE_SPI.STATUS & 0x80)) {}  // wait for transmit complete
+    while (!(EVE_SPI.STATUS & 0x80)) {}  // wait for transmit complete
 }
 
 static inline void spi_transmit_32(uint32_t data)
@@ -99,16 +100,16 @@ static inline void spi_transmit_burst(uint32_t data)
 static inline uint8_t spi_receive(uint8_t data)
 {
     EVE_SPI.DATA = data;
-    while(!(EVE_SPI.STATUS & 0x80)) {}  // wait for transmit complete
+    while (!(EVE_SPI.STATUS & 0x80)) {}  // wait for transmit complete
     return EVE_SPI.DATA;
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *data)
 {
     #if defined (__AVR_HAVE_ELPM__) /* we have an AVR with more than 64kB FLASH memory */
-    return(pgm_read_byte_far(data));
+    return (pgm_read_byte_far(data));
     #else
-    return(pgm_read_byte_near(data));
+    return (pgm_read_byte_near(data));
     #endif
 }
 

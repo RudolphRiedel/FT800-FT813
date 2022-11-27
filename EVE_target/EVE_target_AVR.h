@@ -2,7 +2,7 @@
 @file    EVE_target_AVR.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-09
+@date    2022-11-27
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -26,6 +26,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 5.0
 - extracted from EVE_target.h
+- basic maintenance: checked for violations of white space and indent rules
 
 */
 
@@ -37,7 +38,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #if !defined (ARDUINO)
 #if defined (__GNUC__)
 
-#if defined (__AVR__) && ! defined (__AVR_XMEGA__)
+#if defined (__AVR__) && !defined (__AVR_XMEGA__)
 
 #include <avr/io.h>
 #include <avr/pgmspace.h>
@@ -48,9 +49,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 #if !defined (EVE_CS)
     #define EVE_CS_PORT PORTB
-    #define EVE_CS      (1<<PB5)
+    #define EVE_CS      (1U << PB5)
     #define EVE_PDN_PORT    PORTB
-    #define EVE_PDN     (1<<PB4)
+    #define EVE_PDN     (1U << PB4)
 #endif
 
 static inline void EVE_pdn_set(void)
@@ -77,27 +78,27 @@ static inline void spi_transmit(uint8_t data)
 {
 #if 1
     SPDR = data; /* start transmission */
-    while(!(SPSR & (1<<SPIF))) {}   /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
+    while (!(SPSR & (1U << SPIF))) {}   /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
 #else
 /* software-spi example */
     uint8_t spiIndex  = 0x80;
     uint8_t k;
 
-    for(k = 0; k <8; k++) // Output each bit of spiOutByte
+    for (k = 0; k < 8U; k++) // Output each bit of spiOutByte
     {
-        if(data & spiIndex) // Output MOSI Bit
+        if (data & spiIndex) // Output MOSI Bit
         {
-            PORTC |= (1<<PORTC1);
+            PORTC |= (1U << PORTC1);
         }
         else
         {
-            PORTC &= ~(1<<PORTC1);
+            PORTC &= ~(1U << PORTC1);
         }
 
-        PORTA |= (1<<PORTA1); // toggle SCK
-        PORTA &= ~(1<<PORTA1);
+        PORTA |= (1U << PORTA1); // toggle SCK
+        PORTA &= ~(1U << PORTA1);
 
-        spiIndex >>= 1;
+        spiIndex >>= 1U;
     }
 #endif
 }
@@ -120,33 +121,33 @@ static inline uint8_t spi_receive(uint8_t data)
 {
 #if 1
     SPDR = data; /* start transmission */
-    while(!(SPSR & (1<<SPIF))) {}   /* wait for transmission to complete - 1us @ 8MHz SPI-CLock */
+    while (!(SPSR & (1U << SPIF))) {}   /* wait for transmission to complete - 1us @ 8MHz SPI-CLock */
     return SPDR;
 #else
-    uint8_t spiIndex  = 0x80;
+    uint8_t spiIndex  = 0x80U;
     uint8_t spiInByte = 0;
     uint8_t k;
 
-    for(k = 0; k <8; k++) // Output each bit of spiOutByte
+    for (k = 0; k < 8U; k++) // Output each bit of spiOutByte
     {
-        if(data & spiIndex) // Output MOSI Bit
+        if (data & spiIndex) // Output MOSI Bit
         {
-            PORTC |= (1<<PORTC1);
+            PORTC |= (1U << PORTC1);
         }
         else
         {
-            PORTC &= ~(1<<PORTC1);
+            PORTC &= ~(1U << PORTC1);
         }
 
-        PORTA |= (1<<PORTA1); // toggle SCK
-        PORTA &= ~(1<<PORTA1);
+        PORTA |= (1U << PORTA1); // toggle SCK
+        PORTA &= ~(1U << PORTA1);
 
-        if(PINC & (1<<PORTC0))
+        if (PINC & (1U << PORTC0))
         {
             spiInByte |= spiIndex;
         }
 
-        spiIndex >>= 1;
+        spiIndex >>= 1U;
     }
     return spiInByte;
 #endif
@@ -155,9 +156,9 @@ static inline uint8_t spi_receive(uint8_t data)
 static inline uint8_t fetch_flash_byte(const uint8_t *data)
 {
     #if defined (__AVR_HAVE_ELPM__) /* we have an AVR with more than 64kB FLASH memory */
-        return(pgm_read_byte_far(data));
+        return (pgm_read_byte_far(data));
     #else
-        return(pgm_read_byte_near(data));
+        return (pgm_read_byte_near(data));
     #endif
 }
 

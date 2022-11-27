@@ -2,7 +2,7 @@
 @file    EVE_target_ESP32.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-10
+@date    2022-11-27
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -26,6 +26,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 5.0
 - extracted from EVE_target.h
+- basic maintenance: checked for violations of white space and indent rules
 
 */
 
@@ -96,7 +97,7 @@ static inline void spi_transmit(uint8_t data)
 {
     spi_transaction_t trans = {0U};
     trans.length = 8U;
-    trans.rxlength = 0U;
+    trans.rxlength = 0;
     trans.flags = SPI_TRANS_USE_TXDATA;
     trans.tx_data[0U] = data;
     spi_device_polling_transmit(EVE_spi_device_simple, &trans);
@@ -106,8 +107,8 @@ static inline void spi_transmit_32(uint32_t data)
 {
     spi_transaction_t trans = {0U};
     trans.length = 32U;
-    trans.rxlength = 0U;
-    trans.flags = 0U;
+    trans.rxlength = 0;
+    trans.flags = 0;
     trans.tx_buffer = &data;
     spi_device_polling_transmit(EVE_spi_device_simple, &trans);
 }

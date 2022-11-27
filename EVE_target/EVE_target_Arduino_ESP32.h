@@ -2,7 +2,7 @@
 @file    EVE_target_Arduino_ESP32.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-24
+@date    2022-11-27
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -26,6 +26,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 5.0
 - extracted from EVE_target.h
+- basic maintenance: checked for violations of white space and indent rules
 
 */
 
@@ -66,7 +67,7 @@ extern spi_device_handle_t EVE_spi_device;
 extern spi_device_handle_t EVE_spi_device_simple;
 
 #if defined(EVE_DMA)
-extern uint32_t EVE_dma_buffer[1025];
+extern uint32_t EVE_dma_buffer[1025U];
 extern volatile uint16_t EVE_dma_buffer_index;
 extern volatile uint8_t EVE_dma_busy;
 

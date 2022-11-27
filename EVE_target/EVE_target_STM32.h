@@ -2,7 +2,7 @@
 @file    EVE_target_STM32.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-10
+@date    2022-11-27
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -26,6 +26,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 5.0
 - extracted from EVE_target.h
+- basic maintenance: checked for violations of white space and indent rules
 
 */
 
@@ -130,16 +131,16 @@ static inline void EVE_cs_set(void)
 static inline void spi_transmit(uint8_t data)
 {
     LL_SPI_TransmitData8(EVE_SPI, data);
-    while(!LL_SPI_IsActiveFlag_TXP(EVE_SPI)) {}
-    while(!LL_SPI_IsActiveFlag_RXWNE(EVE_SPI)) {}
+    while (!LL_SPI_IsActiveFlag_TXP(EVE_SPI)) {}
+    while (!LL_SPI_IsActiveFlag_RXWNE(EVE_SPI)) {}
     LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXWNE */
 }
 #else
 static inline void spi_transmit(uint8_t data)
 {
     LL_SPI_TransmitData8(EVE_SPI, data);
-    while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI)) {}
-    while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI)) {}
+    while (!LL_SPI_IsActiveFlag_TXE(EVE_SPI)) {}
+    while (!LL_SPI_IsActiveFlag_RXNE(EVE_SPI)) {}
     LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI_SR_RXNE */
 }
 #endif
@@ -166,16 +167,16 @@ static inline void spi_transmit_burst(uint32_t data)
 static inline uint8_t spi_receive(uint8_t data)
 {
     LL_SPI_TransmitData8(EVE_SPI, data);
-    while(!LL_SPI_IsActiveFlag_TXP(EVE_SPI)) {}
-    while(!LL_SPI_IsActiveFlag_RXWNE(EVE_SPI)) {}
+    while (!LL_SPI_IsActiveFlag_TXP(EVE_SPI)) {}
+    while (!LL_SPI_IsActiveFlag_RXWNE(EVE_SPI)) {}
     return LL_SPI_ReceiveData8(EVE_SPI);
 }
 #else
 static inline uint8_t spi_receive(uint8_t data)
 {
     LL_SPI_TransmitData8(EVE_SPI, data);
-    while(!LL_SPI_IsActiveFlag_TXE(EVE_SPI)) {}
-    while(!LL_SPI_IsActiveFlag_RXNE(EVE_SPI)) {}
+    while (!LL_SPI_IsActiveFlag_TXE(EVE_SPI)) {}
+    while (!LL_SPI_IsActiveFlag_RXNE(EVE_SPI)) {}
     return LL_SPI_ReceiveData8(EVE_SPI);
 }
 #endif

@@ -2,7 +2,7 @@
 @file    EVE_target_GD32VF103.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-10
+@date    2022-11-27
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -27,6 +27,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 5.0
 - extracted from EVE_target.h
 - made DELAY_MS() more MISRA-C compliant
+- basic maintenance: checked for violations of white space and indent rules
 
 */
 
@@ -49,9 +50,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 static inline void DELAY_MS(uint16_t val)
 {
-    for (uint16_t loops = 0U; loops < val; loops++)
+    for (uint16_t loops = 0; loops < val; loops++)
     {
-        for (uint16_t counter = 0U; counter < EVE_DELAY_1MS; counter++)
+        for (uint16_t counter = 0; counter < EVE_DELAY_1MS; counter++)
         {
             __asm__ volatile("nop");
         }
@@ -81,7 +82,7 @@ static inline void EVE_cs_clear(void)
 static inline void spi_transmit(uint8_t data)
 {
         SPI_DATA(SPI0) = (uint32_t) data;
-        while(SPI_STAT(SPI0) & SPI_STAT_TRANS) {};
+        while (SPI_STAT(SPI0) & SPI_STAT_TRANS) {};
 }
 
 static inline void spi_transmit_32(uint32_t data)
@@ -101,7 +102,7 @@ static inline void spi_transmit_burst(uint32_t data)
 static inline uint8_t spi_receive(uint8_t data)
 {
         SPI_DATA(SPI0) = (uint32_t) data;
-        while(SPI_STAT(SPI0) & SPI_STAT_TRANS) {};
+        while (SPI_STAT(SPI0) & SPI_STAT_TRANS) {};
         return (uint8_t) SPI_DATA(SPI0);
 }
 

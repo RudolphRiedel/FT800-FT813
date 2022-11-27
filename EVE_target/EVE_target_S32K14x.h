@@ -2,7 +2,7 @@
 @file    EVE_target_S32K14x.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-10
+@date    2022-11-27
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -26,6 +26,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 5.0
 - extracted from EVE_target.h
+- basic maintenance: checked for violations of white space and indent rules
 
 */
 
@@ -108,7 +109,7 @@ static inline void spi_transmit(uint8_t data)
 {
     EVE_SPI->SR |= LPSPI_SR_RDF_MASK; /* clear Receive Data Flag */
     EVE_SPI->TDR = data; /* transmit data */
-    while(0U == (EVE_SPI->SR & LPSPI_SR_RDF_MASK));
+    while (0U == (EVE_SPI->SR & LPSPI_SR_RDF_MASK));
     (void) EVE_SPI->RDR; /* dummy read-access to clear Receive Data Flag */
 }
 
@@ -134,7 +135,7 @@ static inline uint8_t spi_receive(uint8_t data)
 {
     EVE_SPI->SR |= LPSPI_SR_RDF_MASK; /* clear Receive Data Flag */
     EVE_SPI->TDR = data; /* transmit data */
-    while(0U == (EVE_SPI->SR & LPSPI_SR_RDF_MASK));
+    while (0U == (EVE_SPI->SR & LPSPI_SR_RDF_MASK));
     return EVE_SPI->RDR;
 }
 

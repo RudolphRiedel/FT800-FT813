@@ -2,7 +2,7 @@
 @file    EVE_target_GD32C103.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-10
+@date    2022-11-27
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -26,6 +26,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 5.0
 - extracted from EVE_target.h
+- basic maintenance: checked for violations of white space and indent rules
 
 */
 
@@ -90,7 +91,7 @@ static inline void EVE_cs_clear(void)
 static inline void spi_transmit(uint8_t data)
 {
     SPI_DATA(SPI0) = (uint32_t) data;
-    while(SPI_STAT(SPI0) & SPI_STAT_TRANS) {}
+    while (SPI_STAT(SPI0) & SPI_STAT_TRANS) {}
     (void) SPI_DATA(SPI0); /* dummy read to clear the flags */
 }
 
@@ -115,8 +116,8 @@ static inline void spi_transmit_burst(uint32_t data)
 static inline uint8_t spi_receive(uint8_t data)
 {
     SPI_DATA(SPI0) = (uint32_t) data;
-    while(SPI_STAT(SPI0) & SPI_STAT_TRANS) {}
-    while(0U == (SPI_STAT(SPI0) & SPI_STAT_RBNE)) {}
+    while (SPI_STAT(SPI0) & SPI_STAT_TRANS) {}
+    while (0U == (SPI_STAT(SPI0) & SPI_STAT_RBNE)) {}
     return (uint8_t) SPI_DATA(SPI0);
 }
 

@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2022-10-31
+@date    2022-11-27
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -59,6 +59,7 @@ the IOT5
 - changed the timings for EVE2_38A and EVE2_38G to what Matrix Orbital is using in their library
 - added profiles for EVE_EVE3x_38A and EVE_EVE3x_38G
 - fixed some MISRA-C issues
+- basic maintenance: checked for violations of white space and indent rules
 
 */
 
@@ -170,7 +171,7 @@ typedef struct
 
 /* display timing parameters below */
 
-/* ----------- 320 x 240 ----------- */
+/* ########## 320 x 240 ########## */
 
 /* EVE2-35A 320x240 3.5" Matrix Orbital, resistive, or non-touch, FT812 */
 #if defined(EVE_EVE2_35)
@@ -311,7 +312,7 @@ typedef struct
 #define EVE_GEN 4
 #endif
 
-/* ----------- 480 x 272 ----------- */
+/* ########## 480 x 272 ########## */
 
 /* untested */
 /* EVE2-43A 480x272 4.3" Matrix Orbital, resistive or no touch, FT812 */
@@ -435,7 +436,7 @@ typedef struct
 #define EVE_GEN 2
 #endif
 
-/* ----------- 800 x 480 ----------- */
+/* ########## 800 x 480 ########## */
 
 /* untested */
 /* FTDI/BRT EVE2 modules VM810C50A-D, ME812A-WH50R and ME813A-WH50C, 800x480 5.0" */
@@ -719,7 +720,7 @@ typedef struct
 #define EVE_GEN 2
 #endif
 
-/* ----------- 1024 x 600 ----------- */
+/* ########## 1024 x 600 ########## */
 
 /* ADAM101-LCP-SWVGA-NEW 1024x600 10.1" Glyn, capacitive, FT813 */
 #if defined(EVE_ADAM101)
@@ -852,7 +853,7 @@ typedef struct
 #define EVE_PCLK_FREQ (51000000UL) /* 51MHz - value for EVE_cmd_pclkfreq */
 #endif
 
-/* ----------- 1280 x 800 ------------ */
+/* ########## 1280 x 800 ########## */
 
 /* untested */
 /* EVE4-101G 1280x800 10.1" Matrix Orbital, capacitive touch, BT817 */
@@ -900,7 +901,7 @@ typedef struct
 #define EVE_GEN 4
 #endif
 
-/* ----------- non-standard ----------- */
+/* ########## non-standard ########## */
 
 /* untested */
 // timings are from here: https://github.com/MatrixOrbital/EVE2-Library/blob/master/Eve2_81x.c
@@ -1171,7 +1172,7 @@ typedef struct
 #define EVE_HAS_GT911
 #endif
 
-/* ------ Common Timings ------ */
+/* ########## Common Timings ########## */
 
 #if defined(Resolution_320x240)
 #define EVE_HSIZE (320L) /* Thd Length of visible part of line (in PCLKs) - display width */

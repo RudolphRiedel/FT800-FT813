@@ -2,7 +2,7 @@
 @file    EVE_target_V851.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-09
+@date    2022-11-27
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -26,6 +26,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 5.0
 - extracted from EVE_target.h
+- basic maintenance: checked for violations of white space and indent rules
 
 */
 
@@ -48,29 +49,29 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 static inline void EVE_pdn_set(void)
 {
-    P0 &= ~(1U<<6U);
+    P0 &= ~(1U << 6U);
 }
 
 static inline void EVE_pdn_clear(void)
 {
-    P0 |= (1U<<6U);
+    P0 |= (1U << 6U);
 }
 
 static inline void EVE_cs_set(void)
 {
-    P8 &= ~(1U<<2U); /* manually set chip-select to low */
+    P8 &= ~(1U << 2U); /* manually set chip-select to low */
 }
 
 static inline void EVE_cs_clear(void)
 {
-    P8 |= (1U<<2U);  /* manually set chip-select to high */
+    P8 |= (1U << 2U);  /* manually set chip-select to high */
 }
 
 static inline void spi_transmit(uint8_t data)
 {
     CSIH0CTL0 = 0xC1U; /* CSIH2PWR = 1;  CSIH2TXE=1; CSIH2RXE = 0; direct access mode  */
     CSIH0TX0H = data;   /* start transmission */
-    while(CSIH0STR0 & 0x00080U) {}  /* wait for transmission to complete - 800ns @ 10MHz SPI-Clock */
+    while (CSIH0STR0 & 0x00080U) {}  /* wait for transmission to complete - 800ns @ 10MHz SPI-Clock */
 }
 
 static inline void spi_transmit_32(uint32_t data)
@@ -91,7 +92,7 @@ static inline uint8_t spi_receive(uint8_t data)
 {
     CSIH0CTL0 = 0xE1U; /* CSIH2PWR = 1;  CSIH2TXE=1; CSIH2RXE = 1; direct access mode  */
     CSIH0TX0H = data;   /* start transmission */
-    while(CSIH0STR0 & 0x00080U) {}  /* wait for transmission to complete - 800ns @ 10MHz SPI-Clock */
+    while (CSIH0STR0 & 0x00080U) {}  /* wait for transmission to complete - 800ns @ 10MHz SPI-Clock */
     return (uint8_t) CSIH0RX0H;
 }
 

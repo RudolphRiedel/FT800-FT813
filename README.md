@@ -170,9 +170,9 @@ thread_1ms_update_display()
 
     count++;
 
-    if(EVE_busy() == E_OK)
+    if (E_OK == EVE_busy())
     {
-        switch(state)
+        switch (state)
         {
             case 0:
                 update_first();
@@ -183,7 +183,7 @@ thread_1ms_update_display()
                 state = 2;
                 break;
             case 2:
-                if(counter > 19)
+                if (counter > 19)
                 {
                     update_last_swap_list();
                     count = 0;
