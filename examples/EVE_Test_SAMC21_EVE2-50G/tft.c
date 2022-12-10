@@ -1,22 +1,11 @@
 /*
 @file    tft.c / tft.cpp
 @brief   TFT handling functions for EVE_Test project
-@version 1.19
-@date    2022-03-19
+@version 1.20
+@date    2022-12-10
 @author  Rudolph Riedel
 
 @section History
-
-1.14
-- added example code for BT81x that demonstrates how to write a flash-image from the microcontrollers memory
-  to an external flash on a BT81x module and how to use an UTF-8 font contained in this flash-image
-
-1.15
-- moved "display_list_size = EVE_memRead16(REG_CMD_DL);" from TFT_display() to TFT_touch() to speed up the display
- refresh for non-DMA targets
-
-1.16
-- disabled the UTF-8 font example code, can be re-enabled if desired by changing the "#define TEST_UTF8 0" to "#define TEST_UTF8 1"
 
 1.17
 - replaced the UTF-8 font with a freshly generated one and adjusted the parameters for the .xfont file
@@ -28,6 +17,9 @@
 - removed most of the history
 - changed a couple of "while (EVE_busy()) {};" lines to "EVE_execute_cmd();"
 - renamed PINK to MAGENTA
+
+1.20
+- several minor changes
 
  */
 
@@ -104,6 +96,15 @@ void touch_calibrate(void)
     EVE_memWrite32(REG_TOUCH_TRANSFORM_D, 0x000000d2);
     EVE_memWrite32(REG_TOUCH_TRANSFORM_E, 0x0000feac);
     EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0xfffcfaaf);
+#endif
+
+#if defined (EVE_CFAF800480E1_050SC_A2)
+    EVE_memWrite32(REG_TOUCH_TRANSFORM_A, 0x00010603);
+    EVE_memWrite32(REG_TOUCH_TRANSFORM_B, 0x0000007A);
+    EVE_memWrite32(REG_TOUCH_TRANSFORM_C, 0xFFFF0525);
+    EVE_memWrite32(REG_TOUCH_TRANSFORM_D, 0x0000060B);
+    EVE_memWrite32(REG_TOUCH_TRANSFORM_E, 0x00010E13);
+    EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0xFFE8813F);
 #endif
 
 #if defined (EVE_PAF90)
@@ -259,7 +260,6 @@ void touch_calibrate(void)
 void initStaticBackground(void)
 {
     EVE_cmd_dl(CMD_DLSTART); /* Start the display list */
-
     EVE_cmd_dl(TAG(0)); /* do not use the following objects for touch-detection */
 
     EVE_cmd_bgcolor(0x00c0c0c0); /* light grey */
@@ -270,20 +270,20 @@ void initStaticBackground(void)
     EVE_cmd_dl(DL_BEGIN | EVE_RECTS);
     EVE_cmd_dl(LINE_WIDTH(1*16)); /* size is in 1/16 pixel */
 
-    EVE_cmd_dl(DL_COLOR_RGB | BLUE_1);
+    EVE_color_rgb(BLUE_1);
     EVE_cmd_dl(VERTEX2F(0,0));
     EVE_cmd_dl(VERTEX2F(EVE_HSIZE,LAYOUT_Y1-2));
     EVE_cmd_dl(DL_END);
 
     /* display the logo */
-    EVE_cmd_dl(DL_COLOR_RGB | WHITE);
+    EVE_color_rgb(WHITE);
     EVE_cmd_dl(DL_BEGIN | EVE_BITMAPS);
     EVE_cmd_setbitmap(MEM_LOGO, EVE_ARGB1555, 56, 56);
     EVE_cmd_dl(VERTEX2F(EVE_HSIZE - 58, 5));
     EVE_cmd_dl(DL_END);
 
     /* draw a black line to separate things */
-    EVE_cmd_dl(DL_COLOR_RGB | BLACK);
+    EVE_color_rgb(BLACK);
     EVE_cmd_dl(DL_BEGIN | EVE_LINES);
     EVE_cmd_dl(VERTEX2F(0,LAYOUT_Y1-2));
     EVE_cmd_dl(VERTEX2F(EVE_HSIZE,LAYOUT_Y1-2));
@@ -360,11 +360,11 @@ uint16_t display_list_size = 0;
 /* check for touch events and setup vars for TFT_display() */
 void TFT_touch(void)
 {
-    uint8_t tag;
-    static uint8_t toggle_lock = 0;
-
     if(tft_active != 0)
     {
+        uint8_t tag;
+        static uint8_t toggle_lock = 0;
+
         if(EVE_IS_BUSY == EVE_busy()) /* is EVE still processing the last display list? */
         {
             return;
@@ -422,7 +422,7 @@ void TFT_display(void)
 
         EVE_cmd_append_burst(MEM_DL_STATIC, num_dl_static); /* insert static part of display-list from copy in gfx-mem */
         /* display a button */
-        EVE_cmd_dl_burst(DL_COLOR_RGB | WHITE);
+        EVE_color_rgb_burst(WHITE);
         EVE_cmd_fgcolor_burst(0x00c0c0c0); /* some grey */
         EVE_cmd_dl_burst(TAG(10)); /* assign tag-value '10' to the button that follows */
         EVE_cmd_button_burst(20,20,80,30, 28, toggle_state,"Touch!");
@@ -431,6 +431,7 @@ void TFT_display(void)
         /* display a picture and rotate it when the button on top is activated */
         EVE_cmd_setbitmap_burst(MEM_PIC1, EVE_RGB565, 100, 100);
 
+        EVE_cmd_dl_burst(DL_SAVE_CONTEXT);
         EVE_cmd_dl_burst(CMD_LOADIDENTITY);
         EVE_cmd_translate_burst(65536 * 70, 65536 * 50); /* shift off-center */
         EVE_cmd_rotate_burst(rotate);
@@ -445,11 +446,10 @@ void TFT_display(void)
         EVE_cmd_dl_burst(DL_BEGIN | EVE_BITMAPS);
         EVE_cmd_dl_burst(VERTEX2F(EVE_HSIZE - 100, (LAYOUT_Y1)));
         EVE_cmd_dl_burst(DL_END);
-
-        EVE_cmd_dl_burst(RESTORE_CONTEXT()); /* reset the transformation matrix to default values */
+        EVE_cmd_dl_burst(DL_RESTORE_CONTEXT);
 
         /* print profiling values */
-        EVE_cmd_dl_burst(DL_COLOR_RGB | BLACK);
+        EVE_color_rgb_burst(BLACK);
 
         #if defined (EVE_DMA)
         EVE_cmd_number_burst(100, EVE_VSIZE - 65, 26, EVE_OPT_RIGHTX, cmd_fifo_size); /* number of bytes written to the cmd-fifo */
