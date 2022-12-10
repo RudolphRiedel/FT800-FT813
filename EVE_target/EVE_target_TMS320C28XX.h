@@ -2,7 +2,7 @@
 @file    EVE_target_TMS320C28XX.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-27
+@date    2022-12-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -27,6 +27,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 5.0
 - extracted from EVE_target.h
 - basic maintenance: checked for violations of white space and indent rules
+- changed EVE_DELAY_1MS to allow setup thru the build-environment
 
 */
 
@@ -48,8 +49,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 typedef uint_least8_t uint8_t; /* this architecture does not actually know what a byte is, uint_least8_t is 16 bits wide */
 
+/* you may define these in your build-environment to use different settings */
+#if !defined (EVE_DELAY_1MS)
 /* 150MHz -> 6.67ns per cycle, 5 cycles for the loop itself and 8 NOPs -> 1ms / (6.67ns * 13) = 11532 */
 #define EVE_DELAY_1MS 12000U
+#endif
+/* you may define these in your build-environment to use different settings */
 
 static inline void DELAY_MS(uint16_t val)
 {

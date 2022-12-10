@@ -2,7 +2,7 @@
 @file    EVE_target_GD32C103.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-27
+@date    2022-12-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -27,6 +27,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 5.0
 - extracted from EVE_target.h
 - basic maintenance: checked for violations of white space and indent rules
+- split up the optional default defines to allow to only change what needs changing thru the build-environment
 
 */
 
@@ -46,14 +47,26 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 /* note: SPI0 is used */
 
+/* you may define these in your build-environment to use different settings */
 #if !defined (EVE_CS)
-    #define EVE_CS_PORT GPIOA
-    #define EVE_CS GPIO_PIN_4
-    #define EVE_PDN_PORT GPIOA
-    #define EVE_PDN GPIO_PIN_3
-    #define EVE_SPI_PORT GPIOA
-    #define EVE_DELAY_1MS 20000U  /* ~1ms at 120MHz Core-Clock */
+#define EVE_CS_PORT GPIOA
+#define EVE_CS GPIO_PIN_4
 #endif
+
+#if !defined (EVE_PDN)
+#define EVE_PDN_PORT GPIOA
+#define EVE_PDN GPIO_PIN_3
+#endif
+
+#if !defined (EVE_SPI_PORT)
+#define EVE_SPI_PORT GPIOA
+#endif
+
+#if !defined (EVE_DELAY_1MS)
+#define EVE_DELAY_1MS 20000U  /* ~1ms at 120MHz Core-Clock */
+#endif
+/* you may define these in your build-environment to use different settings */
+
 
 #if defined (EVE_DMA)
     extern uint32_t EVE_dma_buffer[1025U];

@@ -2,7 +2,7 @@
 @file    EVE_target_Arduino_Metro_M4.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-27
+@date    2022-12-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -27,6 +27,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 5.0
 - extracted from EVE_target.h
 - basic maintenance: checked for violations of white space and indent rules
+- split up the optional default defines to allow to only change what needs changing thru the build-environment
 
 */
 
@@ -49,10 +50,15 @@ extern "C"
 
 #if defined(ARDUINO_METRO_M4)
 
+/* you may define these in your build-environment to use different settings */
 #if !defined(EVE_CS)
-#define EVE_CS 10U
-#define EVE_PDN 8U
+#define EVE_CS 10
 #endif
+
+#if !defined(EVE_PDN)
+#define EVE_PDN 8
+#endif
+/* you may define these in your build-environment to use different settings */
 
 #define EVE_DMA
 

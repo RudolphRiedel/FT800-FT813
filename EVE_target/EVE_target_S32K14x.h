@@ -2,7 +2,7 @@
 @file    EVE_target_S32K14x.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-27
+@date    2022-12-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -27,6 +27,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 5.0
 - extracted from EVE_target.h
 - basic maintenance: checked for violations of white space and indent rules
+- split up the optional default defines to allow to only change what needs changing thru the build-environment
 
 */
 
@@ -51,22 +52,33 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 #include <stdint.h>
 
+/* you may define these in your build-environment to use different settings */
 #if !defined (EVE_CS)
-    #define EVE_CS 5U
-    #define EVE_CS_GPIO PTB
-
-    #define EVE_PDN 14U
-    #define EVE_PDN_GPIO PTD
-
-    /* LPSPI0 on J2 header: PTB2 = SCK, PTB3 = MISO, PTB4 = MOSI */
-    #define EVE_SPI LPSPI0
-    #define EVE_SPI_INDEX PCC_LPSPI0_INDEX
-
-    //#define EVE_DELAY_1MS 15000U   /* maybe ~1ms at 112MHz Core-Clock */
-    #define EVE_DELAY_1MS 5300U  /* maybe ~1ms at 48MHz Core-Clock */
-
-    #define EVE_DMA
+#define EVE_CS 5U
+#define EVE_CS_GPIO PTB
 #endif
+
+#if !defined (EVE_PDN)
+#define EVE_PDN 14U
+#define EVE_PDN_GPIO PTD
+#endif
+
+#if !defined (EVE_SPI)
+/* LPSPI0 on J2 header: PTB2 = SCK, PTB3 = MISO, PTB4 = MOSI */
+#define EVE_SPI LPSPI0
+#endif
+
+#if !defined (EVE_SPI_INDEX)
+#define EVE_SPI_INDEX PCC_LPSPI0_INDEX
+#endif
+
+#if !defined (EVE_DELAY_1MS)
+//#define EVE_DELAY_1MS 15000U   /* maybe ~1ms at 112MHz Core-Clock */
+#define EVE_DELAY_1MS 5300U  /* maybe ~1ms at 48MHz Core-Clock */
+#endif
+/* you may define these in your build-environment to use different settings */
+
+// #define EVE_DMA /* to be defined in the build-environment */
 
 void DELAY_MS(uint16_t val);
 void EVE_init_spi(void);

@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions for plain C targets
 @version 5.0
-@date    2022-11-27
+@date    2022-12-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -53,6 +53,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added DMA support for the GD32C103 target
 - fixed the ESP32 target to work with the ESP32-S3 as well
 - basic maintenance: checked for violations of white space and indent rules
+- changed the code for ATSAMC21 and ATSAMx51 targets to use EVE_SPI_SERCOM
 
  */
 
@@ -106,7 +107,7 @@ void EVE_init_dma(void)
     DMAC->CTRL.reg = DMAC_CTRL_LVLEN0 | DMAC_CTRL_DMAENABLE; /* enable level 0 transfers, enable DMA */
 
     dmadescriptor.BTCTRL.reg = DMAC_BTCTRL_SRCINC | DMAC_BTCTRL_VALID; /* increase source-address, beat-size = 8-bit */
-    dmadescriptor.DSTADDR.reg = (uint32_t) &EVE_SPI->SPI.DATA.reg;
+    dmadescriptor.DSTADDR.reg = (uint32_t) &EVE_SPI_SERCOM->SPI.DATA.reg;
     dmadescriptor.DESCADDR.reg = 0; /* no next descriptor */
 
     DMAC->CHINTENSET.reg = DMAC_CHINTENSET_TCMPL;
@@ -118,7 +119,7 @@ void EVE_start_dma_transfer(void)
 {
     dmadescriptor.BTCNT.reg = (EVE_dma_buffer_index * 4U) - 1U;
     dmadescriptor.SRCADDR.reg = (uint32_t) &EVE_dma_buffer[EVE_dma_buffer_index]; /* note: last entry in array + 1 */
-    EVE_SPI->SPI.CTRLB.bit.RXEN = 0; /* switch receiver off by setting RXEN to 0 which is not enable-protected */
+    EVE_SPI_SERCOM->SPI.CTRLB.bit.RXEN = 0; /* switch receiver off by setting RXEN to 0 which is not enable-protected */
     EVE_cs_set();
     DMAC->CHCTRLA.bit.ENABLE = 1; /* start sending out EVE_dma_buffer ?*/
     EVE_dma_busy = 42;
@@ -129,8 +130,8 @@ void DMAC_Handler()
 {
     DMAC->CHID.reg = EVE_DMA_CHANNEL; /* we only use one channel, so this should not even change */
     DMAC->CHINTFLAG.reg = DMAC_CHINTFLAG_TCMPL; /* ack irq */
-    while (0U == EVE_SPI->SPI.INTFLAG.bit.TXC); /* wait for the SPI to be done transmitting */
-    EVE_SPI->SPI.CTRLB.bit.RXEN = 1; /* switch receiver on by setting RXEN to 1 which is not enable protected */
+    while (0U == EVE_SPI_SERCOM->SPI.INTFLAG.bit.TXC); /* wait for the SPI to be done transmitting */
+    EVE_SPI_SERCOM->SPI.CTRLB.bit.RXEN = 1; /* switch receiver on by setting RXEN to 1 which is not enable protected */
     EVE_cs_clear();
     EVE_dma_busy = 0;
 }
@@ -182,7 +183,7 @@ void EVE_init_dma(void)
         DMAC_CHCTRLA_TRIGSRC(EVE_SPI_DMA_TRIGGER);
 
     dmadescriptor.BTCTRL.reg = DMAC_BTCTRL_SRCINC | DMAC_BTCTRL_VALID; /* increase source-address, beat-size = 8-bit */
-    dmadescriptor.DSTADDR.reg = (uint32_t) &EVE_SPI->SPI.DATA.reg;
+    dmadescriptor.DSTADDR.reg = (uint32_t) &EVE_SPI_SERCOM->SPI.DATA.reg;
     dmadescriptor.DESCADDR.reg = 0; /* no next descriptor */
 
     DMAC->Channel[EVE_DMA_CHANNEL].CHINTENSET.bit.TCMPL = 1; /* enable transfer complete interrupt */
@@ -196,7 +197,7 @@ void EVE_start_dma_transfer(void)
 {
     dmadescriptor.BTCNT.reg = (EVE_dma_buffer_index * 4U) - 1U;
     dmadescriptor.SRCADDR.reg = (uint32_t) &EVE_dma_buffer[EVE_dma_buffer_index]; /* note: last entry in array + 1 */
-    EVE_SPI->SPI.CTRLB.bit.RXEN = 0; /* switch receiver off by setting RXEN to 0 which is not enable-protected */
+    EVE_SPI_SERCOM->SPI.CTRLB.bit.RXEN = 0; /* switch receiver off by setting RXEN to 0 which is not enable-protected */
     EVE_cs_set();
     DMAC->Channel[EVE_DMA_CHANNEL].CHCTRLA.bit.ENABLE = 1; /* start sending out EVE_dma_buffer */
     EVE_dma_busy = 42;
@@ -206,8 +207,8 @@ void EVE_start_dma_transfer(void)
 void DMAC_0_Handler()
 {
     DMAC->Channel[EVE_DMA_CHANNEL].CHINTFLAG.reg = DMAC_CHINTFLAG_TCMPL; /* ack irq */
-    while (0U == EVE_SPI->SPI.INTFLAG.bit.TXC); /* wait for the SPI to be done transmitting */
-    EVE_SPI->SPI.CTRLB.bit.RXEN = 1; /* switch receiver on by setting RXEN to 1 which is not enable protected */
+    while (0U == EVE_SPI_SERCOM->SPI.INTFLAG.bit.TXC); /* wait for the SPI to be done transmitting */
+    EVE_SPI_SERCOM->SPI.CTRLB.bit.RXEN = 1; /* switch receiver on by setting RXEN to 1 which is not enable protected */
     EVE_dma_busy = 0;
     EVE_cs_clear();
 }

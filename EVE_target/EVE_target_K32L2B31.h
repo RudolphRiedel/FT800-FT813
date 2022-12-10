@@ -2,7 +2,7 @@
 @file    EVE_target_K32L2B31.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-27
+@date    2022-12-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -28,6 +28,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - extracted from EVE_target.h
 - made DELAY_MS() more MISRA-C compliant
 - basic maintenance: checked for violations of white space and indent rules
+- split up the optional default defines to allow to only change what needs changing thru the build-environment
 
 */
 
@@ -47,14 +48,25 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #include "fsl_gpio.h"
 #include "fsl_spi.h"
 
+/* you may define these in your build-environment to use different settings */
 #if !defined (EVE_CS)
-    #define EVE_CS 4
-    #define EVE_CS_GPIO GPIOD
-    #define EVE_PDN 2
-    #define EVE_PDN_GPIO GPIOD
-    #define EVE_SPI SPI1
-    #define EVE_DELAY_1MS 8000U  /* ~1ms at 48MHz Core-Clock */
+#define EVE_CS 4
+#define EVE_CS_GPIO GPIOD
 #endif
+
+#if !defined (EVE_PDN)
+#define EVE_PDN 2
+#define EVE_PDN_GPIO GPIOD
+#endif
+
+#if !defined (EVE_SPI)
+#define EVE_SPI SPI1
+#endif
+
+#if !defined (EVE_DELAY_1MS)
+#define EVE_DELAY_1MS 8000U  /* ~1ms at 48MHz Core-Clock */
+#endif
+/* you may define these in your build-environment to use different settings */
 
 static inline void DELAY_MS(uint16_t val)
 {

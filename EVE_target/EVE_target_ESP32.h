@@ -2,7 +2,7 @@
 @file    EVE_target_ESP32.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-27
+@date    2022-12-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -27,6 +27,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 5.0
 - extracted from EVE_target.h
 - basic maintenance: checked for violations of white space and indent rules
+- split up the optional default defines to allow to only change what needs changing thru the build-environment
 
 */
 
@@ -45,13 +46,27 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #include "driver/gpio.h"
 #include "freertos/task.h"
 
-#if !defined (EVE_CS)
-    #define EVE_CS      GPIO_NUM_13
-    #define EVE_PDN     GPIO_NUM_12
-    #define EVE_SCK     GPIO_NUM_18
-    #define EVE_MISO    GPIO_NUM_19
-    #define EVE_MOSI    GPIO_NUM_23
+/* you may define these in your build-environment to use different settings */
+#if !defined(EVE_CS)
+#define EVE_CS GPIO_NUM_13
 #endif
+
+#if !defined(EVE_PDN)
+#define EVE_PDN GPIO_NUM_12
+#endif
+
+#if !defined(EVE_SCK)
+#define EVE_SCK GPIO_NUM_18
+#endif
+
+#if !defined(EVE_MISO)
+#define EVE_MISO GPIO_NUM_19
+#endif
+
+#if !defined(EVE_MOSI)
+#define EVE_MOSI GPIO_NUM_23
+#endif
+/* you may define these in your build-environment to use different settings */
 
 extern spi_device_handle_t EVE_spi_device;
 extern spi_device_handle_t EVE_spi_device_simple;

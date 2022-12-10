@@ -2,7 +2,7 @@
 @file    EVE_target_RP2040.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-10
+@date    2022-12-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -26,6 +26,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 5.0
 - extracted from EVE_target.h
+- split up the optional default defines to allow to only change what needs changing thru the build-environment
 
 */
 
@@ -44,15 +45,33 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #include "pico/stdlib.h"
 #include "hardware/spi.h"
 
+/* you may define these in your build-environment to use different settings */
 #if !defined (EVE_CS)
-    #define EVE_CS      5
-    #define EVE_PDN     6
-    #define EVE_SCK     2
-    #define EVE_MOSI    3
-    #define EVE_MISO    4
-    #define EVE_SPI spi0
-    #define EVE_DMA
+#define EVE_CS 5
 #endif
+
+#if !defined (EVE_PDN)
+#define EVE_PDN 6
+#endif
+
+#if !defined (EVE_SCK)
+#define EVE_SCK 2
+#endif
+
+#if !defined (EVE_MOSI)
+#define EVE_MOSI 3
+#endif
+
+#if !defined (EVE_MISO)
+#define EVE_MISO 4
+#endif
+
+#if !defined (EVE_SPI)
+#define EVE_SPI spi0
+#endif
+/* you may define these in your build-environment to use different settings */
+
+// #define EVE_DMA /* to be defined in the build-environment */
 
 #define DELAY_MS(ms) sleep_ms(ms)
 

@@ -2,7 +2,7 @@
 @file    EVE_target_Arduino_XMC1100_XMC2GO.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-24
+@date    2022-12-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -26,6 +26,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 5.0
 - extracted from EVE_target.h
+- split up the optional default defines to allow to only change what needs changing thru the build-environment
 
 */
 
@@ -48,10 +49,15 @@ extern "C"
 
 #if defined(XMC1100_XMC2GO)
 
+/* you may define these in your build-environment to use different settings */
 #if !defined(EVE_CS)
 #define EVE_CS 3
+#endif
+
+#if !defined(EVE_PDN)
 #define EVE_PDN 4
 #endif
+/* you may define these in your build-environment to use different settings */
 
 #define DELAY_MS(ms) delay(ms)
 

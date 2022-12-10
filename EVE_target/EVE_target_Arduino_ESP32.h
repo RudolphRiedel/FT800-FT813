@@ -2,7 +2,7 @@
 @file    EVE_target_Arduino_ESP32.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-27
+@date    2022-12-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -27,6 +27,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 5.0
 - extracted from EVE_target.h
 - basic maintenance: checked for violations of white space and indent rules
+- split up the optional default defines to allow to only change what needs changing thru the build-environment
 
 */
 
@@ -51,13 +52,28 @@ extern "C"
 /* note: this is using the ESP-IDF driver as the Arduino class and driver does not allow DMA for SPI */
 #include "driver/spi_master.h"
 
+/* you may define these in your build-environment to use different settings */
 #if !defined(EVE_CS)
 #define EVE_CS 13
+#endif
+
+#if !defined(EVE_PDN)
 #define EVE_PDN 12
+#endif
+
+#if !defined(EVE_SCK)
 #define EVE_SCK 18
+#endif
+
+#if !defined(EVE_MISO)
 #define EVE_MISO 19
+#endif
+
+#if !defined(EVE_MOSI)
 #define EVE_MOSI 23
 #endif
+/* you may define these in your build-environment to use different settings */
+
 
 #define EVE_DMA
 

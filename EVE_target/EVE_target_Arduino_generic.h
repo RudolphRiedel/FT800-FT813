@@ -2,7 +2,7 @@
 @file    EVE_target_Arduino_generic.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-24
+@date    2022-12-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -26,6 +26,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 5.0
 - extracted from EVE_target.h
+- split up the optional default defines to allow to only change what needs changing thru the build-environment
 
 */
 
@@ -46,10 +47,15 @@ extern "C"
 {
 #endif
 
+/* you may define these in your build-environment to use different settings */
 #if !defined(EVE_CS)
 #define EVE_CS 10
+#endif
+
+#if !defined(EVE_PDN)
 #define EVE_PDN 8
 #endif
+/* you may define these in your build-environment to use different settings */
 
 #define DELAY_MS(ms) delay(ms)
 

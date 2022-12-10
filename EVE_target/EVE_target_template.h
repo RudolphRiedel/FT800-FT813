@@ -2,7 +2,7 @@
 @file    EVE_target_template.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-09
+@date    2022-12-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -26,6 +26,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 5.0
 - extracted from EVE_target.h
+- split up the optional default defines to allow to only change what needs changing thru the build-environment
 
 */
 
@@ -43,16 +44,31 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 #include "mytarget.h"
 
+/* you may define these in your build-environment to use different settings */
 #if !defined (EVE_CS)
-    #define EVE_CS_PORT 0
-    #define EVE_CS PORT_PA05
-    #define EVE_PDN_PORT 0
-    #define EVE_PDN PORT_PA03
-    #define EVE_SPI SERCOM0
-    #define EVE_DMA_CHANNEL 0
+#define EVE_CS_PORT 0
+#define EVE_CS PORT_PA05
 #endif
 
+#if !defined (EVE_PDN)
+#define EVE_PDN_PORT 0U
+#define EVE_PDN PORT_PA03
+#endif
+
+#if !defined (EVE_SPI)
+#define EVE_SPI 0U
+#endif
+
+#if defined(EVE_DMA) && !defined(EVE_DMA_CHANNEL)
+#define EVE_DMA_CHANNEL 0U
+#endif
+
+#if !defined (EVE_DELAY_1MS)
 #define EVE_DELAY_1MS 8000U  /* ~1ms at 48MHz Core-Clock */
+#endif
+/* you may define these in your build-environment to use different settings */
+
+// #define EVE_DMA /* to be defined in the build-environment */
 
 #if defined (EVE_DMA)
     extern uint32_t EVE_dma_buffer[1025U];

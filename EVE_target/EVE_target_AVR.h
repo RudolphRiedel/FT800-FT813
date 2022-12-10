@@ -2,7 +2,7 @@
 @file    EVE_target_AVR.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-27
+@date    2022-12-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -27,6 +27,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 5.0
 - extracted from EVE_target.h
 - basic maintenance: checked for violations of white space and indent rules
+- split up the optional default defines to allow to only change what needs changing thru the build-environment
 
 */
 
@@ -47,12 +48,17 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 #define DELAY_MS(ms) _delay_ms(ms)
 
-#if !defined (EVE_CS)
-    #define EVE_CS_PORT PORTB
-    #define EVE_CS      (1U << PB5)
-    #define EVE_PDN_PORT    PORTB
-    #define EVE_PDN     (1U << PB4)
+/* you may define these in your build-environment to use different settings */
+#if !defined(EVE_CS)
+#define EVE_CS_PORT PORTB
+#define EVE_CS      (1U << PB5)
 #endif
+
+#if !defined(EVE_PDN)
+#define EVE_PDN_PORT    PORTB
+#define EVE_PDN     (1U << PB4)
+#endif
+/* you may define these in your build-environment to use different settings */
 
 static inline void EVE_pdn_set(void)
 {

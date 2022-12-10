@@ -2,7 +2,7 @@
 @file    EVE_target_MSP432.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-27
+@date    2022-12-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -27,6 +27,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 5.0
 - extracted from EVE_target.h
 - basic maintenance: checked for violations of white space and indent rules
+- split up the optional default defines to allow to only change what needs changing thru the build-environment
 
 */
 
@@ -44,20 +45,28 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
 #include <stdint.h>
 
+/* you may define these in your build-environment to use different settings */
 #if !defined (EVE_CS)
-    #define RIVERDI_PORT GPIO_PORT_P1
-    #define RIVERDI_SIMO BIT6   /* P1.6 */
-    #define RIVERDI_SOMI BIT7   /* P1.7 */
-    #define RIVERDI_CLK BIT5    /* P1.5 */
-    #define EVE_CS_PORT         GPIO_PORT_P5
-    #define EVE_CS              GPIO_PIN0     /* P5.0 */
-    #define EVE_PDN_PORT        GPIO_PORT_P5
-    #define EVE_PDN             GPIO_PIN1     /* P5.1 */
+#define EVE_CS_PORT GPIO_PORT_P5
+#define EVE_CS GPIO_PIN0 /* P5.0 */
 #endif
 
-void EVE_SPI_Init(void);
+#if !defined (EVE_PDN)
+#define EVE_PDN_PORT GPIO_PORT_P5
+#define EVE_PDN GPIO_PIN1 /* P5.1 */
+#endif
 
+#if !defined (EVE_DELAY_1MS)
 #define EVE_DELAY_1MS 8000U /* ~1ms at 48MHz Core-Clock */
+#endif
+/* you may define these in your build-environment to use different settings */
+
+#define RIVERDI_PORT GPIO_PORT_P1
+#define RIVERDI_SIMO BIT6   /* P1.6 */
+#define RIVERDI_SOMI BIT7   /* P1.7 */
+#define RIVERDI_CLK BIT5    /* P1.5 */
+
+void EVE_SPI_Init(void);
 
 static inline void DELAY_MS(uint16_t val)
 {

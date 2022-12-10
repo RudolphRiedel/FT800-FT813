@@ -202,7 +202,7 @@ For Arduino I am using PlatformIO with Visual Studio Code.
 
 The platform the code is compiled for is automatically detected thru compiler flags in EVE_target.h.
 
-The desired TFT is selected by adding a define for it to the build-enviroment, e.g. -DEVE_EVE3_50G
+The desired TFT is selected by adding a define for it to the build-environment, e.g. -DEVE_EVE3_50G
 There is a list of available options at the start of EVE_config.h sorted by chipset.
 
 - Provide the pins used for Chip-Select and Power-Down in EVE_target.h for the target configuration you are using

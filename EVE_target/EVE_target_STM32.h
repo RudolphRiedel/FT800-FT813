@@ -84,17 +84,35 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #include "stm32h7xx_ll_spi.h"
 #endif
 
+/* you may define these in your build-environment to use different settings */
 #if !defined (EVE_CS)
-    #define EVE_CS_PORT GPIOD
-    #define EVE_CS GPIO_PIN_12
-    #define EVE_PDN_PORT GPIOD
-    #define EVE_PDN GPIO_PIN_13
-    #define EVE_SPI SPI1
-    #define EVE_DMA_INSTANCE DMA2
-    #define EVE_DMA_CHANNEL 3
-    #define EVE_DMA_STREAM 3
-//      #define EVE_DMA     /* do not activate, it is not working yet */
+#define EVE_CS_PORT GPIOD
+#define EVE_CS GPIO_PIN_12
 #endif
+
+#if !defined (EVE_PDN)
+#define EVE_PDN_PORT GPIOD
+#define EVE_PDN GPIO_PIN_13
+#endif
+
+#if !defined (EVE_SPI)
+#define EVE_SPI SPI1
+#endif
+
+#if !defined (EVE_DMA_INSTANCE)
+#define EVE_DMA_INSTANCE DMA2
+#endif
+
+#if !defined (EVE_DMA_CHANNEL)
+#define EVE_DMA_CHANNEL 3
+#endif
+
+#if !defined (EVE_DMA_STREAM)
+#define EVE_DMA_STREAM 3
+#endif
+/* you may define these in your build-environment to use different settings */
+
+//#define EVE_DMA /* to be defined in the build-environment */ /* do not activate, it is not working yet */
 
 #if defined (EVE_DMA)
     extern uint32_t EVE_dma_buffer[1025U];

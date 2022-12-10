@@ -2,7 +2,7 @@
 @file    EVE_target_ATSAMC21.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-27
+@date    2022-12-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -27,6 +27,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 5.0
 - extracted from EVE_target.h
 - basic maintenance: checked for violations of white space and indent rules
+- split up the optional default defines to allow to only change what needs changing thru the build-environment
+- changed EVE_SPI to a numerical value to automatically determine the correct SERCOMx_DMAC_ID_TX
 
 */
 
@@ -70,18 +72,51 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 #include "sam.h"
 
+/* you may define these in your build-environment to use different settings */
 #if !defined (EVE_CS)
-    #define EVE_CS_PORT 0U
-    #define EVE_CS PORT_PA05
-    #define EVE_PDN_PORT 0U
-    #define EVE_PDN PORT_PA03
-    #define EVE_SPI SERCOM0
-    #define EVE_SPI_DMA_TRIGGER SERCOM0_DMAC_ID_TX
-    #define EVE_DMA_CHANNEL 0U
-//          #define EVE_DMA
+#define EVE_CS_PORT 0U
+#define EVE_CS PORT_PA05
 #endif
 
+#if !defined (EVE_PDN)
+#define EVE_PDN_PORT 0U
+#define EVE_PDN PORT_PA03
+#endif
+
+#if !defined (EVE_SPI)
+#define EVE_SPI 0U
+#endif
+
+#if defined(EVE_DMA) && !defined(EVE_DMA_CHANNEL)
+#define EVE_DMA_CHANNEL 0U
+#endif
+
+#if !defined (EVE_DELAY_1MS)
 #define EVE_DELAY_1MS 8000U  /* ~1ms at 48MHz Core-Clock */
+#endif
+/* you may define these in your build-environment to use different settings */
+
+// #define EVE_DMA /* to be defined in the build-environment */
+
+#if EVE_SPI == 0U
+#define EVE_SPI_SERCOM SERCOM0
+#define EVE_SPI_DMA_TRIGGER SERCOM0_DMAC_ID_TX
+#elif EVE_SPI == 1U
+#define EVE_SPI_SERCOM SERCOM1
+#define EVE_SPI_DMA_TRIGGER SERCOM1_DMAC_ID_TX
+#elif EVE_SPI == 2U
+#define EVE_SPI_SERCOM SERCOM2
+#define EVE_SPI_DMA_TRIGGER SERCOM2_DMAC_ID_TX
+#elif EVE_SPI == 3U
+#define EVE_SPI_SERCOM SERCOM3
+#define EVE_SPI_DMA_TRIGGER SERCOM3_DMAC_ID_TX
+#elif EVE_SPI == 4U
+#define EVE_SPI_SERCOM SERCOM4
+#define EVE_SPI_DMA_TRIGGER SERCOM4_DMAC_ID_TX
+#elif EVE_SPI == 5U
+#define EVE_SPI_SERCOM SERCOM5
+#define EVE_SPI_DMA_TRIGGER SERCOM5_DMAC_ID_TX
+#endif
 
 #if defined (EVE_DMA)
     extern uint32_t EVE_dma_buffer[1025U];
@@ -116,9 +151,9 @@ static inline void EVE_cs_clear(void)
 
 static inline void spi_transmit(uint8_t data)
 {
-    EVE_SPI->SPI.DATA.reg = data;
-    while (0U == (EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC)) {}
-    (void) EVE_SPI->SPI.DATA.reg; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
+    EVE_SPI_SERCOM->SPI.DATA.reg = data;
+    while (0U == (EVE_SPI_SERCOM->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC)) {}
+    (void) EVE_SPI_SERCOM->SPI.DATA.reg; /* dummy read-access to clear SERCOM_SPI_INTFLAG_RXC */
 }
 
 static inline void spi_transmit_32(uint32_t data)
@@ -141,9 +176,9 @@ static inline void spi_transmit_burst(uint32_t data)
 
 static inline uint8_t spi_receive(uint8_t data)
 {
-    EVE_SPI->SPI.DATA.reg = data;
-    while (0U == (EVE_SPI->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC)) {}
-    return EVE_SPI->SPI.DATA.reg;
+    EVE_SPI_SERCOM->SPI.DATA.reg = data;
+    while (0U == (EVE_SPI_SERCOM->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC)) {}
+    return EVE_SPI_SERCOM->SPI.DATA.reg;
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *data)
