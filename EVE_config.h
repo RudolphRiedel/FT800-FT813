@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2022-11-27
+@date    2022-12-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -60,6 +60,8 @@ the IOT5
 - added profiles for EVE_EVE3x_38A and EVE_EVE3x_38G
 - fixed some MISRA-C issues
 - basic maintenance: checked for violations of white space and indent rules
+- added an EVE_CFAF800480E1_050SC_A2 profile without EVE_HAS_GT911 as there is a newer version of this
+  model around that mimics a FT5316 while still using a GT911.
 
 */
 
@@ -81,6 +83,7 @@ the IOT5
 #define EVE_EVE4_70G
 #define EVE_EVE4_101G
 #define EVE_CFAF800480Ex_050SC_A2
+#define EVE_CFAF800480E1_050SC_A2
 
 /* BT815 / BT816 */
 #define EVE_VM816C50AD
@@ -514,7 +517,7 @@ typedef struct
 #if defined(EVE_CFAF800480Ex_050SC_A2)
 #define Resolution_800x480
 
-#define EVE_PCLK (1L)             /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
+#define EVE_PCLK (1L) /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
 #define EVE_PCLK_FREQ (30000000UL) /* EVE_PCLK needs to be set to 1 for this to take effect */
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
@@ -523,6 +526,23 @@ typedef struct
 #define EVE_GEN 4
 #define EVE_HAS_GT911 /* special treatment required for out-of-spec touch-controller */
 #endif
+
+/* untested */
+/* Crystalfonts CFAF800480E1-050SC-A2 800x480 5.0" , BT817 capacitive touch */
+/* note: there is a new variant of the CFAF800480E1-050SC-A2 which mimics a FT5316 as touch controller */
+/* this should also work with CFAF800480E2-050SN-A2 (no touch) and CFAF800480E2-050SR-A2 (resistive touch) */
+#if defined(EVE_CFAF800480E1_050SC_A2)
+#define Resolution_800x480
+
+#define EVE_PCLK (1L) /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
+#define EVE_PCLK_FREQ (30000000UL) /* EVE_PCLK needs to be set to 1 for this to take effect */
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (0L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 4
+#endif
+
 
 /* untested */
 /* Matrix Orbital EVE3 modules EVE3-50A, EVE3-70A : 800x480 5.0" and 7.0" resistive, or no touch, BT816 */
