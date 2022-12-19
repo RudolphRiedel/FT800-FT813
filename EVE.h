@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 5.0
-@date    2022-11-27
+@date    2022-12-19
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -44,6 +44,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - removed macro RETURN() - use define DL_RETURN
 - removed macro SAVE_CONTEXT() - use define DL_SAVE_CONTEXT
 - basic maintenance: checked for violations of white space and indent rules
+- more linter fixes
+- changed EVE_COMPRESSED_RGBA_ASTC_nxn_KHR to EVE_ASTC_nXn to fix linter warnings and used the opportunity to make these shorter
+- added DL_COLOR_A as alternative to the COLOR_A macro
 
 */
 
@@ -78,6 +81,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define DL_CLEAR_RGB    0x02000000UL /* requires OR'd arguments */
 #define DL_COLOR_RGB    0x04000000UL /* requires OR'd arguments */
 #define DL_POINT_SIZE   0x0D000000UL /* requires OR'd arguments */
+#define DL_COLOR_A      0x10000000UL /* requires OR'd arguments */
 #define DL_BEGIN        0x1F000000UL /* requires OR'd arguments */
 #define DL_END          0x21000000UL
 #define DL_SAVE_CONTEXT 0x22000000UL
@@ -552,10 +556,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define BITMAP_SIZE(filter,wrapx,wrapy,width,height) ((8UL << 24U) | (((filter) & 1UL) << 20U) | (((wrapx) & 1UL) << 19U) | (((wrapy) & 1UL) << 18U) | (((width) & 511UL) << 9U)|(((height) & 511UL) << 0U))
 
 /* beware, this is different to FTDIs implementation as this takes the original values as parameters and not only the upper bits */
-#define BITMAP_LAYOUT_H(linestride,height) ((40UL << 24U) | ((((linestride & 0xC00U) >> 10U)&3UL) << 2U) | ((((height & 0x600U) >> 9U) & 3UL) << 0U))
+#define BITMAP_LAYOUT_H(linestride,height) ((40UL << 24U) | (((((linestride) & 0xC00U) >> 10U)&3UL) << 2U) | (((((height) & 0x600U) >> 9U) & 3UL) << 0U))
 
 /* beware, this is different to FTDIs implementation as this takes the original values as parameters and not only the upper bits */
-#define BITMAP_SIZE_H(width,height) ((41UL << 24U) | ((((width & 0x600U) >> 9U) & 3UL) << 2U) | ((((height & 0x600U) >> 9U) & 3UL) << 0U))
+#define BITMAP_SIZE_H(width,height) ((41UL << 24U) | (((((width) & 0x600U) >> 9U) & 3UL) << 2U) | (((((height) & 0x600U) >> 9U) & 3UL) << 0U))
 
 #define BITMAP_SOURCE(addr) ((1UL << 24U) | (((addr) & 4194303UL) << 0U))
 
@@ -614,20 +618,20 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define DL_BITMAP_EXT_FORMAT 0x2E000000UL /* requires OR'd arguments */
 
 /* Extended Bitmap formats */
-#define EVE_COMPRESSED_RGBA_ASTC_4x4_KHR   37808UL
-#define EVE_COMPRESSED_RGBA_ASTC_5x4_KHR   37809UL
-#define EVE_COMPRESSED_RGBA_ASTC_5x5_KHR   37810UL
-#define EVE_COMPRESSED_RGBA_ASTC_6x5_KHR   37811UL
-#define EVE_COMPRESSED_RGBA_ASTC_6x6_KHR   37812UL
-#define EVE_COMPRESSED_RGBA_ASTC_8x5_KHR   37813UL
-#define EVE_COMPRESSED_RGBA_ASTC_8x6_KHR   37814UL
-#define EVE_COMPRESSED_RGBA_ASTC_8x8_KHR   37815UL
-#define EVE_COMPRESSED_RGBA_ASTC_10x5_KHR  37816UL
-#define EVE_COMPRESSED_RGBA_ASTC_10x6_KHR  37817UL
-#define EVE_COMPRESSED_RGBA_ASTC_10x8_KHR  37818UL
-#define EVE_COMPRESSED_RGBA_ASTC_10x10_KHR 37819UL
-#define EVE_COMPRESSED_RGBA_ASTC_12x10_KHR 37820UL
-#define EVE_COMPRESSED_RGBA_ASTC_12x12_KHR 37821UL
+#define EVE_ASTC_4X4   37808UL
+#define EVE_ASTC_5X4   37809UL
+#define EVE_ASTC_5X5   37810UL
+#define EVE_ASTC_6X5   37811UL
+#define EVE_ASTC_6X6   37812UL
+#define EVE_ASTC_8X5   37813UL
+#define EVE_ASTC_8X6   37814UL
+#define EVE_ASTC_8X8   37815UL
+#define EVE_ASTC_10X5  37816UL
+#define EVE_ASTC_10X6  37817UL
+#define EVE_ASTC_10X8  37818UL
+#define EVE_ASTC_10X10 37819UL
+#define EVE_ASTC_12X10 37820UL
+#define EVE_ASTC_12X12 37821UL
 
 
 #define EVE_RAM_ERR_REPORT      0x309800UL /* max 128 bytes null terminated string */
@@ -689,10 +693,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define BITMAP_TRANSFORM_D_EXT(p,v) ((24UL << 24U) | (((p) & 1UL) << 17U) | (((v) & 131071UL) << 0U))
 #define BITMAP_TRANSFORM_E_EXT(p,v) ((25UL << 24U) | (((p) & 1UL) << 17U) | (((v) & 131071UL) << 0U))
 
-#define BITMAP_TRANSFORM_A(a) BITMAP_TRANSFORM_A_EXT(0UL,a)
-#define BITMAP_TRANSFORM_B(b) BITMAP_TRANSFORM_B_EXT(0UL,b)
-#define BITMAP_TRANSFORM_D(d) BITMAP_TRANSFORM_D_EXT(0UL,d)
-#define BITMAP_TRANSFORM_E(e) BITMAP_TRANSFORM_E_EXT(0UL,e)
+#define BITMAP_TRANSFORM_A(a) BITMAP_TRANSFORM_A_EXT(0UL,(a))
+#define BITMAP_TRANSFORM_B(b) BITMAP_TRANSFORM_B_EXT(0UL,(b))
+#define BITMAP_TRANSFORM_D(d) BITMAP_TRANSFORM_D_EXT(0UL,(d))
+#define BITMAP_TRANSFORM_E(e) BITMAP_TRANSFORM_E_EXT(0UL,(e))
 
 #endif  /* EVE_GEN > 2 */
 

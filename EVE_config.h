@@ -43,7 +43,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 - added a profile for RiTFT35 from Riverdi
 - changed the clock-polarity for EVE_EVE4_70G
 - added a profile for CFAF800480Ex-050SC-A2 modules from Crystalfontz
-- removed the define for the selected configuration to allow setting the define in the build-enviroment instead
+- removed the define for the selected configuration to allow setting the define in the build-environment instead
 - added an error message if no valid define was setup and therefore no set of parameters is configured
 - converted all TABs to SPACEs
 - removed EVE_TOUCH_RZTHRESH as it only applies to resistive touch screens and as EVE_init() still writes it if the
@@ -70,7 +70,7 @@ the IOT5
 
 #pragma once
 
-/* define one of these in your build-enviroment to select the settings for the TFT attached */
+/* define one of these in your build-environment to select the settings for the TFT attached */
 #if 0
 
 /* BT817 / BT818 */
@@ -1237,7 +1237,7 @@ typedef struct
 #endif
 
 #if !defined(EVE_HSIZE)
-#error "Please add a define for the desired display to your build-enviroment, e.g. -DEVE_EVE3_50G"
+#error "Please add a define for the desired display to your build-environment, e.g. -DEVE_EVE3_50G"
 #endif
 
 #endif /* EVE_CONFIG_H */
