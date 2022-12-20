@@ -96,7 +96,7 @@ This library currently has nine files that I hope are named to make clear what t
 Generate a basic display list and tell EVE to use it:
 ````
 EVE_cmd_dl(CMD_DLSTART); // tells EVE to start a new display-list
-EVE_cmd_dl(DL_CLEAR_RGB | WHITE); // sets the background color
+EVE_cmd_dl(DL_CLEAR_COLOR_RGB | WHITE); // sets the background color
 EVE_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
 EVE_color_rgb(BLACK);
 EVE_cmd_text(5, 15, 28, 0, "Hello there!");
@@ -111,7 +111,7 @@ But there is a way to speed things up, we can get away with only sending the add
 ````
 EVE_start_cmd_burst();
 EVE_cmd_dl_burst(CMD_DLSTART);
-EVE_cmd_dl_burst(DL_CLEAR_RGB | WHITE);
+EVE_cmd_dl_burst(DL_CLEAR_COLOR_RGB | WHITE);
 EVE_cmd_dl_burst(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
 EVE_color_rgb_burst(BLACK);
 EVE_cmd_text_burst(5, 15, 28, 0, "Hello there!");
@@ -141,7 +141,7 @@ You could for example do this, spread over three consecutive calls:
 ````
 EVE_start_cmd_burst();
 EVE_cmd_dl_burst(CMD_DLSTART);
-EVE_cmd_dl_burst(DL_CLEAR_RGB | WHITE);
+EVE_cmd_dl_burst(DL_CLEAR_COLOR_RGB | WHITE);
 EVE_end_cmd_burst();
 ````
 

@@ -133,7 +133,7 @@
       <Value>EVE_CS=PORT_PB01</Value>
       <Value>EVE_PDN_PORT=1</Value>
       <Value>EVE_PDN=PORT_PB31</Value>
-      <Value>EVE_SPI=SERCOM5</Value>
+      <Value>EVE_SPI=5</Value>
       <Value>EVE_SPI_DMA_TRIGGER=SERCOM5_DMAC_ID_TX</Value>
       <Value>EVE_DMA_CHANNEL=0</Value>
       <Value>EVE_DMA</Value>
@@ -205,6 +205,9 @@
     <Compile Include="EmbeddedVideoEngine\EVE_target.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="EmbeddedVideoEngine\EVE_target\EVE_target_ATSAMx5x.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
@@ -224,6 +227,7 @@
   <ItemGroup>
     <Folder Include="Device_Startup\" />
     <Folder Include="EmbeddedVideoEngine" />
+    <Folder Include="EmbeddedVideoEngine\EVE_target" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Device_Startup\same51j19a_flash.ld">

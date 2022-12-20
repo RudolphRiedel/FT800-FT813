@@ -1279,7 +1279,7 @@ uint8_t EVE_init(void)
     EVE_memWrite16(REG_SOUND, 0x6000U); /* set synthesizer to mute */
 
     /* write a basic display-list to get things started */
-    EVE_memWrite32(EVE_RAM_DL, DL_CLEAR_RGB);
+    EVE_memWrite32(EVE_RAM_DL, DL_CLEAR_COLOR_RGB);
     EVE_memWrite32(EVE_RAM_DL + 4U, (DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG));
     EVE_memWrite32(EVE_RAM_DL + 8U, DL_DISPLAY); /* end of display list */
     EVE_memWrite32(REG_DLSWAP, EVE_DLSWAP_FRAME);
@@ -3467,7 +3467,7 @@ void EVE_calibrate_manual(uint16_t width, uint16_t height)
     while (count < 3U)
     {
         EVE_cmd_dl(CMD_DLSTART);
-        EVE_cmd_dl(DL_CLEAR_RGB | 0x000000UL);
+        EVE_cmd_dl(DL_CLEAR_COLOR_RGB);
         EVE_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
 
         /* draw Calibration Point on screen */

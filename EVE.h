@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 5.0
-@date    2022-12-19
+@date    2022-12-20
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -47,6 +47,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - more linter fixes
 - changed EVE_COMPRESSED_RGBA_ASTC_nxn_KHR to EVE_ASTC_nXn to fix linter warnings and used the opportunity to make these shorter
 - added DL_COLOR_A as alternative to the COLOR_A macro
+- added defines for all DL_ display list commands
+- cleaned up the macros
+- fix: changed DL_CLEAR_RGB to DL_CLEAR_COLOR_RGB as this is what the programming guide uses
 
 */
 
@@ -59,7 +62,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #include "EVE_config.h"
 #include "EVE_commands.h"
 
-
 /* Memory */
 #define EVE_RAM_G         0x00000000UL
 #define EVE_ROM_CHIPID    0x000C0000UL
@@ -69,29 +71,65 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_RAM_REG       0x00302000UL
 #define EVE_RAM_CMD       0x00308000UL
 
-
 /* Memory buffer sizes */
 #define EVE_RAM_G_SIZE   (1024U*1024UL)
 #define EVE_CMDFIFO_SIZE (4U*1024UL)
 #define EVE_RAM_DL_SIZE  (8U*1024UL)
 
-
-#define DL_DISPLAY      0x00000000UL
-#define DL_CLEAR        0x26000000UL /* requires OR'd arguments */
-#define DL_CLEAR_RGB    0x02000000UL /* requires OR'd arguments */
-#define DL_COLOR_RGB    0x04000000UL /* requires OR'd arguments */
-#define DL_POINT_SIZE   0x0D000000UL /* requires OR'd arguments */
-#define DL_COLOR_A      0x10000000UL /* requires OR'd arguments */
-#define DL_BEGIN        0x1F000000UL /* requires OR'd arguments */
-#define DL_END          0x21000000UL
-#define DL_SAVE_CONTEXT 0x22000000UL
+/* diplay list list commands, most need OR's arguments */
+#define DL_DISPLAY       0x00000000UL
+#define DL_BITMAP_SOURCE 0x01000000UL
+#define DL_CLEAR_COLOR_RGB 0x02000000UL
+#define DL_TAG           0x03000000UL
+#define DL_COLOR_RGB     0x04000000UL
+#define DL_BITMAP_HANDLE 0x05000000UL
+#define DL_CELL          0x06000000UL
+#define DL_BITMAP_LAYOUT 0x07000000UL
+#define DL_BITMAP_SIZE   0x08000000UL
+#define DL_ALPHA_FUNC    0x09000000UL
+#define DL_STENCIL_FUNC  0x0A000000UL
+#define DL_BLEND_FUNC    0x0B000000UL
+#define DL_STENCIL_OP    0x0C000000UL
+#define DL_POINT_SIZE    0x0D000000UL
+#define DL_LINE_WIDTH    0x0E000000UL
+#define DL_CLEAR_COLOR_A 0x0F000000UL
+#define DL_COLOR_A       0x10000000UL
+#define DL_CLEAR_STENCIL 0x11000000UL
+#define DL_CLEAR_TAG     0x12000000UL
+#define DL_STENCIL_MASK  0x13000000UL
+#define DL_TAG_MASK      0x14000000UL
+#define DL_BITMAP_TRANSFORM_A 0x15000000UL
+#define DL_BITMAP_TRANSFORM_B 0x16000000UL
+#define DL_BITMAP_TRANSFORM_C 0x17000000UL
+#define DL_BITMAP_TRANSFORM_D 0x18000000UL
+#define DL_BITMAP_TRANSFORM_E 0x19000000UL
+#define DL_BITMAP_TRANSFORM_F 0x1A000000UL
+#define DL_SCISSOR_XY    0x1B000000UL
+#define DL_SCISSOR_SIZE  0x1C000000UL
+#define DL_CALL          0x1D000000UL
+#define DL_JUMP          0x1E000000UL
+#define DL_BEGIN         0x1F000000UL
+#define DL_COLOR_MASK    0x20000000UL
+#define DL_END           0x21000000UL
+#define DL_SAVE_CONTEXT  0x22000000UL
 #define DL_RESTORE_CONTEXT 0x23000000UL
-#define DL_RETURN       0x24000000UL
+#define DL_RETURN        0x24000000UL
+#define DL_MACRO         0x25000000UL
+#define DL_CLEAR         0x26000000UL
+#define DL_VERTEX_FORMAT 0x27000000UL
+#define DL_BITMAP_LAYOUT_H 0x28000000UL
+#define DL_BITMAP_SIZE_H 0x29000000UL
+#define DL_PALETTE_SOURCE 0x2A000000UL
+#define DL_VERTEX_TRANSLATE_X 0x2B000000UL
+#define DL_VERTEX_TRANSLATE_Y 0x2C000000UL
+#define DL_NOP            0x2D000000UL
+
+#define DL_VERTEX2F       0x40000000UL
+#define DL_VERTEX2II      0x80000000UL
 
 #define CLR_COL       0x4U
 #define CLR_STN       0x2U
 #define CLR_TAG       0x1U
-
 
 /* Host commands */
 #define EVE_ACTIVE       0x00U /* place FT8xx in active state */
@@ -108,7 +146,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PINDRIVE     0x70U /* setup drive strength for various pins */
 #define EVE_PIN_PD_STATE 0x71U /* setup how pins behave during power down */
 
-
 /* Graphic command defines */
 #define EVE_NEVER      0UL
 #define EVE_LESS       1UL
@@ -118,7 +155,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_EQUAL      5UL
 #define EVE_NOTEQUAL   6UL
 #define EVE_ALWAYS     7UL
-
 
 /* Bitmap formats */
 #define EVE_ARGB1555   0UL
@@ -134,16 +170,13 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_TEXTVGA    10UL
 #define EVE_BARGRAPH   11UL
 
-
 /* Bitmap filter types */
 #define EVE_NEAREST    0UL
 #define EVE_BILINEAR   1UL
 
-
 /* Bitmap wrap types */
 #define EVE_BORDER     0UL
 #define EVE_REPEAT     1UL
-
 
 /* Stencil defines */
 #define EVE_KEEP       1UL
@@ -152,12 +185,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_DECR       4UL
 #define EVE_INVERT     5UL
 
-
 /* Graphics display list swap defines */
 #define EVE_DLSWAP_DONE   0UL
 #define EVE_DLSWAP_LINE   1UL
 #define EVE_DLSWAP_FRAME  2UL
-
 
 /* Interrupt bits */
 #define EVE_INT_SWAP          0x01
@@ -169,13 +200,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_INT_CMDFLAG       0x40
 #define EVE_INT_CONVCOMPLETE  0x80
 
-
 /* Touch mode */
 #define EVE_TMODE_OFF        0U
 #define EVE_TMODE_ONESHOT    1U
 #define EVE_TMODE_FRAME      2U
 #define EVE_TMODE_CONTINUOUS 3U
-
 
 /* Alpha blending */
 #define EVE_ZERO                 0UL
@@ -184,7 +213,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_DST_ALPHA            3UL
 #define EVE_ONE_MINUS_SRC_ALPHA  4UL
 #define EVE_ONE_MINUS_DST_ALPHA  5UL
-
 
 /* Graphics primitives */
 #define EVE_BITMAPS              1UL
@@ -203,7 +231,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_PALETTED4444         15UL
 #define EVE_PALETTED8            16UL
 #define EVE_L2                   17UL
-
 
 /* Widget command options */
 #define EVE_OPT_MONO             1U
@@ -226,57 +253,52 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_OPT_NOTEAR           4U
 #define EVE_OPT_SOUND            32U
 
-
 /* ADC */
 #define EVE_ADC_DIFFERENTIAL     1UL
 #define EVE_ADC_SINGLE_ENDED     0UL
-
 
 /* Fonts */
 #define EVE_NUMCHAR_PERFONT     (128UL)  /* number of font characters per bitmap handle */
 #define EVE_FONT_TABLE_SIZE     (148UL)  /* size of the font table - utilized for loopup by the graphics engine */
 #define EVE_FONT_TABLE_POINTER  (0xFFFFCUL) /* pointer to the inbuilt font tables starting from bitmap handle 16 */
 
-
 /* Audio sample type defines */
 #define EVE_LINEAR_SAMPLES       0UL /* 8bit signed samples */
 #define EVE_ULAW_SAMPLES         1UL /* 8bit ulaw samples */
 #define EVE_ADPCM_SAMPLES        2UL /* 4bit ima adpcm samples */
 
-
 /* Synthesized sound */
-#define EVE_SILENCE              0x00U
-#define EVE_SQUAREWAVE           0x01U
-#define EVE_SINEWAVE             0x02U
-#define EVE_SAWTOOTH             0x03U
-#define EVE_TRIANGLE             0x04U
-#define EVE_BEEPING              0x05U
-#define EVE_ALARM                0x06U
-#define EVE_WARBLE               0x07U
-#define EVE_CAROUSEL             0x08U
-#define EVE_PIPS(n)              (0x0FU + (n))
-#define EVE_HARP                 0x40U
-#define EVE_XYLOPHONE            0x41U
-#define EVE_TUBA                 0x42U
-#define EVE_GLOCKENSPIEL         0x43U
-#define EVE_ORGAN                0x44U
-#define EVE_TRUMPET              0x45U
-#define EVE_PIANO                0x46U
-#define EVE_CHIMES               0x47U
-#define EVE_MUSICBOX             0x48U
-#define EVE_BELL                 0x49U
-#define EVE_CLICK                0x50U
-#define EVE_SWITCH               0x51U
-#define EVE_COWBELL              0x52U
-#define EVE_NOTCH                0x53U
-#define EVE_HIHAT                0x54U
-#define EVE_KICKDRUM             0x55U
-#define EVE_POP                  0x56U
-#define EVE_CLACK                0x57U
-#define EVE_CHACK                0x58U
-#define EVE_MUTE                 0x60U
-#define EVE_UNMUTE               0x61U
-
+#define EVE_SILENCE      0x00U
+#define EVE_SQUAREWAVE   0x01U
+#define EVE_SINEWAVE     0x02U
+#define EVE_SAWTOOTH     0x03U
+#define EVE_TRIANGLE     0x04U
+#define EVE_BEEPING      0x05U
+#define EVE_ALARM        0x06U
+#define EVE_WARBLE       0x07U
+#define EVE_CAROUSEL     0x08U
+#define EVE_PIPS(n)      (0x0FU + (n))
+#define EVE_HARP         0x40U
+#define EVE_XYLOPHONE    0x41U
+#define EVE_TUBA         0x42U
+#define EVE_GLOCKENSPIEL 0x43U
+#define EVE_ORGAN        0x44U
+#define EVE_TRUMPET      0x45U
+#define EVE_PIANO        0x46U
+#define EVE_CHIMES       0x47U
+#define EVE_MUSICBOX     0x48U
+#define EVE_BELL         0x49U
+#define EVE_CLICK        0x50U
+#define EVE_SWITCH       0x51U
+#define EVE_COWBELL      0x52U
+#define EVE_NOTCH        0x53U
+#define EVE_HIHAT        0x54U
+#define EVE_KICKDRUM     0x55U
+#define EVE_POP          0x56U
+#define EVE_CLACK        0x57U
+#define EVE_CHACK        0x58U
+#define EVE_MUTE         0x60U
+#define EVE_UNMUTE       0x61U
 
 /* Synthesized sound frequencies, midi note */
 #define EVE_MIDI_A0   21U
@@ -368,17 +390,14 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_MIDI_B7   107U
 #define EVE_MIDI_C8   108U
 
-
 /* GPIO bits */
 #define EVE_GPIO0  0U
 #define EVE_GPIO1  1U /* default gpio pin for audio shutdown, 1 - enable, 0 - disable */
 #define EVE_GPIO7  7U /* default gpio pin for display enable, 1 - enable, 0 - disable */
 
-
 /* Display rotation */
 #define EVE_DISPLAY_0   0U /* 0 degrees rotation */
 #define EVE_DISPLAY_180 1U /* 180 degrees rotation */
-
 
 /* Commands */
 #define CMD_APPEND       0xFFFFFF1EUL
@@ -437,7 +456,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define CMD_TRANSLATE    0xFFFFFF27UL
 #define CMD_VIDEOFRAME   0xFFFFFF41UL
 #define CMD_VIDEOSTART   0xFFFFFF40UL
-
 
 /* Registers */
 #define REG_ANA_COMP         0x00302184UL /* only listed in datasheet */
@@ -549,65 +567,65 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 
 /* Macros for static display list generation */
-#define ALPHA_FUNC(func,ref) ((9UL << 24U) | (((func) & 7UL) << 8U) | (((ref) & 255UL) << 0U))
-// #define BEGIN(prim) ((31UL << 24U) | (((prim) & 15UL) << 0U)) - use define DL_BEGIN
-#define BITMAP_HANDLE(handle) ((5UL << 24U) | (((handle) & 31UL) << 0U))
-#define BITMAP_LAYOUT(format,linestride,height) ((7UL << 24U) | (((format) & 31UL) << 19U) | (((linestride) & 1023UL) << 9U) | (((height) & 511UL) << 0U))
-#define BITMAP_SIZE(filter,wrapx,wrapy,width,height) ((8UL << 24U) | (((filter) & 1UL) << 20U) | (((wrapx) & 1UL) << 19U) | (((wrapy) & 1UL) << 18U) | (((width) & 511UL) << 9U)|(((height) & 511UL) << 0U))
+#define ALPHA_FUNC(func,ref) ((DL_ALPHA_FUNC) | (((func) & 7UL) << 8U) | ((ref) & 0xFFUL))
+#define BITMAP_HANDLE(handle) ((DL_BITMAP_HANDLE) | ((handle) & 0x1FUL))
+#define BITMAP_LAYOUT(format,linestride,height) ((DL_BITMAP_LAYOUT) | (((format) & 0x1FUL) << 19U) | (((linestride) & 0x3FFUL) << 9U) | ((height) & 0x1FFUL))
+#define BITMAP_SIZE(filter,wrapx,wrapy,width,height) ((DL_BITMAP_SIZE) | (((filter) & 1UL) << 20U) | (((wrapx) & 1UL) << 19U) | (((wrapy) & 1UL) << 18U) | (((width) & 0x1FFUL) << 9U) | ((height) & 0x1FFUL))
 
 /* beware, this is different to FTDIs implementation as this takes the original values as parameters and not only the upper bits */
-#define BITMAP_LAYOUT_H(linestride,height) ((40UL << 24U) | (((((linestride) & 0xC00U) >> 10U)&3UL) << 2U) | (((((height) & 0x600U) >> 9U) & 3UL) << 0U))
+#define BITMAP_LAYOUT_H(linestride,height) ((DL_BITMAP_LAYOUT_H) | (((((linestride) & 0xC00U) >> 10U)&3UL) << 2U) | ((((height) & 0x600U) >> 9U) & 3UL))
 
 /* beware, this is different to FTDIs implementation as this takes the original values as parameters and not only the upper bits */
-#define BITMAP_SIZE_H(width,height) ((41UL << 24U) | (((((width) & 0x600U) >> 9U) & 3UL) << 2U) | (((((height) & 0x600U) >> 9U) & 3UL) << 0U))
+#define BITMAP_SIZE_H(width,height) ((DL_BITMAP_SIZE_H) | (((((width) & 0x600U) >> 9U) & 3UL) << 2U) | ((((height) & 0x600U) >> 9U) & 3UL))
 
-#define BITMAP_SOURCE(addr) ((1UL << 24U) | (((addr) & 4194303UL) << 0U))
+#define BITMAP_SOURCE(addr) ((DL_BITMAP_SOURCE) | ((addr) & 0x3FFFFFUL))
 
 #if EVE_GEN < 3 /* only define these for FT81x */
-#define BITMAP_TRANSFORM_A(a) ((21UL << 24U) | (((a) & 131071UL) << 0U))
-#define BITMAP_TRANSFORM_B(b) ((22UL << 24U) | (((b) & 131071UL) << 0U))
-#define BITMAP_TRANSFORM_D(d) ((24UL << 24U) | (((d) & 131071UL) << 0U))
-#define BITMAP_TRANSFORM_E(e) ((25UL << 24U) | (((e) & 131071UL) << 0U))
+#define BITMAP_TRANSFORM_A(a) ((DL_BITMAP_TRANSFORM_A) | ((a) & 0x1FFFFUL))
+#define BITMAP_TRANSFORM_B(b) ((DL_BITMAP_TRANSFORM_B) | ((b) & 0x1FFFFUL))
+#define BITMAP_TRANSFORM_D(d) ((DL_BITMAP_TRANSFORM_D) | ((d) & 0x1FFFFUL))
+#define BITMAP_TRANSFORM_E(e) ((DL_BITMAP_TRANSFORM_E) | ((e) & 0x1FFFFUL))
 #endif
 
-#define BITMAP_TRANSFORM_C(c) ((23UL << 24U) | (((c) & 16777215UL) << 0U))
-#define BITMAP_TRANSFORM_F(f) ((26UL << 24U) | (((f) & 16777215UL) << 0U))
+#define BITMAP_TRANSFORM_C(c) ((DL_BITMAP_TRANSFORM_C) | ((c) & 0x1FFFFUL))
+#define BITMAP_TRANSFORM_F(f) ((DL_BITMAP_TRANSFORM_F) | ((f) & 0x1FFFFUL))
 
-#define BLEND_FUNC(src,dst) ((11UL << 24U) | (((src) & 7UL) << 3U) | (((dst) & 7UL) << 0U))
-#define CALL(dest) ((29UL << 24U) | (((dest) & 65535UL) << 0U))
-#define CELL(cell) ((6UL << 24U) | (((cell) & 127UL) << 0U))
-#define CLEAR(c,s,t) ((38UL << 24U) | (((c) & 1UL) << 2U) | (((s) & 1UL) << 1U) | (((t) & 1UL) << 0U))
-#define CLEAR_COLOR_A(alpha) ((15UL << 24U) | (((alpha) & 255UL) << 0U))
-#define CLEAR_COLOR_RGB(red,green,blue) ((2UL << 24U) | (((red) & 255UL) << 16U) | (((green) & 255UL) << 8U) | (((blue) & 255UL) << 0U))
-#define CLEAR_STENCIL(s) ((17UL << 24U) | (((s) & 255UL) << 0U))
-#define CLEAR_TAG(s) ((18UL << 24U) | (((s) & 255UL) << 0U))
-#define COLOR_A(alpha) ((16UL << 24U) | (((alpha) & 255UL) << 0U))
-#define COLOR_MASK(r,g,b,a) ((32UL << 24U) | (((r) & 1UL) << 3U) | (((g) & 1UL) << 2U) | (((b) & 1UL) << 1U) | (((a) & 1UL) << 0U))
-#define COLOR_RGB(red,green,blue) ((4UL << 24U) | (((red) & 255UL) << 16U) | (((green) & 255UL) << 8U) | (((blue) & 255UL) << 0U))
-// #define DISPLAY() ((0UL << 24U)) - use define DL_DISPLAY
-// #define END() ((33UL << 24U)) - use define DL_END
-#define JUMP(dest) ((30UL << 24U) | (((dest) & 65535UL) << 0U))
-#define LINE_WIDTH(width) ((14UL << 24U) | (((width) & 4095UL) << 0U))
-#define MACRO(m) ((37UL << 24U) | (((m) & 1UL) << 0U))
-// #define NOP() ((45UL << 24U))
-#define PALETTE_SOURCE(addr) ((42UL << 24U) | (((addr) & 4194303UL) << 0U))
-#define POINT_SIZE(size) ((13UL << 24U) | (((size) & 8191UL) << 0U))
-// #define RESTORE_CONTEXT() ((35UL << 24U)) - use define DL_RESTORE_CONTEXT
-// #define RETURN() ((36UL << 24U)) - use define DL_RETURN
-// #define SAVE_CONTEXT() ((34UL << 24U)) - use define DL_SAVE_CONTEXT
-#define SCISSOR_SIZE(width,height) ((28UL << 24U) | (((width) & 4095UL) << 12U) | (((height) & 4095UL) << 0U))
-#define SCISSOR_XY(x,y) ((27UL << 24U) | (((x) & 2047UL) << 11U) | (((y) & 2047UL) << 0U))
-#define STENCIL_FUNC(func,ref,mask) ((10UL << 24U) | (((func) & 7UL) << 16U) | (((ref) & 255UL) << 8U)|(((mask) & 255UL) << 0U))
-#define STENCIL_MASK(mask) ((19UL << 24U) | (((mask) & 255UL) << 0U))
-#define STENCIL_OP(sfail,spass) ((12UL << 24U) | (((sfail) & 7UL) << 3U) | (((spass) & 7UL) << 0U))
-#define TAG(s) ((3UL << 24U) | (((s) & 255UL) << 0U))
-#define TAG_MASK(mask) ((20UL << 24U) | (((mask) & 1UL) << 0U))
-#define VERTEX2F(x,y) ((1UL << 30U) | (((x) & 32767UL) << 15U) | (((y) & 32767UL) << 0U))
-#define VERTEX2II(x,y,handle,cell) ((2UL << 30U) | (((x) & 511UL) << 21U) | (((y) & 511UL) << 12U) | (((handle) & 31UL) << 7U) | (((cell) & 127UL) << 0U))
-#define VERTEX_FORMAT(frac) ((39UL << 24U) | (((frac) & 7UL) << 0U))
-#define VERTEX_TRANSLATE_X(x) ((43UL << 24U) | (((x) & 131071UL) << 0U))
-#define VERTEX_TRANSLATE_Y(y) ((44UL << 24U) | (((y) & 131071UL) << 0U))
+#define BLEND_FUNC(src,dst) ((DL_BLEND_FUNC) | (((src) & 7UL) << 3U) | ((dst) & 7UL))
+#define CALL(dest) ((DL_CALL) | ((dest) & 0xFFFFUL))
+#define CELL(cell) ((DL_CELL) | ((cell) & 0x7FUL))
+#define CLEAR(c,s,t) ((DL_CLEAR) | (((c) & 1UL) << 2U) | (((s) & 1UL) << 1U) | ((t) & 1UL))
+#define CLEAR_COLOR_A(alpha) ((DL_CLEAR_COLOR_A) | ((alpha) & 0xFFUL))
+#define CLEAR_COLOR_RGB(red,green,blue) ((DL_CLEAR_COLOR_RGB) | (((red) & 0xFFUL) << 16U) | (((green) & 0xFFUL) << 8U) | ((blue) & 0xFFUL))
+#define CLEAR_STENCIL(s) ((DL_CLEAR_STENCIL) | ((s) & 0xFFUL))
+#define CLEAR_TAG(s) ((DL_CLEAR_TAG) | ((s) & 0xFFUL))
+#define COLOR_A(alpha) ((DL_COLOR_A) | ((alpha) & 0xFFUL))
+#define COLOR_MASK(r,g,b,a) ((DL_COLOR_MASK) | (((r) & 1UL) << 3U) | (((g) & 1UL) << 2U) | (((b) & 1UL) << 1U) | ((a) & 1UL))
+#define COLOR_RGB(red,green,blue) ((DL_COLOR_RGB) | (((red) & 0xFFUL) << 16U) | (((green) & 0xFFUL) << 8U) | ((blue) & 0xFFUL))
+#define JUMP(dest) ((DL_JUMP) | ((dest) & 0xFFFFUL))
+#define LINE_WIDTH(width) ((DL_LINE_WIDTH) | ((width) & 0xFFFUL))
+#define MACRO(m) ((DL_MACRO) | ((m) & 1UL))
+#define PALETTE_SOURCE(addr) ((DL_PALETTE_SOURCE) | ((addr) & 0x3FFFFF3UL))
+#define POINT_SIZE(size) ((DL_POINT_SIZE) | ((size) & 0x1FFFUL))
+#define SCISSOR_SIZE(width,height) ((DL_SCISSOR_SIZE) | (((width) & 0xFFFUL) << 12U) | ((height) & 0xFFFUL))
+#define SCISSOR_XY(x,y) ((DL_SCISSOR_XY) | (((x) & 0x7FFUL) << 11U) | ((y) & 0x7FFUL))
+#define STENCIL_FUNC(func,ref,mask) ((DL_STENCIL_FUNC) | (((func) & 7UL) << 16U) | (((ref) & 0xFFUL) << 8U)|((mask) & 0xFFUL))
+#define STENCIL_MASK(mask) ((DL_STENCIL_MASK) | ((mask) & 0xFFUL))
+#define STENCIL_OP(sfail,spass) ((DL_STENCIL_OP) | (((sfail) & 7UL) << 3U) | ((spass) & 7UL))
+#define TAG(s) ((DL_TAG) | ((s) & 0xFFUL))
+#define TAG_MASK(mask) ((DL_TAG_MASK) | ((mask) & 1UL))
+#define VERTEX2F(x,y) ((DL_VERTEX2F) | (((x) & 0x7FFFUL) << 15U) | ((y) & 0x7FFFUL))
+#define VERTEX2II(x,y,handle,cell) ((DL_VERTEX2II) | (((x) & 0x1FFUL) << 21U) | (((y) & 0x1FFUL) << 12U) | (((handle) & 0x1FUL) << 7U) | ((cell) & 0x7FUL))
+#define VERTEX_FORMAT(frac) ((DL_VERTEX_FORMAT) | ((frac) & 7UL))
+#define VERTEX_TRANSLATE_X(x) ((DL_VERTEX_TRANSLATE_X) | ((x) & 0x1FFFFUL))
+#define VERTEX_TRANSLATE_Y(y) ((DL_VERTEX_TRANSLATE_Y) | ((y) & 0x1FFFFUL))
 
+/* #define BEGIN(prim) ((DL_BEGIN) | ((prim) & 15UL)) */ /* use define DL_BEGIN */
+/* #define DISPLAY() ((DL_DISPLAY)) */ /* use define DL_DISPLAY */
+/* #define END() ((DL_END)) */ /* use define DL_END */
+/* #define RESTORE_CONTEXT() ((DL_RESTORE_CONTEXT)) */ /* use define DL_RESTORE_CONTEXT */
+/* #define RETURN() ((DL_RETURN)) */ /* use define DL_RETURN */
+/* #define SAVE_CONTEXT() ((DL_SAVE_CONTEXT)) */ /* use define DL_SAVE_CONTEXT */
+/* #define NOP() ((DL_NOP)) */
 
 /* ########## EVE Generation 3: BT815 / BT816 definitions ########## */
 
@@ -616,6 +634,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_GLFORMAT 31UL /* used with BITMAP_LAYOUT to indicate bitmap-format is specified by BITMAP_EXT_FORMAT */
 
 #define DL_BITMAP_EXT_FORMAT 0x2E000000UL /* requires OR'd arguments */
+#define DL_BITMAP_SWIZZLE    0x2F000000UL
+/* #define DL_INT_FRR           0x30000000UL */ /* ESE displays "Internal: flash read result" - undocumented display list command */
 
 /* Extended Bitmap formats */
 #define EVE_ASTC_4X4   37808UL
@@ -633,7 +653,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_ASTC_12X10 37820UL
 #define EVE_ASTC_12X12 37821UL
 
-
 #define EVE_RAM_ERR_REPORT      0x309800UL /* max 128 bytes null terminated string */
 #define EVE_RAM_FLASH           0x800000UL
 #define EVE_RAM_FLASH_POSTBLOB  0x801000UL
@@ -642,7 +661,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_OPT_OVERLAY 128U
 #define EVE_OPT_FORMAT 4096U
 #define EVE_OPT_FILL   8192U
-
 
 /* Commands for BT815 / BT816 */
 #define CMD_BITMAP_TRANSFORM 0xFFFFFF21UL
@@ -672,7 +690,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define CMD_ANIMFRAME        0xFFFFFF5AUL
 #define CMD_VIDEOSTARTF      0xFFFFFF5FUL /* does not need a dedicated function, just use EVE_cmd_dl(CMD_VIDEOSTARTF) */
 
-
 /* Registers for BT815 / BT816 */
 #define REG_ADAPTIVE_FRAMERATE 0x0030257cUL
 #define REG_PLAYBACK_PAUSE     0x003025ecUL
@@ -681,17 +698,14 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define REG_PLAY_CONTROL       0x0030914eUL
 #define REG_COPRO_PATCH_DTR    0x00309162UL
 
-
 /* Macros for BT815 / BT816 */
-#define BITMAP_EXT_FORMAT(format) ((46UL << 24U) | (((format) & 65535UL) << 0U))
-#define BITMAP_SWIZZLE(r,g,b,a) ((47UL << 24U) | (((r) & 7UL) << 9U) | (((g) & 7UL) << 6U) | (((b) & 7UL) << 3U) | (((a) & 7UL) << 0U))
-#define BITMAP_SOURCE2(flash_or_ram, addr) ((1UL << 24U) | ((flash_or_ram) << 23U) | (((addr) & 8388607UL) << 0U))
-#define INT_FRR() ((48UL << 24U))
+#define BITMAP_EXT_FORMAT(format) ((DL_BITMAP_EXT_FORMAT) | ((format) & 0xFFFFUL))
+#define BITMAP_SWIZZLE(r,g,b,a) ((DL_BITMAP_SWIZZLE) | (((r) & 7UL) << 9U) | (((g) & 7UL) << 6U) | (((b) & 7UL) << 3U) | ((a) & 7UL))
 
-#define BITMAP_TRANSFORM_A_EXT(p,v) ((21UL << 24U) | (((p) & 1UL) << 17U) | (((v) & 131071UL) << 0U))
-#define BITMAP_TRANSFORM_B_EXT(p,v) ((22UL << 24U) | (((p) & 1UL) << 17U) | (((v) & 131071UL) << 0U))
-#define BITMAP_TRANSFORM_D_EXT(p,v) ((24UL << 24U) | (((p) & 1UL) << 17U) | (((v) & 131071UL) << 0U))
-#define BITMAP_TRANSFORM_E_EXT(p,v) ((25UL << 24U) | (((p) & 1UL) << 17U) | (((v) & 131071UL) << 0U))
+#define BITMAP_TRANSFORM_A_EXT(p,v) ((DL_BITMAP_TRANSFORM_A) | (((p) & 1UL) << 17U) | ((v) & 0x1FFFFUL))
+#define BITMAP_TRANSFORM_B_EXT(p,v) ((DL_BITMAP_TRANSFORM_B) | (((p) & 1UL) << 17U) | ((v) & 0x1FFFFUL))
+#define BITMAP_TRANSFORM_D_EXT(p,v) ((DL_BITMAP_TRANSFORM_D) | (((p) & 1UL) << 17U) | ((v) & 0x1FFFFUL))
+#define BITMAP_TRANSFORM_E_EXT(p,v) ((DL_BITMAP_TRANSFORM_E) | (((p) & 1UL) << 17U) | ((v) & 0x1FFFFUL))
 
 #define BITMAP_TRANSFORM_A(a) BITMAP_TRANSFORM_A_EXT(0UL,(a))
 #define BITMAP_TRANSFORM_B(b) BITMAP_TRANSFORM_B_EXT(0UL,(b))
@@ -699,7 +713,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define BITMAP_TRANSFORM_E(e) BITMAP_TRANSFORM_E_EXT(0UL,(e))
 
 #endif  /* EVE_GEN > 2 */
-
 
 /* ########## EVE Generation 4: BT817 / BT818 definitions ########## */
 
@@ -724,7 +737,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define CMD_RUNANIM        0xFFFFFF6FUL
 #define CMD_TESTCARD       0xFFFFFF61UL /* does not need a dedicated function, just use EVE_cmd_dl(CMD_TESTCARD) */
 #define CMD_WAIT           0xFFFFFF65UL
-
 
 /* Registers for BT817 / BT818 */
 #define REG_UNDERRUN      0x0030260cUL

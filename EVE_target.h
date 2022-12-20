@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-27
+@date    2022-12-20
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -70,6 +70,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - moved targets to extra header files: MSP432, TMS320C28XX
 - moved all the Arduino targets to extra header files
 - basic maintenance: checked for violations of white space and indent rules
+- fix: wrong target definition file names for XMEGA and AVR
 
 */
 
@@ -122,7 +123,7 @@ command buffer is executed by the command co-processor.
 
 #if defined(__AVR_XMEGA__)
 
-#include "EVE_target/EVE_EVE_target_XMEGA.h"
+#include "EVE_target/EVE_target_XMEGA.h"
 
 #endif /* XMEGA */
 
@@ -131,7 +132,7 @@ command buffer is executed by the command co-processor.
 
 #if defined(__AVR__) && !defined(__AVR_XMEGA__)
 
-#include "EVE_target/EVE_EVE_target_AVR.h"
+#include "EVE_target/EVE_target_AVR.h"
 
 #endif /* AVR */
 

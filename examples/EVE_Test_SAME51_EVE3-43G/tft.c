@@ -211,7 +211,7 @@ void touch_calibrate(void)
 #if 0
     /* calibrate touch and displays values to screen */
     EVE_cmd_dl(CMD_DLSTART);
-    EVE_cmd_dl(DL_CLEAR_RGB | BLACK);
+    EVE_cmd_dl(DL_CLEAR_COLOR_RGB | BLACK);
     EVE_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
     EVE_cmd_text((EVE_HSIZE/2), 50, 26, EVE_OPT_CENTER, "Please tap on the dot.");
     EVE_cmd_calibrate();
@@ -229,7 +229,7 @@ void touch_calibrate(void)
     touch_f = EVE_memRead32(REG_TOUCH_TRANSFORM_F);
 
     EVE_cmd_dl(CMD_DLSTART);
-    EVE_cmd_dl(DL_CLEAR_RGB | BLACK);
+    EVE_cmd_dl(DL_CLEAR_COLOR_RGB | BLACK);
     EVE_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
     EVE_cmd_dl(TAG(0));
 
@@ -416,7 +416,7 @@ void TFT_display(void)
         EVE_start_cmd_burst(); /* start writing to the cmd-fifo as one stream of bytes, only sending the address once */
 
         EVE_cmd_dl_burst(CMD_DLSTART); /* start the display list */
-        EVE_cmd_dl_burst(DL_CLEAR_RGB | WHITE); /* set the default clear color to white */
+        EVE_cmd_dl_burst(DL_CLEAR_COLOR_RGB | WHITE); /* set the default clear color to white */
         EVE_cmd_dl_burst(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG); /* clear the screen - this and the previous prevent artifacts between lists, Attributes are the color, stencil and tag buffers */
         EVE_cmd_dl_burst(TAG(0));
 

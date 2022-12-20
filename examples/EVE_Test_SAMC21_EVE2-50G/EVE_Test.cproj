@@ -187,6 +187,9 @@
     <Compile Include="EmbeddedVideoEngine\EVE_target.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="EmbeddedVideoEngine\EVE_target\EVE_target_ATSAMC21.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
@@ -206,6 +209,7 @@
   <ItemGroup>
     <Folder Include="Device_Startup\" />
     <Folder Include="EmbeddedVideoEngine" />
+    <Folder Include="EmbeddedVideoEngine\EVE_target" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Device_Startup\samc21e18a_flash.ld">

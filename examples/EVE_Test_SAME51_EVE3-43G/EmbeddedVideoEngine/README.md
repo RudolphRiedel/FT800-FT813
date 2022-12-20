@@ -13,14 +13,15 @@ It contains code for and has been used with various micro-controllers and displa
 I have used it so far with:
 
 - 8-Bit AVR, specifically the 90CAN series
-- Arduino: Uno, mini-pro, ESP8266, ESP32 (DMA), Metro-M4 (DMA), STM32 Nucleo_F446RE (DMA)
+- Arduino: Uno, mini-pro, ESP8266, ESP32 (DMA), Metro-M4 (DMA), STM32 Nucleo_F446RE (DMA), XMC1100
 - Renesas F1L RH850
 - Infineon Aurix TC222
 - ATSAMC21E18A (DMA)
 - ATSAME51J19A (DMA)
 - ESP32 (DMA)
-- RP2040 (DMA) - Raspberry Pi Pico
+- RP2040 Baremetal (DMA) + Arduino (DMA) - Raspberry Pi Pico
 - S32K144 (DMA)
+- GD32C103CBT6 (DMA)
 
 I have reports of successfully using it with:
 
@@ -31,6 +32,7 @@ I have reports of successfully using it with:
 - MSP432
 - some PICs
 - ATxmega128A1
+- TMS320F28335
 
 ## Displays
 
@@ -60,6 +62,7 @@ The TFTs tested so far:
 - GEN4-FT813-50CTP-CLB https://4dsystems.com.au/gen4-ft813-50ctp-clb
 - RVT101HVBNWC00-B https://riverdi.com/product/rvt101hvbnwc00-b/
 - RVT70HSBNWC00-B https://riverdi.com/product/rvt70hsbnwc00-b/
+- RVT50HQBNWC00-B https://riverdi.com/product/rvt50hqbnwc00-b/
 
 ## This is version 5
 
@@ -93,7 +96,7 @@ This library currently has nine files that I hope are named to make clear what t
 Generate a basic display list and tell EVE to use it:
 ````
 EVE_cmd_dl(CMD_DLSTART); // tells EVE to start a new display-list
-EVE_cmd_dl(DL_CLEAR_RGB | WHITE); // sets the background color
+EVE_cmd_dl(DL_CLEAR_COLOR_RGB | WHITE); // sets the background color
 EVE_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
 EVE_color_rgb(BLACK);
 EVE_cmd_text(5, 15, 28, 0, "Hello there!");
@@ -108,7 +111,7 @@ But there is a way to speed things up, we can get away with only sending the add
 ````
 EVE_start_cmd_burst();
 EVE_cmd_dl_burst(CMD_DLSTART);
-EVE_cmd_dl_burst(DL_CLEAR_RGB | WHITE);
+EVE_cmd_dl_burst(DL_CLEAR_COLOR_RGB | WHITE);
 EVE_cmd_dl_burst(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
 EVE_color_rgb_burst(BLACK);
 EVE_cmd_text_burst(5, 15, 28, 0, "Hello there!");
@@ -138,7 +141,7 @@ You could for example do this, spread over three consecutive calls:
 ````
 EVE_start_cmd_burst();
 EVE_cmd_dl_burst(CMD_DLSTART);
-EVE_cmd_dl_burst(DL_CLEAR_RGB | WHITE);
+EVE_cmd_dl_burst(DL_CLEAR_COLOR_RGB | WHITE);
 EVE_end_cmd_burst();
 ````
 
@@ -167,9 +170,9 @@ thread_1ms_update_display()
 
     count++;
 
-    if(EVE_busy() == E_OK)
+    if (E_OK == EVE_busy())
     {
-        switch(state)
+        switch (state)
         {
             case 0:
                 update_first();
@@ -180,7 +183,7 @@ thread_1ms_update_display()
                 state = 2;
                 break;
             case 2:
-                if(counter > 19)
+                if (counter > 19)
                 {
                     update_last_swap_list();
                     count = 0;
@@ -199,7 +202,7 @@ For Arduino I am using PlatformIO with Visual Studio Code.
 
 The platform the code is compiled for is automatically detected thru compiler flags in EVE_target.h.
 
-The desired TFT is selected by adding a define for it to the build-enviroment, e.g. -DEVE_EVE3_50G
+The desired TFT is selected by adding a define for it to the build-environment, e.g. -DEVE_EVE3_50G
 There is a list of available options at the start of EVE_config.h sorted by chipset.
 
 - Provide the pins used for Chip-Select and Power-Down in EVE_target.h for the target configuration you are using
