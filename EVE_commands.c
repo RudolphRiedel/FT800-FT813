@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2022-12-19
+@date    2022-12-21
 @author  Rudolph Riedel
 
 @section info
@@ -119,6 +119,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - basic maintenance: checked for violations of white space and indent rules
 - more linter fixes for minor issues like variables shorter than 3 characters
 - added EVE_color_a() / EVE_color_a_burst()
+- more minor tweaks and fixes to make the static analyzer happy
 
 */
 
@@ -126,7 +127,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 
 /* EVE Memory Commands - used with EVE_memWritexx and EVE_memReadxx */
 #define MEM_WRITE 0x80U /* EVE Host Memory Write */
-//#define MEM_READ 0x00U  /* EVE Host Memory Read */
+/* #define MEM_READ 0x00U */ /* EVE Host Memory Read */
 
 /* define NULL if it not already is */
 #ifndef NULL
@@ -1070,7 +1071,6 @@ uint8_t EVE_init_flash(void)
 
 #endif /* EVE_GEN > 2 */
 
-/* FT811 / FT813 binary-blob from FTDIs AN_336 to patch the touch-engine for Goodix GT911 / GT9271 touch controllers */
 #if defined(EVE_HAS_GT911)
 
 #if defined(__AVR__)
@@ -1078,8 +1078,16 @@ uint8_t EVE_init_flash(void)
 #else
 #define PROGMEM
 #endif
+void use_gt911(void);
 
-const uint8_t EVE_GT911_data[1184U] PROGMEM = {
+void use_gt911(void)
+{
+#if EVE_GEN > 2
+    EVE_memWrite16(REG_TOUCH_CONFIG, 0x05d0U); /* switch to Goodix touch controller */
+#else
+
+/* FT811 / FT813 binary-blob from FTDIs AN_336 to patch the touch-engine for Goodix GT911 / GT9271 touch controllers */
+const uint8_t eve_gt911_data[1184U] PROGMEM = {
     26,  255, 255, 255, 32,  32,  48,  0,   4,   0,   0,   0,   2,   0,   0,   0,   34,  255, 255, 255, 0,   176, 48,
     0,   120, 218, 237, 84,  221, 111, 84,  69,  20,  63,  51,  179, 93,  160, 148, 101, 111, 76,  5,   44,  141, 123,
     111, 161, 11,  219, 154, 16,  9,   16,  17,  229, 156, 75,  26,  11,  13,  21,  227, 3,   16,  252, 184, 179, 45,
@@ -1132,6 +1140,28 @@ const uint8_t EVE_GT911_data[1184U] PROGMEM = {
     140, 175, 73,  112, 184, 252, 61,  184, 16,  90,  250, 35,  168, 82,  119, 176, 57,  116, 94,  200, 150, 22,  190,
     179, 44,  104, 12,  235, 84,  149, 102, 252, 89,  154, 193, 99,  228, 106, 242, 125, 248, 64,  194, 255, 223, 127,
     242, 83,  11,  255, 2,   70,  214, 226, 128, 0,   0};
+
+    EVE_cs_set();
+    spi_transmit((uint8_t) 0xB0U); /* high-byte of REG_CMDB_WRITE + MEM_WRITE */
+    spi_transmit((uint8_t) 0x25U); /* middle-byte of REG_CMDB_WRITE */
+    spi_transmit((uint8_t) 0x78U); /* low-byte of REG_CMDB_WRITE */
+    private_block_write(eve_gt911_data, sizeof(eve_gt911_data));
+    EVE_cs_clear();
+    EVE_execute_cmd();
+
+    EVE_memWrite8(REG_TOUCH_OVERSAMPLE, 0x0fU); /* setup oversample to 0x0f as "hidden" in binary-blob for AN_336 */
+    EVE_memWrite16(REG_TOUCH_CONFIG, 0x05D0U);  /* write magic cookie as requested by AN_336 */
+
+    /* specific to the EVE2 modules from Matrix-Orbital we have to use GPIO3 to reset GT911 */
+    EVE_memWrite16(REG_GPIOX_DIR, 0x8008U); /* Reset-Value is 0x8000, adding 0x08 sets GPIO3 to output, default-value
+                                              for REG_GPIOX is 0x8000 -> Low output on GPIO3 */
+    DELAY_MS(1U);                           /* wait more than 100�s */
+    EVE_memWrite8(REG_CPURESET, 0U);        /* clear all resets */
+    DELAY_MS(110U); /* wait more than 55ms - does not work with multitouch, for some reason a minimum delay of 108ms is
+                      required */
+    EVE_memWrite16(REG_GPIOX_DIR, 0x8000U); /* setting GPIO3 back to input */
+#endif
+}
 #endif
 
 /* EVE chip initialization, has to be executed with the SPI setup to 11 MHz or less as required by FT8xx / BT8xx! */
@@ -1167,17 +1197,20 @@ uint8_t EVE_init(void)
     EVE_cmdWrite(EVE_ACTIVE, 0U); /* start EVE */
 
     /*
-    BRT AN033 BT81X_Series_Programming_Guide V1.2 added a delay of at least 300ms as a requirement after sending command
-    ACTIVE. Together with the sentence: "Ensure that there is no SPI access during this time." AN033
-    BT81X_Series_Programming_Guide V2.0 removed this delay requirement again. From observation of the startup-behavior
-    of quite a number of displays, reading REG_ID immediately after sending command ACTIVE is not an issue, but a BT815
-    running at 72MHzs needs about 42ms before it answers anyways. So I added a fixed delay of 40ms as a compromise, this
-    provides a moment of silence on the SPI without actually delaying the startup.
+    BRT AN033 BT81X_Series_Programming_Guide V1.2 added a delay of at least 300ms
+    as a requirement after sending command ACTIVE.
+    Together with the sentence: "Ensure that there is no SPI access during this time."
+    AN033 BT81X_Series_Programming_Guide V2.0 removed this delay requirement again.
+    From observation of the startup-behavior of quite a number of displays,
+    reading REG_ID immediately after sending command ACTIVE is not an issue,
+    but a BT815 running at 72MHzs needs about 42ms before it answers anyways.
+    So I added a fixed delay of 40ms as a compromise, this provides a moment
+    of silence on the SPI without actually delaying the startup.
     */
     DELAY_MS(40U);
 
-    while (chipid != 0x7CU) /* if chipid is not 0x7c, continue to read it until it is, EVE needs a moment for its power
-                              on self-test and configuration */
+    while (chipid != 0x7CU) /* if chipid is not 0x7c, continue to read it until it is,
+                                EVE needs a moment for its power on self-test and configuration */
     {
         DELAY_MS(1U);
         chipid = EVE_memRead8(REG_ID);
@@ -1193,8 +1226,8 @@ uint8_t EVE_init(void)
     {
         DELAY_MS(1U);
         timeout++;
-        if (timeout > 50U) /* experimental, 10 was the lowest value to get the BT815 started with, the touch-controller
-                             was the last to get out of reset */
+        if (timeout > 50U) /* experimental, 10 was the lowest value to get the BT815 started with,
+                             the touch-controller was the last to get out of reset */
         {
             return EVE_FAIL_RESET_TIMEOUT;
         }
@@ -1202,36 +1235,13 @@ uint8_t EVE_init(void)
 
 /* tell EVE that we changed the frequency from default to 72MHz for BT8xx */
 #if EVE_GEN > 2
-    EVE_memWrite32(REG_FREQUENCY, 72000000U);
+    EVE_memWrite32(REG_FREQUENCY, 72000000UL);
 #endif
 
 /* we have a display with a Goodix GT911 / GT9271 touch-controller on it, so we patch our FT811 or FT813 according to
- * AN_336 or setup a BT815 accordingly */
+ * AN_336 or setup a BT815 / BT817 accordingly */
 #if defined(EVE_HAS_GT911)
-
-#if EVE_GEN > 2
-    EVE_memWrite16(REG_TOUCH_CONFIG, 0x05d0U); /* switch to Goodix touch controller */
-#else
-    EVE_cs_set();
-    spi_transmit((uint8_t) 0xB0U); /* high-byte of REG_CMDB_WRITE + MEM_WRITE */
-    spi_transmit((uint8_t) 0x25U); /* middle-byte of REG_CMDB_WRITE */
-    spi_transmit((uint8_t) 0x78U); /* low-byte of REG_CMDB_WRITE */
-    private_block_write(EVE_GT911_data, sizeof(EVE_GT911_data));
-    EVE_cs_clear();
-    EVE_execute_cmd();
-
-    EVE_memWrite8(REG_TOUCH_OVERSAMPLE, 0x0fU); /* setup oversample to 0x0f as "hidden" in binary-blob for AN_336 */
-    EVE_memWrite16(REG_TOUCH_CONFIG, 0x05D0U);  /* write magic cookie as requested by AN_336 */
-
-    /* specific to the EVE2 modules from Matrix-Orbital we have to use GPIO3 to reset GT911 */
-    EVE_memWrite16(REG_GPIOX_DIR, 0x8008U); /* Reset-Value is 0x8000, adding 0x08 sets GPIO3 to output, default-value
-                                              for REG_GPIOX is 0x8000 -> Low output on GPIO3 */
-    DELAY_MS(1U);                           /* wait more than 100�s */
-    EVE_memWrite8(REG_CPURESET, 0U);        /* clear all resets */
-    DELAY_MS(110U); /* wait more than 55ms - does not work with multitouch, for some reason a minimum delay of 108ms is
-                      required */
-    EVE_memWrite16(REG_GPIOX_DIR, 0x8000U); /* setting GPIO3 back to input */
-#endif
+    use_gt911();
 #endif
 
     /*  EVE_memWrite8(REG_PCLK, 0U);  */ /* set PCLK to zero - don't clock the LCD until later, line disabled because
