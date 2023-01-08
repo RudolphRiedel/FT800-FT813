@@ -1,8 +1,8 @@
 /*
-@file    tft.c / tft.cpp
+@file    tft.c
 @brief   TFT handling functions for EVE_Test project
-@version 1.20
-@date    2022-12-10
+@version 1.21
+@date    2023-01-08
 @author  Rudolph Riedel
 
 @section History
@@ -21,10 +21,14 @@
 1.20
 - several minor changes
 
+1.21
+- several minor changes
+
  */
 
 #include "EmbeddedVideoEngine/EVE.h"
 #include "tft_data.h"
+#include "tft.h"
 
 
 #define TEST_UTF8 0
@@ -47,14 +51,18 @@
 #define MEM_LOGO 0x000f8000 /* start-address of logo, needs 6272 bytes of memory */
 #define MEM_PIC1 0x000fa000 /* start of 100x100 pixel test image, ARGB565, needs 20000 bytes of memory */
 
-
 #define MEM_DL_STATIC (EVE_RAM_G_SIZE - 4096) /* 0xff000 - start-address of the static part of the display-list, upper 4k of gfx-mem */
 
-uint32_t num_dl_static; /* amount of bytes in the static part of our display-list */
+uint32_t num_dl_static = 0; /* amount of bytes in the static part of our display-list */
 uint8_t tft_active = 0;
-uint16_t num_profile_a, num_profile_b;
+uint16_t num_profile_a = 0;
+uint16_t num_profile_b = 0;
 
 #define LAYOUT_Y1 66
+
+
+void touch_calibrate(void);
+void initStaticBackground(void);
 
 
 void touch_calibrate(void)
@@ -210,6 +218,8 @@ void touch_calibrate(void)
 /* write down the numbers on the screen and either place them in one of the pre-defined blocks above or make a new block */
 #if 0
     /* calibrate touch and displays values to screen */
+
+#if 1
     EVE_cmd_dl(CMD_DLSTART);
     EVE_cmd_dl(DL_CLEAR_COLOR_RGB | BLACK);
     EVE_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
@@ -218,15 +228,16 @@ void touch_calibrate(void)
     EVE_cmd_dl(DL_DISPLAY);
     EVE_cmd_dl(CMD_SWAP);
     EVE_execute_cmd();
+#else
+    EVE_calibrate_manual(EVE_HSIZE, EVE_VSIZE);
+#endif
 
-    uint32_t touch_a, touch_b, touch_c, touch_d, touch_e, touch_f;
-
-    touch_a = EVE_memRead32(REG_TOUCH_TRANSFORM_A);
-    touch_b = EVE_memRead32(REG_TOUCH_TRANSFORM_B);
-    touch_c = EVE_memRead32(REG_TOUCH_TRANSFORM_C);
-    touch_d = EVE_memRead32(REG_TOUCH_TRANSFORM_D);
-    touch_e = EVE_memRead32(REG_TOUCH_TRANSFORM_E);
-    touch_f = EVE_memRead32(REG_TOUCH_TRANSFORM_F);
+    uint32_t touch_a = EVE_memRead32(REG_TOUCH_TRANSFORM_A);
+    uint32_t touch_b = EVE_memRead32(REG_TOUCH_TRANSFORM_B);
+    uint32_t touch_c = EVE_memRead32(REG_TOUCH_TRANSFORM_C);
+    uint32_t touch_d = EVE_memRead32(REG_TOUCH_TRANSFORM_D);
+    uint32_t touch_e = EVE_memRead32(REG_TOUCH_TRANSFORM_E);
+    uint32_t touch_f = EVE_memRead32(REG_TOUCH_TRANSFORM_F);
 
     EVE_cmd_dl(CMD_DLSTART);
     EVE_cmd_dl(DL_CLEAR_COLOR_RGB | BLACK);
@@ -260,25 +271,25 @@ void touch_calibrate(void)
 void initStaticBackground(void)
 {
     EVE_cmd_dl(CMD_DLSTART); /* Start the display list */
-    EVE_cmd_dl(TAG(0)); /* do not use the following objects for touch-detection */
+    EVE_cmd_dl(DL_TAG); /* no tag = 0 - do not use the following objects for touch-detection */
 
-    EVE_cmd_bgcolor(0x00c0c0c0); /* light grey */
+    EVE_cmd_bgcolor(0x00c0c0c0UL); /* light grey */
 
-    EVE_cmd_dl(VERTEX_FORMAT(0)); /* reduce precision for VERTEX2F to 1 pixel instead of 1/16 pixel default */
+    EVE_cmd_dl(DL_VERTEX_FORMAT); /* set to 0 - reduce precision for VERTEX2F to 1 pixel instead of 1/16 pixel default */
 
     /* draw a rectangle on top */
     EVE_cmd_dl(DL_BEGIN | EVE_RECTS);
-    EVE_cmd_dl(LINE_WIDTH(1*16)); /* size is in 1/16 pixel */
+    EVE_cmd_dl(LINE_WIDTH(1U*16U)); /* size is in 1/16 pixel */
 
     EVE_color_rgb(BLUE_1);
-    EVE_cmd_dl(VERTEX2F(0,0));
+    EVE_cmd_dl(DL_VERTEX2F); /* set to 0 / 0 */
     EVE_cmd_dl(VERTEX2F(EVE_HSIZE,LAYOUT_Y1-2));
     EVE_cmd_dl(DL_END);
 
     /* display the logo */
     EVE_color_rgb(WHITE);
     EVE_cmd_dl(DL_BEGIN | EVE_BITMAPS);
-    EVE_cmd_setbitmap(MEM_LOGO, EVE_ARGB1555, 56, 56);
+    EVE_cmd_setbitmap(MEM_LOGO, EVE_ARGB1555, 56U, 56U);
     EVE_cmd_dl(VERTEX2F(EVE_HSIZE - 58, 5));
     EVE_cmd_dl(DL_END);
 
@@ -341,7 +352,7 @@ void TFT_init(void)
 
     if (E_OK == EVE_init_flash())
     {
-        EVE_cmd_flashread(MEM_FONT, 84928, 320); /* copy .xfont from FLASH to RAM_G, offset and length are from the .map file */
+        EVE_cmd_flashread(MEM_FONT, 61376, 320); /* copy .xfont from FLASH to RAM_G, offset and length are from the .map file */
     }
 
 #endif /* TEST_UTF8 */
@@ -352,7 +363,6 @@ void TFT_init(void)
         initStaticBackground();
     }
 }
-
 
 uint16_t toggle_state = 0;
 uint16_t display_list_size = 0;
@@ -394,10 +404,11 @@ void TFT_touch(void)
                     }
                 }
                 break;
+            default:
+                break;
         }
     }
 }
-
 
 /*
     dynamic portion of display-handling, meant to be called every 20ms or more
@@ -406,7 +417,7 @@ void TFT_display(void)
 {
     static int32_t rotate = 0;
 
-    if(tft_active != 0)
+    if(tft_active != 0U)
     {
         #if defined (EVE_DMA)
             uint16_t cmd_fifo_size;
@@ -418,18 +429,18 @@ void TFT_display(void)
         EVE_cmd_dl_burst(CMD_DLSTART); /* start the display list */
         EVE_cmd_dl_burst(DL_CLEAR_COLOR_RGB | WHITE); /* set the default clear color to white */
         EVE_cmd_dl_burst(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG); /* clear the screen - this and the previous prevent artifacts between lists, Attributes are the color, stencil and tag buffers */
-        EVE_cmd_dl_burst(TAG(0));
+        EVE_cmd_dl_burst(DL_TAG);
 
         EVE_cmd_append_burst(MEM_DL_STATIC, num_dl_static); /* insert static part of display-list from copy in gfx-mem */
         /* display a button */
         EVE_color_rgb_burst(WHITE);
-        EVE_cmd_fgcolor_burst(0x00c0c0c0); /* some grey */
-        EVE_cmd_dl_burst(TAG(10)); /* assign tag-value '10' to the button that follows */
+        EVE_cmd_fgcolor_burst(0x00c0c0c0UL); /* some grey */
+        EVE_cmd_dl_burst(DL_TAG+10U); /* assign tag-value '10' to the button that follows */
         EVE_cmd_button_burst(20,20,80,30, 28, toggle_state,"Touch!");
-        EVE_cmd_dl_burst(TAG(0)); /* no touch */
+        EVE_cmd_dl_burst(DL_TAG); /* no touch */
 
         /* display a picture and rotate it when the button on top is activated */
-        EVE_cmd_setbitmap_burst(MEM_PIC1, EVE_RGB565, 100, 100);
+        EVE_cmd_setbitmap_burst(MEM_PIC1, EVE_RGB565, 100U, 100U);
 
         EVE_cmd_dl_burst(DL_SAVE_CONTEXT);
         EVE_cmd_dl_burst(CMD_LOADIDENTITY);
@@ -438,7 +449,7 @@ void TFT_display(void)
         EVE_cmd_translate_burst(65536 * -70, 65536 * -50); /* shift back */
         EVE_cmd_dl_burst(CMD_SETMATRIX);
 
-        if(toggle_state != 0)
+        if(toggle_state != 0U)
         {
             rotate += 256;
         }

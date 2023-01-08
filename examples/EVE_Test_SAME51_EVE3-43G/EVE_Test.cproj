@@ -40,14 +40,14 @@
         </dependencies>
       </framework-data>
     </AsfFrameworkConfig>
-    <avrtool>com.atmel.avrdbg.tool.atmelice</avrtool>
-    <avrtoolserialnumber>J41800003266</avrtoolserialnumber>
+    <avrtool>com.atmel.avrdbg.tool.samice</avrtool>
+    <avrtoolserialnumber>801009877</avrtoolserialnumber>
     <avrdeviceexpectedsignature>0x61810302</avrdeviceexpectedsignature>
     <avrtoolinterface>SWD</avrtoolinterface>
     <com_atmel_avrdbg_tool_atmelice>
       <ToolOptions>
         <InterfaceProperties>
-          <SwdClock>4000000</SwdClock>
+          <SwdClock>0</SwdClock>
         </InterfaceProperties>
         <InterfaceName>SWD</InterfaceName>
       </ToolOptions>
@@ -59,7 +59,7 @@
     <com_atmel_avrdbg_tool_samice>
       <ToolOptions>
         <InterfaceProperties>
-          <SwdClock>0</SwdClock>
+          <SwdClock>4000000</SwdClock>
         </InterfaceProperties>
         <InterfaceName>SWD</InterfaceName>
       </ToolOptions>
@@ -134,8 +134,6 @@
       <Value>EVE_PDN_PORT=1</Value>
       <Value>EVE_PDN=PORT_PB31</Value>
       <Value>EVE_SPI=5</Value>
-      <Value>EVE_SPI_DMA_TRIGGER=SERCOM5_DMAC_ID_TX</Value>
-      <Value>EVE_DMA_CHANNEL=0</Value>
       <Value>EVE_DMA</Value>
     </ListValues>
   </armgcc.compiler.symbols.DefSymbols>
