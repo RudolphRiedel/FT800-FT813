@@ -2,14 +2,14 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2022-12-10
+@date    2023-01-18
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2022 Rudolph Riedel
+Copyright (c) 2016-2023 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -62,6 +62,7 @@ the IOT5
 - basic maintenance: checked for violations of white space and indent rules
 - added an EVE_CFAF800480E1_050SC_A2 profile without EVE_HAS_GT911 as there is a newer version of this
   model around that mimics a FT5316 while still using a GT911.
+- added a profile for the CFAF1024600B0-070SC-A1 from Crystalfontz
 
 */
 
@@ -84,6 +85,7 @@ the IOT5
 #define EVE_EVE4_101G
 #define EVE_CFAF800480Ex_050SC_A2
 #define EVE_CFAF800480E1_050SC_A2
+#define EVE_CFAF1024600B0_070SC_A1
 
 /* BT815 / BT816 */
 #define EVE_VM816C50AD
@@ -810,67 +812,26 @@ typedef struct
 #define EVE_HAS_GT911
 #endif
 
-#if defined(BT817_TEST1)
-#define EVE_HSIZE (1024L) /* Thd Length of visible part of line (in PCLKs) - display width */
-#define EVE_VSIZE (600L)  /* Tvd Number of visible lines (in lines) - display height */
+/* CFAF1024600B0-070SC-A1 1024x600 7.0" Crystalfontz, BT817 */
+#if defined (EVE_CFAF1024600B0_070SC_A1)
+#define EVE_HSIZE   (1024L)
+#define EVE_VSIZE   (600L)
 
-#define EVE_VSYNC0 (1L)    /* Tvf Vertical Front Porch */
-#define EVE_VSYNC1 (2L)    /* Tvf + Tvp Vertical Front Porch plus Vsync Pulse width */
-#define EVE_VOFFSET (25L)  /* Tvf + Tvp + Tvb Number of non-visible lines (in lines) */
-#define EVE_VCYCLE (626L)  /* Tv Total number of lines (visible and non-visible) (in lines) */
-#define EVE_HSYNC0 (16L)   /* Thf Horizontal Front Porch */
-#define EVE_HSYNC1 (17L)   /* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
-#define EVE_HOFFSET (177L) /* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
-#define EVE_HCYCLE (1597L) /* Th Total length of line (visible and non-visible) (in PCLKs) */
-#define EVE_PCLKPOL (1L)   /* PCLK polarity (0 = rising edge, 1 = falling edge) */
-#define EVE_SWIZZLE (3L)   /* Defines the arrangement of the RGB pins */
-#define EVE_PCLK (1L)      /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
-#define EVE_CSPREAD (0L) /* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
+#define EVE_VSYNC0  (1L)
+#define EVE_VSYNC1  (2L)
+#define EVE_VOFFSET (25L)
+#define EVE_VCYCLE  (626L)
+#define EVE_HSYNC0  (16L)
+#define EVE_HSYNC1  (17L)
+#define EVE_HOFFSET (177L)
+#define EVE_HCYCLE  (1344L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (3L)
+#define EVE_PCLK    (1L)
+#define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
-/*#define EVE_PCLK_FREQ (51000000UL)*/ /* 51MHz - value for EVE_cmd_pclkfreq */
-#endif
-
-#if defined(BT817_TEST2)
-#define EVE_HSIZE (1024L) /* Thd Length of visible part of line (in PCLKs) - display width */
-#define EVE_VSIZE (600L)  /* Tvd Number of visible lines (in lines) - display height */
-
-#define EVE_VSYNC0 (1L)    /* Tvf Vertical Front Porch */
-#define EVE_VSYNC1 (2L)    /* Tvf + Tvp Vertical Front Porch plus Vsync Pulse width */
-#define EVE_VOFFSET (25L)  /* Tvf + Tvp + Tvb Number of non-visible lines (in lines) */
-#define EVE_VCYCLE (626L)  /* Tv Total number of lines (visible and non-visible) (in lines) */
-#define EVE_HSYNC0 (16L)   /* Thf Horizontal Front Porch */
-#define EVE_HSYNC1 (17L)   /* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
-#define EVE_HOFFSET (177L) /* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
-#define EVE_HCYCLE (1597L) /* Th Total length of line (visible and non-visible) (in PCLKs) */
-#define EVE_PCLKPOL (1L)   /* PCLK polarity (0 = rising edge, 1 = falling edge) */
-#define EVE_SWIZZLE (3L)   /* Defines the arrangement of the RGB pins */
-#define EVE_PCLK (1L)      /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
-#define EVE_CSPREAD (0L) /* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
-#define EVE_HAS_CRYSTAL
-#define EVE_GEN 4
-#define EVE_PCLK_FREQ (51000000UL) /* 51MHz - value for EVE_cmd_pclkfreq */
-#endif
-
-#if defined(BT817_TEST3)
-#define EVE_HSIZE (1024L) /* Thd Length of visible part of line (in PCLKs) - display width */
-#define EVE_VSIZE (600L)  /* Tvd Number of visible lines (in lines) - display height */
-
-#define EVE_VSYNC0 (1L)    /* Tvf Vertical Front Porch */
-#define EVE_VSYNC1 (2L)    /* Tvf + Tvp Vertical Front Porch plus Vsync Pulse width */
-#define EVE_VOFFSET (25L)  /* Tvf + Tvp + Tvb Number of non-visible lines (in lines) */
-#define EVE_VCYCLE (626L)  /* Tv Total number of lines (visible and non-visible) (in lines) */
-#define EVE_HSYNC0 (16L)   /* Thf Horizontal Front Porch */
-#define EVE_HSYNC1 (17L)   /* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
-#define EVE_HOFFSET (177L) /* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
-#define EVE_HCYCLE (1344L) /* Th Total length of line (visible and non-visible) (in PCLKs) */
-#define EVE_PCLKPOL (1L)   /* PCLK polarity (0 = rising edge, 1 = falling edge) */
-#define EVE_SWIZZLE (3L)   /* Defines the arrangement of the RGB pins */
-#define EVE_PCLK (1L)      /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
-#define EVE_CSPREAD (0L) /* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
-#define EVE_HAS_CRYSTAL
-#define EVE_GEN 4
-#define EVE_PCLK_FREQ (51000000UL) /* 51MHz - value for EVE_cmd_pclkfreq */
+#define EVE_PCLK_FREQ (51000000L) /* 51MHz - value for EVE_cmd_pclkfreq -> 60 FPS */
 #endif
 
 /* ########## 1280 x 800 ########## */
