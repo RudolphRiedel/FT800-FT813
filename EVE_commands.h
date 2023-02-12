@@ -2,14 +2,14 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2022-12-30
+@date    2023-02-12
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2022 Rudolph Riedel
+Copyright (c) 2016-2023 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -68,6 +68,7 @@ EVE_cmd_animstartram_burst()
 - more linter fixes for minor issues like variables shorter than 3 characters
 - added EVE_color_a() / EVE_color_a_burst()
 - removed EVE_cmd_newlist_burst() prototype as the function got removed earlier
+- added prototype for EVE_write_display_parameters()
 
 */
 
@@ -191,11 +192,10 @@ void EVE_cmd_videoframe(uint32_t dest, uint32_t result_ptr);
 ##################################################################### */
 
 #if EVE_GEN > 2
-
 uint8_t EVE_init_flash(void);
-
 #endif /* EVE_GEN > 2 */
 
+void EVE_write_display_parameters(void);
 uint8_t EVE_init(void);
 
 /* ##################################################################

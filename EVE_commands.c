@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2022-12-30
+@date    2023-02-12
 @author  Rudolph Riedel
 
 @section info
@@ -15,7 +15,7 @@ The c-standard is C99.
 
 MIT License
 
-Copyright (c) 2016-2022 Rudolph Riedel
+Copyright (c) 2016-2023 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -121,6 +121,8 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - added EVE_color_a() / EVE_color_a_burst()
 - more minor tweaks and fixes to make the static analyzer happy
 - changed the burst variant of private_string_write() back to the older and faster version
+- refactoring of EVE_init() to single return
+- added prototype for EVE_write_display_parameters()
 
 */
 
@@ -1165,95 +1167,65 @@ const uint8_t eve_gt911_data[1184U] PROGMEM = {
 }
 #endif
 
-/* EVE chip initialization, has to be executed with the SPI setup to 11 MHz or less as required by FT8xx / BT8xx! */
-/* Takes no parameters but has a few optional parameters that are used by setting up defines. */
-/* EVE_TOUCH_RZTHRESH - configure the sensitivity of resistive touch, defaults to 1200. */
-/* EVE_ROTATE - set the screen rotation: bit0 = invert, bit2 = portrait, bit3 = mirrored */
-/* Note: if you use this you need a set of calibration values for the selected rotation since this rotates before
- * calibration! */
-/* EVE_BACKLIGHT_PWM - configure the backlight pwm, defaults to 0x20 / 25% */
-/* Returns E_OK in case of success. */
-uint8_t EVE_init(void)
+static uint8_t wait_chipid(void)
 {
+    uint8_t ret = EVE_FAIL_CHIPID_TIMEOUT;
     uint8_t chipid = 0U;
     uint16_t timeout = 0U;
 
-    EVE_pdn_set();
-    DELAY_MS(6U); /* minimum time for power-down is 5ms */
-    EVE_pdn_clear();
-    DELAY_MS(21U); /* minimum time to allow from rising PD_N to first access is 20ms */
-
-    /*  EVE_cmdWrite(EVE_RST_PULSE,0U); */ /* reset, only required for warm-start if PowerDown line is not used */
-
-#if defined(EVE_HAS_CRYSTAL)
-    EVE_cmdWrite(EVE_CLKEXT, 0U); /* setup EVE for external clock */
-#else
-    EVE_cmdWrite(EVE_CLKINT, 0U);              /* setup EVE for internal clock */
-#endif
-
-#if EVE_GEN > 2
-    EVE_cmdWrite(EVE_CLKSEL, 0x46U); /* set clock to 72 MHz */
-#endif
-
-    EVE_cmdWrite(EVE_ACTIVE, 0U); /* start EVE */
-
-    /*
-    BRT AN033 BT81X_Series_Programming_Guide V1.2 added a delay of at least 300ms
-    as a requirement after sending command ACTIVE.
-    Together with the sentence: "Ensure that there is no SPI access during this time."
-    AN033 BT81X_Series_Programming_Guide V2.0 removed this delay requirement again.
-    From observation of the startup-behavior of quite a number of displays,
-    reading REG_ID immediately after sending command ACTIVE is not an issue,
-    but a BT815 running at 72MHzs needs about 42ms before it answers anyways.
-    So I added a fixed delay of 40ms as a compromise, this provides a moment
-    of silence on the SPI without actually delaying the startup.
-    */
-    DELAY_MS(40U);
-
-    while (chipid != 0x7CU) /* if chipid is not 0x7c, continue to read it until it is,
-                                EVE needs a moment for its power on self-test and configuration */
+    for ( ; ; )
     {
         DELAY_MS(1U);
+
         chipid = EVE_memRead8(REG_ID);
-        timeout++;
-        if (timeout > 400U)
+        if(0x7cU == chipid) /* EVE is up and running */
         {
-            return EVE_FAIL_CHIPID_TIMEOUT;
+            ret = E_OK;
+            break;
+        }
+
+        timeout++;
+        if (timeout > 400U) /* EVE might not be with us at all */
+        {
+            break;
         }
     }
 
-    timeout = 0U;
-    while (0x00U != (EVE_memRead8(REG_CPURESET) & 7U)) /* check if EVE is in working status */
+    return ret;
+}
+
+static uint8_t wait_reset(void)
+{
+    uint8_t ret = EVE_FAIL_RESET_TIMEOUT;
+    uint8_t reset = 0U;
+    uint16_t timeout = 0U;
+
+    for ( ; ; )
     {
         DELAY_MS(1U);
-        timeout++;
-        if (timeout > 50U) /* experimental, 10 was the lowest value to get the BT815 started with,
-                             the touch-controller was the last to get out of reset */
+
+        reset = EVE_memRead8(REG_CPURESET) & 7U;
+        if(0U == reset) /* EVE reports all units running */
         {
-            return EVE_FAIL_RESET_TIMEOUT;
+            ret = E_OK;
+            break;
+        }
+
+        timeout++;
+        if (timeout > 50U) /* audio, touch or coprocessor engine fault */
+        {
+            break;
         }
     }
 
-/* tell EVE that we changed the frequency from default to 72MHz for BT8xx */
-#if EVE_GEN > 2
-    EVE_memWrite32(REG_FREQUENCY, 72000000UL);
-#endif
+    return ret;
+}
 
-/* we have a display with a Goodix GT911 / GT9271 touch-controller on it, so we patch our FT811 or FT813 according to
- * AN_336 or setup a BT815 / BT817 accordingly */
-#if defined(EVE_HAS_GT911)
-    use_gt911();
-#endif
-
-    /*  EVE_memWrite8(REG_PCLK, 0U);  */ /* set PCLK to zero - don't clock the LCD until later, line disabled because
-                                              zero is reset-default and we just did a reset */
-
-#if defined(EVE_ADAM101)
-    EVE_memWrite8(REG_PWM_DUTY, 0x80U); /* turn off backlight for Glyn ADAM101 module, it uses inverted values */
-#else
-    EVE_memWrite8(REG_PWM_DUTY, 0U);           /* turn off backlight for any other module */
-#endif
-
+/* Writes all parameters defined for the display selected in EVE_config.h to */
+/* the corresponding registers, is used by EVE_init() and can be used to */
+/* refresh the register values if needed.*/
+void EVE_write_display_parameters(void)
+{
     /* Initialize Display */
     EVE_memWrite16(REG_HSIZE, EVE_HSIZE);     /* active display width */
     EVE_memWrite16(REG_HCYCLE, EVE_HCYCLE);   /* total number of clocks per line, incl front/back porch */
@@ -1269,8 +1241,6 @@ uint8_t EVE_init(void)
     EVE_memWrite8(REG_PCLK_POL, EVE_PCLKPOL); /* LCD data is clocked in on this PCLK edge */
     EVE_memWrite8(REG_CSPREAD, EVE_CSPREAD); /* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
 
-    /* do not set PCLK yet - wait for just after the first display list */
-
     /* configure Touch */
     EVE_memWrite8(REG_TOUCH_MODE, EVE_TMODE_CONTINUOUS); /* enable touch */
 #if defined(EVE_TOUCH_RZTHRESH)
@@ -1283,19 +1253,11 @@ uint8_t EVE_init(void)
     EVE_memWrite8(REG_ROTATE, EVE_ROTATE & 7U); /* bit0 = invert, bit2 = portrait, bit3 = mirrored */
     /* reset default value is 0x0 - not inverted, landscape, not mirrored */
 #endif
+}
 
-    /* disable Audio for now */
-    EVE_memWrite8(REG_VOL_PB, 0U);      /* turn recorded audio volume down, reset-default is 0xff */
-    EVE_memWrite8(REG_VOL_SOUND, 0U);   /* turn synthesizer volume down, reset-default is 0xff */
-    EVE_memWrite16(REG_SOUND, 0x6000U); /* set synthesizer to mute */
-
-    /* write a basic display-list to get things started */
-    EVE_memWrite32(EVE_RAM_DL, DL_CLEAR_COLOR_RGB);
-    EVE_memWrite32(EVE_RAM_DL + 4U, (DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG));
-    EVE_memWrite32(EVE_RAM_DL + 8U, DL_DISPLAY); /* end of display list */
-    EVE_memWrite32(REG_DLSWAP, EVE_DLSWAP_FRAME);
-
-    /* nothing is being displayed yet... the pixel clock is still 0x00 */
+static uint8_t enable_pixel_clock(void)
+{
+    uint8_t ret = E_OK;
 
 #if EVE_GEN > 3
 #if defined(EVE_PCLK_FREQ)
@@ -1304,40 +1266,112 @@ uint8_t EVE_init(void)
     frequency = EVE_cmd_pclkfreq(EVE_PCLK_FREQ, 0L);
     if (0U == frequency)    /* this failed for some reason so we return with an error */
     {
-        return EVE_FAIL_PCLK_FREQ;
+        ret = EVE_FAIL_PCLK_FREQ;
+    }
+    else
+    {
+        EVE_memWrite8(REG_GPIO, 0x80U); /* enable the DISP signal to the LCD panel, it is set to output in REG_GPIO_DIR by default */
+        EVE_memWrite8(REG_PCLK, EVE_PCLK); /* now start clocking data to the LCD panel */
     }
 #endif
-#endif
-
+#else
     EVE_memWrite8(REG_GPIO, 0x80U); /* enable the DISP signal to the LCD panel, it is set to output in REG_GPIO_DIR by default */
     EVE_memWrite8(REG_PCLK, EVE_PCLK); /* now start clocking data to the LCD panel */
+#endif
 
+    return ret;
+}
+
+/* EVE chip initialization, has to be executed with the SPI setup to 11 MHz or less as required by FT8xx / BT8xx! */
+/* Takes no parameters but has a few optional parameters that are used by setting up defines. */
+/* EVE_TOUCH_RZTHRESH - configure the sensitivity of resistive touch, defaults to 1200. */
+/* EVE_ROTATE - set the screen rotation: bit0 = invert, bit2 = portrait, bit3 = mirrored */
+/* Note: if you use this you need a set of calibration values for the selected rotation since this rotates before
+ * calibration! */
+/* EVE_BACKLIGHT_PWM - configure the backlight pwm, defaults to 0x20 / 25% */
+/* Returns E_OK in case of success. */
+uint8_t EVE_init(void)
+{
+    uint8_t ret;
+
+    EVE_pdn_set();
+    DELAY_MS(6U); /* minimum time for power-down is 5ms */
+    EVE_pdn_clear();
+    DELAY_MS(21U); /* minimum time to allow from rising PD_N to first access is 20ms */
+    /*  EVE_cmdWrite(EVE_RST_PULSE,0U); */ /* reset, only required for warm-start if PowerDown line is not used */
+
+#if defined(EVE_HAS_CRYSTAL)
+    EVE_cmdWrite(EVE_CLKEXT, 0U); /* setup EVE for external clock */
+#else
+    EVE_cmdWrite(EVE_CLKINT, 0U); /* setup EVE for internal clock */
+#endif
+
+#if EVE_GEN > 2
+    EVE_cmdWrite(EVE_CLKSEL, 0x46U); /* set clock to 72 MHz */
+#endif
+
+    EVE_cmdWrite(EVE_ACTIVE, 0U); /* start EVE */
+    DELAY_MS(40U); /* give EVE a moment of silence to power up */
+
+    ret = wait_chipid();
+    if(E_OK == ret)
+    {
+        ret = wait_reset();
+        if(E_OK == ret)
+        {
+/* tell EVE that we changed the frequency from default to 72MHz for BT8xx */
+#if EVE_GEN > 2
+            EVE_memWrite32(REG_FREQUENCY, 72000000UL);
+#endif
+
+/* we have a display with a Goodix GT911 / GT9271 touch-controller on it,
+ so we patch our FT811 or FT813 according to AN_336 or setup a BT815 / BT817 accordingly */
+#if defined(EVE_HAS_GT911)
+            use_gt911();
+#endif
+
+#if defined(EVE_ADAM101)
+            EVE_memWrite8(REG_PWM_DUTY, 0x80U); /* turn off backlight for Glyn ADAM101 module, it uses inverted values */
+#else
+            EVE_memWrite8(REG_PWM_DUTY, 0U); /* turn off backlight for any other module */
+#endif
+            EVE_write_display_parameters();
+
+            /* disable Audio for now */
+            EVE_memWrite8(REG_VOL_PB, 0U);      /* turn recorded audio volume down, reset-default is 0xff */
+            EVE_memWrite8(REG_VOL_SOUND, 0U);   /* turn synthesizer volume down, reset-default is 0xff */
+            EVE_memWrite16(REG_SOUND, 0x6000U); /* set synthesizer to mute */
+
+            /* write a basic display-list to get things started */
+            EVE_memWrite32(EVE_RAM_DL, DL_CLEAR_COLOR_RGB);
+            EVE_memWrite32(EVE_RAM_DL + 4U, (DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG));
+            EVE_memWrite32(EVE_RAM_DL + 8U, DL_DISPLAY); /* end of display list */
+            EVE_memWrite32(REG_DLSWAP, EVE_DLSWAP_FRAME);
+            /* nothing is being displayed yet... the pixel clock is still 0x00 */
+
+            ret = enable_pixel_clock();
+            if(E_OK == ret)
+            {
 #if defined(EVE_BACKLIGHT_PWM)
-    EVE_memWrite8(REG_PWM_DUTY, EVE_BACKLIGHT_PWM); /* set backlight to user requested level */
+                EVE_memWrite8(REG_PWM_DUTY, EVE_BACKLIGHT_PWM); /* set backlight to user requested level */
 #else
 #if defined(EVE_ADAM101)
-    EVE_memWrite8(REG_PWM_DUTY, 0x60U); /* turn on backlight to 25% for Glyn ADAM101 module, it uses inverted values */
+                EVE_memWrite8(REG_PWM_DUTY, 0x60U); /* turn on backlight to 25% for Glyn ADAM101 module, it uses inverted values */
 #else
-    EVE_memWrite8(REG_PWM_DUTY, 0x20U); /* turn on backlight to 25% for any other module */
+                EVE_memWrite8(REG_PWM_DUTY, 0x20U); /* turn on backlight to 25% for any other module */
 #endif
 #endif
+                DELAY_MS(1U);
+                EVE_execute_cmd(); /* just to be safe, wait for EVE to not be busy */
 
-    timeout = 0U;
-    while (EVE_busy() != E_OK) /* just to be safe, should not even enter the loop */
-    {
-        DELAY_MS(1U);
-        timeout++;
-        if (timeout > 4U)
-        {
-            break; /* something is wrong here, but since we made it this far through the init, just leave the loop */
+#if defined(EVE_DMA)
+                EVE_init_dma(); /* prepare DMA */
+#endif
+            }
         }
     }
 
-#if defined(EVE_DMA)
-    EVE_init_dma(); /* prepare DMA */
-#endif
-
-    return E_OK;
+    return ret;
 }
 
 /* ##################################################################
