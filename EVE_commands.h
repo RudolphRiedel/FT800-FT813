@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2023-02-12
+@date    2023-02-20
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -69,6 +69,7 @@ EVE_cmd_animstartram_burst()
 - added EVE_color_a() / EVE_color_a_burst()
 - removed EVE_cmd_newlist_burst() prototype as the function got removed earlier
 - added prototype for EVE_write_display_parameters()
+- added EVE_memRead_sram_buffer()
 
 */
 
@@ -128,6 +129,7 @@ void EVE_memWrite16(uint32_t ft_address, uint16_t ft_data);
 void EVE_memWrite32(uint32_t ft_address, uint32_t ft_data);
 void EVE_memWrite_flash_buffer(uint32_t ft_address, const uint8_t *p_data, uint32_t len);
 void EVE_memWrite_sram_buffer(uint32_t ft_address, const uint8_t *p_data, uint32_t len);
+void EVE_memRead_sram_buffer(uint32_t ft_address, uint8_t *p_data, uint32_t len);
 uint8_t EVE_busy(void);
 void EVE_execute_cmd(void);
 

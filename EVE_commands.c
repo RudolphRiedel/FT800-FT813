@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2023-02-12
+@date    2023-02-20
 @author  Rudolph Riedel
 
 @section info
@@ -123,6 +123,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - changed the burst variant of private_string_write() back to the older and faster version
 - refactoring of EVE_init() to single return
 - added prototype for EVE_write_display_parameters()
+- added EVE_memRead_sram_buffer()
 
 */
 
@@ -221,38 +222,62 @@ void EVE_memWrite32(uint32_t ft_address, uint32_t ft_data)
 /* Helper function, write a block of memory from the FLASH of the host controller to EVE. */
 void EVE_memWrite_flash_buffer(uint32_t ft_address, const uint8_t *p_data, uint32_t len)
 {
-    EVE_cs_set();
-    spi_transmit((uint8_t)(ft_address >> 16U) | MEM_WRITE);
-    spi_transmit((uint8_t)(ft_address >> 8U));
-    spi_transmit((uint8_t)(ft_address & 0x000000ffUL));
-
-    uint32_t length = (len + 3U) & (~3U);
-
-    for (uint32_t count = 0U; count < length; count++)
+    if (p_data != NULL)
     {
-        spi_transmit(fetch_flash_byte(&p_data[count]));
-    }
+        EVE_cs_set();
+        spi_transmit((uint8_t)(ft_address >> 16U) | MEM_WRITE);
+        spi_transmit((uint8_t)(ft_address >> 8U));
+        spi_transmit((uint8_t)(ft_address & 0x000000ffUL));
 
-    EVE_cs_clear();
+    //    uint32_t length = (len + 3U) & (~3U);
+
+        for (uint32_t count = 0U; count < len; count++)
+        {
+            spi_transmit(fetch_flash_byte(&p_data[count]));
+        }
+
+        EVE_cs_clear();
+    }    
 }
 
 /* Helper function, write a block of memory from the SRAM of the host controller to EVE. */
 void EVE_memWrite_sram_buffer(uint32_t ft_address, const uint8_t *p_data, uint32_t len)
 {
-    EVE_cs_set();
-    spi_transmit((uint8_t)(ft_address >> 16U) | MEM_WRITE);
-    spi_transmit((uint8_t)(ft_address >> 8U));
-    spi_transmit((uint8_t)(ft_address & 0x000000ffUL));
-
-    uint32_t length = (len + 3U) & (~3U);
-
-    for (uint32_t count = 0U; count < length; count++)
+    if (p_data != NULL)
     {
-        spi_transmit(p_data[count]);
-    }
+        EVE_cs_set();
+        spi_transmit((uint8_t)(ft_address >> 16U) | MEM_WRITE);
+        spi_transmit((uint8_t)(ft_address >> 8U));
+        spi_transmit((uint8_t)(ft_address & 0x000000ffUL));
 
-    EVE_cs_clear();
+    //    uint32_t length = (len + 3U) & (~3U);
+
+        for (uint32_t count = 0U; count < len; count++)
+        {
+            spi_transmit(p_data[count]);
+        }
+
+        EVE_cs_clear();
+    }
 }
+
+/* Helper function, read a block of memory from EVE to the SRAM of the host controller */
+void EVE_memRead_sram_buffer(uint32_t ft_address, uint8_t *p_data, uint32_t len)
+{
+    if (p_data != NULL)
+    {
+        EVE_cs_set();
+        spi_transmit_32(((ft_address >> 16U) & 0x0000007fUL) + (ft_address & 0x0000ff00UL) + ((ft_address & 0x000000ffUL) << 16U));
+
+        for (uint32_t count = 0U; count < len; count++)
+        {
+            p_data[count] = spi_receive(0U); /* read data byte by sending another dummy byte */
+        }
+
+        EVE_cs_clear();
+    }    
+}
+
 
 /* Check if the co-processor completed executing the current command list. */
 /* Returns E_OK in case EVE is not busy (no DMA transfer active and REG_CMDB_SPACE has the value 0xffc, meaning the

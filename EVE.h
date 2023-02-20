@@ -2,14 +2,14 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 5.0
-@date    2022-12-20
+@date    2023-02-20
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2022 Rudolph Riedel
+Copyright (c) 2016-2023 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -50,6 +50,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - added defines for all DL_ display list commands
 - cleaned up the macros
 - fix: changed DL_CLEAR_RGB to DL_CLEAR_COLOR_RGB as this is what the programming guide uses
+- fix: renamed EVE_ROM_FONT_ADDR to EVE_ROM_FONTROOT
 
 */
 
@@ -66,7 +67,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define EVE_RAM_G         0x00000000UL
 #define EVE_ROM_CHIPID    0x000C0000UL
 #define EVE_ROM_FONT      0x001E0000UL
-#define EVE_ROM_FONT_ADDR 0x002FFFFCUL
+#define EVE_ROM_FONTROOT  0x002FFFFCUL
 #define EVE_RAM_DL        0x00300000UL
 #define EVE_RAM_REG       0x00302000UL
 #define EVE_RAM_CMD       0x00308000UL
