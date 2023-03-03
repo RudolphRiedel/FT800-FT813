@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2023-02-20
+@date    2023-03-03
 @author  Rudolph Riedel
 
 @section info
@@ -124,6 +124,8 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - refactoring of EVE_init() to single return
 - added prototype for EVE_write_display_parameters()
 - added EVE_memRead_sram_buffer()
+- Bugfix issue #81: neither DISP or the pixel clock are enabled for EVE4 configurations not using EVE_PCLK_FREQ.
+    thanks for the report to grados73 on Github!
 
 */
 
@@ -1293,16 +1295,14 @@ static uint8_t enable_pixel_clock(void)
     {
         ret = EVE_FAIL_PCLK_FREQ;
     }
-    else
+#endif
+#endif
+
+    if(E_OK == ret)
     {
         EVE_memWrite8(REG_GPIO, 0x80U); /* enable the DISP signal to the LCD panel, it is set to output in REG_GPIO_DIR by default */
         EVE_memWrite8(REG_PCLK, EVE_PCLK); /* now start clocking data to the LCD panel */
     }
-#endif
-#else
-    EVE_memWrite8(REG_GPIO, 0x80U); /* enable the DISP signal to the LCD panel, it is set to output in REG_GPIO_DIR by default */
-    EVE_memWrite8(REG_PCLK, EVE_PCLK); /* now start clocking data to the LCD panel */
-#endif
 
     return ret;
 }
