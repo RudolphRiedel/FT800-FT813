@@ -2,14 +2,14 @@
 @file    EVE_target_STM32.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-11-27
+@date    2023-03-19
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2022 Rudolph Riedel
+Copyright (c) 2016-2023 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -40,7 +40,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #if defined (__GNUC__)
 
 /* set with "build_flags" in platformio.ini or as defines in your build environment */
-#if defined (STM32L0) || (STM32F0) || (STM32F1) || (STM32F3) || (STM32F4) || (STM32G4) || (STM32H7)
+#if defined (STM32L0) || (STM32F0) || (STM32F1) || (STM32F3) || (STM32F4) || (STM32G4) || (STM32H7) || (STM32G0)
 
 #if defined (STM32L0) /* set with "build_flags = -D STM32L0" in platformio.ini */
 #include "stm32l0xx.h"
@@ -84,15 +84,21 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #include "stm32h7xx_ll_spi.h"
 #endif
 
+#if defined (STM32G0) /* set with "build_flags = -D STM32G0" in platformio.ini */
+#include "stm32g0xx.h"
+#include "stm32g0xx_hal.h"
+#include "stm32g0xx_ll_spi.h"
+#endif
+
 /* you may define these in your build-environment to use different settings */
 #if !defined (EVE_CS)
-#define EVE_CS_PORT GPIOD
-#define EVE_CS GPIO_PIN_12
+#define EVE_CS_PORT GPIOA
+#define EVE_CS GPIO_PIN_4
 #endif
 
 #if !defined (EVE_PDN)
-#define EVE_PDN_PORT GPIOD
-#define EVE_PDN GPIO_PIN_13
+#define EVE_PDN_PORT GPIOA
+#define EVE_PDN GPIO_PIN_3
 #endif
 
 #if !defined (EVE_SPI)
