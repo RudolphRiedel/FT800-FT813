@@ -2,14 +2,14 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-12-20
+@date    2023-03-19
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2022 Rudolph Riedel
+Copyright (c) 2016-2023 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -71,6 +71,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - moved all the Arduino targets to extra header files
 - basic maintenance: checked for violations of white space and indent rules
 - fix: wrong target definition file names for XMEGA and AVR
+- added STM32G0
 
 */
 
@@ -186,7 +187,7 @@ command buffer is executed by the command co-processor.
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined(STM32L0) || (STM32F0) || (STM32F1) || (STM32F3) || (STM32F4) || (STM32G4) || (STM32H7)
+#if defined(STM32L0) || (STM32F0) || (STM32F1) || (STM32F3) || (STM32F4) || (STM32G4) || (STM32H7) || (STM32G0)
 /* set with "build_flags" in platformio.ini or as defines in your build environment */
 
 #include "EVE_target/EVE_target_STM32.h"
