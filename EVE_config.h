@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2023-01-18
+@date    2023-03-24
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -63,6 +63,7 @@ the IOT5
 - added an EVE_CFAF800480E1_050SC_A2 profile without EVE_HAS_GT911 as there is a newer version of this
   model around that mimics a FT5316 while still using a GT911.
 - added a profile for the CFAF1024600B0-070SC-A1 from Crystalfontz
+- added a profile for the Gameduino GD3X 7"
 
 */
 
@@ -94,6 +95,7 @@ the IOT5
 #define EVE_RiTFT43
 #define EVE_RiTFT50
 #define EVE_RiTFT70
+#define EVE_GD3X
 #define EVE_EVE3_29
 #define EVE_EVE3_35
 #define EVE_EVE3_35G
@@ -641,6 +643,17 @@ typedef struct
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (1L)
 #define EVE_HAS_CRYSTAL
+#define EVE_GEN 3
+#endif
+
+/* Gameduino GD3X 7" with BT816 */
+#if defined(EVE_GD3X)
+#define Resolution_800x480
+
+#define EVE_PCLK (2L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (3L)
+#define EVE_CSPREAD (0L)
 #define EVE_GEN 3
 #endif
 

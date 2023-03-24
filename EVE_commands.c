@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2023-03-03
+@date    2023-03-24
 @author  Rudolph Riedel
 
 @section info
@@ -126,6 +126,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - added EVE_memRead_sram_buffer()
 - Bugfix issue #81: neither DISP or the pixel clock are enabled for EVE4 configurations not using EVE_PCLK_FREQ.
     thanks for the report to grados73 on Github!
+- added a few support lines for the Gameduino GD3X to EVE_init().
 
 */
 
@@ -1323,7 +1324,10 @@ uint8_t EVE_init(void)
     DELAY_MS(6U); /* minimum time for power-down is 5ms */
     EVE_pdn_clear();
     DELAY_MS(21U); /* minimum time to allow from rising PD_N to first access is 20ms */
-    /*  EVE_cmdWrite(EVE_RST_PULSE,0U); */ /* reset, only required for warm-start if PowerDown line is not used */
+
+#if defined(EVE_GD3X)
+    EVE_cmdWrite(EVE_RST_PULSE,0U); /* reset, only required for warm-start if PowerDown line is not used */
+#endif
 
 #if defined(EVE_HAS_CRYSTAL)
     EVE_cmdWrite(EVE_CLKEXT, 0U); /* setup EVE for external clock */
@@ -1373,6 +1377,10 @@ uint8_t EVE_init(void)
             EVE_memWrite32(EVE_RAM_DL + 8U, DL_DISPLAY); /* end of display list */
             EVE_memWrite32(REG_DLSWAP, EVE_DLSWAP_FRAME);
             /* nothing is being displayed yet... the pixel clock is still 0x00 */
+
+#if defined (EVE_GD3X)
+            EVE_memWrite16(REG_OUTBITS,0x01B6U); /* the GD3X is only using 6 bits per color */
+#endif
 
             ret = enable_pixel_clock();
             if(E_OK == ret)
