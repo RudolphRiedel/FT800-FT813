@@ -1,8 +1,8 @@
 /*
 @file    tft.c
 @brief   TFT handling functions for EVE_Test project
-@version 1.21
-@date    2023-01-08
+@version 1.22
+@date    2023-03-24
 @author  Rudolph Riedel
 
 @section History
@@ -23,6 +23,9 @@
 
 1.21
 - several minor changes
+
+1.22
+- added touch calibration values for EVE_GD3X
 
  */
 
@@ -212,6 +215,15 @@ void touch_calibrate(void)
     EVE_memWrite32(REG_TOUCH_TRANSFORM_D, 0xFFFFFF5E);
     EVE_memWrite32(REG_TOUCH_TRANSFORM_E, 0x00010226);
     EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0x0000C783);
+#endif
+
+#if defined (EVE_GD3X)
+    EVE_memWrite32(REG_TOUCH_TRANSFORM_A, 0x0000D09D);
+    EVE_memWrite32(REG_TOUCH_TRANSFORM_B, 0xFFFFFE27);
+    EVE_memWrite32(REG_TOUCH_TRANSFORM_C, 0xFFF0838A);
+    EVE_memWrite32(REG_TOUCH_TRANSFORM_D, 0xFFFFFF72);
+    EVE_memWrite32(REG_TOUCH_TRANSFORM_E, 0xFFFF7D2B);
+    EVE_memWrite32(REG_TOUCH_TRANSFORM_F, 0x01F3096A);
 #endif
 
 /* activate this if you are using a module for the first time or if you need to re-calibrate it */
