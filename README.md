@@ -10,7 +10,8 @@ It contains code for and has been used with various micro-controllers and displa
 
 ## Controllers
 
-I have used it so far with:  
+I have used it so far with:
+
 - 8-Bit AVR, specifically the 90CAN series
 - Arduino: Uno, mini-pro, ESP8266, ESP32 (DMA), Metro-M4 (DMA), STM32 Nucleo_F446RE (DMA), XMC1100
 - Renesas F1L RH850
@@ -21,8 +22,10 @@ I have used it so far with:
 - RP2040 Baremetal (DMA) + Arduino (DMA) - Raspberry Pi Pico
 - S32K144 (DMA)
 - GD32C103CBT6 (DMA)
+- STM32G0B1CET6
 
-I have reports of successfully using it with:  
+I have reports of successfully using it with:
+
 - ATSAMV70
 - ATSAMD20
 - ATSAME4
@@ -34,7 +37,8 @@ I have reports of successfully using it with:
 
 ## Displays
 
-The TFTs tested so far:  
+The TFTs tested so far:
+
 - FT810CB-HY50HD http://www.hotmcu.com/5-graphical-lcd-touchscreen-800x480-spi-ft810-p-286.html
 - FT811CB-HY50HD  http://www.hotmcu.com/5-graphical-lcd-capacitive-touch-screen-800x480-spi-ft811-p-301.html
 - RVT70UQFNWC0x https://riverdi.com/product/rvt70uqfnwc0x/
@@ -60,31 +64,36 @@ The TFTs tested so far:
 - RVT101HVBNWC00-B https://riverdi.com/product/rvt101hvbnwc00-b/
 - RVT70HSBNWC00-B https://riverdi.com/product/rvt70hsbnwc00-b/
 - RVT50HQBNWC00-B https://riverdi.com/product/rvt50hqbnwc00-b/
+- CFAF1024600B0-070SC-A1 https://www.crystalfontz.com/product/cfaf1024600b0070sca1-1024x600-7-inch-eve-tft
+- Sunflower shield from Cowfish Studios
+- GD3X Gameduino shield
 
 ## This is version 5
 
 This is version 5 of this code library and there are a couple of changes from V4.
 
-First of all, support for FT80x is gone.  
-The main reason is that this allowed a nice speed improvement modification that only works with FT81x and beyond.  
+First of all, support for FT80x is gone. The main reason is that this allowed a nice speed improvement modification that only works with FT81x and beyond.
 Then there is a hard break from FT80x to FT81x with ony 256k of memory in FT80x but 1MB in FT81x. The memory map is different and all the registers are located elsewhere.
-FT810, FT811, FT812, FT813, BT815, BT816, BT817 and BT818 can use the exact same code as long none of the new features of BT81x are used - and there are plenty of modules with these available to choose from.  
-As a side effect all commands are automatically started now.  
-Second is that there are two sets of display-list building command functions now: EVE_cmd_xxx() and EVE_cmd_xxx_burst().  
+FT810, FT811, FT812, FT813, BT815, BT816, BT817 and BT818 can use the exact same code as long none of the new features of BT81x are used - and there are plenty of modules with these available to choose from
+
+As a side effect all commands are automatically started now. 
+
+Second is that there are two sets of display-list building command functions now: EVE_cmd_xxx() and EVE_cmd_xxx_burst().
 The EVE_cmd_xxx_burst() functions are optimized for speed, these are pure data transfer functions and do not even check anymore if burst mode is active.
 
 ## Structure
 
-This library currently has nine files that I hope are named to make clear what these do:  
-- EVE.h - this has all defines for FT81x / BT81x itself, so here are options, registers, commands and macros defined  
-- EVE_commands.c - this has all the API functions that are to be called from an application  
-- EVE_commands.h - this contains the prototypes for the functions in EVE_commands.c  
-- EVE_config.h - this has all the parameters for the numerous supported display modules, here is definded which set of parameters is to be used  
-- EVE_target.c - this has non-portable specific code for a number of supported controllers, mostly to support DMA  
-- EVE_target.h - this has non-portable pin defines and code as "static inline" functions for all supported controllers  
-- EVE_target.cpp - this is for Arduino C++ targets  
-- EVE_cpp_wrapper.cpp - this is for Arduino C++ targets  
-- EVE_cpp_wrapper.h - this is for Arduino C++ targets  
+This library currently has nine files that I hope are named to make clear what these do:
+
+- EVE.h - this has all defines for FT81x / BT81x itself, so here are options, registers, commands and macros defined
+- EVE_commands.c - this has all the API functions that are to be called from an application
+- EVE_commands.h - this contains the prototypes for the functions in EVE_commands.c
+- EVE_config.h - this has all the parameters for the numerous supported display modules, here is definded which set of parameters is to be used
+- EVE_target.c - this has non-portable specific code for a number of supported controllers, mostly to support DMA
+- EVE_target.h - this has non-portable pin defines and code as "static inline" functions for all supported controllers
+- EVE_target.cpp - this is for Arduino C++ targets
+- EVE_cpp_wrapper.cpp - this is for Arduino C++ targets
+- EVE_cpp_wrapper.h - this is for Arduino C++ targets
 
 ## Examples
 
@@ -95,7 +104,7 @@ EVE_cmd_dl(DL_CLEAR_COLOR_RGB | WHITE); // sets the background color
 EVE_cmd_dl(DL_CLEAR | CLR_COL | CLR_STN | CLR_TAG);
 EVE_color_rgb(BLACK);
 EVE_cmd_text(5, 15, 28, 0, "Hello there!");
-EVE_cmd_dl(DL_DISPLAY); // put in the display list to mark the end
+EVE_cmd_dl(DL_DISPLAY); // put in the display list to mark its end
 EVE_cmd_dl(CMD_SWAP); // tell EVE to use the new display list
 while (EVE_busy());
 ````
@@ -116,11 +125,11 @@ EVE_end_cmd_burst();
 while (EVE_busy());
 ````
 
-This does the same as the first example but faster.  
+This does the same as the first example but faster.
 The preceding EVE_start_cmd_burst() either sets chip-select to low and sends out the three byte address.  
-Or if DMA is available for the target you are compiling for with support code in EVE_target.c / EVE_target.cpp and EVE_target.h, it writes the address to EVE_dma_buffer[] and sets EVE_dma_buffer_index to 1.
+Or if DMA is available for the target you are compiling for with support code in EVE_target.c / EVE_target.cpp and EVE_target.h, it writes the address to EVE_dma_buffer and sets EVE_dma_buffer_index to 1.
 
-Note the trailing "_burst" in the following functions, these are special versions of these commands that can only be used within an EVE_start_cmd_burst()/EVE_end_cmd_bust() pair.  
+Note the trailing "_burst" in the following functions, these are special versions of these commands that can only be used within an EVE_start_cmd_burst()/EVE_end_cmd_bust() pair.
 These functions are optimized to push out data and nothing else.
 
 The final EVE_end_cmd_burst() either pulls back the chip-select to high.  
@@ -129,7 +138,7 @@ Or if we have DMA it calls EVE_start_dma_transfer() to start pushing out the buf
 As we have 7 commands for EVE in these simple examples, the second one has the address overhead removed from six commands and therefore needs to transfer 18 bytes less over SPI.  
 So even with a small 8-bit controller that does not support DMA this is a usefull optimization for building display lists.
 
-Using DMA has one caveat: we need to limit the transfer to <4k as we are writing to the FIFO of EVEs command co-processor. This is usually not an issue though as we can shorten the display list generation with previously generated snippets that we attach to the current list with CMD_APPEND. And when we use widgets like CMD_BUTTON or CMD_CLOCK the generated display list grows by a larger amount than what we need to put into the command-FIFO so we likely reach the 8k limit of the display-list before we hit the 4k limit of the command-FIFO.  
+Using DMA has one caveat: we need to limit the transfer to <4k as we are writing to the FIFO of EVEs command co-processor. This is usually not an issue though as we can shorten the display list generation with previously generated snippets that we attach to the current list with CMD_APPEND. And when we use widgets like CMD_BUTTON or CMD_CLOCK the generated display list grows by a larger amount than what we need to put into the command-FIFO so we likely reach the 8k limit of the display-list before we hit the 4k limit of the command-FIFO.
 It is possible to use two or more DMA transfers to the FIFO to build a single display list, either to get around the 4k limit of the FIFO or in order to distribute the workload better of the time necessary between two display renewals.
 
 You could for example do this, spread over three consecutive calls:
@@ -155,9 +164,9 @@ EVE_cmd_dl_burst(CMD_SWAP);
 EVE_end_cmd_burst();
 ````
 
-But you need to check with EVE_busy() before each of these blocks.  
-Maybe similar like this never compiled pseudo-code:  
-````
+But you need to check with EVE_busy() before each of these blocks.
+Maybe similar like this never compiled pseudo-code:
+
 thread_1ms_update_display()
 {
     static uint8_t state = 0;
@@ -188,39 +197,32 @@ thread_1ms_update_display()
         }
     }
 }
-````
+
 
 ## Remarks
 
-The examples in the "example_projects" drawer are for use with AtmelStudio7.  
+The examples in the "example_projects" drawer are for use with AtmelStudio7.
 For Arduino I am using PlatformIO with Visual Studio Code.
 
-The platform the code is compiled for is automatically detected thru compiler flags in EVE_target.h.  
-The desired TFT is selected by adding a define for it to the build-environment, for example: "-DEVE_EVE3_50G"  
-There is a list of available options at the start of EVE_config.h sorted by chipset.  
-The pins used for Chip-Select and Power-Down are configured in the EVE_target/EVE_target_xxxx.h files like this:
-````
-#if !defined(EVE_CS)
-#define EVE_CS 10
-#endif
+The platform the code is compiled for is automatically detected thru compiler flags in EVE_target.h.
 
-#if !defined(EVE_PDN)
-#define EVE_PDN 8
-#endif
-````
-So you can override the default settings by adding your own defines to your build-environment, for example: "-DEVE_CS=9"  
-When compiling for AVR you need to provide the clock it is running at in order to make the _delay_ms() calls used to initialize the TFT work with the intended timing.  
-For other plattforms you need to provide a DELAY_MS(ms) function that works at least between 1ms and 56ms and is not performing these delays shorter than requested.  
+The desired TFT is selected by adding a define for it to the build-environment, e.g. -DEVE_EVE3_50G
+There is a list of available options at the start of EVE_config.h sorted by chipset.
+
+- Provide the pins used for Chip-Select and Power-Down in EVE_target.h for the target configuration you are using
+
+When compiling for AVR you need to provide the clock it is running at in order to make the _delay_ms() calls used to initialize the TFT work with the intended timing.
+For other plattforms you need to provide a DELAY_MS(ms) function that works at least between 1ms and 56ms and is not performing these delays shorter than requested.
 The DELAY_MS(ms) is only used during initialization of the FT8xx/BT8xx.
-See EVE_target.h for examples.  
+See EVE_target.h for examples.
 
-In Addition you need to initialize the pins used for Chip-Select and Power-Down in your hardware correctly to output.  
-Plus setup the SPI accordingly, mode-0, 8-bit, MSB-first, not more than 11MHz for the init.  
-A couple of targets already have a function EVE_init_spi() in EVE_target.c or EVE_cpp_target.cpp.  
+In Addition you need to initialize the pins used for Chip-Select and Power-Down in your hardware correctly to output.
+Plus setup the SPI accordingly, mode-0, 8-bit, MSB-first, not more than 11MHz for the init.
+A couple of targets already have a function EVE_init_spi() in EVE_target.c.
 
 A word of "warning", you have to take a little care yourself to for example not send more than 4kB at once to the command co-processor
-or to not generate display lists that are longer than 8kB.  
-My library does not check and re-check the command-FIFO on every step.  
+or to not generate display lists that are longer than 8kB.
+My library does not check and re-check the command-FIFO on every step.
 This is optimized for speed, so the training wheels are off.
 
 ## Post questions here

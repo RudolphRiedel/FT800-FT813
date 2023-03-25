@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2023-03-24
+@date    2023-03-25
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -64,6 +64,7 @@ the IOT5
   model around that mimics a FT5316 while still using a GT911.
 - added a profile for the CFAF1024600B0-070SC-A1 from Crystalfontz
 - added a profile for the Gameduino GD3X 7"
+- slightly adjusted the Sunflower config and removed the "untested" tag
 
 */
 
@@ -249,17 +250,16 @@ typedef struct
 #define EVE_GEN 2
 #endif
 
-/* untested */
 /* Sunflower Arduino Shield, 320x240 3.5" from Cowfish, FT813 */
 // https://github.com/Cowfish-Studios/Cowfish_Sunflower_Shield_PCB
-/* set EVE_CS to 6 and EVE_PDN to 5 in the Arduino block in EVE_target.h */
+/* note: CS is on pin D6 and PD is on pin D5 */
 #if defined(EVE_SUNFLOWER)
 #define Resolution_320x240
 
 #define EVE_PCLK (9L)
-#define EVE_PCLKPOL (1L)
+#define EVE_PCLKPOL (0L)
 #define EVE_SWIZZLE (2L)
-#define EVE_CSPREAD (0L)
+#define EVE_CSPREAD (1L)
 #define EVE_GEN 2
 #endif
 
@@ -646,7 +646,8 @@ typedef struct
 #define EVE_GEN 3
 #endif
 
-/* Gameduino GD3X 7" with BT816 */
+/* Gameduino GD3X 7" shield with BT816 */
+/* note: CS is on pin D8 and there is no PD pin */
 #if defined(EVE_GD3X)
 #define Resolution_800x480
 
