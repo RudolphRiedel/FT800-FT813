@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 5.0
-@date    2023-02-20
+@date    2023-03-31
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -51,6 +51,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - cleaned up the macros
 - fix: changed DL_CLEAR_RGB to DL_CLEAR_COLOR_RGB as this is what the programming guide uses
 - fix: renamed EVE_ROM_FONT_ADDR to EVE_ROM_FONTROOT
+- added #ifdef __cplusplus / extern "C" to allow adding EVE_ functions to C++ code
 
 */
 
@@ -60,6 +61,11 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #pragma once
 
 #include "EVE_target.h"
+
+#ifdef __cplusplus
+extern "C" {
+    #endif
+
 #include "EVE_config.h"
 #include "EVE_commands.h"
 
@@ -747,5 +753,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #define REG_ANIM_ACTIVE   0x0030902CUL
 
 #endif /*  EVE_GEN > 3 */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* EVE_H */
