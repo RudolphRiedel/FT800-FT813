@@ -2,14 +2,14 @@
 @file    EVE_target.c
 @brief   target specific functions for plain C targets
 @version 5.0
-@date    2022-12-10
+@date    2023-04-01
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2022 Rudolph Riedel
+Copyright (c) 2016-2023 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -23,15 +23,6 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMA
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 @section History
-
-4.0
-- added support for MSP432
-- moved the two include lines out of reach for Arduino to increase compatibility with Arduino
-- removed preceding "__" from two CMSIS functions that were not necessary and maybe even wrong
-- moved the very basic DELAY_MS() function for ATSAM to EVE_target.c and therefore removed the unneceesary inlining for this function
-- added DMA support for ATSAME51
-- started to implement DMA support for STM32
-- added a few more controllers as examples from the ATSAMC2x and ATSAMx5x family trees
 
 5.0
 - changed the DMA buffer from uin8_t to uint32_t
@@ -54,6 +45,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - fixed the ESP32 target to work with the ESP32-S3 as well
 - basic maintenance: checked for violations of white space and indent rules
 - changed the code for ATSAMC21 and ATSAMx51 targets to use EVE_SPI_SERCOM
+- ESP32: fix for building with ESP-IDF 5.x
 
  */
 
@@ -362,7 +354,11 @@ void EVE_init_spi(void)
     spi_device_interface_config_t devcfg = {0};
     gpio_config_t io_cfg = {0};
 
+#if ESP_IDF_VERSION_MAJOR <= 4
     io_cfg.intr_type = GPIO_PIN_INTR_DISABLE;
+#elif ESP_IDF_VERSION_MAJOR == 5
+    io_cfg.intr_type = GPIO_INTR_DISABLE;
+#endif
     io_cfg.mode = GPIO_MODE_OUTPUT;
     io_cfg.pin_bit_mask = BIT(EVE_PDN) | BIT(EVE_CS);
     gpio_config(&io_cfg);
