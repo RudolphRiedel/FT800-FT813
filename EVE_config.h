@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2023-03-25
+@date    2023-04-05
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -65,6 +65,7 @@ the IOT5
 - added a profile for the CFAF1024600B0-070SC-A1 from Crystalfontz
 - added a profile for the Gameduino GD3X 7"
 - slightly adjusted the Sunflower config and removed the "untested" tag
+- added profiles for new displays from Panasys
 
 */
 
@@ -88,6 +89,7 @@ the IOT5
 #define EVE_CFAF800480Ex_050SC_A2
 #define EVE_CFAF800480E1_050SC_A2
 #define EVE_CFAF1024600B0_070SC_A1
+#define EVE_PS817_043WQ_C_IPS
 
 /* BT815 / BT816 */
 #define EVE_VM816C50AD
@@ -110,6 +112,11 @@ the IOT5
 #define EVE_EVE3x_38G
 #define EVE_EVE3x_39
 #define EVE_EVE3x_39G
+#define EVE_PS816_043WQ_R_IPS
+#define EVE_PS815_043W_C_IPS
+#define EVE_PS815_050W_C_IPS
+#define EVE_PS815_070W_C_IPS
+#define EVE_PS815_090W_C_IPS
 
 /* FT812 / F813 */
 #define EVE_ME812A
@@ -406,6 +413,50 @@ typedef struct
 #endif
 
 /* untested */
+/* PS817-043WQ-C-IPS 480x272 4.3" Panasys, BT817 */
+#if defined(EVE_PS817_043WQ_C_IPS)
+#define EVE_HSIZE (480L)
+#define EVE_VSIZE (272L)
+
+#define EVE_VSYNC0 (0L)
+#define EVE_VSYNC1 (4L)
+#define EVE_VOFFSET (12L)
+#define EVE_VCYCLE (292L)
+#define EVE_HSYNC0 (0L)
+#define EVE_HSYNC1 (4L)
+#define EVE_HOFFSET (43L)
+#define EVE_HCYCLE (531L)
+#define EVE_PCLK (7L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (0L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 4
+#endif
+
+/* untested */
+/* PS816-043WQ-R-IPS 480x272 4.3" Panasys, resistive touch, BT816 */
+#if defined(EVE_PS816_043WQ_R_IPS)
+#define EVE_HSIZE (480L)
+#define EVE_VSIZE (272L)
+
+#define EVE_VSYNC0 (0L)
+#define EVE_VSYNC1 (4L)
+#define EVE_VOFFSET (12L)
+#define EVE_VCYCLE (292L)
+#define EVE_HSYNC0 (0L)
+#define EVE_HSYNC1 (4L)
+#define EVE_HOFFSET (43L)
+#define EVE_HCYCLE (531L)
+#define EVE_PCLK (7L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (0L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 3
+#endif
+
+/* untested */
 /* NHD-4.3-480272FT-CxXx-xxx 480x272 4.3" Newhaven, resistive or capacitive, FT81x */
 #if defined(EVE_NHD_43)
 #define Resolution_480x272
@@ -636,6 +687,58 @@ typedef struct
 /* RVT70xQBxxxxx 800x480 7.0" Riverdi, various options, BT815/BT816 */
 /* not working properly? try the EVE_RiTFT50 profile */
 #if defined(EVE_RiTFT70)
+#define Resolution_800x480
+
+#define EVE_PCLK (2L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (1L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 3
+#endif
+
+/* untested */
+/* PS815-043W-C-IPS 800x480 4.3" Panasys, BT815 */
+#if defined(EVE_PS815_043W_C_IPS)
+#define Resolution_800x480
+
+#define EVE_PCLK (2L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (1L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 3
+#endif
+
+/* untested */
+/* PS815-050W-C-IPS 800x480 5.0" Panasys, BT815 */
+#if defined(EVE_PS815_050W_C_IPS)
+#define Resolution_800x480
+
+#define EVE_PCLK (2L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (1L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 3
+#endif
+
+/* untested */
+/* PS815-070W-C-IPS 800x480 7.0" Panasys, BT815 */
+#if defined(EVE_PS815_070W_C_IPS)
+#define Resolution_800x480
+
+#define EVE_PCLK (2L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (1L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 3
+#endif
+
+/* untested */
+/* PS815-090W-C-IPS 800x480 9.0" Panasys, BT815 */
+#if defined(EVE_PS815_090W_C_IPS)
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
