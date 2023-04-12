@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2023-04-05
+@date    2023-04-12
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -71,8 +71,6 @@ the IOT5
 
 #ifndef EVE_CONFIG_H
 #define EVE_CONFIG_H
-
-#pragma once
 
 /* define one of these in your build-environment to select the settings for the TFT attached */
 #if 0

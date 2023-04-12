@@ -16,7 +16,8 @@ I have used it so far with:
 - Arduino: Uno, mini-pro, ESP8266, ESP32 (DMA), Metro-M4 (DMA), STM32 Nucleo_F446RE (DMA), XMC1100
 - Renesas F1L RH850
 - Infineon Aurix TC222
-- ATSAMC21E18A (DMA)
+- GD32VF103
+- ATSAMC21J18A (DMA)
 - ATSAME51J19A (DMA)
 - ESP32 (DMA)
 - RP2040 Baremetal (DMA) + Arduino (DMA) - Raspberry Pi Pico
@@ -209,20 +210,21 @@ The platform the code is compiled for is automatically detected thru compiler fl
 The desired TFT is selected by adding a define for it to the build-environment, e.g. -DEVE_EVE3_50G
 There is a list of available options at the start of EVE_config.h sorted by chipset.
 
-- Provide the pins used for Chip-Select and Power-Down in EVE_target.h for the target configuration you are using
+The pins used for Chip-Select and Power-Down setup in the EVE_target/EVE_target_XXXXX.h file for your target with defines and these defines can be bypassed with defines in the build-environment.  
+Check the apropriate header file for your desired target.
 
 When compiling for AVR you need to provide the clock it is running at in order to make the _delay_ms() calls used to initialize the TFT work with the intended timing.
 For other plattforms you need to provide a DELAY_MS(ms) function that works at least between 1ms and 56ms and is not performing these delays shorter than requested.
 The DELAY_MS(ms) is only used during initialization of the FT8xx/BT8xx.
-See EVE_target.h for examples.
 
 In Addition you need to initialize the pins used for Chip-Select and Power-Down in your hardware correctly to output.
-Plus setup the SPI accordingly, mode-0, 8-bit, MSB-first, not more than 11MHz for the init.
+Plus setup the SPI accordingly, mode-0, 8-bit, MSB-first, not more than 11MHz for the initialization.
 A couple of targets already have a function EVE_init_spi() in EVE_target.c.
 
-A word of "warning", you have to take a little care yourself to for example not send more than 4kB at once to the command co-processor
-or to not generate display lists that are longer than 8kB.
-My library does not check and re-check the command-FIFO on every step.
+A word of "warning", you have to take care yourself to not send more than 4kiB at once to the command co-processor
+or to not generate display lists that are longer than 8kiB.
+My library does not check and re-check the command-FIFO on every step.  
+Also there are no checks for the validity of function arguments.  
 This is optimized for speed, so the training wheels are off.
 
 ## Post questions here

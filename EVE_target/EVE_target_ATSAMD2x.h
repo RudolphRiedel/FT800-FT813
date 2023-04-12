@@ -2,7 +2,7 @@
 @file    EVE_target_ATSAMD2x.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-01-16
+@date    2023-04-12
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -58,8 +58,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 #ifndef EVE_TARGET_ATSAMD2X_H
 #define EVE_TARGET_ATSAMD2X_H
-
-#pragma once
 
 #if !defined (ARDUINO)
 #if defined (__GNUC__)

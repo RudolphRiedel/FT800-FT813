@@ -2,7 +2,7 @@
 @file    EVE_target_STM32.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-03-19
+@date    2023-04-12
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -30,11 +30,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 */
 
-
 #ifndef EVE_TARGET_STM32_H
 #define EVE_TARGET_STM32_H
-
-#pragma once
 
 #if !defined (ARDUINO)
 #if defined (__GNUC__)

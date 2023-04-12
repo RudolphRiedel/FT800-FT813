@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2023-02-20
+@date    2023-04-12
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -75,8 +75,6 @@ EVE_cmd_animstartram_burst()
 
 #ifndef EVE_COMMANDS_H
 #define EVE_COMMANDS_H
-
-#pragma once
 
 //#include "EVE.h"
 

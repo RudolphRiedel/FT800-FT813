@@ -2,14 +2,14 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2022-12-10
+@date    2023-04-12
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2022 Rudolph Riedel
+Copyright (c) 2016-2023 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -62,13 +62,15 @@ the IOT5
 - basic maintenance: checked for violations of white space and indent rules
 - added an EVE_CFAF800480E1_050SC_A2 profile without EVE_HAS_GT911 as there is a newer version of this
   model around that mimics a FT5316 while still using a GT911.
+- added a profile for the CFAF1024600B0-070SC-A1 from Crystalfontz
+- added a profile for the Gameduino GD3X 7"
+- slightly adjusted the Sunflower config and removed the "untested" tag
+- added profiles for new displays from Panasys
 
 */
 
 #ifndef EVE_CONFIG_H
 #define EVE_CONFIG_H
-
-#pragma once
 
 /* define one of these in your build-environment to select the settings for the TFT attached */
 #if 0
@@ -84,6 +86,8 @@ the IOT5
 #define EVE_EVE4_101G
 #define EVE_CFAF800480Ex_050SC_A2
 #define EVE_CFAF800480E1_050SC_A2
+#define EVE_CFAF1024600B0_070SC_A1
+#define EVE_PS817_043WQ_C_IPS
 
 /* BT815 / BT816 */
 #define EVE_VM816C50AD
@@ -92,6 +96,7 @@ the IOT5
 #define EVE_RiTFT43
 #define EVE_RiTFT50
 #define EVE_RiTFT70
+#define EVE_GD3X
 #define EVE_EVE3_29
 #define EVE_EVE3_35
 #define EVE_EVE3_35G
@@ -105,6 +110,11 @@ the IOT5
 #define EVE_EVE3x_38G
 #define EVE_EVE3x_39
 #define EVE_EVE3x_39G
+#define EVE_PS816_043WQ_R_IPS
+#define EVE_PS815_043W_C_IPS
+#define EVE_PS815_050W_C_IPS
+#define EVE_PS815_070W_C_IPS
+#define EVE_PS815_090W_C_IPS
 
 /* FT812 / F813 */
 #define EVE_ME812A
@@ -245,17 +255,16 @@ typedef struct
 #define EVE_GEN 2
 #endif
 
-/* untested */
 /* Sunflower Arduino Shield, 320x240 3.5" from Cowfish, FT813 */
 // https://github.com/Cowfish-Studios/Cowfish_Sunflower_Shield_PCB
-/* set EVE_CS to 6 and EVE_PDN to 5 in the Arduino block in EVE_target.h */
+/* note: CS is on pin D6 and PD is on pin D5 */
 #if defined(EVE_SUNFLOWER)
 #define Resolution_320x240
 
 #define EVE_PCLK (9L)
-#define EVE_PCLKPOL (1L)
+#define EVE_PCLKPOL (0L)
 #define EVE_SWIZZLE (2L)
-#define EVE_CSPREAD (0L)
+#define EVE_CSPREAD (1L)
 #define EVE_GEN 2
 #endif
 
@@ -399,6 +408,50 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
+#endif
+
+/* untested */
+/* PS817-043WQ-C-IPS 480x272 4.3" Panasys, BT817 */
+#if defined(EVE_PS817_043WQ_C_IPS)
+#define EVE_HSIZE (480L)
+#define EVE_VSIZE (272L)
+
+#define EVE_VSYNC0 (0L)
+#define EVE_VSYNC1 (4L)
+#define EVE_VOFFSET (12L)
+#define EVE_VCYCLE (292L)
+#define EVE_HSYNC0 (0L)
+#define EVE_HSYNC1 (4L)
+#define EVE_HOFFSET (43L)
+#define EVE_HCYCLE (531L)
+#define EVE_PCLK (7L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (0L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 4
+#endif
+
+/* untested */
+/* PS816-043WQ-R-IPS 480x272 4.3" Panasys, resistive touch, BT816 */
+#if defined(EVE_PS816_043WQ_R_IPS)
+#define EVE_HSIZE (480L)
+#define EVE_VSIZE (272L)
+
+#define EVE_VSYNC0 (0L)
+#define EVE_VSYNC1 (4L)
+#define EVE_VOFFSET (12L)
+#define EVE_VCYCLE (292L)
+#define EVE_HSYNC0 (0L)
+#define EVE_HSYNC1 (4L)
+#define EVE_HOFFSET (43L)
+#define EVE_HCYCLE (531L)
+#define EVE_PCLK (7L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (0L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 3
 #endif
 
 /* untested */
@@ -643,6 +696,70 @@ typedef struct
 #endif
 
 /* untested */
+/* PS815-043W-C-IPS 800x480 4.3" Panasys, BT815 */
+#if defined(EVE_PS815_043W_C_IPS)
+#define Resolution_800x480
+
+#define EVE_PCLK (2L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (1L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 3
+#endif
+
+/* untested */
+/* PS815-050W-C-IPS 800x480 5.0" Panasys, BT815 */
+#if defined(EVE_PS815_050W_C_IPS)
+#define Resolution_800x480
+
+#define EVE_PCLK (2L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (1L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 3
+#endif
+
+/* untested */
+/* PS815-070W-C-IPS 800x480 7.0" Panasys, BT815 */
+#if defined(EVE_PS815_070W_C_IPS)
+#define Resolution_800x480
+
+#define EVE_PCLK (2L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (1L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 3
+#endif
+
+/* untested */
+/* PS815-090W-C-IPS 800x480 9.0" Panasys, BT815 */
+#if defined(EVE_PS815_090W_C_IPS)
+#define Resolution_800x480
+
+#define EVE_PCLK (2L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (1L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 3
+#endif
+
+/* Gameduino GD3X 7" shield with BT816 */
+/* note: CS is on pin D8 and there is no PD pin */
+#if defined(EVE_GD3X)
+#define Resolution_800x480
+
+#define EVE_PCLK (2L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (3L)
+#define EVE_CSPREAD (0L)
+#define EVE_GEN 3
+#endif
+
+/* untested */
 /* RVT50HQBxxxxx 800x480 5.0" Riverdi, various options, BT817 */
 #if defined(EVE_RVT50H)
 #define EVE_HSIZE (800L)
@@ -810,67 +927,26 @@ typedef struct
 #define EVE_HAS_GT911
 #endif
 
-#if defined(BT817_TEST1)
-#define EVE_HSIZE (1024L) /* Thd Length of visible part of line (in PCLKs) - display width */
-#define EVE_VSIZE (600L)  /* Tvd Number of visible lines (in lines) - display height */
+/* CFAF1024600B0-070SC-A1 1024x600 7.0" Crystalfontz, BT817 */
+#if defined (EVE_CFAF1024600B0_070SC_A1)
+#define EVE_HSIZE   (1024L)
+#define EVE_VSIZE   (600L)
 
-#define EVE_VSYNC0 (1L)    /* Tvf Vertical Front Porch */
-#define EVE_VSYNC1 (2L)    /* Tvf + Tvp Vertical Front Porch plus Vsync Pulse width */
-#define EVE_VOFFSET (25L)  /* Tvf + Tvp + Tvb Number of non-visible lines (in lines) */
-#define EVE_VCYCLE (626L)  /* Tv Total number of lines (visible and non-visible) (in lines) */
-#define EVE_HSYNC0 (16L)   /* Thf Horizontal Front Porch */
-#define EVE_HSYNC1 (17L)   /* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
-#define EVE_HOFFSET (177L) /* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
-#define EVE_HCYCLE (1597L) /* Th Total length of line (visible and non-visible) (in PCLKs) */
-#define EVE_PCLKPOL (1L)   /* PCLK polarity (0 = rising edge, 1 = falling edge) */
-#define EVE_SWIZZLE (3L)   /* Defines the arrangement of the RGB pins */
-#define EVE_PCLK (1L)      /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
-#define EVE_CSPREAD (0L) /* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
+#define EVE_VSYNC0  (1L)
+#define EVE_VSYNC1  (2L)
+#define EVE_VOFFSET (25L)
+#define EVE_VCYCLE  (626L)
+#define EVE_HSYNC0  (16L)
+#define EVE_HSYNC1  (17L)
+#define EVE_HOFFSET (177L)
+#define EVE_HCYCLE  (1344L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (3L)
+#define EVE_PCLK    (1L)
+#define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
-/*#define EVE_PCLK_FREQ (51000000UL)*/ /* 51MHz - value for EVE_cmd_pclkfreq */
-#endif
-
-#if defined(BT817_TEST2)
-#define EVE_HSIZE (1024L) /* Thd Length of visible part of line (in PCLKs) - display width */
-#define EVE_VSIZE (600L)  /* Tvd Number of visible lines (in lines) - display height */
-
-#define EVE_VSYNC0 (1L)    /* Tvf Vertical Front Porch */
-#define EVE_VSYNC1 (2L)    /* Tvf + Tvp Vertical Front Porch plus Vsync Pulse width */
-#define EVE_VOFFSET (25L)  /* Tvf + Tvp + Tvb Number of non-visible lines (in lines) */
-#define EVE_VCYCLE (626L)  /* Tv Total number of lines (visible and non-visible) (in lines) */
-#define EVE_HSYNC0 (16L)   /* Thf Horizontal Front Porch */
-#define EVE_HSYNC1 (17L)   /* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
-#define EVE_HOFFSET (177L) /* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
-#define EVE_HCYCLE (1597L) /* Th Total length of line (visible and non-visible) (in PCLKs) */
-#define EVE_PCLKPOL (1L)   /* PCLK polarity (0 = rising edge, 1 = falling edge) */
-#define EVE_SWIZZLE (3L)   /* Defines the arrangement of the RGB pins */
-#define EVE_PCLK (1L)      /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
-#define EVE_CSPREAD (0L) /* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
-#define EVE_HAS_CRYSTAL
-#define EVE_GEN 4
-#define EVE_PCLK_FREQ (51000000UL) /* 51MHz - value for EVE_cmd_pclkfreq */
-#endif
-
-#if defined(BT817_TEST3)
-#define EVE_HSIZE (1024L) /* Thd Length of visible part of line (in PCLKs) - display width */
-#define EVE_VSIZE (600L)  /* Tvd Number of visible lines (in lines) - display height */
-
-#define EVE_VSYNC0 (1L)    /* Tvf Vertical Front Porch */
-#define EVE_VSYNC1 (2L)    /* Tvf + Tvp Vertical Front Porch plus Vsync Pulse width */
-#define EVE_VOFFSET (25L)  /* Tvf + Tvp + Tvb Number of non-visible lines (in lines) */
-#define EVE_VCYCLE (626L)  /* Tv Total number of lines (visible and non-visible) (in lines) */
-#define EVE_HSYNC0 (16L)   /* Thf Horizontal Front Porch */
-#define EVE_HSYNC1 (17L)   /* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
-#define EVE_HOFFSET (177L) /* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
-#define EVE_HCYCLE (1344L) /* Th Total length of line (visible and non-visible) (in PCLKs) */
-#define EVE_PCLKPOL (1L)   /* PCLK polarity (0 = rising edge, 1 = falling edge) */
-#define EVE_SWIZZLE (3L)   /* Defines the arrangement of the RGB pins */
-#define EVE_PCLK (1L)      /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
-#define EVE_CSPREAD (0L) /* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
-#define EVE_HAS_CRYSTAL
-#define EVE_GEN 4
-#define EVE_PCLK_FREQ (51000000UL) /* 51MHz - value for EVE_cmd_pclkfreq */
+#define EVE_PCLK_FREQ (51000000L) /* 51MHz - value for EVE_cmd_pclkfreq -> 60 FPS */
 #endif
 
 /* ########## 1280 x 800 ########## */

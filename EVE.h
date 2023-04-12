@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 5.0
-@date    2023-03-31
+@date    2023-04-12
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -58,13 +58,12 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 #ifndef EVE_H
 #define EVE_H
 
-#pragma once
-
 #include "EVE_target.h"
 
 #ifdef __cplusplus
-extern "C" {
-    #endif
+extern "C"
+{
+#endif
 
 #include "EVE_config.h"
 #include "EVE_commands.h"

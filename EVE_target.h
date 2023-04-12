@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-03-19
+@date    2023-04-12
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -104,8 +104,6 @@ EVE_busy() does nothing but to report that EVE is busy if there is an active DMA
 At the end of the DMA transfer an IRQ is executed which clears the DMA active state and calls EVE_cs_clear() by which the
 command buffer is executed by the command co-processor.
 */
-
-#pragma once
 
 #if !defined(ARDUINO)
 

@@ -2,14 +2,14 @@
 @file    EVE_target_ICCAVR.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2022-12-10
+@date    2023-04-12
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2022 Rudolph Riedel
+Copyright (c) 2016-2023 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -34,8 +34,6 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 #ifndef EVE_TARGET_ICCAVR_H
 #define EVE_TARGET_ICCAVR_H
-
-#pragma once
 
 #if !defined (ARDUINO)
 #if defined (__IMAGECRAFT__)
