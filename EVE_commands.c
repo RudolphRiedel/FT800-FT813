@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2023-03-24
+@date    2023-04-15
 @author  Rudolph Riedel
 
 @section info
@@ -127,6 +127,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - Bugfix issue #81: neither DISP or the pixel clock are enabled for EVE4 configurations not using EVE_PCLK_FREQ.
     thanks for the report to grados73 on Github!
 - added a few support lines for the Gameduino GD3X to EVE_init().
+- switched from using CMD_PCLKFREQ to writing to REG_PCLK_FREQ directly
 
 */
 
@@ -328,7 +329,14 @@ uint8_t EVE_busy(void)
         spi_transmit_32(CMD_FLASHFAST);
         EVE_cs_clear();
 
-        EVE_memWrite8(REG_PCLK, EVE_PCLK); /* restore REG_PCLK in case it was set to zero by an error */
+        /* restore REG_PCLK in case it was set to zero by an error */
+#if (EVE_GEN > 3) && (defined EVE_PCLK_FREQ)
+        EVE_memWrite16(REG_PCLK_FREQ, EVE_PCLK_FREQ);
+        EVE_memWrite8(REG_PCLK, 1U); /* enable extsync mode */
+#else
+        EVE_memWrite8(REG_PCLK, EVE_PCLK);
+#endif
+
         DELAY_MS(5U);                      /* just to be safe */
 
 #endif
@@ -1283,29 +1291,16 @@ void EVE_write_display_parameters(void)
 #endif
 }
 
-static uint8_t enable_pixel_clock(void)
+void enable_pixel_clock(void)
 {
-    uint8_t ret = E_OK;
+    EVE_memWrite8(REG_GPIO, 0x80U); /* enable the DISP signal to the LCD panel, it is set to output in REG_GPIO_DIR by default */
 
-#if EVE_GEN > 3
-#if defined(EVE_PCLK_FREQ)
-    uint32_t frequency;
-    /* setup the second PLL for the pixel-clock according to the define in EVE_config.h for the display, as close a match as possible */
-    frequency = EVE_cmd_pclkfreq(EVE_PCLK_FREQ, 0L);
-    if (0U == frequency)    /* this failed for some reason so we return with an error */
-    {
-        ret = EVE_FAIL_PCLK_FREQ;
-    }
+#if (EVE_GEN > 3) && (defined EVE_PCLK_FREQ)
+    EVE_memWrite16(REG_PCLK_FREQ, EVE_PCLK_FREQ);
+    EVE_memWrite8(REG_PCLK, 1U); /* enable extsync mode */
+#else
+    EVE_memWrite8(REG_PCLK, EVE_PCLK); /* start clocking data to the LCD panel */
 #endif
-#endif
-
-    if(E_OK == ret)
-    {
-        EVE_memWrite8(REG_GPIO, 0x80U); /* enable the DISP signal to the LCD panel, it is set to output in REG_GPIO_DIR by default */
-        EVE_memWrite8(REG_PCLK, EVE_PCLK); /* now start clocking data to the LCD panel */
-    }
-
-    return ret;
 }
 
 /* EVE chip initialization, has to be executed with the SPI setup to 11 MHz or less as required by FT8xx / BT8xx! */
@@ -1382,25 +1377,23 @@ uint8_t EVE_init(void)
             EVE_memWrite16(REG_OUTBITS,0x01B6U); /* the GD3X is only using 6 bits per color */
 #endif
 
-            ret = enable_pixel_clock();
-            if(E_OK == ret)
-            {
+            enable_pixel_clock();
+
 #if defined(EVE_BACKLIGHT_PWM)
-                EVE_memWrite8(REG_PWM_DUTY, EVE_BACKLIGHT_PWM); /* set backlight to user requested level */
+            EVE_memWrite8(REG_PWM_DUTY, EVE_BACKLIGHT_PWM); /* set backlight to user requested level */
 #else
 #if defined(EVE_ADAM101)
-                EVE_memWrite8(REG_PWM_DUTY, 0x60U); /* turn on backlight to 25% for Glyn ADAM101 module, it uses inverted values */
+            EVE_memWrite8(REG_PWM_DUTY, 0x60U); /* turn on backlight to 25% for Glyn ADAM101 module, it uses inverted values */
 #else
-                EVE_memWrite8(REG_PWM_DUTY, 0x20U); /* turn on backlight to 25% for any other module */
+            EVE_memWrite8(REG_PWM_DUTY, 0x20U); /* turn on backlight to 25% for any other module */
 #endif
 #endif
-                DELAY_MS(1U);
-                EVE_execute_cmd(); /* just to be safe, wait for EVE to not be busy */
+            DELAY_MS(1U);
+            EVE_execute_cmd(); /* just to be safe, wait for EVE to not be busy */
 
 #if defined(EVE_DMA)
-                EVE_init_dma(); /* prepare DMA */
+            EVE_init_dma(); /* prepare DMA */
 #endif
-            }
         }
     }
 

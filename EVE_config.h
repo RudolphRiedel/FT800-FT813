@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2023-04-12
+@date    2023-04-15
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -66,6 +66,7 @@ the IOT5
 - added a profile for the Gameduino GD3X 7"
 - slightly adjusted the Sunflower config and removed the "untested" tag
 - added profiles for new displays from Panasys
+- switched from using CMD_PCLKFREQ to writing to REG_PCLK_FREQ directly
 
 */
 
@@ -570,8 +571,7 @@ typedef struct
 #if defined(EVE_CFAF800480Ex_050SC_A2)
 #define Resolution_800x480
 
-#define EVE_PCLK (1L) /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
-#define EVE_PCLK_FREQ (30000000UL) /* EVE_PCLK needs to be set to 1 for this to take effect */
+#define EVE_PCLK_FREQ (0x0451UL) /* value to be put into REG_PCLK_FREQ -> 30MHz, REG_PCLK is set to 1 */
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (0L)
@@ -587,8 +587,7 @@ typedef struct
 #if defined(EVE_CFAF800480E1_050SC_A2)
 #define Resolution_800x480
 
-#define EVE_PCLK (1L) /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
-#define EVE_PCLK_FREQ (30000000UL) /* EVE_PCLK needs to be set to 1 for this to take effect */
+#define EVE_PCLK_FREQ (0x0451UL) /* value to be put into REG_PCLK_FREQ -> 30MHz, REG_PCLK is set to 1 */
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (0L)
@@ -894,8 +893,7 @@ typedef struct
 #define EVE_HSYNC1 (70L)
 #define EVE_HOFFSET (160L)
 #define EVE_HCYCLE (1344L)
-#define EVE_PCLK (1L)             /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
-#define EVE_PCLK_FREQ (51000000UL) /* EVE_PCLK needs to be set to 1 for this to take effect */
+#define EVE_PCLK_FREQ (0x0D12UL) /* value to be put into REG_PCLK_FREQ -> 51MHz, REG_PCLK is set to 1 */
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (0L)
@@ -917,8 +915,7 @@ typedef struct
 #define EVE_HSYNC1 (70L)
 #define EVE_HOFFSET (160L)
 #define EVE_HCYCLE (1344L)
-#define EVE_PCLK (1L)             /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
-#define EVE_PCLK_FREQ (51000000UL) /* 51MHz - value for EVE_cmd_pclkfreq -> 60 FPS */
+#define EVE_PCLK_FREQ (0x0D12UL) /* value to be put into REG_PCLK_FREQ -> 51MHz, REG_PCLK is set to 1 */
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (0L)
@@ -942,11 +939,10 @@ typedef struct
 #define EVE_HCYCLE  (1344L)
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (3L)
-#define EVE_PCLK    (1L)
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
-#define EVE_PCLK_FREQ (51000000L) /* 51MHz - value for EVE_cmd_pclkfreq -> 60 FPS */
+#define EVE_PCLK_FREQ (0x0D12UL) /* value to be put into REG_PCLK_FREQ -> 51MHz, REG_PCLK is set to 1 */
 #endif
 
 /* ########## 1280 x 800 ########## */
@@ -964,10 +960,9 @@ typedef struct
 #define EVE_HSYNC1 (80L)          /* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
 #define EVE_HOFFSET (158L)        /* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
 #define EVE_HCYCLE (1440L)        /* Th Total length of line (visible and non-visible) (in PCLKs) */
-#define EVE_PCLK (1L)             /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
-#define EVE_PCLK_FREQ (71000000UL) /* 71MHz - value for EVE_cmd_pclkfreq */
+#define EVE_PCLK_FREQ (0x08C1UL) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
 #define EVE_PCLKPOL (0L)          /* PCLK polarity (0 = rising edge, 1 = falling edge) */
-#define EVE_SWIZZLE (3L)          /* Defines the arrangement of the RGB pins */
+#define EVE_SWIZZLE (0L)          /* Defines the arrangement of the RGB pins */
 #define EVE_CSPREAD (0L) /* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
@@ -988,14 +983,34 @@ typedef struct
 #define EVE_HSYNC1 (20L)
 #define EVE_HOFFSET (88L)
 #define EVE_HCYCLE (1440L)
-#define EVE_PCLK (1L)             /* 1 = use second PLL for pixel-clock in BT817 / BT818 */
-#define EVE_PCLK_FREQ (71000000UL) /* EVE_PCLK needs to be set to 1 for this to take effect */
+#define EVE_PCLK_FREQ (0x08C1UL) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
 #endif
+
+/* untested */
+#if defined(EVE_WXGA_TEST)
+#define EVE_HSIZE (1280L)        /* Thd Length of visible part of line (in PCLKs) - display width */
+#define EVE_VSIZE (800L)         /* Tvd Number of visible lines (in lines) - display height */
+#define EVE_VSYNC0 (0L)          /* Tvf Vertical Front Porch */
+#define EVE_VSYNC1 (15L)         /* Tvf + Tvp Vertical Front Porch plus Vsync Pulse width */
+#define EVE_VOFFSET (38L)        /* Tvf + Tvp + Tvb Number of non-visible lines (in lines) */
+#define EVE_VCYCLE (838L)        /* Tv Total number of lines (visible and non-visible) (in lines) */
+#define EVE_HSYNC0 (0L)          /* Thf Horizontal Front Porch */
+#define EVE_HSYNC1 (72L)         /* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
+#define EVE_HOFFSET (160L)       /* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
+#define EVE_HCYCLE (1440L)       /* Th Total length of line (visible and non-visible) (in PCLKs) */
+#define EVE_PCLK_FREQ (0x08C1UL) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
+#define EVE_PCLKPOL (0L)         /* PCLK polarity (0 = rising edge, 1 = falling edge) */
+#define EVE_SWIZZLE (0L)         /* Defines the arrangement of the RGB pins */
+#define EVE_CSPREAD (0L)         /* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 4
+#endif
+
 
 /* ########## non-standard ########## */
 
