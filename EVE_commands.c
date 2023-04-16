@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2023-04-15
+@date    2023-04-16
 @author  Rudolph Riedel
 
 @section info
@@ -128,6 +128,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
     thanks for the report to grados73 on Github!
 - added a few support lines for the Gameduino GD3X to EVE_init().
 - switched from using CMD_PCLKFREQ to writing to REG_PCLK_FREQ directly
+- added define EVE_SET_REG_PCLK_2X to set REG_PCLK_2X to 1 when necessary
 
 */
 
@@ -1297,6 +1298,11 @@ void enable_pixel_clock(void)
 
 #if (EVE_GEN > 3) && (defined EVE_PCLK_FREQ)
     EVE_memWrite16(REG_PCLK_FREQ, EVE_PCLK_FREQ);
+
+#if defined (EVE_SET_REG_PCLK_2X)
+    EVE_memWrite8(REG_PCLK_2X, 1U);
+#endif
+
     EVE_memWrite8(REG_PCLK, 1U); /* enable extsync mode */
 #else
     EVE_memWrite8(REG_PCLK, EVE_PCLK); /* start clocking data to the LCD panel */

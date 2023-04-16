@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2023-04-15
+@date    2023-04-16
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -67,6 +67,7 @@ the IOT5
 - slightly adjusted the Sunflower config and removed the "untested" tag
 - added profiles for new displays from Panasys
 - switched from using CMD_PCLKFREQ to writing to REG_PCLK_FREQ directly
+- added define EVE_SET_REG_PCLK_2X to set REG_PCLK_2X to 1 when necessary
 
 */
 
@@ -961,6 +962,7 @@ typedef struct
 #define EVE_HOFFSET (158L)        /* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
 #define EVE_HCYCLE (1440L)        /* Th Total length of line (visible and non-visible) (in PCLKs) */
 #define EVE_PCLK_FREQ (0x08C1UL) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
+#define EVE_SET_REG_PCLK_2X
 #define EVE_PCLKPOL (0L)          /* PCLK polarity (0 = rising edge, 1 = falling edge) */
 #define EVE_SWIZZLE (0L)          /* Defines the arrangement of the RGB pins */
 #define EVE_CSPREAD (0L) /* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
@@ -978,12 +980,13 @@ typedef struct
 #define EVE_VSYNC0 (0L)
 #define EVE_VSYNC1 (10L)
 #define EVE_VOFFSET (23L)
-#define EVE_VCYCLE (830L)
+#define EVE_VCYCLE (838L)
 #define EVE_HSYNC0 (0L)
 #define EVE_HSYNC1 (20L)
 #define EVE_HOFFSET (88L)
 #define EVE_HCYCLE (1440L)
 #define EVE_PCLK_FREQ (0x08C1UL) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
+#define EVE_SET_REG_PCLK_2X
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (0L)
@@ -992,7 +995,7 @@ typedef struct
 #endif
 
 /* untested */
-#if defined(EVE_WXGA_TEST)
+#if defined(EVE_WXGA_TEST1)
 #define EVE_HSIZE (1280L)        /* Thd Length of visible part of line (in PCLKs) - display width */
 #define EVE_VSIZE (800L)         /* Tvd Number of visible lines (in lines) - display height */
 #define EVE_VSYNC0 (0L)          /* Tvf Vertical Front Porch */
@@ -1004,6 +1007,7 @@ typedef struct
 #define EVE_HOFFSET (160L)       /* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
 #define EVE_HCYCLE (1440L)       /* Th Total length of line (visible and non-visible) (in PCLKs) */
 #define EVE_PCLK_FREQ (0x08C1UL) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
+#define EVE_SET_REG_PCLK_2X
 #define EVE_PCLKPOL (0L)         /* PCLK polarity (0 = rising edge, 1 = falling edge) */
 #define EVE_SWIZZLE (0L)         /* Defines the arrangement of the RGB pins */
 #define EVE_CSPREAD (0L)         /* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
@@ -1011,6 +1015,26 @@ typedef struct
 #define EVE_GEN 4
 #endif
 
+/* untested */
+#if defined(EVE_WXGA_TEST2)
+#define EVE_HSIZE (1280L)        /* Thd Length of visible part of line (in PCLKs) - display width */
+#define EVE_VSIZE (800L)         /* Tvd Number of visible lines (in lines) - display height */
+#define EVE_VSYNC0 (0L)          /* Tvf Vertical Front Porch */
+#define EVE_VSYNC1 (15L)         /* Tvf + Tvp Vertical Front Porch plus Vsync Pulse width */
+#define EVE_VOFFSET (38L)        /* Tvf + Tvp + Tvb Number of non-visible lines (in lines) */
+#define EVE_VCYCLE (838L)        /* Tv Total number of lines (visible and non-visible) (in lines) */
+#define EVE_HSYNC0 (0L)          /* Thf Horizontal Front Porch */
+#define EVE_HSYNC1 (72L)         /* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
+#define EVE_HOFFSET (160L)       /* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
+#define EVE_HCYCLE (1440L)       /* Th Total length of line (visible and non-visible) (in PCLKs) */
+#define EVE_PCLK_FREQ (0x08C1UL) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
+#define EVE_SET_REG_PCLK_2X
+#define EVE_PCLKPOL (1L)         /* PCLK polarity (0 = rising edge, 1 = falling edge) */
+#define EVE_SWIZZLE (0L)         /* Defines the arrangement of the RGB pins */
+#define EVE_CSPREAD (0L)         /* helps with noise, when set to 1 fewer signals are changed simultaneously, reset-default: 1 */
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 4
+#endif
 
 /* ########## non-standard ########## */
 
