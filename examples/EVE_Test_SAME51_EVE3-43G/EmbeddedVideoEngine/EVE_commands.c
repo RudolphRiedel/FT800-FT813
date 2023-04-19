@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2023-04-16
+@date    2023-04-19
 @author  Rudolph Riedel
 
 @section info
@@ -129,6 +129,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - added a few support lines for the Gameduino GD3X to EVE_init().
 - switched from using CMD_PCLKFREQ to writing to REG_PCLK_FREQ directly
 - added define EVE_SET_REG_PCLK_2X to set REG_PCLK_2X to 1 when necessary
+- Bugfix: EVE_init() did not set the audio engine to "mute" as intended, but to "silent"
 
 */
 
@@ -1370,7 +1371,7 @@ uint8_t EVE_init(void)
             /* disable Audio for now */
             EVE_memWrite8(REG_VOL_PB, 0U);      /* turn recorded audio volume down, reset-default is 0xff */
             EVE_memWrite8(REG_VOL_SOUND, 0U);   /* turn synthesizer volume down, reset-default is 0xff */
-            EVE_memWrite16(REG_SOUND, 0x6000U); /* set synthesizer to mute */
+            EVE_memWrite16(REG_SOUND, EVE_MUTE); /* set synthesizer to mute */
 
             /* write a basic display-list to get things started */
             EVE_memWrite32(EVE_RAM_DL, DL_CLEAR_COLOR_RGB);
