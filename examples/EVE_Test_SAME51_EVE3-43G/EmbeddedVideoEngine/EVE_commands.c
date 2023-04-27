@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2023-04-19
+@date    2023-04-27
 @author  Rudolph Riedel
 
 @section info
@@ -130,6 +130,8 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - switched from using CMD_PCLKFREQ to writing to REG_PCLK_FREQ directly
 - added define EVE_SET_REG_PCLK_2X to set REG_PCLK_2X to 1 when necessary
 - Bugfix: EVE_init() did not set the audio engine to "mute" as intended, but to "silent"
+- Bugfix: EVE_busy() returns E_NOT_OK now on co-processor faults.
+    thanks for the report to Z0ld3n on Github!
 
 */
 
@@ -288,6 +290,7 @@ void EVE_memRead_sram_buffer(uint32_t ft_address, uint8_t *p_data, uint32_t len)
 /* Check if the co-processor completed executing the current command list. */
 /* Returns E_OK in case EVE is not busy (no DMA transfer active and REG_CMDB_SPACE has the value 0xffc, meaning the
  * CMD-FIFO is empty. */
+/* Returns E_NOT_OK if there was a co-processor fault. */
 /* Returns EVE_FIFO_HALF_EMPTY if no DMA transfer is active and REG_CMDB_SPACE shows more than 2048 bytes available. */
 /* Returns EVE_IS_BUSY if a DMA transfer is active or REG_CMDB_SPACE has a value smaller than 0xffc. */
 uint8_t EVE_busy(void)
@@ -305,6 +308,8 @@ uint8_t EVE_busy(void)
     /* (REG_CMDB_SPACE & 0x03) != 0 -> we have a co-processor fault */
     if ((space & 3U) != 0U) /* we have a co-processor fault, make EVE play with us again */
     {
+        ret = E_NOT_OK;
+
 #if EVE_GEN > 2
         uint16_t copro_patch_pointer;
 
@@ -343,18 +348,20 @@ uint8_t EVE_busy(void)
 
 #endif
     }
-
-    if (0xffcU == space)
-    {
-        ret = E_OK;
-    }
-    else if (space > 0x800U)
-    {
-        ret = EVE_FIFO_HALF_EMPTY;
-    }
     else
     {
-        ret = EVE_IS_BUSY;
+        if (0xffcU == space)
+        {
+            ret = E_OK;
+        }
+        else if (space > 0x800U)
+        {
+            ret = EVE_FIFO_HALF_EMPTY;
+        }
+        else
+        {
+            ret = EVE_IS_BUSY;
+        }
     }
 
 #if defined(EVE_DMA)

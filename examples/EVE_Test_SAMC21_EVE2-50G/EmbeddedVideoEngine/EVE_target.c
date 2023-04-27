@@ -64,11 +64,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 void DELAY_MS(uint16_t val)
 {
-    uint16_t counter;
-
     while (val > 0U)
     {
-        for (counter= 0; counter < EVE_DELAY_1MS; counter++)
+        for (uint16_t counter = 0; counter < EVE_DELAY_1MS; counter++)
         {
             __asm__ volatile ("nop");
         }
@@ -139,11 +137,9 @@ void DMAC_Handler()
 
 void DELAY_MS(uint16_t val)
 {
-    uint16_t counter;
-
     while (val > 0U)
     {
-        for (counter= 0; counter < EVE_DELAY_1MS; counter++)
+        for (uint16_t counter = 0; counter < EVE_DELAY_1MS; counter++)
         {
             __asm__ volatile ("nop");
         }
@@ -489,11 +485,9 @@ void EVE_start_dma_transfer(void)
 
 void DELAY_MS(uint16_t val)
 {
-    uint16_t counter;
-
     while (val > 0U)
     {
-        for (counter= 0; counter < EVE_DELAY_1MS; counter++)
+        for (uint16_t counter = 0; counter < EVE_DELAY_1MS; counter++)
         {
             __asm__ volatile ("nop");
         }
@@ -589,11 +583,9 @@ void EVE_DMA_IRQHandler(void)
 
 void DELAY_MS(uint16_t val)
 {
-    uint16_t counter;
-
     while (val > 0U)
     {
-        for (counter= 0; counter < EVE_DELAY_1MS; counter++)
+        for (uint16_t counter = 0; counter < EVE_DELAY_1MS; counter++)
         {
             __asm__ volatile ("nop");
         }
