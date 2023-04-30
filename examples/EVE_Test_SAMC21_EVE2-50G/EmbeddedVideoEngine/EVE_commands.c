@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2023-04-27
+@date    2023-04-30
 @author  Rudolph Riedel
 
 @section info
@@ -132,6 +132,8 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - Bugfix: EVE_init() did not set the audio engine to "mute" as intended, but to "silent"
 - Bugfix: EVE_busy() returns E_NOT_OK now on co-processor faults.
     thanks for the report to Z0ld3n on Github!
+- Fix: reworked EVE_busy() to return EVE_FAULT_RECOVERED on deteced co-processor faults,
+    removed the flash commands from the fault recovery sequence as these are project specific.
 
 */
 
@@ -286,11 +288,39 @@ void EVE_memRead_sram_buffer(uint32_t ft_address, uint8_t *p_data, uint32_t len)
     }    
 }
 
+static void CoprocessorFaultRecover(void)
+{
+#if EVE_GEN > 2
+        uint16_t copro_patch_pointer;
+        copro_patch_pointer = EVE_memRead16(REG_COPRO_PATCH_PTR);
+#endif
+
+        EVE_memWrite8(REG_CPURESET, 1U); /* hold co-processor engine in the reset condition */
+        EVE_memWrite16(REG_CMD_READ, 0U); /* set REG_CMD_READ to 0 */
+        EVE_memWrite16(REG_CMD_WRITE, 0U); /* set REG_CMD_WRITE to 0 */
+        EVE_memWrite16(REG_CMD_DL, 0U); /* reset REG_CMD_DL to 0 as required by the BT81x programming guide, should not hurt FT8xx */
+
+#if EVE_GEN > 2
+        EVE_memWrite16(REG_COPRO_PATCH_PTR, copro_patch_pointer);
+
+        /* restore REG_PCLK in case it was set to zero by an error */
+#if (EVE_GEN > 3) && (defined EVE_PCLK_FREQ)
+        EVE_memWrite16(REG_PCLK_FREQ, EVE_PCLK_FREQ);
+        EVE_memWrite8(REG_PCLK, 1U); /* enable extsync mode */
+#else
+        EVE_memWrite8(REG_PCLK, EVE_PCLK);
+#endif
+
+#endif
+        EVE_memWrite8(REG_CPURESET, 0U); /* set REG_CPURESET to 0 to restart the co-processor engine*/
+        DELAY_MS(10U);                   /* just to be safe */
+}
 
 /* Check if the co-processor completed executing the current command list. */
 /* Returns E_OK in case EVE is not busy (no DMA transfer active and REG_CMDB_SPACE has the value 0xffc, meaning the
  * CMD-FIFO is empty. */
-/* Returns E_NOT_OK if there was a co-processor fault. */
+/* If there was a coprocessor fault the recovery sequence is executed and E_NOT_OK is returned. */
+/* note: in case of recovery the graphics context gets reset and the external flash needs to be reinitialized if needed */
 /* Returns EVE_FIFO_HALF_EMPTY if no DMA transfer is active and REG_CMDB_SPACE shows more than 2048 bytes available. */
 /* Returns EVE_IS_BUSY if a DMA transfer is active or REG_CMDB_SPACE has a value smaller than 0xffc. */
 uint8_t EVE_busy(void)
@@ -308,45 +338,8 @@ uint8_t EVE_busy(void)
     /* (REG_CMDB_SPACE & 0x03) != 0 -> we have a co-processor fault */
     if ((space & 3U) != 0U) /* we have a co-processor fault, make EVE play with us again */
     {
-        ret = E_NOT_OK;
-
-#if EVE_GEN > 2
-        uint16_t copro_patch_pointer;
-
-        copro_patch_pointer = EVE_memRead16(REG_COPRO_PATCH_DTR);
-#endif
-
-        EVE_memWrite8(REG_CPURESET, 1U);   /* hold co-processor engine in the reset condition */
-        EVE_memWrite16(REG_CMD_READ, 0U);  /* set REG_CMD_READ to 0 */
-        EVE_memWrite16(REG_CMD_WRITE, 0U); /* set REG_CMD_WRITE to 0 */
-        EVE_memWrite32(REG_CMD_DL, 0U); /* reset REG_CMD_DL to 0 as required by the BT81x programming guide, should not hurt FT8xx */
-        EVE_memWrite8(REG_CPURESET, 0U); /* set REG_CMD_WRITE to 0 to restart the co-processor engine*/
-
-#if EVE_GEN > 2
-
-        EVE_memWrite16(REG_COPRO_PATCH_DTR, copro_patch_pointer);
-        DELAY_MS(5U); /* just to be safe */
-
-        EVE_cs_set();
-        spi_transmit((uint8_t) 0xB0U); /* high-byte of REG_CMDB_WRITE + MEM_WRITE */
-        spi_transmit((uint8_t) 0x25U); /* middle-byte of REG_CMDB_WRITE */
-        spi_transmit((uint8_t) 0x78U); /* low-byte of REG_CMDB_WRITE */
-
-        spi_transmit_32(CMD_FLASHATTACH);
-        spi_transmit_32(CMD_FLASHFAST);
-        EVE_cs_clear();
-
-        /* restore REG_PCLK in case it was set to zero by an error */
-#if (EVE_GEN > 3) && (defined EVE_PCLK_FREQ)
-        EVE_memWrite16(REG_PCLK_FREQ, EVE_PCLK_FREQ);
-        EVE_memWrite8(REG_PCLK, 1U); /* enable extsync mode */
-#else
-        EVE_memWrite8(REG_PCLK, EVE_PCLK);
-#endif
-
-        DELAY_MS(5U);                      /* just to be safe */
-
-#endif
+        ret = EVE_FAULT_RECOVERED;
+        CoprocessorFaultRecover();
     }
     else
     {

@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2023-04-12
+@date    2023-04-30
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -70,6 +70,7 @@ EVE_cmd_animstartram_burst()
 - removed EVE_cmd_newlist_burst() prototype as the function got removed earlier
 - added prototype for EVE_write_display_parameters()
 - added EVE_memRead_sram_buffer()
+- added EVE_FAULT_RECOVERED to the list of return codes
 
 */
 
@@ -92,6 +93,7 @@ EVE_cmd_animstartram_burst()
 #define EVE_FAIL_FLASHFAST_SPEED_TEST 11U
 #define EVE_IS_BUSY 12U
 #define EVE_FIFO_HALF_EMPTY 13U
+#define EVE_FAULT_RECOVERED 14U
 
 #if 0
 enum

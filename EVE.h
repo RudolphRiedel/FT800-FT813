@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 5.0
-@date    2023-04-12
+@date    2023-04-30
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -52,6 +52,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - fix: changed DL_CLEAR_RGB to DL_CLEAR_COLOR_RGB as this is what the programming guide uses
 - fix: renamed EVE_ROM_FONT_ADDR to EVE_ROM_FONTROOT
 - added #ifdef __cplusplus / extern "C" to allow adding EVE_ functions to C++ code
+- fix: typo REG_COPRO_PATCH_DTR -> REG_COPRO_PATCH_PTR
 
 */
 
@@ -702,7 +703,7 @@ extern "C"
 #define REG_FLASH_STATUS       0x003025f0UL
 #define REG_FLASH_SIZE         0x00309024UL
 #define REG_PLAY_CONTROL       0x0030914eUL
-#define REG_COPRO_PATCH_DTR    0x00309162UL
+#define REG_COPRO_PATCH_PTR    0x00309162UL
 
 /* Macros for BT815 / BT816 */
 #define BITMAP_EXT_FORMAT(format) ((DL_BITMAP_EXT_FORMAT) | ((format) & 0xFFFFUL))
