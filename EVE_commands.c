@@ -135,6 +135,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - Fix: reworked EVE_busy() to return EVE_FAULT_RECOVERED on deteced co-processor faults,
     removed the flash commands from the fault recovery sequence as these are project specific.
 - added EVE_get_and_reset_fault_state() to check if EVE_busy() triggered a fault recovery
+- added notes on how to use to EVE_cmd_setfont2() and EVE_cmd_romfont()
 
 */
 
@@ -2799,6 +2800,12 @@ void EVE_cmd_progress_burst(int16_t xc0, int16_t yc0, int16_t wid, int16_t hgt,
     spi_transmit_burst((uint32_t) range);
 }
 
+/* Note: CMD_ROMFONT generates display list commands so it needs to be put in a display list. */
+/* A minimum display list to properly execute CMD_ROMFONT would be: */
+/* EVE_cmd_dl(CMD_DLSTART); */
+/* EVE_cmd_romfont(font, romslot); */
+/* ...other bitmap handle commands like more CMD_ROMFONT or CMD_SETFONT2 */
+/* EVE_cmd_dl(CMD_SWAP); */
 void EVE_cmd_romfont(uint32_t font, uint32_t romslot)
 {
     if (0U == cmd_burst)
@@ -2992,6 +2999,12 @@ void EVE_cmd_setfont_burst(uint32_t font, uint32_t ptr)
     spi_transmit_burst(ptr);
 }
 
+/* Note: CMD_SETFONT2 generates display list commands so it needs to be put in a display list. */
+/* A minimum display list to properly execute CMD_SETFONT2 would be: */
+/* EVE_cmd_dl(CMD_DLSTART); */
+/* EVE_cmd_setfont2(font, ptr, firstchar); */
+/* ...other bitmap handle commands like more CMD_SETFONT2 or CMD_ROMFONT */
+/* EVE_cmd_dl(CMD_SWAP); */
 void EVE_cmd_setfont2(uint32_t font, uint32_t ptr, uint32_t firstchar)
 {
     if (0U == cmd_burst)
