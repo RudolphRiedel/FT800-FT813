@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2023-04-30
+@date    2023-05-01
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -71,6 +71,8 @@ EVE_cmd_animstartram_burst()
 - added prototype for EVE_write_display_parameters()
 - added EVE_memRead_sram_buffer()
 - added EVE_FAULT_RECOVERED to the list of return codes
+- added defines for the state of the external flash
+- added protype for EVE_get_and_reset_fault_state()
 
 */
 
@@ -95,25 +97,10 @@ EVE_cmd_animstartram_burst()
 #define EVE_FIFO_HALF_EMPTY 13U
 #define EVE_FAULT_RECOVERED 14U
 
-#if 0
-enum
-{
-    E_OK = 0U,
-    E_NOT_OK,
-    EVE_FAIL_CHIPID_TIMEOUT,
-    EVE_FAIL_RESET_TIMEOUT,
-    EVE_FAIL_PCLK_FREQ,
-    EVE_FAIL_FLASH_STATUS_INIT,
-    EVE_FAIL_FLASH_STATUS_DETACHED,
-    EVE_FAIL_FLASHFAST_NOT_SUPPORTED,
-    EVE_FAIL_FLASHFAST_NO_HEADER_DETECTED,
-    EVE_FAIL_FLASHFAST_SECTOR0_FAILED,
-    EVE_FAIL_FLASHFAST_BLOB_MISMATCH,
-    EVE_FAIL_FLASHFAST_SPEED_TEST,
-    EVE_IS_BUSY,
-    EVE_FIFO_HALF_EMPTY
-};
-#endif
+#define EVE_FLASH_STATUS_INIT 0U
+#define EVE_FLASH_STATUS_DETACHED 1U
+#define EVE_FLASH_STATUS_BASIC 2U
+#define EVE_FLASH_STATUS_FULL 3U
 
 /* ##################################################################
     helper functions
@@ -131,6 +118,7 @@ void EVE_memWrite_flash_buffer(uint32_t ft_address, const uint8_t *p_data, uint3
 void EVE_memWrite_sram_buffer(uint32_t ft_address, const uint8_t *p_data, uint32_t len);
 void EVE_memRead_sram_buffer(uint32_t ft_address, uint8_t *p_data, uint32_t len);
 uint8_t EVE_busy(void);
+uint8_t EVE_get_and_reset_fault_state(void);
 void EVE_execute_cmd(void);
 
 /* ##################################################################

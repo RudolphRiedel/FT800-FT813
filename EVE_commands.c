@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2023-04-30
+@date    2023-05-01
 @author  Rudolph Riedel
 
 @section info
@@ -126,7 +126,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - added EVE_memRead_sram_buffer()
 - Bugfix issue #81: neither DISP or the pixel clock are enabled for EVE4 configurations not using EVE_PCLK_FREQ.
     thanks for the report to grados73 on Github!
-- added a few support lines for the Gameduino GD3X to EVE_init().
+- added a few support lines for the Gameduino GD3X to EVE_init()
 - switched from using CMD_PCLKFREQ to writing to REG_PCLK_FREQ directly
 - added define EVE_SET_REG_PCLK_2X to set REG_PCLK_2X to 1 when necessary
 - Bugfix: EVE_init() did not set the audio engine to "mute" as intended, but to "silent"
@@ -134,6 +134,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
     thanks for the report to Z0ld3n on Github!
 - Fix: reworked EVE_busy() to return EVE_FAULT_RECOVERED on deteced co-processor faults,
     removed the flash commands from the fault recovery sequence as these are project specific.
+- added EVE_get_and_reset_fault_state() to check if EVE_busy() triggered a fault recovery
 
 */
 
@@ -149,6 +150,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 #endif
 
 static volatile uint8_t cmd_burst = 0U; /* flag to indicate cmd-burst is active */
+static volatile uint8_t fault_recovered = E_OK; /* flag to indicate if EVE_busy triggered a fault recovery */
 
 /* ##################################################################
     helper functions
@@ -339,6 +341,7 @@ uint8_t EVE_busy(void)
     if ((space & 3U) != 0U) /* we have a co-processor fault, make EVE play with us again */
     {
         ret = EVE_FAULT_RECOVERED;
+        fault_recovered = EVE_FAULT_RECOVERED; /* save fault recovery state */
         CoprocessorFaultRecover();
     }
     else
@@ -361,6 +364,22 @@ uint8_t EVE_busy(void)
     }
 #endif
 
+    return ret;
+}
+
+/* Returns EVE_FAULT_RECOVERED if EVE_busy() detected a coprocessor fault */
+/* and tried to recover from it by resetting the coprocessor. */
+/* The internal fault indicator is cleared so it could be set by EVE_busy() again. */
+/* Returns E_OK if EVE_busy() did not detect a coprocessor fault. */
+uint8_t EVE_get_and_reset_fault_state(void)
+{
+    uint8_t ret = E_OK;
+
+    if (fault_recovered)
+    {
+        ret = EVE_FAULT_RECOVERED;
+        fault_recovered = E_OK;
+    }
     return ret;
 }
 
@@ -1032,7 +1051,7 @@ void EVE_cmd_videoframe(uint32_t dest, uint32_t result_ptr)
 /**
  * @brief EVE flash initialization for BT81x, switches the FLASH attached to a BT81x to full-speed mode
  *
- * @return returns E_OK in case of success, EVE_FAIL_FLASH_STATUS_INIT if the status remains init,
+ * @return Returns E_OK in case of success, EVE_FAIL_FLASH_STATUS_INIT if the status remains init,
  * EVE_FAIL_FLASH_STATUS_DETACHED if no flash chip was found, a number of different values for failures with
  * cmd_flashfast and E_NOT_OK if a not supported status is returned in REG_FLASH_STATUS.
  */
@@ -1044,8 +1063,8 @@ uint8_t EVE_init_flash(void)
 
     status = EVE_memRead8(REG_FLASH_STATUS); /* should be 0x02 - FLASH_STATUS_BASIC, power-up is done and the attached flash is detected */
 
-     /* FLASH_STATUS_INIT - we are somehow still in init, give it a litte more time, this should never happen */
-    while (0U == status)
+     /* we are somehow still in init, give it a litte more time, this should never happen */
+    while (EVE_FLASH_STATUS_INIT == status)
     {
         status = EVE_memRead8(REG_FLASH_STATUS);
         DELAY_MS(1U);
@@ -1057,8 +1076,8 @@ uint8_t EVE_init_flash(void)
         }
     }
 
-    /* FLASH_STATUS_DETACHED - no flash was found during init, no flash present or the detection failed, give it another try */
-    if (1U == status)
+    /* no flash was found during init, no flash present or the detection failed, give it another try */
+    if (EVE_FLASH_STATUS_DETACHED == status)
     {
         EVE_cmd_dl(CMD_FLASHATTACH);
         EVE_execute_cmd();
@@ -1069,8 +1088,8 @@ uint8_t EVE_init_flash(void)
         }
     }
 
-    /* FLASH_STATUS_BASIC - flash detected and ready for action, move it up to FLASH_STATUS_FULL */
-    if (2U == status)
+    /* flash detected and ready for action, move it up to FLASH_STATUS_FULL */
+    if (EVE_FLASH_STATUS_BASIC == status)
     {
         uint32_t result;
 
@@ -1102,7 +1121,7 @@ uint8_t EVE_init_flash(void)
         }
     }
 
-    if (3U == status) /* FLASH_STATUS_FULL - we are already there, why has this function been called? */
+    if (EVE_FLASH_STATUS_FULL == status) /* we are already there, why has this function been called? */
     {
         ret_val = E_OK;
     }
