@@ -2,7 +2,7 @@
 @file    EVE_target_Arduino_XMC1100_XMC2GO.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-04-12
+@date    2023-05-20
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -27,6 +27,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 5.0
 - extracted from EVE_target.h
 - split up the optional default defines to allow to only change what needs changing thru the build-environment
+- changed #include "EVE_cpp_wrapper.h" to #include "../EVE_cpp_wrapper.h"
 
 */
 
@@ -37,7 +38,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 
 #include <stdint.h>
 #include <Arduino.h>
-#include "EVE_cpp_wrapper.h"
+#include "../EVE_cpp_wrapper.h"
 
 #ifdef __cplusplus
 extern "C"
