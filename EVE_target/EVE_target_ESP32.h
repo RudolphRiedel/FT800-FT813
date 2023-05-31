@@ -2,7 +2,7 @@
 @file    EVE_target_ESP32.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-04-12
+@date    2023-05-31
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -28,6 +28,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - extracted from EVE_target.h
 - basic maintenance: checked for violations of white space and indent rules
 - split up the optional default defines to allow to only change what needs changing thru the build-environment
+- changed a couple of {0U} to {}
 
 */
 
@@ -107,7 +108,7 @@ static inline void EVE_pdn_clear(void)
 
 static inline void spi_transmit(uint8_t data)
 {
-    spi_transaction_t trans = {0U};
+    spi_transaction_t trans = {};
     trans.length = 8U;
     trans.rxlength = 0;
     trans.flags = SPI_TRANS_USE_TXDATA;
@@ -117,7 +118,7 @@ static inline void spi_transmit(uint8_t data)
 
 static inline void spi_transmit_32(uint32_t data)
 {
-    spi_transaction_t trans = {0U};
+    spi_transaction_t trans = {};
     trans.length = 32U;
     trans.rxlength = 0;
     trans.flags = 0;
@@ -137,7 +138,7 @@ static inline void spi_transmit_burst(uint32_t data)
 
 static inline uint8_t spi_receive(uint8_t data)
 {
-    spi_transaction_t trans = {0U};
+    spi_transaction_t trans = {};
     trans.length = 8U;
     trans.rxlength = 8U;
     trans.flags = (SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA);

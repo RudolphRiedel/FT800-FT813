@@ -2,7 +2,7 @@
 @file    EVE_target_Arduino_ESP32.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-05-20
+@date    2023-05-31
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -29,6 +29,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - basic maintenance: checked for violations of white space and indent rules
 - split up the optional default defines to allow to only change what needs changing thru the build-environment
 - changed #include "EVE_cpp_wrapper.h" to #include "../EVE_cpp_wrapper.h"
+- fixed a few warnings about missing initializers when compiling with the Arduino IDE 2.1.0
 
 */
 
@@ -115,7 +116,7 @@ static inline void EVE_cs_clear(void)
 
 static inline void spi_transmit(uint8_t data)
 {
-    spi_transaction_t trans = {0};
+    spi_transaction_t trans = {};
     trans.length = 8;
     trans.rxlength = 0;
     trans.flags = SPI_TRANS_USE_TXDATA;
@@ -125,7 +126,7 @@ static inline void spi_transmit(uint8_t data)
 
 static inline void spi_transmit_32(uint32_t data)
 {
-    spi_transaction_t trans = {0};
+    spi_transaction_t trans = {};
     trans.length = 32;
     trans.rxlength = 0;
     trans.flags = 0;
@@ -145,7 +146,7 @@ static inline void spi_transmit_burst(uint32_t data)
 
 static inline uint8_t spi_receive(uint8_t data)
 {
-    spi_transaction_t trans = {0};
+    spi_transaction_t trans = {};
     trans.length = 8;
     trans.rxlength = 8;
     trans.flags = (SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA);

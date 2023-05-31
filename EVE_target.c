@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions for plain C targets
 @version 5.0
-@date    2023-04-01
+@date    2023-05-31
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -46,6 +46,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - basic maintenance: checked for violations of white space and indent rules
 - changed the code for ATSAMC21 and ATSAMx51 targets to use EVE_SPI_SERCOM
 - ESP32: fix for building with ESP-IDF 5.x
+- ESP32: changed a couple of {0} to {}
 
  */
 
@@ -333,8 +334,8 @@ void DELAY_MS(uint16_t ms)
     vTaskDelay(ticksMS);
 }
 
-spi_device_handle_t EVE_spi_device = {0};
-spi_device_handle_t EVE_spi_device_simple = {0};
+spi_device_handle_t EVE_spi_device = {};
+spi_device_handle_t EVE_spi_device_simple = {};
 
 static void eve_spi_post_transfer_callback(void)
 {
@@ -346,9 +347,9 @@ static void eve_spi_post_transfer_callback(void)
 
 void EVE_init_spi(void)
 {
-    spi_bus_config_t buscfg = {0};
-    spi_device_interface_config_t devcfg = {0};
-    gpio_config_t io_cfg = {0};
+    spi_bus_config_t buscfg = {};
+    spi_device_interface_config_t devcfg = {};
+    gpio_config_t io_cfg = {};
 
 #if ESP_IDF_VERSION_MAJOR <= 4
     io_cfg.intr_type = GPIO_PIN_INTR_DISABLE;
@@ -398,7 +399,7 @@ void EVE_init_dma(void)
 
 void EVE_start_dma_transfer(void)
 {
-    spi_transaction_t EVE_spi_transaction = {0};
+    spi_transaction_t EVE_spi_transaction = {};
     gpio_set_level(EVE_CS, 0); /* make EVE listen */
     EVE_spi_transaction.tx_buffer = (uint8_t *) &EVE_dma_buffer[1];
     EVE_spi_transaction.length = (EVE_dma_buffer_index-1) * 4U * 8U;

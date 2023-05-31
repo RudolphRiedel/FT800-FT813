@@ -2,14 +2,14 @@
 @file    EVE_target.cpp
 @brief   target specific functions for C++ targets, so far only Arduino targets
 @version 5.0
-@date    2022-11-27
+@date    2023-05-31
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2022 Rudolph Riedel
+Copyright (c) 2016-2023 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
@@ -41,6 +41,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - modified the WIZIOPICO target for Arduino RP2040 to also work with ArduinoCore-mbed
 - fixed the ESP32 target to work with the ESP32-S3 as well
 - basic maintenance: checked for violations of white space and indent rules
+- fixed a few warnings about missing initializers when compiling with the Arduino IDE 2.1.0
 
  */
 
@@ -198,8 +199,8 @@ void EVE_start_dma_transfer(void)
 /* note: this is using the ESP-IDF driver as the Arduino class and driver does not allow DMA for SPI */
 #include "EVE_target.h"
 
-spi_device_handle_t EVE_spi_device = {0};
-spi_device_handle_t EVE_spi_device_simple = {0};
+spi_device_handle_t EVE_spi_device = {};
+spi_device_handle_t EVE_spi_device_simple = {};
 
 static void eve_spi_post_transfer_callback(void)
 {
@@ -211,8 +212,8 @@ static void eve_spi_post_transfer_callback(void)
 
 void EVE_init_spi(void)
 {
-    spi_bus_config_t buscfg = {0};
-    spi_device_interface_config_t devcfg = {0};
+    spi_bus_config_t buscfg = {};
+    spi_device_interface_config_t devcfg = {};
 
     buscfg.mosi_io_num = EVE_MOSI;
     buscfg.miso_io_num = EVE_MISO;
@@ -250,7 +251,7 @@ void EVE_init_dma(void)
 
 void EVE_start_dma_transfer(void)
 {
-    spi_transaction_t EVE_spi_transaction = {0};
+    spi_transaction_t EVE_spi_transaction = {};
     digitalWrite(EVE_CS, LOW); /* make EVE listen */
     EVE_spi_transaction.tx_buffer = (uint8_t *) &EVE_dma_buffer[1];
     EVE_spi_transaction.length = (EVE_dma_buffer_index-1) * 4U * 8U;
