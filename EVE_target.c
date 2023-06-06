@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions for plain C targets
 @version 5.0
-@date    2023-05-31
+@date    2023-06-06
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -47,6 +47,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - changed the code for ATSAMC21 and ATSAMx51 targets to use EVE_SPI_SERCOM
 - ESP32: fix for building with ESP-IDF 5.x
 - ESP32: changed a couple of {0} to {}
+- ESP32: changed back a couple of {} to {0} as C and C++ are not the same thing...
+- Bugfix issue #89: ESP32 not initializing if GPIO pin number > 31
 
  */
 
@@ -334,8 +336,8 @@ void DELAY_MS(uint16_t ms)
     vTaskDelay(ticksMS);
 }
 
-spi_device_handle_t EVE_spi_device = {};
-spi_device_handle_t EVE_spi_device_simple = {};
+spi_device_handle_t EVE_spi_device = {0};
+spi_device_handle_t EVE_spi_device_simple = {0};
 
 static void eve_spi_post_transfer_callback(void)
 {
@@ -347,9 +349,9 @@ static void eve_spi_post_transfer_callback(void)
 
 void EVE_init_spi(void)
 {
-    spi_bus_config_t buscfg = {};
-    spi_device_interface_config_t devcfg = {};
-    gpio_config_t io_cfg = {};
+    spi_bus_config_t buscfg = {0};
+    spi_device_interface_config_t devcfg = {0};
+    gpio_config_t io_cfg = {0};
 
 #if ESP_IDF_VERSION_MAJOR <= 4
     io_cfg.intr_type = GPIO_PIN_INTR_DISABLE;
@@ -357,7 +359,7 @@ void EVE_init_spi(void)
     io_cfg.intr_type = GPIO_INTR_DISABLE;
 #endif
     io_cfg.mode = GPIO_MODE_OUTPUT;
-    io_cfg.pin_bit_mask = BIT(EVE_PDN) | BIT(EVE_CS);
+    io_cfg.pin_bit_mask = BIT64(EVE_PDN) | BIT64(EVE_CS);
     gpio_config(&io_cfg);
 
     gpio_set_level(EVE_CS, 1);
@@ -399,7 +401,7 @@ void EVE_init_dma(void)
 
 void EVE_start_dma_transfer(void)
 {
-    spi_transaction_t EVE_spi_transaction = {};
+    spi_transaction_t EVE_spi_transaction = {0};
     gpio_set_level(EVE_CS, 0); /* make EVE listen */
     EVE_spi_transaction.tx_buffer = (uint8_t *) &EVE_dma_buffer[1];
     EVE_spi_transaction.length = (EVE_dma_buffer_index-1) * 4U * 8U;

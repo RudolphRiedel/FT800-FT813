@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions for plain C targets
 @version 5.0
-@date    2023-04-01
+@date    2023-06-06
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -46,6 +46,9 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - basic maintenance: checked for violations of white space and indent rules
 - changed the code for ATSAMC21 and ATSAMx51 targets to use EVE_SPI_SERCOM
 - ESP32: fix for building with ESP-IDF 5.x
+- ESP32: changed a couple of {0} to {}
+- ESP32: changed back a couple of {} to {0} as C and C++ are not the same thing...
+- Bugfix issue #89: ESP32 not initializing if GPIO pin number > 31
 
  */
 
@@ -356,7 +359,7 @@ void EVE_init_spi(void)
     io_cfg.intr_type = GPIO_INTR_DISABLE;
 #endif
     io_cfg.mode = GPIO_MODE_OUTPUT;
-    io_cfg.pin_bit_mask = BIT(EVE_PDN) | BIT(EVE_CS);
+    io_cfg.pin_bit_mask = BIT64(EVE_PDN) | BIT64(EVE_CS);
     gpio_config(&io_cfg);
 
     gpio_set_level(EVE_CS, 1);
