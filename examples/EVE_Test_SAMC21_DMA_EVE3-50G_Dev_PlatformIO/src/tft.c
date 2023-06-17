@@ -478,8 +478,8 @@ void TFT_display(void)
         EVE_cmd_number_burst(100, EVE_VSIZE - 65, 26, EVE_OPT_RIGHTX, cmd_fifo_size); /* number of bytes written to the cmd-fifo */
         #endif
         EVE_cmd_number_burst(100, EVE_VSIZE - 50, 26, EVE_OPT_RIGHTX, display_list_size); /* number of bytes written to the display-list by the command co-pro */
-        EVE_cmd_number_burst(100, EVE_VSIZE - 35, 26, EVE_OPT_RIGHTX|4, num_profile_a); /* duration in us of TFT_loop() for the touch-event part */
-        EVE_cmd_number_burst(100, EVE_VSIZE - 20, 26, EVE_OPT_RIGHTX|4, num_profile_b); /* duration in us of TFT_loop() for the display-list part */
+        EVE_cmd_number_burst(100, EVE_VSIZE - 35, 26, EVE_OPT_RIGHTX|4U, num_profile_a); /* duration in us of TFT_loop() for the touch-event part */
+        EVE_cmd_number_burst(100, EVE_VSIZE - 20, 26, EVE_OPT_RIGHTX|4U, num_profile_b); /* duration in us of TFT_loop() for the display-list part */
 
         EVE_cmd_dl_burst(DL_DISPLAY); /* instruct the co-processor to show the list */
         EVE_cmd_dl_burst(CMD_SWAP); /* make this list active */
