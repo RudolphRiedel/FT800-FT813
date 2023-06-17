@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2023-04-16
+@date    2023-06-17
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -47,7 +47,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 - added an error message if no valid define was setup and therefore no set of parameters is configured
 - converted all TABs to SPACEs
 - removed EVE_TOUCH_RZTHRESH as it only applies to resistive touch screens and as EVE_init() still writes it if the
-define exists in can be configured thru project options
+define exists - it can be configured thru project options
 - added EVE_Display_Parameters_t to be used with an additional init function, still not sure how to procede exactly
 - split the settings for EVE_RiTFT70 and EVE_RiTFT50 after a report for the EVE_RiTFT70 not working properly and
 confirmation that the provided alternative parameters do work, the EVE_RiTFT50 however are confirmed to be working with
@@ -68,6 +68,7 @@ the IOT5
 - added profiles for new displays from Panasys
 - switched from using CMD_PCLKFREQ to writing to REG_PCLK_FREQ directly
 - added define EVE_SET_REG_PCLK_2X to set REG_PCLK_2X to 1 when necessary
+- split the EVE_NHD_43_800480 in a separate config to add a new optional parameter: EVE_BACKLIGHT_FREQ
 
 */
 
@@ -497,12 +498,28 @@ typedef struct
 /* ########## 800 x 480 ########## */
 
 /* untested */
+/* NHD-4.3-800480FT-CSXP-CTP 800x480 4.3" Newhaven, capacitive touch, FT813 */
+/* there are at least two series of these, the older one is using a backlight controller that */
+/* works up to 1kHz and the newer one is using a backlight controller that works from 800Hz to 100kHz */
+#if defined(EVE_NHD_43_800480)
+#define Resolution_800x480
+
+#define EVE_PCLK (2L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (0L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 2
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (800U) /* if not overwritten in the project options set 800Hz as a compromise */
+#endif
+#endif
+
+/* untested */
 /* FTDI/BRT EVE2 modules VM810C50A-D, ME812A-WH50R and ME813A-WH50C, 800x480 5.0" */
 /* 4D-Systems GEN4 FT812/FT813 5.0/7.0 */
-/* NHD-4.3-800480FT-CSXP-CTP 800x480 4.3" Newhaven, capacitive touch, FT813 */
 #if defined(EVE_VM810C) || defined(EVE_ME812A) || defined(EVE_ME813A) || defined(EVE_GEN4_FT812_50) || \
-    defined(EVE_GEN4_FT813_50) || defined(EVE_GEN4_FT812_70) || defined(EVE_GEN4_FT813_70) ||          \
-    defined(EVE_NHD_43_800480)
+    defined(EVE_GEN4_FT813_50) || defined(EVE_GEN4_FT812_70) || defined(EVE_GEN4_FT813_70)
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
