@@ -2,7 +2,7 @@
 @file    EVE_target.cpp
 @brief   target specific functions for C++ targets, so far only Arduino targets
 @version 5.0
-@date    2023-05-31
+@date    2023-06-18
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -42,6 +42,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - fixed the ESP32 target to work with the ESP32-S3 as well
 - basic maintenance: checked for violations of white space and indent rules
 - fixed a few warnings about missing initializers when compiling with the Arduino IDE 2.1.0
+- added ARDUINO_TEENSY40 to the Teensy 4 target
 
  */
 
@@ -266,7 +267,7 @@ void EVE_start_dma_transfer(void)
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined (ARDUINO_TEENSY41) || (ARDUINO_TEENSY35)
+#if defined (ARDUINO_TEENSY41) || (ARDUINO_TEENSY35) || (ARDUINO_TEENSY40)
 
 #include "EVE_target.h"
 #include <SPI.h>

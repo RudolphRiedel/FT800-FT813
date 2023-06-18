@@ -2,7 +2,7 @@
 @file    EVE_target_Arduino_Teensy4.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-05-20
+@date    2023-06-18
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -29,6 +29,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - basic maintenance: checked for violations of white space and indent rules
 - split up the optional default defines to allow to only change what needs changing thru the build-environment
 - changed #include "EVE_cpp_wrapper.h" to #include "../EVE_cpp_wrapper.h"
+- added ARDUINO_TEENSY40 to the Teensy 4 target
 
 */
 
@@ -46,7 +47,7 @@ extern "C"
 {
 #endif
 
-#if defined(ARDUINO_TEENSY41)
+#if defined(ARDUINO_TEENSY41) || (ARDUINO_TEENSY40)
 
 /* you may define these in your build-environment to use different settings */
 #if !defined(EVE_CS)
