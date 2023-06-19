@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2023-05-01
+@date    2023-06-17
 @author  Rudolph Riedel
 
 @section info
@@ -135,6 +135,8 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - Fix: reworked EVE_busy() to return EVE_FAULT_RECOVERED on deteced co-processor faults,
     removed the flash commands from the fault recovery sequence as these are project specific.
 - added EVE_get_and_reset_fault_state() to check if EVE_busy() triggered a fault recovery
+- added notes on how to use to EVE_cmd_setfont2() and EVE_cmd_romfont()
+- new optional parameter in EVE_init(): EVE_BACKLIGHT_FREQ
 
 */
 
@@ -1335,6 +1337,7 @@ void enable_pixel_clock(void)
 /* EVE_ROTATE - set the screen rotation: bit0 = invert, bit2 = portrait, bit3 = mirrored */
 /* Note: if you use this you need a set of calibration values for the selected rotation since this rotates before
  * calibration! */
+/* EVE_BACKLIGHT_FREQ - configure the backlight frequency, default is not writing it which results in 250Hz */
 /* EVE_BACKLIGHT_PWM - configure the backlight pwm, defaults to 0x20 / 25% */
 /* Returns E_OK in case of success. */
 uint8_t EVE_init(void)
@@ -1405,13 +1408,17 @@ uint8_t EVE_init(void)
 
             enable_pixel_clock();
 
+#if defined(EVE_BACKLIGHT_FREQ)
+            EVE_memWrite16(REG_PWM_HZ, EVE_BACKLIGHT_FREQ); /* set backlight frequency to configured value */
+#endif
+
 #if defined(EVE_BACKLIGHT_PWM)
-            EVE_memWrite8(REG_PWM_DUTY, EVE_BACKLIGHT_PWM); /* set backlight to user requested level */
+            EVE_memWrite8(REG_PWM_DUTY, EVE_BACKLIGHT_PWM); /* set backlight pwm to user requested level */
 #else
 #if defined(EVE_ADAM101)
-            EVE_memWrite8(REG_PWM_DUTY, 0x60U); /* turn on backlight to 25% for Glyn ADAM101 module, it uses inverted values */
+            EVE_memWrite8(REG_PWM_DUTY, 0x60U); /* turn on backlight pwm to 25% for Glyn ADAM101 module, it uses inverted values */
 #else
-            EVE_memWrite8(REG_PWM_DUTY, 0x20U); /* turn on backlight to 25% for any other module */
+            EVE_memWrite8(REG_PWM_DUTY, 0x20U); /* turn on backlight pwm to 25% for any other module */
 #endif
 #endif
             DELAY_MS(1U);
@@ -2799,6 +2806,12 @@ void EVE_cmd_progress_burst(int16_t xc0, int16_t yc0, int16_t wid, int16_t hgt,
     spi_transmit_burst((uint32_t) range);
 }
 
+/* Note: CMD_ROMFONT generates display list commands so it needs to be put in a display list. */
+/* A minimum display list to properly execute CMD_ROMFONT would be: */
+/* EVE_cmd_dl(CMD_DLSTART); */
+/* EVE_cmd_romfont(font, romslot); */
+/* ...other bitmap handle commands like more CMD_ROMFONT or CMD_SETFONT2 */
+/* EVE_cmd_dl(CMD_SWAP); */
 void EVE_cmd_romfont(uint32_t font, uint32_t romslot)
 {
     if (0U == cmd_burst)
@@ -2992,6 +3005,12 @@ void EVE_cmd_setfont_burst(uint32_t font, uint32_t ptr)
     spi_transmit_burst(ptr);
 }
 
+/* Note: CMD_SETFONT2 generates display list commands so it needs to be put in a display list. */
+/* A minimum display list to properly execute CMD_SETFONT2 would be: */
+/* EVE_cmd_dl(CMD_DLSTART); */
+/* EVE_cmd_setfont2(font, ptr, firstchar); */
+/* ...other bitmap handle commands like more CMD_SETFONT2 or CMD_ROMFONT */
+/* EVE_cmd_dl(CMD_SWAP); */
 void EVE_cmd_setfont2(uint32_t font, uint32_t ptr, uint32_t firstchar)
 {
     if (0U == cmd_burst)

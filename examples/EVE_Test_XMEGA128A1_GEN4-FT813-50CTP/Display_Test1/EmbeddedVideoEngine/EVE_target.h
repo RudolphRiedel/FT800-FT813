@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-04-12
+@date    2023-06-18
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -72,6 +72,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - basic maintenance: checked for violations of white space and indent rules
 - fix: wrong target definition file names for XMEGA and AVR
 - added STM32G0
+- added ARDUINO_TEENSY40 to the Teensy 4 target
 
 */
 
@@ -304,7 +305,7 @@ command buffer is executed by the command co-processor.
 
 #include "EVE_target/EVE_target_Arduino_RP2040.h"
 
-#elif defined(ARDUINO_TEENSY41)
+#elif defined(ARDUINO_TEENSY41) || (ARDUINO_TEENSY40)
 
 #include "EVE_target/EVE_target_Arduino_Teensy4.h"
 

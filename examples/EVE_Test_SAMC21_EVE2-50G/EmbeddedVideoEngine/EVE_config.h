@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2023-04-16
+@date    2023-06-19
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -47,7 +47,7 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 - added an error message if no valid define was setup and therefore no set of parameters is configured
 - converted all TABs to SPACEs
 - removed EVE_TOUCH_RZTHRESH as it only applies to resistive touch screens and as EVE_init() still writes it if the
-define exists in can be configured thru project options
+define exists - it can be configured thru project options
 - added EVE_Display_Parameters_t to be used with an additional init function, still not sure how to procede exactly
 - split the settings for EVE_RiTFT70 and EVE_RiTFT50 after a report for the EVE_RiTFT70 not working properly and
 confirmation that the provided alternative parameters do work, the EVE_RiTFT50 however are confirmed to be working with
@@ -68,6 +68,11 @@ the IOT5
 - added profiles for new displays from Panasys
 - switched from using CMD_PCLKFREQ to writing to REG_PCLK_FREQ directly
 - added define EVE_SET_REG_PCLK_2X to set REG_PCLK_2X to 1 when necessary
+- split the EVE_NHD_43_800480 in a separate config to add a new optional parameter: EVE_BACKLIGHT_FREQ
+- added a configuration for Crystalfonts CFA800480E3-050Sx
+- added a configuration for Crystalfonts CFA240400E1-030Tx
+- added a configuration for Crystalfonts CFA240320Ex-024Sx
+- added EVE_BACKLIGHT_FREQ to all Riverdi modules with a value of 4kHz as recommended by Riverdi
 
 */
 
@@ -89,6 +94,7 @@ the IOT5
 #define EVE_CFAF800480Ex_050SC_A2
 #define EVE_CFAF800480E1_050SC_A2
 #define EVE_CFAF1024600B0_070SC_A1
+#define EVE_CFA800480E3_050SX
 #define EVE_PS817_043WQ_C_IPS
 
 /* BT815 / BT816 */
@@ -157,6 +163,8 @@ the IOT5
 #define EVE_VM810C
 #define EVE_FT810CB_HY50HD
 #define EVE_FT811CB_HY50HD
+#define EVE_CFA240400E1_030TX
+#define EVE_CFA240320EX_024SX
 
 #endif
 
@@ -302,6 +310,9 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* untested */
@@ -324,6 +335,9 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* ########## 480 x 272 ########## */
@@ -388,6 +402,9 @@ typedef struct
 #define EVE_CSPREAD (1L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* untested */
@@ -410,6 +427,9 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* untested */
@@ -497,12 +517,28 @@ typedef struct
 /* ########## 800 x 480 ########## */
 
 /* untested */
+/* NHD-4.3-800480FT-CSXP-CTP 800x480 4.3" Newhaven, capacitive touch, FT813 */
+/* there are at least two series of these, the older one is using a backlight controller that */
+/* works up to 1kHz and the newer one is using a backlight controller that works from 800Hz to 100kHz */
+#if defined(EVE_NHD_43_800480)
+#define Resolution_800x480
+
+#define EVE_PCLK (2L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (0L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 2
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (800U) /* if not overwritten in the project options, set 800Hz as a compromise */
+#endif
+#endif
+
+/* untested */
 /* FTDI/BRT EVE2 modules VM810C50A-D, ME812A-WH50R and ME813A-WH50C, 800x480 5.0" */
 /* 4D-Systems GEN4 FT812/FT813 5.0/7.0 */
-/* NHD-4.3-800480FT-CSXP-CTP 800x480 4.3" Newhaven, capacitive touch, FT813 */
 #if defined(EVE_VM810C) || defined(EVE_ME812A) || defined(EVE_ME813A) || defined(EVE_GEN4_FT812_50) || \
-    defined(EVE_GEN4_FT813_50) || defined(EVE_GEN4_FT812_70) || defined(EVE_GEN4_FT813_70) ||          \
-    defined(EVE_NHD_43_800480)
+    defined(EVE_GEN4_FT813_50) || defined(EVE_GEN4_FT812_70) || defined(EVE_GEN4_FT813_70)
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -596,6 +632,22 @@ typedef struct
 #define EVE_GEN 4
 #endif
 
+/* untested */
+/* Crystalfonts CFA800480E3-050Sx Family, 800x480, 5.0", IPS, sunlight readable, BT817 */
+/* CFA800480E3-050SN - no touch */
+/* CFA800480E3-050SR - resistive touch */
+/* CFA800480E3-050SC - capacitive touch */
+/* CFA800480E3-050SW - capactive with wide glass bezel */
+#if defined(EVE_CFA800480E3_050SX)
+#define Resolution_800x480
+
+#define EVE_PCLK_FREQ (0x0451UL) /* value to be put into REG_PCLK_FREQ -> 30MHz, REG_PCLK is set to 1 */
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (0L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 4
+#endif
 
 /* untested */
 /* Matrix Orbital EVE3 modules EVE3-50A, EVE3-70A : 800x480 5.0" and 7.0" resistive, or no touch, BT816 */
@@ -656,6 +708,9 @@ typedef struct
 #define EVE_SWIZZLE (0L)   /* Defines the arrangement of the RGB pins of the FT800 */
 #define EVE_CSPREAD (1L)
 #define EVE_GEN 2
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* untested but confirmed to be working */
@@ -679,6 +734,9 @@ typedef struct
 #define EVE_CSPREAD (1L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* untested but confirmed to be working */
@@ -693,6 +751,9 @@ typedef struct
 #define EVE_CSPREAD (1L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* untested */
@@ -779,6 +840,9 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* untested */
@@ -900,6 +964,9 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* untested but confirmed to be working */
@@ -992,6 +1059,9 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* untested */
@@ -1037,6 +1107,29 @@ typedef struct
 #endif
 
 /* ########## non-standard ########## */
+
+/* untested */
+/* Crystalfonts CFA240320Ex-024Sx 240x320 2.4" , FT811 */
+/* CFA240320E0-024SN - no touch */
+/* CFA240320E0-024SC - capacitve touch */
+#if defined(EVE_CFA240320EX_024SX)
+#define EVE_HSIZE (240L)
+#define EVE_VSIZE (320L)
+
+#define EVE_VSYNC0 (8L)
+#define EVE_VSYNC1 (12L)
+#define EVE_VOFFSET (16L)
+#define EVE_VCYCLE (337L)
+#define EVE_HSYNC0 (38L)
+#define EVE_HSYNC1 (48L)
+#define EVE_HOFFSET (68L)
+#define EVE_HCYCLE (458L)
+#define EVE_PCLK (6L)
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (3L)
+#define EVE_CSPREAD (0L)
+#define EVE_GEN 2
+#endif
 
 /* untested */
 // timings are from here: https://github.com/MatrixOrbital/EVE2-Library/blob/master/Eve2_81x.c
@@ -1104,6 +1197,29 @@ typedef struct
 #define EVE_PCLKPOL (0L)
 #define EVE_SWIZZLE (2L)
 #define EVE_PCLK (5L)
+#define EVE_CSPREAD (0L)
+#define EVE_GEN 2
+#endif
+
+/* untested */
+/* Crystalfonts CFA240400E1-030Tx 240x400 3.0" , FT811 */
+/* CFA240400E1-030TN - no touch */
+/* CFA240400E1-030TC - capacitve touch */
+#if defined(EVE_CFA240400E1_030TX)
+#define EVE_HSIZE (240L)
+#define EVE_VSIZE (400L)
+
+#define EVE_VSYNC0 (41L)
+#define EVE_VSYNC1 (43L)
+#define EVE_VOFFSET (45L)
+#define EVE_VCYCLE (444L)
+#define EVE_HSYNC0 (2L)
+#define EVE_HSYNC1 (4L)
+#define EVE_HOFFSET (8L)
+#define EVE_HCYCLE (370L)
+#define EVE_PCLKPOL (0L)
+#define EVE_SWIZZLE (2L)
+#define EVE_PCLK (6L)
 #define EVE_CSPREAD (0L)
 #define EVE_GEN 2
 #endif
