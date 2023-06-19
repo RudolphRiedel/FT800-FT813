@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2023-06-17
+@date    2023-06-19
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -72,6 +72,7 @@ the IOT5
 - added a configuration for Crystalfonts CFA800480E3-050Sx
 - added a configuration for Crystalfonts CFA240400E1-030Tx
 - added a configuration for Crystalfonts CFA240320Ex-024Sx
+- added EVE_BACKLIGHT_FREQ to all Riverdi modules with a value of 4kHz as recommended by Riverdi
 
 */
 
@@ -309,6 +310,9 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* untested */
@@ -331,6 +335,9 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* ########## 480 x 272 ########## */
@@ -395,6 +402,9 @@ typedef struct
 #define EVE_CSPREAD (1L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* untested */
@@ -417,6 +427,9 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* untested */
@@ -517,7 +530,7 @@ typedef struct
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 2
 #if !defined(EVE_BACKLIGHT_FREQ)
-#define EVE_BACKLIGHT_FREQ (800U) /* if not overwritten in the project options set 800Hz as a compromise */
+#define EVE_BACKLIGHT_FREQ (800U) /* if not overwritten in the project options, set 800Hz as a compromise */
 #endif
 #endif
 
@@ -695,6 +708,9 @@ typedef struct
 #define EVE_SWIZZLE (0L)   /* Defines the arrangement of the RGB pins of the FT800 */
 #define EVE_CSPREAD (1L)
 #define EVE_GEN 2
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* untested but confirmed to be working */
@@ -718,6 +734,9 @@ typedef struct
 #define EVE_CSPREAD (1L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* untested but confirmed to be working */
@@ -732,6 +751,9 @@ typedef struct
 #define EVE_CSPREAD (1L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* untested */
@@ -818,6 +840,9 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* untested */
@@ -939,6 +964,9 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* untested but confirmed to be working */
@@ -1031,6 +1059,9 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
+#if !defined(EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#endif
 #endif
 
 /* untested */
