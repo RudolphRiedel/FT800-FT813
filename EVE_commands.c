@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2023-06-17
+@date    2023-06-21
 @author  Rudolph Riedel
 
 @section info
@@ -137,6 +137,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - added EVE_get_and_reset_fault_state() to check if EVE_busy() triggered a fault recovery
 - added notes on how to use to EVE_cmd_setfont2() and EVE_cmd_romfont()
 - new optional parameter in EVE_init(): EVE_BACKLIGHT_FREQ
+- fixed a couple of minor issues from static code analysis
 
 */
 
@@ -183,8 +184,10 @@ uint16_t EVE_memRead16(uint32_t ft_address)
     uint16_t data;
     EVE_cs_set();
     spi_transmit_32(((ft_address >> 16U) & 0x0000007fUL) + (ft_address & 0x0000ff00UL) + ((ft_address & 0x000000ffUL) << 16U));
-    data = ((uint16_t) spi_receive(0U)); /* read low byte */
-    data = (((uint16_t) spi_receive(0U)) << 8U) | data; /* read high byte */
+    uint8_t lowbyte = spi_receive(0U); /* read low byte */
+    uint8_t hibyte = spi_receive(0U); /* read high byte */
+    data = (uint16_t) (hibyte << 8U);
+    data = (uint16_t) (data + lowbyte);
     EVE_cs_clear();
     return data;
 }
@@ -1135,11 +1138,14 @@ uint8_t EVE_init_flash(void)
 
 #if defined(EVE_HAS_GT911)
 
+#if EVE_GEN < 3
 #if defined(__AVR__)
 #include <avr/pgmspace.h>
 #else
 #define PROGMEM
 #endif
+#endif
+
 void use_gt911(void);
 
 void use_gt911(void)
@@ -1314,7 +1320,7 @@ void EVE_write_display_parameters(void)
 #endif
 }
 
-void enable_pixel_clock(void)
+static void enable_pixel_clock(void)
 {
     EVE_memWrite8(REG_GPIO, 0x80U); /* enable the DISP signal to the LCD panel, it is set to output in REG_GPIO_DIR by default */
 
