@@ -89,7 +89,8 @@ static inline void spi_transmit_32(uint32_t data)
     spi_transmit((uint8_t)(data >> 24U));
 }
 
-/* spi_transmit_burst() is only used for cmd-FIFO commands so it *always* has to transfer 4 bytes */
+/* spi_transmit_burst() is only used for cmd-FIFO commands */
+/* so it *always* has to transfer 4 bytes */
 static inline void spi_transmit_burst(uint32_t data)
 {
     spi_transmit_32(data);

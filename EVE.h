@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 5.0
-@date    2023-04-30
+@date    2023-06-24
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -11,16 +11,22 @@ MIT License
 
 Copyright (c) 2016-2023 Rudolph Riedel
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
-to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute,
-sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 @section History
 
@@ -34,7 +40,8 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - merged FT80x and FT81x definitions as FT81x is baseline now
 - removed the history from before 4.0
 - fixed typo: REG_AH_CYCLE_MAX -> REG_AH_HCYCLE_MAX
-- re-arranged the host commands, removed EVE_CLKINT for BT817/BT818, removed FT80x EVE_CLK36M and EVE_CLK48M
+- re-arranged the host commands, removed EVE_CLKINT for BT817/BT818,
+    removed FT80x EVE_CLK36M and EVE_CLK48M
 - added EVE_OPT_OVERLAY
 - removed the 4.0 history
 - fixed some MISRA-C issues
@@ -45,13 +52,16 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR TH
 - removed macro SAVE_CONTEXT() - use define DL_SAVE_CONTEXT
 - basic maintenance: checked for violations of white space and indent rules
 - more linter fixes
-- changed EVE_COMPRESSED_RGBA_ASTC_nxn_KHR to EVE_ASTC_nXn to fix linter warnings and used the opportunity to make these shorter
+- changed EVE_COMPRESSED_RGBA_ASTC_nxn_KHR to EVE_ASTC_nXn to fix linter
+    warnings and used the opportunity to make these shorter
 - added DL_COLOR_A as alternative to the COLOR_A macro
 - added defines for all DL_ display list commands
 - cleaned up the macros
-- fix: changed DL_CLEAR_RGB to DL_CLEAR_COLOR_RGB as this is what the programming guide uses
+- fix: changed DL_CLEAR_RGB to DL_CLEAR_COLOR_RGB
+    as this is what the programming guide uses
 - fix: renamed EVE_ROM_FONT_ADDR to EVE_ROM_FONTROOT
-- added #ifdef __cplusplus / extern "C" to allow adding EVE_ functions to C++ code
+- added #ifdef __cplusplus / extern "C" to allow
+    adding EVE_ functions to C++ code
 - fix: typo REG_COPRO_PATCH_DTR -> REG_COPRO_PATCH_PTR
 
 */
