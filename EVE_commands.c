@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2023-06-24
+@date    2023-06-25
 @author  Rudolph Riedel
 
 @section info
@@ -81,12 +81,14 @@ lists
 - renamed spi_flash_write() to private_block_write() and made it static
 - renamed EVE_write_string() to private_string_write() and made it static
 - made EVE_start_command() static
-- Bugfix: ESP8266 needs 32 bit alignment for 32 bit pointers, changed private_string_write() for burst-mode to read
-8-bit values
-- Bugfix: somehow messed up private_string_write() for burst-mode but only for 8-Bit controllers
-- changed EVE_memRead8(), EVE_memRead16() and EVE_memRead32() to use spi_transmit_32() for the initial address+zero byte
-transfer This speeds up ESP32/ESP8266 by several µs, has no measureable effect for ATSAMD51 and is a little slower for
-AVR.
+- Bugfix: ESP8266 needs 32 bit alignment for 32 bit pointers,
+    changed private_string_write() for burst-mode to read 8-bit values
+- Bugfix: somehow messed up private_string_write() for burst-mode
+    but only for 8-Bit controllers
+- changed EVE_memRead8(), EVE_memRead16() and EVE_memRead32() to use
+    spi_transmit_32() for the initial address+zero byte transfer
+    This speeds up ESP32/ESP8266 by several us, has no measureable effect
+    for ATSAMD51 and is a little slower for AVR.
 - Bugfix: not sure why but setting private_block_write() to static broke it, without "static" it works
 - Bugfix: EVE_cmd_flashspirx() was using CMD_FLASHREAD
 - fixed a warning in EVE_init() when compiling for EVE4
@@ -142,6 +144,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - added notes on how to use to EVE_cmd_setfont2() and EVE_cmd_romfont()
 - new optional parameter in EVE_init(): EVE_BACKLIGHT_FREQ
 - fixed a couple of minor issues from static code analysis
+- reworked the burst part of private_string_write() to be less complex
 
 */
 
@@ -1608,8 +1611,33 @@ static void private_string_write(const char *p_text)
             padding--;
         }
     }
-    else
+    else /* we are in burst mode so every transfer is 32 bits */
     {
+#if 1
+        for (uint8_t textindex = 0U; textindex < 249U; textindex += 4U)
+        {
+            uint32_t calc = 0U;
+
+            for (uint8_t index = 0U; index < 4U; index++)
+            {
+                uint8_t data = p_bytes[textindex + index];
+
+                if (0U == data)
+                {
+                    spi_transmit_burst(calc);
+                    return;
+                }
+
+                calc += ((uint32_t)data) << (index * 8U);
+            }
+
+            spi_transmit_burst(calc);
+        }
+
+        spi_transmit_burst(0U); /* executed when the line is too long */
+#endif
+
+#if 0
         for (uint8_t textindex = 0U; textindex < 249U;)
         {
             uint32_t calc = 0U;
@@ -1649,6 +1677,7 @@ static void private_string_write(const char *p_text)
 
             spi_transmit_burst(calc);
         }
+#endif
     }
 }
 
