@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-06-24
+@date    2023-07-08
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -79,6 +79,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - fix: wrong target definition file names for XMEGA and AVR
 - added STM32G0
 - added ARDUINO_TEENSY40 to the Teensy 4 target
+- added ARDUINO_UNOR4_MINIMA and ARDUINO_UNOR4_WIFI targets
 
 */
 
@@ -294,7 +295,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #if defined(ARDUINO)
 
 #if defined(__AVR__)
-//  #if defined (ARDUINO_AVR_UNO)
+// #if defined (ARDUINO_AVR_UNO)
 
 #include "EVE_target/EVE_target_Arduino_AVR.h"
 
@@ -334,6 +335,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #elif defined(XMC1100_XMC2GO)
 
 #include "EVE_target/EVE_target_Arduino_XMC1100_XMC2GO.h"
+
+#elif defined (ARDUINO_UNOR4_MINIMA) || (ARDUINO_UNOR4_WIFI)
+
+#include "EVE_target/EVE_target_Arduino_UNO_R4.h"
 
 #else
 

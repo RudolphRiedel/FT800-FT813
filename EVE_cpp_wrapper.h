@@ -2,7 +2,7 @@
 @file    EVE_cpp_wrapper.h
 @brief   wrapper functions to make C++ class methods callable from C functions
 @version 5.0
-@date    2023-06-24
+@date    2023-07-08
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -31,7 +31,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 @section History
 
 5.0
-
+- added wrapper_spi_transmit_32()
 
 */
 
@@ -54,6 +54,7 @@ extern "C" {
 
     void wrapper_spi_transmit(uint8_t data);
     uint8_t wrapper_spi_receive(uint8_t data);
+    uint8_t wrapper_spi_transmit_32(uint32_t data);
 
 #endif
 

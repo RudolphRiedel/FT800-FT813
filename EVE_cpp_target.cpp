@@ -2,7 +2,7 @@
 @file    EVE_target.cpp
 @brief   target specific functions for C++ targets, so far only Arduino targets
 @version 5.0
-@date    2023-06-24
+@date    2023-07-08
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -49,6 +49,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - basic maintenance: checked for violations of white space and indent rules
 - fixed a few warnings about missing initializers when compiling with the Arduino IDE 2.1.0
 - added ARDUINO_TEENSY40 to the Teensy 4 target
+- added UNO R4 functions for blocking buffered SPI transfer
 
  */
 
@@ -376,5 +377,31 @@ void EVE_start_dma_transfer(void)
 
 #endif /* DMA */
 #endif /* WIZIOPICO */
+
+#if defined (ARDUINO_UNOR4_MINIMA) || (ARDUINO_UNOR4_WIFI)
+
+//#include "EVE_target.h"
+#include "EVE.h"
+#include <SPI.h>
+
+#if defined (EVE_DMA)
+
+uint32_t EVE_dma_buffer[1025U];
+volatile uint16_t EVE_dma_buffer_index;
+volatile uint8_t EVE_dma_busy = 0;
+
+void EVE_init_dma(void)
+{
+}
+
+void EVE_start_dma_transfer(void)
+{
+    EVE_cs_set();
+    SPI.transfer(((uint8_t *) &EVE_dma_buffer[0]) + 1U, (((EVE_dma_buffer_index) * 4U) - 1U));
+    EVE_cs_clear();
+}
+
+#endif
+#endif
 
 #endif
