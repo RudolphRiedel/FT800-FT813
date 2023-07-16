@@ -41,7 +41,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef EVE_TARGET_ARDUINO_XMC1100_XMC2GO_H
 #define EVE_TARGET_ARDUINO_XMC1100_XMC2GO_H
 
-#if defined(ARDUINO)
+#if defined (ARDUINO)
 
 #include <stdint.h>
 #include <Arduino.h>
@@ -52,14 +52,14 @@ extern "C"
 {
 #endif
 
-#if defined(XMC1100_XMC2GO)
+#if defined (XMC1100_XMC2GO)
 
 /* you may define these in your build-environment to use different settings */
-#if !defined(EVE_CS)
+#if !defined (EVE_CS)
 #define EVE_CS 3
 #endif
 
-#if !defined(EVE_PDN)
+#if !defined (EVE_PDN)
 #define EVE_PDN 4
 #endif
 /* you may define these in your build-environment to use different settings */

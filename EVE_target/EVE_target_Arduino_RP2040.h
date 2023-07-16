@@ -42,11 +42,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef EVE_TARGET_ARDUINO_RP2040_H
 #define EVE_TARGET_ARDUINO_RP2040_H
 
-#if defined(ARDUINO)
+#if defined (ARDUINO)
 
 #include <stdint.h>
 
-#if defined(PICOPI)
+#if defined (PICOPI)
 #include <stdbool.h> /* only included to fix a bug in Common.h from https://github.com/arduino/ArduinoCore-API */
 #endif
 
@@ -58,34 +58,34 @@ extern "C"
 {
 #endif
 
-#if defined(WIZIOPICO) || (PICOPI)
+#if defined (WIZIOPICO) || (PICOPI)
 /* note: set in platformio.ini by "build_flags = -D WIZIOPICO" */
 
 #include "hardware/pio.h"
 #include "hardware/spi.h"
 
 /* you may define these in your build-environment to use different settings */
-#if !defined(EVE_CS)
+#if !defined (EVE_CS)
 #define EVE_CS 5
 #endif
 
-#if !defined(EVE_PDN)
+#if !defined (EVE_PDN)
 #define EVE_PDN 6
 #endif
 
-#if !defined(EVE_SCK)
+#if !defined (EVE_SCK)
 #define EVE_SCK 2
 #endif
 
-#if !defined(EVE_MOSI)
+#if !defined (EVE_MOSI)
 #define EVE_MOSI 3
 #endif
 
-#if !defined(EVE_MISO)
+#if !defined (EVE_MISO)
 #define EVE_MISO 4
 #endif
 
-#if !defined(EVE_SPI)
+#if !defined (EVE_SPI)
 #define EVE_SPI spi0
 #endif
 /* you may define these in your build-environment to use different settings */
@@ -114,7 +114,7 @@ static inline void EVE_cs_clear(void)
     gpio_put(EVE_CS, 1);
 }
 
-#if defined(EVE_DMA)
+#if defined (EVE_DMA)
 extern uint32_t EVE_dma_buffer[1025U];
 extern volatile uint16_t EVE_dma_buffer_index;
 extern volatile uint8_t EVE_dma_busy;
@@ -137,7 +137,7 @@ static inline void spi_transmit_32(uint32_t data)
 /* so it *always* has to transfer 4 bytes */
 static inline void spi_transmit_burst(uint32_t data)
 {
-#if defined(EVE_DMA)
+#if defined (EVE_DMA)
     EVE_dma_buffer[EVE_dma_buffer_index++] = data;
 #else
     spi_transmit_32(data);

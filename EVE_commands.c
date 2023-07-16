@@ -346,7 +346,7 @@ uint8_t EVE_busy(void)
     uint16_t space;
     uint8_t ret = EVE_IS_BUSY;
 
-#if defined(EVE_DMA)
+#if defined (EVE_DMA)
     if (0 == EVE_dma_busy)
     {
 #endif
@@ -376,7 +376,7 @@ uint8_t EVE_busy(void)
         }
     }
 
-#if defined(EVE_DMA)
+#if defined (EVE_DMA)
     }
 #endif
 
@@ -1222,10 +1222,10 @@ uint8_t EVE_init_flash(void)
 
 #endif /* EVE_GEN > 2 */
 
-#if defined(EVE_HAS_GT911)
+#if defined (EVE_HAS_GT911)
 
 #if EVE_GEN < 3
-#if defined(__AVR__)
+#if defined (__AVR__)
 #include <avr/pgmspace.h>
 #else
 #define PROGMEM
@@ -1394,13 +1394,13 @@ void EVE_write_display_parameters(void)
 
     /* configure Touch */
     EVE_memWrite8(REG_TOUCH_MODE, EVE_TMODE_CONTINUOUS); /* enable touch */
-#if defined(EVE_TOUCH_RZTHRESH)
+#if defined (EVE_TOUCH_RZTHRESH)
     EVE_memWrite16(REG_TOUCH_RZTHRESH, EVE_TOUCH_RZTHRESH); /* configure the sensitivity of resistive touch */
 #else
     EVE_memWrite16(REG_TOUCH_RZTHRESH, 1200U); /* set a reasonable default value if none is given */
 #endif
 
-#if defined(EVE_ROTATE)
+#if defined (EVE_ROTATE)
     EVE_memWrite8(REG_ROTATE, EVE_ROTATE & 7U); /* bit0 = invert, bit2 = portrait, bit3 = mirrored */
     /* reset default value is 0x0 - not inverted, landscape, not mirrored */
 #endif
@@ -1441,11 +1441,11 @@ uint8_t EVE_init(void)
     EVE_pdn_clear();
     DELAY_MS(21U); /* minimum time to allow from rising PD_N to first access is 20ms */
 
-#if defined(EVE_GD3X)
+#if defined (EVE_GD3X)
     EVE_cmdWrite(EVE_RST_PULSE,0U); /* reset, only required for warm-start if PowerDown line is not used */
 #endif
 
-#if defined(EVE_HAS_CRYSTAL)
+#if defined (EVE_HAS_CRYSTAL)
     EVE_cmdWrite(EVE_CLKEXT, 0U); /* setup EVE for external clock */
 #else
     EVE_cmdWrite(EVE_CLKINT, 0U); /* setup EVE for internal clock */
@@ -1471,11 +1471,11 @@ uint8_t EVE_init(void)
 
 /* we have a display with a Goodix GT911 / GT9271 touch-controller on it,
  so we patch our FT811 or FT813 according to AN_336 or setup a BT815 / BT817 accordingly */
-#if defined(EVE_HAS_GT911)
+#if defined (EVE_HAS_GT911)
             use_gt911();
 #endif
 
-#if defined(EVE_ADAM101)
+#if defined (EVE_ADAM101)
             EVE_memWrite8(REG_PWM_DUTY, 0x80U); /* turn off backlight for Glyn ADAM101 module, it uses inverted values */
 #else
             EVE_memWrite8(REG_PWM_DUTY, 0U); /* turn off backlight for any other module */
@@ -1500,14 +1500,14 @@ uint8_t EVE_init(void)
 
             enable_pixel_clock();
 
-#if defined(EVE_BACKLIGHT_FREQ)
+#if defined (EVE_BACKLIGHT_FREQ)
             EVE_memWrite16(REG_PWM_HZ, EVE_BACKLIGHT_FREQ); /* set backlight frequency to configured value */
 #endif
 
-#if defined(EVE_BACKLIGHT_PWM)
+#if defined (EVE_BACKLIGHT_PWM)
             EVE_memWrite8(REG_PWM_DUTY, EVE_BACKLIGHT_PWM); /* set backlight pwm to user requested level */
 #else
-#if defined(EVE_ADAM101)
+#if defined (EVE_ADAM101)
             EVE_memWrite8(REG_PWM_DUTY, 0x60U); /* turn on backlight pwm to 25% for Glyn ADAM101 module, it uses inverted values */
 #else
             EVE_memWrite8(REG_PWM_DUTY, 0x20U); /* turn on backlight pwm to 25% for any other module */
@@ -1516,7 +1516,7 @@ uint8_t EVE_init(void)
             DELAY_MS(1U);
             EVE_execute_cmd(); /* just to be safe, wait for EVE to not be busy */
 
-#if defined(EVE_DMA)
+#if defined (EVE_DMA)
             EVE_init_dma(); /* prepare DMA */
 #endif
         }
@@ -1534,7 +1534,7 @@ uint8_t EVE_init(void)
 /* Be careful to not use any functions in the sequence that do not address the command-fifo as for example any of EVE_mem...() functions. */
 void EVE_start_cmd_burst(void)
 {
-#if defined(EVE_DMA)
+#if defined (EVE_DMA)
     if (EVE_dma_busy)
     {
         EVE_execute_cmd(); /* this is a safe-guard to protect segmented display-list building with DMA from overlapping */
@@ -1543,7 +1543,7 @@ void EVE_start_cmd_burst(void)
 
     cmd_burst = 42U;
 
-#if defined(EVE_DMA)
+#if defined (EVE_DMA)
     EVE_dma_buffer[0U] = 0x7825B000UL; /* REG_CMDB_WRITE + MEM_WRITE low mid hi 00 */
 //    ((uint8_t)(ft_address >> 16U) | MEM_WRITE) | (ft_address & 0x0000ff00UL) | ((uint8_t)(ft_address) << 16U);
 //    EVE_dma_buffer[0U] = EVE_dma_buffer[0U] << 8U;
@@ -1562,7 +1562,7 @@ void EVE_end_cmd_burst(void)
 {
     cmd_burst = 0U;
 
-#if defined(EVE_DMA)
+#if defined (EVE_DMA)
     EVE_start_dma_transfer(); /* begin DMA transfer */
 #else
     EVE_cs_clear();

@@ -42,7 +42,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef EVE_TARGET_ARDUINO_AVR_H
 #define EVE_TARGET_ARDUINO_AVR_H
 
-#if defined(ARDUINO)
+#if defined (ARDUINO)
 
 #include <stdint.h>
 #include <Arduino.h>
@@ -53,16 +53,16 @@ extern "C"
 {
 #endif
 
-#if defined(__AVR__)
+#if defined (__AVR__)
     //  #if defined (ARDUINO_AVR_UNO)
 #include <avr/pgmspace.h>
 
 /* you may define these in your build-environment to use different settings */
-#if !defined(EVE_CS)
+#if !defined (EVE_CS)
 #define EVE_CS 10
 #endif
 
-#if !defined(EVE_PDN)
+#if !defined (EVE_PDN)
 #define EVE_PDN 8
 #endif
 /* you may define these in your build-environment to use different settings */
@@ -119,7 +119,7 @@ static inline uint8_t spi_receive(uint8_t data)
 
 static inline uint8_t fetch_flash_byte(const uint8_t *data)
 {
-#if defined(RAMPZ)
+#if defined (RAMPZ)
     return (pgm_read_byte_far(data));
 #else
     return (pgm_read_byte_near(data));

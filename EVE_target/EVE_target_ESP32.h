@@ -52,23 +52,23 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "freertos/task.h"
 
 /* you may define these in your build-environment to use different settings */
-#if !defined(EVE_CS)
+#if !defined (EVE_CS)
 #define EVE_CS GPIO_NUM_13
 #endif
 
-#if !defined(EVE_PDN)
+#if !defined (EVE_PDN)
 #define EVE_PDN GPIO_NUM_12
 #endif
 
-#if !defined(EVE_SCK)
+#if !defined (EVE_SCK)
 #define EVE_SCK GPIO_NUM_18
 #endif
 
-#if !defined(EVE_MISO)
+#if !defined (EVE_MISO)
 #define EVE_MISO GPIO_NUM_19
 #endif
 
-#if !defined(EVE_MOSI)
+#if !defined (EVE_MOSI)
 #define EVE_MOSI GPIO_NUM_23
 #endif
 /* you may define these in your build-environment to use different settings */

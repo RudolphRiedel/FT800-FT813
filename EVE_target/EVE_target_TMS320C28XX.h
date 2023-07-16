@@ -42,7 +42,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* this is for TIs C2000 compiled with their ti-cgt-c2000 compiler */
 /* which does not define this many symbols */
-#if defined(__TMS320C28XX__)
+#if defined (__TMS320C28XX__)
 
 /* the designated target actually is a TMS320F28335 */
 /* credit for this goes to David Sakal-Sega */

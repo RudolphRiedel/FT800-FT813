@@ -2,7 +2,7 @@
 @file    EVE_cpp_wrapper.cpp
 @brief   wrapper functions to make C++ class methods callable from C functions
 @version 5.0
-@date    2023-07-08
+@date    2023-07-16
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -35,6 +35,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - Bugfix: broke ESP8266 when I implemented this by using "__builtin_bswap32"
     a second time
 - added wrapper_spi_transmit_32()
+- changed return type of wrapper_spi_transmit_32() to void as intended
 
 */
 
@@ -49,7 +50,6 @@ extern "C" {
 #endif
 
 #if defined (ESP8266)
-
     void wrapper_spi_transmit(uint8_t data)
     {
         SPI.write(data);
@@ -59,30 +59,22 @@ extern "C" {
     {
         SPI.write32(data);
     }
-
-    uint8_t wrapper_spi_receive(uint8_t data)
-    {
-        return SPI.transfer(data);
-    }
-
 #else
-
     void wrapper_spi_transmit(uint8_t data)
     {
         SPI.transfer(data);
     }
 
+    void wrapper_spi_transmit_32(uint32_t data)
+    {
+        SPI.transfer(&data, 4);
+    }
+#endif
+
     uint8_t wrapper_spi_receive(uint8_t data)
     {
         return SPI.transfer(data);
     }
-
-    uint8_t wrapper_spi_transmit_32(uint32_t data)
-    {
-        SPI.transfer(&data, 4);
-    }
-
-#endif
 
 #ifdef __cplusplus
 }

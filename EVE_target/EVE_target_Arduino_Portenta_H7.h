@@ -1,8 +1,8 @@
 /*
-@file    EVE_target_Arduino_Teensy4.h
+@file    EVE_target_Arduino_Portenta_H7.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-06-24
+@date    2023-07-16
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -31,17 +31,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 @section History
 
 5.0
-- extracted from EVE_target.h
-- basic maintenance: checked for violations of white space and indent rules
-- split up the optional default defines to allow to only change what needs
-    changing thru the build-environment
-- changed #include "EVE_cpp_wrapper.h" to #include "../EVE_cpp_wrapper.h"
-- added ARDUINO_TEENSY40 to the Teensy 4 target
 
 */
 
-#ifndef EVE_TARGET_ARDUINO_TEENSY4_H
-#define EVE_TARGET_ARDUINO_TEENSY4_H
+#ifndef EVE_TARGET_ARDUINO_PORTENTA_H7_H
+#define EVE_TARGET_ARDUINO_PORTENTA_H7_H
 
 #if defined (ARDUINO)
 
@@ -54,28 +48,15 @@ extern "C"
 {
 #endif
 
-#if defined (ARDUINO_TEENSY41) || (ARDUINO_TEENSY40)
-
 /* you may define these in your build-environment to use different settings */
 #if !defined (EVE_CS)
 #define EVE_CS 10
 #endif
 
 #if !defined (EVE_PDN)
-#define EVE_PDN 9
+#define EVE_PDN 8
 #endif
 /* you may define these in your build-environment to use different settings */
-
-#define EVE_DMA
-
-#if defined (EVE_DMA)
-extern uint32_t EVE_dma_buffer[1025U];
-extern volatile uint16_t EVE_dma_buffer_index;
-extern volatile uint8_t EVE_dma_busy;
-
-void EVE_init_dma(void);
-void EVE_start_dma_transfer(void);
-#endif
 
 #define DELAY_MS(ms) delay(ms)
 
@@ -99,6 +80,17 @@ static inline void EVE_cs_clear(void)
     digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listen */
 }
 
+#define EVE_DMA /* no DMA for now, "just" buffer transfers */
+
+#if defined (EVE_DMA)
+extern uint32_t EVE_dma_buffer[1025U];
+extern volatile uint16_t EVE_dma_buffer_index;
+extern volatile uint8_t EVE_dma_busy;
+
+void EVE_init_dma(void);
+void EVE_start_dma_transfer(void);
+#endif
+
 static inline void spi_transmit(uint8_t data)
 {
     wrapper_spi_transmit(data);
@@ -106,10 +98,7 @@ static inline void spi_transmit(uint8_t data)
 
 static inline void spi_transmit_32(uint32_t data)
 {
-    spi_transmit((uint8_t)(data & 0x000000ffUL));
-    spi_transmit((uint8_t)(data >> 8U));
-    spi_transmit((uint8_t)(data >> 16U));
-    spi_transmit((uint8_t)(data >> 24U));
+    wrapper_spi_transmit_32(data);
 }
 
 /* spi_transmit_burst() is only used for cmd-FIFO commands */
@@ -133,12 +122,10 @@ static inline uint8_t fetch_flash_byte(const uint8_t *data)
     return *data;
 }
 
-#endif /* Teensy41 */
-
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* Arduino */
 
-#endif /* EVE_TARGET_ARDUINO_TEENSY4_H */
+#endif /* EVE_TARGET_ARDUINO_PORTENTA_H7_H */

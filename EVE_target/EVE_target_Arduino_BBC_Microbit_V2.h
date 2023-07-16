@@ -41,7 +41,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef EVE_TARGET_ARDUINO_BBC_MICROBIT_V2_H
 #define EVE_TARGET_ARDUINO_BBC_MICROBIT_V2_H
 
-#if defined(ARDUINO)
+#if defined (ARDUINO)
 
 #include <stdint.h>
 #include <Arduino.h>
@@ -53,14 +53,14 @@ extern "C"
 #endif
 
 /* note: gave up and postponed implementation, this is not working, yet */
-#if defined(ARDUINO_BBC_MICROBIT_V2)
+#if defined (ARDUINO_BBC_MICROBIT_V2)
 
 /* you may define these in your build-environment to use different settings */
-#if !defined(EVE_CS)
+#if !defined (EVE_CS)
 #define EVE_CS 12
 #endif
 
-#if !defined(EVE_PDN)
+#if !defined (EVE_PDN)
 #define EVE_PDN 9
 #endif
 /* you may define these in your build-environment to use different settings */

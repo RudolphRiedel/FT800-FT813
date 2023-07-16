@@ -41,7 +41,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef EVE_TARGET_ARDUINO_METRO_M4_H
 #define EVE_TARGET_ARDUINO_METRO_M4_H
 
-#if defined(ARDUINO)
+#if defined (ARDUINO)
 
 #include <stdint.h>
 #include <Arduino.h>
@@ -52,21 +52,21 @@ extern "C"
 {
 #endif
 
-#if defined(ARDUINO_METRO_M4)
+#if defined (ARDUINO_METRO_M4)
 
 /* you may define these in your build-environment to use different settings */
-#if !defined(EVE_CS)
+#if !defined (EVE_CS)
 #define EVE_CS 10
 #endif
 
-#if !defined(EVE_PDN)
+#if !defined (EVE_PDN)
 #define EVE_PDN 8
 #endif
 /* you may define these in your build-environment to use different settings */
 
 #define EVE_DMA
 
-#if defined(EVE_DMA)
+#if defined (EVE_DMA)
 extern uint32_t EVE_dma_buffer[1025U];
 extern volatile uint16_t EVE_dma_buffer_index;
 extern volatile uint8_t EVE_dma_busy;
@@ -114,7 +114,7 @@ static inline void spi_transmit_32(uint32_t data)
 /* so it *always* has to transfer 4 bytes */
 static inline void spi_transmit_burst(uint32_t data)
 {
-#if defined(EVE_DMA)
+#if defined (EVE_DMA)
     EVE_dma_buffer[EVE_dma_buffer_index++] = data;
 #else
     spi_transmit_32(data);

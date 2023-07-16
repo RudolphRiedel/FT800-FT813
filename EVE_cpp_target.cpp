@@ -2,7 +2,7 @@
 @file    EVE_target.cpp
 @brief   target specific functions for C++ targets, so far only Arduino targets
 @version 5.0
-@date    2023-07-08
+@date    2023-07-16
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -50,6 +50,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - fixed a few warnings about missing initializers when compiling with the Arduino IDE 2.1.0
 - added ARDUINO_TEENSY40 to the Teensy 4 target
 - added UNO R4 functions for blocking buffered SPI transfer
+- changed the Arduino Nucleo 446RE target to make clear this is only for SPI1
+- added ARDUINO_GIGA target for blocking buffered SPI transfer
+- added ARDUINO_PORTENTA_H7 target for blocking buffered SPI transfer
 
  */
 
@@ -120,6 +123,7 @@ SPI_HandleTypeDef eve_spi_handle;
 
 void EVE_init_spi(void)
 {
+#if EVE_SPI_UNIT == 1U
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_SPI1_CLK_ENABLE();
 
@@ -133,6 +137,10 @@ void EVE_init_spi(void)
     HAL_GPIO_Init(GPIOA, &gpio_init);
 
     eve_spi_handle.Instance = EVE_SPI;
+#else
+#error SPI1 only, add other configurations here
+#endif
+
     eve_spi_handle.Init.Mode = SPI_MODE_MASTER;
     eve_spi_handle.Init.Direction = SPI_DIRECTION_2LINES;
     eve_spi_handle.Init.DataSize = SPI_DATASIZE_8BIT;
@@ -144,6 +152,7 @@ void EVE_init_spi(void)
     eve_spi_handle.Init.TIMode = SPI_TIMODE_DISABLED;
     eve_spi_handle.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLED;
     eve_spi_handle.Init.CRCPolynomial = 3;
+
     HAL_SPI_Init(&eve_spi_handle);
     __HAL_SPI_ENABLE(&eve_spi_handle);
 }
@@ -170,9 +179,14 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
 
 void EVE_init_dma(void)
 {
+#if EVE_SPI_UNIT == 1U
     __HAL_RCC_DMA2_CLK_ENABLE();
     eve_dma_handle.Instance = DMA2_Stream3;
     eve_dma_handle.Init.Channel = DMA_CHANNEL_3;
+#else
+#error SPI1 only, add other configurations here
+#endif
+
     eve_dma_handle.Init.Direction = DMA_MEMORY_TO_PERIPH;
     eve_dma_handle.Init.PeriphInc = DMA_PINC_DISABLE;
     eve_dma_handle.Init.MemInc = DMA_MINC_ENABLE;
@@ -181,10 +195,16 @@ void EVE_init_dma(void)
     eve_dma_handle.Init.Mode = DMA_NORMAL;
     eve_dma_handle.Init.Priority = DMA_PRIORITY_HIGH;
     eve_dma_handle.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+
     HAL_DMA_Init(&eve_dma_handle);
     __HAL_LINKDMA(&eve_spi_handle, hdmatx, eve_dma_handle);
+
+#if EVE_SPI_UNIT == 1U
     HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
+#else
+#error SPI1 only, add other configurations here
+#endif
 }
 
 void EVE_start_dma_transfer(void)
@@ -378,9 +398,100 @@ void EVE_start_dma_transfer(void)
 #endif /* DMA */
 #endif /* WIZIOPICO */
 
+/* ################################################################## */
+/* ################################################################## */
+
 #if defined (ARDUINO_UNOR4_MINIMA) || (ARDUINO_UNOR4_WIFI)
 
 //#include "EVE_target.h"
+#include "EVE.h"
+#include <SPI.h>
+
+#include <r_dmac.h>
+
+#if defined (EVE_DMA)
+
+uint32_t EVE_dma_buffer[1025U];
+volatile uint16_t EVE_dma_buffer_index;
+volatile uint8_t EVE_dma_busy = 0;
+
+#if 0
+#define SPI_REG(channel)  ((R_SPI0_Type *) ((uint32_t) R_SPI0 + \
+                           ((uint32_t) R_SPI1 - (uint32_t) R_SPI0) * (channel)))
+
+R_SPI0_Type *spi_regs = SPI_REG(EVE_SPI);
+
+volatile fsp_err_t dma_initialized = FSP_ERR_NOT_OPEN;
+
+typedef struct
+{
+    transfer_info_t info;
+    transfer_cfg_t cfg;
+//    transfer_instance_t inst;
+    dmac_instance_ctrl_t ctrl;
+    dmac_extended_cfg_t extend;
+} fsp_dma_t;
+
+fsp_dma_t eve_dma = {};
+#endif
+
+void EVE_init_dma(void)
+{
+#if 0
+    eve_dma.info.num_blocks = 1;
+    eve_dma.info.p_src = &EVE_dma_buffer[1];
+    eve_dma.info.p_dest = (void *) &spi_regs->SPDR;
+
+    eve_dma.info.transfer_settings_word_b.dest_addr_mode = TRANSFER_ADDR_MODE_FIXED;
+    eve_dma.info.transfer_settings_word_b.repeat_area = TRANSFER_REPEAT_AREA_SOURCE;
+    eve_dma.info.transfer_settings_word_b.irq = TRANSFER_IRQ_END;
+    eve_dma.info.transfer_settings_word_b.chain_mode = TRANSFER_CHAIN_MODE_DISABLED;
+    eve_dma.info.transfer_settings_word_b.src_addr_mode = TRANSFER_ADDR_MODE_INCREMENTED;
+    eve_dma.info.transfer_settings_word_b.size = TRANSFER_SIZE_4_BYTE;
+    eve_dma.info.transfer_settings_word_b.mode = TRANSFER_MODE_BLOCK;
+
+    eve_dma.cfg.p_info = &eve_dma.info;
+    eve_dma.cfg.p_extend = &eve_dma.extend;
+
+    if (FSP_SUCCESS == R_DMAC_Open(&eve_dma.ctrl, &eve_dma.cfg))
+    {
+        dma_initialized = FSP_SUCCESS;
+    }
+#endif
+}
+
+void EVE_start_dma_transfer(void)
+{
+    EVE_cs_set();
+
+#if 0
+    eve_dma.info.length = EVE_dma_buffer_index - 1U;
+
+    if(FSP_SUCCESS == dma_initialized)
+    {
+        SPI.transfer(((uint8_t *) &EVE_dma_buffer[0]) + 1U, 3U);
+
+        spi_regs->SPCR_b.TXMD = 0;
+
+        SPI.transfer(((uint8_t *) &EVE_dma_buffer[1]), ((EVE_dma_buffer_index - 1U) * 4U));
+        EVE_cs_clear();
+    }
+    else
+#endif
+    {
+        SPI.transfer(((uint8_t *) &EVE_dma_buffer[0]) + 1U, (((EVE_dma_buffer_index) * 4U) - 1U));
+        EVE_cs_clear();
+    }
+}
+
+#endif /* DMA */
+#endif /* UNO R4 */
+
+/* ################################################################## */
+/* ################################################################## */
+
+#if defined (ARDUINO_GIGA)
+
 #include "EVE.h"
 #include <SPI.h>
 
@@ -401,7 +512,35 @@ void EVE_start_dma_transfer(void)
     EVE_cs_clear();
 }
 
-#endif
-#endif
+#endif /* DMA */
+#endif /* GIGA */
 
-#endif
+/* ################################################################## */
+/* ################################################################## */
+
+#if defined (ARDUINO_PORTENTA_H7_M7) || (ARDUINO_PORTENTA_H7_M4)
+
+#include "EVE.h"
+#include <SPI.h>
+
+#if defined (EVE_DMA)
+
+uint32_t EVE_dma_buffer[1025U];
+volatile uint16_t EVE_dma_buffer_index;
+volatile uint8_t EVE_dma_busy = 0;
+
+void EVE_init_dma(void)
+{
+}
+
+void EVE_start_dma_transfer(void)
+{
+    EVE_cs_set();
+    SPI.transfer(((uint8_t *) &EVE_dma_buffer[0]) + 1U, (((EVE_dma_buffer_index) * 4U) - 1U));
+    EVE_cs_clear();
+}
+
+#endif /* DMA */
+#endif /* PORTENTA H7 */
+
+#endif /* ARDUINO */

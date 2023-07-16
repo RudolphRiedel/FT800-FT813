@@ -2,7 +2,7 @@
 @file    EVE_target_Arduino_UNO_R4.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-07-08
+@date    2023-07-16
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -31,14 +31,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 @section History
 
 5.0
-
+- started to work on DMA support
 
 */
 
 #ifndef EVE_TARGET_ARDUINO_UNO_R4_H
 #define EVE_TARGET_ARDUINO_UNO_R4_H
 
-#if defined(ARDUINO)
+#if defined (ARDUINO)
 
 #include <stdint.h>
 #include <Arduino.h>
@@ -50,14 +50,24 @@ extern "C"
 #endif
 
 /* you may define these in your build-environment to use different settings */
-#if !defined(EVE_CS)
+#if !defined (EVE_CS)
 #define EVE_CS 10
 #endif
 
-#if !defined(EVE_PDN)
+#if !defined (EVE_PDN)
 #define EVE_PDN 8
 #endif
 /* you may define these in your build-environment to use different settings */
+
+/* we can not get the SPI interface from the Arduino SPI class */
+#if !defined (EVE_SPI)
+#if defined (ARDUINO_UNOR4_MINIMA)
+#define EVE_SPI 1
+#endif
+#if defined (ARDUINO_UNOR4_WIFI)
+#define EVE_SPI 0
+#endif
+#endif
 
 #define DELAY_MS(ms) delay(ms)
 
@@ -83,7 +93,7 @@ static inline void EVE_cs_clear(void)
 
 #define EVE_DMA /* no DMA for now, "just" buffer transfers */
 
-#if defined(EVE_DMA)
+#if defined (EVE_DMA)
 extern uint32_t EVE_dma_buffer[1025U];
 extern volatile uint16_t EVE_dma_buffer_index;
 extern volatile uint8_t EVE_dma_busy;
@@ -92,7 +102,6 @@ void EVE_init_dma(void);
 void EVE_start_dma_transfer(void);
 #endif
 
-
 static inline void spi_transmit(uint8_t data)
 {
     wrapper_spi_transmit(data);
@@ -100,23 +109,14 @@ static inline void spi_transmit(uint8_t data)
 
 static inline void spi_transmit_32(uint32_t data)
 {
-#if 1
     wrapper_spi_transmit_32(data);
-#endif
-
-#if 0
-    spi_transmit((uint8_t)(data & 0x000000ffUL));
-    spi_transmit((uint8_t)(data >> 8U));
-    spi_transmit((uint8_t)(data >> 16U));
-    spi_transmit((uint8_t)(data >> 24U));
-#endif
 }
 
 /* spi_transmit_burst() is only used for cmd-FIFO commands */
 /* so it *always* has to transfer 4 bytes */
 static inline void spi_transmit_burst(uint32_t data)
 {
-#if defined(EVE_DMA)
+#if defined (EVE_DMA)
     EVE_dma_buffer[EVE_dma_buffer_index++] = data;
 #else
     spi_transmit_32(data);

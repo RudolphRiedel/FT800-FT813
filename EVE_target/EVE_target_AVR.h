@@ -54,12 +54,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define DELAY_MS(ms) _delay_ms(ms)
 
 /* you may define these in your build-environment to use different settings */
-#if !defined(EVE_CS)
+#if !defined (EVE_CS)
 #define EVE_CS_PORT PORTB
 #define EVE_CS      (1U << PB5)
 #endif
 
-#if !defined(EVE_PDN)
+#if !defined (EVE_PDN)
 #define EVE_PDN_PORT    PORTB
 #define EVE_PDN     (1U << PB4)
 #endif

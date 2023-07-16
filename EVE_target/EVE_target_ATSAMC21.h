@@ -105,7 +105,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define EVE_SPI 0U
 #endif
 
-#if defined(EVE_DMA) && !defined(EVE_DMA_CHANNEL)
+#if defined (EVE_DMA) && !defined (EVE_DMA_CHANNEL)
 #define EVE_DMA_CHANNEL 0U
 #endif
 

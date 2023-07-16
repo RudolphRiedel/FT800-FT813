@@ -2,7 +2,7 @@
 @file    EVE_target_Arduino_Nucleo_F446RE.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-06-24
+@date    2023-07-16
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -27,6 +27,7 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 @section History
 
 5.0
@@ -35,13 +36,15 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - split up the optional default defines to allow to only change what needs
     changing thru the build-environment
 - changed #include "EVE_cpp_wrapper.h" to #include "../EVE_cpp_wrapper.h"
+- EVE_SPI could not actually be configured as "SPI1" is not just a number,
+  changed parameter to EVE_SPI_UNIT and "1" is the only valid option, for now
 
 */
 
 #ifndef EVE_TARGET_ARDUINO_NUCLEO_F446RE_H
 #define EVE_TARGET_ARDUINO_NUCLEO_F446RE_H
 
-#if defined(ARDUINO)
+#if defined (ARDUINO)
 
 #include <stdint.h>
 #include <Arduino.h>
@@ -52,30 +55,36 @@ extern "C"
 {
 #endif
 
-#if defined(ARDUINO_NUCLEO_F446RE)
+#if defined (ARDUINO_NUCLEO_F446RE)
 
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_ll_spi.h"
 
 /* you may define these in your build-environment to use different settings */
-#if !defined(EVE_CS)
+#if !defined (EVE_CS)
 #define EVE_CS 10
 #endif
 
-#if !defined(EVE_PDN)
+#if !defined (EVE_PDN)
 #define EVE_PDN 8
 #endif
 
-#if !defined(EVE_SPI)
-#define EVE_SPI SPI1
+#if !defined (EVE_SPI_UNIT)
+#define EVE_SPI_UNIT 1U
 #endif
 /* you may define these in your build-environment to use different settings */
+
+#if EVE_SPI_UNIT == 1U
+#define EVE_SPI SPI1
+#else
+#error SPI1 only with PA5 = SCK, PA6 = MISO and PA7 = MOSI
+#endif
 
 void EVE_init_spi(void);
 
 #define EVE_DMA
 
-#if defined(EVE_DMA)
+#if defined (EVE_DMA)
 extern uint32_t EVE_dma_buffer[1025U];
 extern volatile uint16_t EVE_dma_buffer_index;
 extern volatile uint8_t EVE_dma_busy;
@@ -127,7 +136,7 @@ static inline void spi_transmit_32(uint32_t data)
 /* so it *always* has to transfer 4 bytes */
 static inline void spi_transmit_burst(uint32_t data)
 {
-#if defined(EVE_DMA)
+#if defined (EVE_DMA)
     EVE_dma_buffer[EVE_dma_buffer_index++] = data;
 #else
     spi_transmit_32(data);
