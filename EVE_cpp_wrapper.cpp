@@ -36,6 +36,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     a second time
 - added wrapper_spi_transmit_32()
 - changed return type of wrapper_spi_transmit_32() to void as intended
+- added workaround for non-standard implementations of SPI.transfer(buffer, count)
 
 */
 
@@ -65,10 +66,18 @@ extern "C" {
         SPI.transfer(data);
     }
 
+#if defined (WIZIOPICO) || (XMC1100_XMC2GO)
+    void wrapper_spi_transmit_32(uint32_t data)
+    {
+        SPI.transfer((uint8_t *) &data, 4);
+    }
+#else
     void wrapper_spi_transmit_32(uint32_t data)
     {
         SPI.transfer(&data, 4);
     }
+#endif
+
 #endif
 
     uint8_t wrapper_spi_receive(uint8_t data)
