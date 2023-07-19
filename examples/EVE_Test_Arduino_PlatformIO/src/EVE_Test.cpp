@@ -19,7 +19,7 @@ void setup()
     digitalWrite(EVE_PDN, LOW);
 
 /* we are not using the Arduino SPI class since we want DMA */
-#if defined(ESP32) || (ARDUINO_NUCLEO_F446RE) || (WIZIOPICO) || (PICOPI)
+#if (ARDUINO_NUCLEO_F446RE) || (WIZIOPICO) || (PICOPI)
     EVE_init_spi();
 #else
     SPI.begin(); /* sets up the SPI to run in Mode 0 and 1 MHz */
