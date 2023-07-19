@@ -13,7 +13,7 @@ It contains code for and has been used with various micro-controllers and displa
 I have used it so far with:
 
 - 8-Bit AVR, specifically the 90CAN series
-- Arduino: Uno, mini-pro, ESP8266, ESP32 (DMA), Metro-M4 (DMA), STM32 Nucleo_F446RE (DMA), XMC1100
+- Arduino: Uno R3, mini-pro, ESP8266, ESP32, Metro-M4 (DMA), STM32 Nucleo_F446RE (DMA), XMC1100, Uno R4
 - Renesas F1L RH850
 - Infineon Aurix TC222
 - GD32VF103

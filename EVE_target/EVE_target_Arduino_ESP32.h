@@ -2,7 +2,7 @@
 @file    EVE_target_Arduino_ESP32.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-06-24
+@date    2023-07-19
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -32,12 +32,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 5.0
 - extracted from EVE_target.h
-- basic maintenance: checked for violations of white space and indent rules
 - split up the optional default defines to allow to only change what needs
     changing thru the build-environment
 - changed #include "EVE_cpp_wrapper.h" to #include "../EVE_cpp_wrapper.h"
-- fixed a few warnings about missing initializers when compiling with the
-    Arduino IDE 2.1.0
+- reworked the ESP32 support code to no longer use ESP-IDF for DMA transfers,
+  this is slower and blocking but Arduino-ESP32 got siginificantly faster by now
+  and using only the SPI class allows other SPI devices more easily
 
 */
 
@@ -54,11 +54,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 extern "C"
 {
 #endif
-
-#if defined (ESP32)
-/* note: this is using the ESP-IDF driver as the Arduino class and driver */
-/* does not allow DMA for SPI */
-#include "driver/spi_master.h"
 
 /* you may define these in your build-environment to use different settings */
 #if !defined (EVE_CS)
@@ -82,23 +77,6 @@ extern "C"
 #endif
 /* you may define these in your build-environment to use different settings */
 
-
-#define EVE_DMA
-
-void EVE_init_spi(void);
-
-extern spi_device_handle_t EVE_spi_device;
-extern spi_device_handle_t EVE_spi_device_simple;
-
-#if defined (EVE_DMA)
-extern uint32_t EVE_dma_buffer[1025U];
-extern volatile uint16_t EVE_dma_buffer_index;
-extern volatile uint8_t EVE_dma_busy;
-
-void EVE_init_dma(void);
-void EVE_start_dma_transfer(void);
-#endif
-
 #define DELAY_MS(ms) delay(ms)
 
 static inline void EVE_pdn_set(void)
@@ -113,34 +91,33 @@ static inline void EVE_pdn_clear(void)
 
 static inline void EVE_cs_set(void)
 {
-    spi_device_acquire_bus(EVE_spi_device_simple, portMAX_DELAY);
     digitalWrite(EVE_CS, LOW); /* make EVE listen */
 }
 
 static inline void EVE_cs_clear(void)
 {
     digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listen */
-    spi_device_release_bus(EVE_spi_device_simple);
 }
+
+#define EVE_DMA /* no DMA for now, "just" buffer transfers */
+
+#if defined (EVE_DMA)
+extern uint32_t EVE_dma_buffer[1025U];
+extern volatile uint16_t EVE_dma_buffer_index;
+extern volatile uint8_t EVE_dma_busy;
+
+void EVE_init_dma(void);
+void EVE_start_dma_transfer(void);
+#endif
 
 static inline void spi_transmit(uint8_t data)
 {
-    spi_transaction_t trans = {};
-    trans.length = 8;
-    trans.rxlength = 0;
-    trans.flags = SPI_TRANS_USE_TXDATA;
-    trans.tx_data[0] = data;
-    spi_device_polling_transmit(EVE_spi_device_simple, &trans);
+    wrapper_spi_transmit(data);
 }
 
 static inline void spi_transmit_32(uint32_t data)
 {
-    spi_transaction_t trans = {};
-    trans.length = 32;
-    trans.rxlength = 0;
-    trans.flags = 0;
-    trans.tx_buffer = &data;
-    spi_device_polling_transmit(EVE_spi_device_simple, &trans);
+    wrapper_spi_transmit_32(data);
 }
 
 /* spi_transmit_burst() is only used for cmd-FIFO commands */
@@ -156,22 +133,13 @@ static inline void spi_transmit_burst(uint32_t data)
 
 static inline uint8_t spi_receive(uint8_t data)
 {
-    spi_transaction_t trans = {};
-    trans.length = 8;
-    trans.rxlength = 8;
-    trans.flags = (SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA);
-    trans.tx_data[0] = data;
-    spi_device_polling_transmit(EVE_spi_device_simple, &trans);
-
-    return trans.rx_data[0];
+    return wrapper_spi_receive(data);
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *data)
 {
     return *data;
 }
-
-#endif /* ESP32 */
 
 #ifdef __cplusplus
 }
