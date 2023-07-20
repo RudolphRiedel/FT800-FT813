@@ -2,7 +2,7 @@
 @file    EVE_target_Arduino_ESP32.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-07-19
+@date    2023-07-20
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -38,6 +38,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - reworked the ESP32 support code to no longer use ESP-IDF for DMA transfers,
   this is slower and blocking but Arduino-ESP32 got siginificantly faster by now
   and using only the SPI class allows other SPI devices more easily
+- changed wrapper_spi_transmit_32() to use SPI.write32() which requires a byte-swap
 
 */
 
@@ -117,7 +118,7 @@ static inline void spi_transmit(uint8_t data)
 
 static inline void spi_transmit_32(uint32_t data)
 {
-    wrapper_spi_transmit_32(data);
+    wrapper_spi_transmit_32(__builtin_bswap32(data));
 }
 
 /* spi_transmit_burst() is only used for cmd-FIFO commands */

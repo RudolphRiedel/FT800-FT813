@@ -2,7 +2,7 @@
 @file    EVE_target.cpp
 @brief   target specific functions for C++ targets, so far only Arduino targets
 @version 5.0
-@date    2023-07-19
+@date    2023-07-20
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -56,6 +56,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - reworked the ESP32 support code to no longer use ESP-IDF for DMA transfers,
   this is slower and blocking but Arduino-ESP32 got siginificantly faster by now
   and using only the SPI class allows other SPI devices more easily
+- optimized for ESP32 by switching to SPI.writeBytes()
 
  */
 
@@ -497,9 +498,12 @@ void EVE_start_dma_transfer(void)
 {
     SPI.endTransaction();
     SPI.beginTransaction(SPISettings(20000000, MSBFIRST, SPI_MODE0));
+//    SPI.setFrequency(20000000); // not working, bug reported
     EVE_cs_set();
-    SPI.transfer(((uint8_t *) &EVE_dma_buffer[0]) + 1U, (((EVE_dma_buffer_index) * 4U) - 1U));
+//    SPI.transfer(((uint8_t *) &EVE_dma_buffer[0]) + 1U, (((EVE_dma_buffer_index) * 4U) - 1U));
+    SPI.writeBytes(((uint8_t *) &EVE_dma_buffer[0]) + 1U, (((EVE_dma_buffer_index) * 4U) - 1U));
     EVE_cs_clear();
+//    SPI.setFrequency(8000000);
     SPI.endTransaction();
     SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
 }
