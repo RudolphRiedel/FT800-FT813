@@ -2,7 +2,7 @@
 @file    EVE_target.cpp
 @brief   target specific functions for C++ targets, so far only Arduino targets
 @version 5.0
-@date    2023-07-20
+@date    2023-07-21
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -57,6 +57,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   this is slower and blocking but Arduino-ESP32 got siginificantly faster by now
   and using only the SPI class allows other SPI devices more easily
 - optimized for ESP32 by switching to SPI.writeBytes()
+- added generic Arduino STM32 target
 
  */
 
@@ -498,17 +499,43 @@ void EVE_start_dma_transfer(void)
 {
     SPI.endTransaction();
     SPI.beginTransaction(SPISettings(20000000, MSBFIRST, SPI_MODE0));
-//    SPI.setFrequency(20000000); // not working, bug reported
     EVE_cs_set();
 //    SPI.transfer(((uint8_t *) &EVE_dma_buffer[0]) + 1U, (((EVE_dma_buffer_index) * 4U) - 1U));
     SPI.writeBytes(((uint8_t *) &EVE_dma_buffer[0]) + 1U, (((EVE_dma_buffer_index) * 4U) - 1U));
     EVE_cs_clear();
-//    SPI.setFrequency(8000000);
     SPI.endTransaction();
     SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
 }
 
 #endif /* DMA */
 #endif /* ESP32 */
+
+/* ################################################################## */
+/* ################################################################## */
+
+#if defined (ARDUINO_ARCH_STM32)
+
+#include "EVE.h"
+#include <SPI.h>
+
+#if defined (EVE_DMA)
+
+uint32_t EVE_dma_buffer[1025U];
+volatile uint16_t EVE_dma_buffer_index;
+volatile uint8_t EVE_dma_busy = 0;
+
+void EVE_init_dma(void)
+{
+}
+
+void EVE_start_dma_transfer(void)
+{
+    EVE_cs_set();
+    SPI.transfer(((uint8_t *) &EVE_dma_buffer[0]) + 1U, (((EVE_dma_buffer_index) * 4U) - 1U));
+    EVE_cs_clear();
+}
+
+#endif /* DMA */
+#endif /* ARDUINO_ARCH_STM32 */
 
 #endif /* ARDUINO */

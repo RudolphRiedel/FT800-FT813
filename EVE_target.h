@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-07-16
+@date    2023-07-21
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -82,6 +82,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - added ARDUINO_UNOR4_MINIMA and ARDUINO_UNOR4_WIFI targets
 - added ARDUINO_GIGA target
 - added ARDUINO_PORTENTA_H7 target
+- added generic Arduino STM32 target
 
 */
 
@@ -348,6 +349,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #elif defined (ARDUINO_PORTENTA_H7_M7) || (ARDUINO_PORTENTA_H7_M4)
 
 #include  "EVE_target/EVE_target_Arduino_Portenta_H7.h"
+
+#elif defined (ARDUINO_ARCH_STM32)
+
+/* this is a generic STM32 target as fall-thru, it uses a buffer to transfer */
+#include  "EVE_target/EVE_target_Arduino_STM32_generic.h"
 
 #else
 
