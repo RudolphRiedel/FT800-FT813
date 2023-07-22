@@ -167,7 +167,7 @@ static volatile uint8_t fault_recovered = E_OK; /* flag to indicate if EVE_busy 
 ##################################################################### */
 
 
-void EVE_cmdWrite(uint8_t command, uint8_t parameter)
+void EVE_cmdWrite(uint8_t const command, uint8_t const parameter)
 {
     EVE_cs_set();
     spi_transmit(command);
@@ -176,7 +176,7 @@ void EVE_cmdWrite(uint8_t command, uint8_t parameter)
     EVE_cs_clear();
 }
 
-uint8_t EVE_memRead8(uint32_t ft_address)
+uint8_t EVE_memRead8(uint32_t const ft_address)
 {
     uint8_t data;
     EVE_cs_set();
@@ -186,7 +186,7 @@ uint8_t EVE_memRead8(uint32_t ft_address)
     return data;
 }
 
-uint16_t EVE_memRead16(uint32_t ft_address)
+uint16_t EVE_memRead16(uint32_t const ft_address)
 {
     uint16_t data;
     EVE_cs_set();
@@ -199,7 +199,7 @@ uint16_t EVE_memRead16(uint32_t ft_address)
     return data;
 }
 
-uint32_t EVE_memRead32(uint32_t ft_address)
+uint32_t EVE_memRead32(uint32_t const ft_address)
 {
     uint32_t data;
     EVE_cs_set();
@@ -212,7 +212,7 @@ uint32_t EVE_memRead32(uint32_t ft_address)
     return data;
 }
 
-void EVE_memWrite8(uint32_t ft_address, uint8_t ft_data)
+void EVE_memWrite8(uint32_t const ft_address, uint8_t const ft_data)
 {
     EVE_cs_set();
     spi_transmit((uint8_t)(ft_address >> 16U) | MEM_WRITE);
@@ -222,7 +222,7 @@ void EVE_memWrite8(uint32_t ft_address, uint8_t ft_data)
     EVE_cs_clear();
 }
 
-void EVE_memWrite16(uint32_t ft_address, uint16_t ft_data)
+void EVE_memWrite16(uint32_t const ft_address, uint16_t const ft_data)
 {
     EVE_cs_set();
     spi_transmit((uint8_t)(ft_address >> 16U) | MEM_WRITE); /* send Memory Write plus high address byte */
@@ -233,7 +233,7 @@ void EVE_memWrite16(uint32_t ft_address, uint16_t ft_data)
     EVE_cs_clear();
 }
 
-void EVE_memWrite32(uint32_t ft_address, uint32_t ft_data)
+void EVE_memWrite32(uint32_t const ft_address, uint32_t const ft_data)
 {
     EVE_cs_set();
     spi_transmit((uint8_t)(ft_address >> 16U) | MEM_WRITE); /* send Memory Write plus high address byte */
@@ -244,7 +244,7 @@ void EVE_memWrite32(uint32_t ft_address, uint32_t ft_data)
 }
 
 /* Helper function, write a block of memory from the FLASH of the host controller to EVE. */
-void EVE_memWrite_flash_buffer(uint32_t ft_address, const uint8_t *p_data, uint32_t len)
+void EVE_memWrite_flash_buffer(uint32_t const ft_address, const uint8_t *p_data, uint32_t const len)
 {
     if (p_data != NULL)
     {
@@ -265,7 +265,7 @@ void EVE_memWrite_flash_buffer(uint32_t ft_address, const uint8_t *p_data, uint3
 }
 
 /* Helper function, write a block of memory from the SRAM of the host controller to EVE. */
-void EVE_memWrite_sram_buffer(uint32_t ft_address, const uint8_t *p_data, uint32_t len)
+void EVE_memWrite_sram_buffer(uint32_t const ft_address, const uint8_t *p_data, uint32_t const len)
 {
     if (p_data != NULL)
     {
@@ -286,7 +286,7 @@ void EVE_memWrite_sram_buffer(uint32_t ft_address, const uint8_t *p_data, uint32
 }
 
 /* Helper function, read a block of memory from EVE to the SRAM of the host controller */
-void EVE_memRead_sram_buffer(uint32_t ft_address, uint8_t *p_data, uint32_t len)
+void EVE_memRead_sram_buffer(uint32_t const ft_address, uint8_t *p_data, uint32_t const len)
 {
     if (p_data != NULL)
     {
@@ -1190,25 +1190,31 @@ uint8_t EVE_init_flash(void)
         {
             case 0x0000UL:
                 ret_val = E_OK;
-                break;
+            break;
+
             case 0xE001UL:
                 ret_val = EVE_FAIL_FLASHFAST_NOT_SUPPORTED;
-                break;
+            break;
+
             case 0xE002UL:
                 ret_val = EVE_FAIL_FLASHFAST_NO_HEADER_DETECTED;
-                break;
+            break;
+
             case 0xE003UL:
                 ret_val = EVE_FAIL_FLASHFAST_SECTOR0_FAILED;
-                break;
+            break;
+
             case 0xE004UL:
                 ret_val = EVE_FAIL_FLASHFAST_BLOB_MISMATCH;
-                break;
+            break;
+
             case 0xE005UL:
                 ret_val = EVE_FAIL_FLASHFAST_SPEED_TEST;
-                break;
+            break;
+
             default: /* we have an unknown error, so just return failure */
                 ret_val = E_NOT_OK;
-                break;
+            break;
         }
     }
 
@@ -1324,7 +1330,7 @@ static uint8_t wait_chipid(void)
     uint8_t chipid = 0U;
     uint16_t timeout = 0U;
 
-    for ( ; ; )
+    for (;;)
     {
         DELAY_MS(1U);
 
@@ -1351,7 +1357,7 @@ static uint8_t wait_reset(void)
     uint8_t reset = 0U;
     uint16_t timeout = 0U;
 
-    for ( ; ; )
+    for (;;)
     {
         DELAY_MS(1U);
 
@@ -1569,24 +1575,12 @@ void EVE_end_cmd_burst(void)
 #endif
 }
 
-#if 0
-/* private function, begin a co-processor command, only used for non-burst commands */
-static void EVE_start_command(uint32_t command)
-{
-    EVE_cs_set();
-    spi_transmit((uint8_t) 0xB0U); /* high-byte of REG_CMDB_WRITE + MEM_WRITE */
-    spi_transmit((uint8_t) 0x25U); /* middle-byte of REG_CMDB_WRITE */
-    spi_transmit((uint8_t) 0x78U); /* low-byte of REG_CMDB_WRITE */
-    spi_transmit_32(command);
-}
-#endif
-
 /* write a string to co-processor memory in context of a command: */
 /* no chip-select, just plain SPI-transfers */
 static void private_string_write(const char *p_text)
 {
     /* treat the array as bunch of bytes */
-    const uint8_t *p_bytes = (const uint8_t *)p_text;
+    const uint8_t *const p_bytes = (const uint8_t *)p_text;
 
     if (0U == cmd_burst)
     {
@@ -1613,7 +1607,6 @@ static void private_string_write(const char *p_text)
     }
     else /* we are in burst mode so every transfer is 32 bits */
     {
-#if 1
         for (uint8_t textindex = 0U; textindex < 249U; textindex += 4U)
         {
             uint32_t calc = 0U;
@@ -1635,49 +1628,6 @@ static void private_string_write(const char *p_text)
         }
 
         spi_transmit_burst(0U); /* executed when the line is too long */
-#endif
-
-#if 0
-        for (uint8_t textindex = 0U; textindex < 249U;)
-        {
-            uint32_t calc = 0U;
-            uint8_t data;
-
-            data = p_bytes[textindex++];
-            if (0U == data)
-            {
-                spi_transmit_burst(calc);
-                break;
-            }
-            calc += (uint32_t) (data);
-
-            data = p_bytes[textindex++];
-            if (0U == data)
-            {
-                spi_transmit_burst(calc);
-                break;
-            }
-            calc += ((uint32_t) data) << 8U;
-
-            data = p_bytes[textindex++];
-            if (0U == data)
-            {
-                spi_transmit_burst(calc);
-                break;
-            }
-            calc += ((uint32_t) data) << 16U;
-
-            data = p_bytes[textindex++];
-            if (0U == data)
-            {
-                spi_transmit_burst(calc);
-                break;
-            }
-            calc += ((uint32_t) data) << 24U;
-
-            spi_transmit_burst(calc);
-        }
-#endif
     }
 }
 
@@ -2634,8 +2584,7 @@ void EVE_cmd_fgcolor_burst(uint32_t color)
 }
 
 void EVE_cmd_gauge(int16_t xc0, int16_t yc0, int16_t rad, uint16_t options,
-                    uint16_t major, uint16_t minor,
-                    uint16_t val, uint16_t range)
+                    uint16_t major, uint16_t minor, uint16_t val, uint16_t range)
 {
     if (0U == cmd_burst)
     {
@@ -2669,8 +2618,7 @@ void EVE_cmd_gauge(int16_t xc0, int16_t yc0, int16_t rad, uint16_t options,
 }
 
 void EVE_cmd_gauge_burst(int16_t xc0, int16_t yc0, int16_t rad, uint16_t options,
-                            uint16_t major, uint16_t minor,
-                            uint16_t val, uint16_t range)
+                            uint16_t major, uint16_t minor, uint16_t val, uint16_t range)
 {
     spi_transmit_burst(CMD_GAUGE);
     spi_transmit_burst(((uint32_t) ((uint16_t) xc0)) + (((uint32_t) ((uint16_t) yc0)) << 16U));
@@ -3475,7 +3423,7 @@ void EVE_calibrate_manual(uint16_t width, uint16_t height)
         EVE_cmd_dl(CMD_SWAP);
         EVE_execute_cmd();
 
-        for ( ; ; )
+        for (;;)
         {
             touch_value = EVE_memRead32(REG_TOUCH_DIRECT_XY); /* read for any new touch tag inputs */
 
@@ -3494,7 +3442,7 @@ void EVE_calibrate_manual(uint16_t width, uint16_t height)
                     touch_y[count] = (int32_t) (touch_value & 0x03FFU);         /* raw Touchscreen Y coordinate */
                     touch_lock = 1U;
                     count++;
-                    break; /* leave for ( ; ; ) */
+                    break; /* leave for (;;) */
                 }
             }
         }

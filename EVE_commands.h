@@ -110,17 +110,17 @@ EVE_cmd_animstartram_burst()
     helper functions
 ##################################################################### */
 
-void EVE_cmdWrite(uint8_t command, uint8_t parameter);
+void EVE_cmdWrite(uint8_t const command, uint8_t const parameter);
 
-uint8_t EVE_memRead8(uint32_t ft_address);
-uint16_t EVE_memRead16(uint32_t ft_address);
-uint32_t EVE_memRead32(uint32_t ft_address);
-void EVE_memWrite8(uint32_t ft_address, uint8_t ft_data);
-void EVE_memWrite16(uint32_t ft_address, uint16_t ft_data);
-void EVE_memWrite32(uint32_t ft_address, uint32_t ft_data);
-void EVE_memWrite_flash_buffer(uint32_t ft_address, const uint8_t *p_data, uint32_t len);
-void EVE_memWrite_sram_buffer(uint32_t ft_address, const uint8_t *p_data, uint32_t len);
-void EVE_memRead_sram_buffer(uint32_t ft_address, uint8_t *p_data, uint32_t len);
+uint8_t EVE_memRead8(uint32_t const ft_address);
+uint16_t EVE_memRead16(uint32_t const ft_address);
+uint32_t EVE_memRead32(uint32_t const ft_address);
+void EVE_memWrite8(uint32_t const ft_address, uint8_t const ft_data);
+void EVE_memWrite16(uint32_t const ft_address, uint16_t const ft_data);
+void EVE_memWrite32(uint32_t const ft_address, uint32_t const ft_data);
+void EVE_memWrite_flash_buffer(uint32_t const ft_address, const uint8_t *p_data, uint32_t const len);
+void EVE_memWrite_sram_buffer(uint32_t const ft_address, const uint8_t *p_data, uint32_t const len);
+void EVE_memRead_sram_buffer(uint32_t const ft_address, uint8_t *p_data, uint32_t const len);
 uint8_t EVE_busy(void);
 uint8_t EVE_get_and_reset_fault_state(void);
 void EVE_execute_cmd(void);

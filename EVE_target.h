@@ -297,7 +297,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #if defined (ARDUINO)
 
 #if defined (__AVR__)
-// #if defined (ARDUINO_AVR_UNO)
+//#if defined (ARDUINO_AVR_UNO)
 
 #include "EVE_target/EVE_target_Arduino_AVR.h"
 

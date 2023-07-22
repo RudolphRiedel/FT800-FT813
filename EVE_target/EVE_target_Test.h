@@ -51,32 +51,32 @@ extern uint8_t EVE_spi_test_buffer_receive[32];
 
 struct
 {
-    uint8_t Called;
+    uint8_t called;
 } Test_EVE_pdn_set;
 
 struct
 {
-    uint8_t Called;
+    uint8_t called;
 } Test_EVE_pdn_clear;
 
 struct
 {
-    uint8_t Called;
+    uint8_t called;
 } Test_EVE_cs_set;
 
 struct
 {
-    uint8_t Called;
+    uint8_t called;
 } Test_EVE_cs_clear;
 
 struct
 {
-    uint8_t Called;
+    uint8_t called;
 } Test_EVE_spi_transmit;
 
 struct
 {
-    uint8_t Called;
+    uint8_t called;
 } Test_EVE_spi_transmit_32;
 
 #define EVE_DELAY_1MS 4U  /* no real delay needed for the software tests */
@@ -90,23 +90,23 @@ static inline void DELAY_MS(uint16_t val)
 }
 static inline void EVE_pdn_set(void)
 {
-    Test_EVE_pdn_set.Called = Test_EVE_pdn_set.Called + 1U;
+    Test_EVE_pdn_set.called = Test_EVE_pdn_set.called + 1U;
 }
 
 static inline void EVE_pdn_clear(void)
 {
-    Test_EVE_pdn_clear.Called = Test_EVE_pdn_clear.Called + 1U;
+    Test_EVE_pdn_clear.called = Test_EVE_pdn_clear.called + 1U;
 }
 
 static inline void EVE_cs_set(void)
 {
-    Test_EVE_cs_set.Called = Test_EVE_cs_set.Called + 1U;
+    Test_EVE_cs_set.called = Test_EVE_cs_set.called + 1U;
     EVE_spi_test_buffer_index = 0;
 }
 
 static inline void EVE_cs_clear(void)
 {
-    Test_EVE_cs_clear.Called = Test_EVE_cs_clear.Called + 1U;
+    Test_EVE_cs_clear.called = Test_EVE_cs_clear.called + 1U;
 }
 
 static inline void spi_transmit(uint8_t data)

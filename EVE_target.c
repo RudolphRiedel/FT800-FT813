@@ -348,9 +348,9 @@ spi_device_handle_t EVE_spi_device_simple = {0};
 static void eve_spi_post_transfer_callback(void)
 {
     gpio_set_level(EVE_CS, 1); /* tell EVE to stop listen */
-    #if defined (EVE_DMA)
+#if defined (EVE_DMA)
         EVE_dma_busy = 0;
-    #endif
+#endif
 }
 
 void EVE_init_spi(void)

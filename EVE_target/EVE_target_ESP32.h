@@ -137,11 +137,11 @@ static inline void spi_transmit_32(uint32_t data)
 /* so it *always* has to transfer 4 bytes */
 static inline void spi_transmit_burst(uint32_t data)
 {
-    #if defined (EVE_DMA)
-        EVE_dma_buffer[EVE_dma_buffer_index++] = data;
-    #else
-        spi_transmit_32(data);
-    #endif
+#if defined (EVE_DMA)
+    EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+#else
+    spi_transmit_32(data);
+#endif
 }
 
 static inline uint8_t spi_receive(uint8_t data)

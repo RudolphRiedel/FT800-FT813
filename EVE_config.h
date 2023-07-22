@@ -155,7 +155,7 @@ the IOT5
 #define EVE_CFAF320240F_035T
 #define EVE_CFAF480128A0_039TC
 #define EVE_CFAF800480E0_050SC
-#define EVE_GEN4_FT81x_43
+#define EVE_GEN4_FT81X_43
 #define EVE_GEN4_FT812_50
 #define EVE_GEN4_FT812_70
 #define EVE_GEN4_FT813_50
@@ -169,6 +169,7 @@ the IOT5
 #define EVE_FT811CB_HY50HD
 #define EVE_CFA240400E1_030TX
 #define EVE_CFA240320EX_024SX
+#define EVE_GAMEDUINO3
 
 #endif
 
@@ -495,7 +496,7 @@ typedef struct
 
 /* untested */
 /* 4D-Systems GEN4-FT81x-43xx 480x272 4.3",resistive or capacitive, FT812 / FT813 */
-#if defined (EVE_GEN4_FT81x_43)
+#if defined (EVE_GEN4_FT81X_43)
 #define Resolution_480x272
 
 #define EVE_PCLK (6L)
@@ -508,7 +509,7 @@ typedef struct
 
 /* untested */
 /* Gameduino 3, 480x272 4.3",resistive touch, FT810 */
-#if defined (EVE_GEN4_FT81x_43)
+#if defined (EVE_GAMEDUINO3)
 #define Resolution_480x272
 
 #define EVE_PCLK (6L)

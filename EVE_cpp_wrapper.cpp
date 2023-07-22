@@ -46,6 +46,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <Arduino.h>
 //#include <stdio.h>
 #include <SPI.h>
+#include "EVE_cpp_wrapper.h"
 
 #ifdef __cplusplus
 extern "C" {

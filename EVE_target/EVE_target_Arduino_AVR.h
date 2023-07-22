@@ -54,7 +54,7 @@ extern "C"
 #endif
 
 #if defined (__AVR__)
-    //  #if defined (ARDUINO_AVR_UNO)
+//#if defined (ARDUINO_AVR_UNO)
 #include <avr/pgmspace.h>
 
 /* you may define these in your build-environment to use different settings */

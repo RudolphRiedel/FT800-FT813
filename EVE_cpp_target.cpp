@@ -401,7 +401,7 @@ void EVE_start_dma_transfer(void)
 #if 0
     eve_dma.info.length = EVE_dma_buffer_index - 1U;
 
-    if(FSP_SUCCESS == dma_initialized)
+    if (FSP_SUCCESS == dma_initialized)
     {
         SPI.transfer(((uint8_t *) &EVE_dma_buffer[0]) + 1U, 3U);
 

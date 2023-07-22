@@ -94,9 +94,8 @@ static inline void spi_transmit(uint8_t data)
 #else
 /* software-spi example */
     uint8_t spiIndex  = 0x80;
-    uint8_t k;
 
-    for (k = 0; k < 8U; k++) // Output each bit of spiOutByte
+    for (uint8_t count = 0; count < 8U; count++) // Output each bit of spiOutByte
     {
         if (data & spiIndex) // Output MOSI Bit
         {
@@ -140,9 +139,8 @@ static inline uint8_t spi_receive(uint8_t data)
 #else
     uint8_t spiIndex  = 0x80U;
     uint8_t spiInByte = 0;
-    uint8_t k;
 
-    for (k = 0; k < 8U; k++) // Output each bit of spiOutByte
+    for (uint8_t count = 0; count < 8U; count++) // Output each bit of spiOutByte
     {
         if (data & spiIndex) // Output MOSI Bit
         {
@@ -170,11 +168,11 @@ static inline uint8_t spi_receive(uint8_t data)
 static inline uint8_t fetch_flash_byte(const uint8_t *data)
 {
     /* do we have an AVR with more than 64kB FLASH memory? */
-    #if defined (__AVR_HAVE_ELPM__) 
-        return (pgm_read_byte_far(data));
-    #else
-        return (pgm_read_byte_near(data));
-    #endif
+#if defined (__AVR_HAVE_ELPM__) 
+    return (pgm_read_byte_far(data));
+#else
+    return (pgm_read_byte_near(data));
+#endif
 }
 
 #endif /* AVR */
