@@ -59,6 +59,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - optimized for ESP32 by switching to SPI.writeBytes()
 - added generic Arduino STM32 target
 - added check and code for optional macro parameter EVE_SPI_BOOST in generic Arduino STM32 target
+- fix: target ARDUINO_NUCLEO_F446RE did not build anymore
 
  */
 
@@ -515,6 +516,8 @@ void EVE_start_dma_transfer(void)
 /* ################################################################## */
 
 #if defined (ARDUINO_ARCH_STM32)
+#if !defined (ARDUINO_NUCLEO_F446RE)
+
 
 #include "EVE.h"
 #include <SPI.h>
@@ -548,6 +551,7 @@ void EVE_start_dma_transfer(void)
 }
 
 #endif /* DMA */
+#endif
 #endif /* ARDUINO_ARCH_STM32 */
 
 #endif /* ARDUINO */
