@@ -2,7 +2,7 @@
 @file    EVE_target.cpp
 @brief   target specific functions for C++ targets, so far only Arduino targets
 @version 5.0
-@date    2023-07-21
+@date    2023-07-22
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -58,6 +58,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   and using only the SPI class allows other SPI devices more easily
 - optimized for ESP32 by switching to SPI.writeBytes()
 - added generic Arduino STM32 target
+- added check and code for optional macro parameter EVE_SPI_BOOST in generic Arduino STM32 target
 
  */
 
@@ -531,7 +532,18 @@ void EVE_init_dma(void)
 void EVE_start_dma_transfer(void)
 {
     EVE_cs_set();
+
+#if !defined (EVE_SPI_BOOST)
     SPI.transfer(((uint8_t *) &EVE_dma_buffer[0]) + 1U, (((EVE_dma_buffer_index) * 4U) - 1U));
+#else
+    uint8_t *buffer = ((uint8_t *) &EVE_dma_buffer[0]) + 1U;
+    size_t count = (((EVE_dma_buffer_index) * 4U) - 1U);
+    for (size_t index = 0; index < count; index++)
+    {
+        spi_transmit(buffer[index]);
+    }
+#endif
+
     EVE_cs_clear();
 }
 

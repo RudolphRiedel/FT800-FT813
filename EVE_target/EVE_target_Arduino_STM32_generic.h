@@ -2,7 +2,7 @@
 @file    EVE_target_Arduino_STM32_generic.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-07-21
+@date    2023-07-22
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -31,6 +31,38 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 @section History
 
 5.0
+- added check and code for optional macro parameter EVE_SPI_BOOST
+
+*/
+
+/*
+optional parameter: EVE_SPI_BOOST
+If this is defined thru the project options (-DEVE_SPI_BOOST), then the STM32
+LL-HAL library is used directly instead of going thru the SPI class.
+It is still necessary to setup the SPI properly thru the class like this:
+SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+And in order for this to work the SPI unit that is used needs to be configured
+as well, for example: -DEVE_SPI=SPI1
+
+Test with STM32C031C6, SPI clock 8MHz:
+Arduino_Core_STM32 2.5.0:
+built with -O2, RAM = 5252 bytes, Flash = 26564 bytes
+16 bit read: 30.2µs
+8 bit read: 23.2µs
+231 byte buffer transfer: 587µs
+
+Test with STM32C031C6, SPI clock 8MHz:
+Arduino_Core_STM32 2.6.0 + pull-request #2082
+built with -O2, RAM = 5252 bytes, Flash = 26624 bytes
+16 bit read: 16.06µs
+8 bit read: 13.38µs
+231 byte buffer transfer: 474.92µs
+
+EVE_SPI_BOOST defined:
+built with -O2, RAM = 5252 bytes, Flash = 27468 bytes
+16 bit read: 13.6µs
+8 bit read: 11.4µs
+231 byte buffer transfer: 451µs
 
 */
 
@@ -42,6 +74,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <stdint.h>
 #include <Arduino.h>
 #include "../EVE_cpp_wrapper.h"
+#include "stm32yyxx_ll_spi.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -93,12 +126,35 @@ void EVE_start_dma_transfer(void);
 
 static inline void spi_transmit(uint8_t data)
 {
+#if !defined (EVE_SPI_BOOST)
     wrapper_spi_transmit(data);
+#else
+#if defined(SPI_SR_TXP)
+    while (!LL_SPI_IsActiveFlag_TXP(EVE_SPI));
+#else
+    while (!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
+#endif
+    LL_SPI_TransmitData8(EVE_SPI, data);
+
+#if defined(SPI_SR_RXP)
+      while (!LL_SPI_IsActiveFlag_RXP(EVE_SPI));
+#else
+      while (!LL_SPI_IsActiveFlag_RXNE(EVE_SPI));
+#endif
+      LL_SPI_ReceiveData8(EVE_SPI); /* dummy read-access to clear SPI receive flag */
+#endif
 }
 
 static inline void spi_transmit_32(uint32_t data)
 {
+#if !defined (EVE_SPI_BOOST)
     wrapper_spi_transmit_32(data);
+#else
+    spi_transmit((uint8_t)(data & 0x000000ffUL));
+    spi_transmit((uint8_t)(data >> 8U));
+    spi_transmit((uint8_t)(data >> 16U));
+    spi_transmit((uint8_t)(data >> 24U));
+#endif
 }
 
 /* spi_transmit_burst() is only used for cmd-FIFO commands */
@@ -114,7 +170,23 @@ static inline void spi_transmit_burst(uint32_t data)
 
 static inline uint8_t spi_receive(uint8_t data)
 {
+#if !defined (EVE_SPI_BOOST)
     return wrapper_spi_receive(data);
+#else
+#if defined(SPI_SR_TXP)
+    while (!LL_SPI_IsActiveFlag_TXP(EVE_SPI));
+#else
+    while (!LL_SPI_IsActiveFlag_TXE(EVE_SPI));
+#endif
+    LL_SPI_TransmitData8(EVE_SPI, data);
+
+#if defined(SPI_SR_RXP)
+      while (!LL_SPI_IsActiveFlag_RXP(EVE_SPI));
+#else
+      while (!LL_SPI_IsActiveFlag_RXNE(EVE_SPI));
+#endif
+      return LL_SPI_ReceiveData8(EVE_SPI);
+#endif
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *data)
