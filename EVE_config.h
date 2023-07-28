@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2023-06-24
+@date    2023-07-28
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -77,6 +77,7 @@ the IOT5
 - added a configuration for Crystalfonts CFA240400E1-030Tx
 - added a configuration for Crystalfonts CFA240320Ex-024Sx
 - added EVE_BACKLIGHT_FREQ to all Riverdi modules with a value of 4kHz as recommended by Riverdi
+- EVE_PCLK_FREQ was incorrectly using "UL"
 
 */
 
@@ -613,7 +614,7 @@ typedef struct
 #if defined (EVE_CFAF800480Ex_050SC_A2)
 #define Resolution_800x480
 
-#define EVE_PCLK_FREQ (0x0451UL) /* value to be put into REG_PCLK_FREQ -> 30MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x0451U) /* value to be put into REG_PCLK_FREQ -> 30MHz, REG_PCLK is set to 1 */
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (0L)
@@ -629,7 +630,7 @@ typedef struct
 #if defined (EVE_CFAF800480E1_050SC_A2)
 #define Resolution_800x480
 
-#define EVE_PCLK_FREQ (0x0451UL) /* value to be put into REG_PCLK_FREQ -> 30MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x0451U) /* value to be put into REG_PCLK_FREQ -> 30MHz, REG_PCLK is set to 1 */
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (0L)
@@ -646,7 +647,7 @@ typedef struct
 #if defined (EVE_CFA800480E3_050SX)
 #define Resolution_800x480
 
-#define EVE_PCLK_FREQ (0x0451UL) /* value to be put into REG_PCLK_FREQ -> 30MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x0451U) /* value to be put into REG_PCLK_FREQ -> 30MHz, REG_PCLK is set to 1 */
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (0L)
@@ -963,7 +964,7 @@ typedef struct
 #define EVE_HSYNC1 (70L)
 #define EVE_HOFFSET (160L)
 #define EVE_HCYCLE (1344L)
-#define EVE_PCLK_FREQ (0x0D12UL) /* value to be put into REG_PCLK_FREQ -> 51MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x0D12U) /* value to be put into REG_PCLK_FREQ -> 51MHz, REG_PCLK is set to 1 */
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (0L)
@@ -988,7 +989,7 @@ typedef struct
 #define EVE_HSYNC1 (70L)
 #define EVE_HOFFSET (160L)
 #define EVE_HCYCLE (1344L)
-#define EVE_PCLK_FREQ (0x0D12UL) /* value to be put into REG_PCLK_FREQ -> 51MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x0D12U) /* value to be put into REG_PCLK_FREQ -> 51MHz, REG_PCLK is set to 1 */
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (0L)
@@ -1015,7 +1016,7 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
-#define EVE_PCLK_FREQ (0x0D12UL) /* value to be put into REG_PCLK_FREQ -> 51MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x0D12U) /* value to be put into REG_PCLK_FREQ -> 51MHz, REG_PCLK is set to 1 */
 #endif
 
 /* ########## 1280 x 800 ########## */
@@ -1033,7 +1034,7 @@ typedef struct
 #define EVE_HSYNC1 (80L)          /* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
 #define EVE_HOFFSET (158L)        /* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
 #define EVE_HCYCLE (1440L)        /* Th Total length of line (visible and non-visible) (in PCLKs) */
-#define EVE_PCLK_FREQ (0x08C1UL) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x08C1U) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
 #define EVE_SET_REG_PCLK_2X
 #define EVE_PCLKPOL (0L)          /* PCLK polarity (0 = rising edge, 1 = falling edge) */
 #define EVE_SWIZZLE (0L)          /* Defines the arrangement of the RGB pins */
@@ -1057,7 +1058,7 @@ typedef struct
 #define EVE_HSYNC1 (20L)
 #define EVE_HOFFSET (88L)
 #define EVE_HCYCLE (1440L)
-#define EVE_PCLK_FREQ (0x08C1UL) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x08C1U) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
 #define EVE_SET_REG_PCLK_2X
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
@@ -1081,7 +1082,7 @@ typedef struct
 #define EVE_HSYNC1 (72L)         /* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
 #define EVE_HOFFSET (160L)       /* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
 #define EVE_HCYCLE (1440L)       /* Th Total length of line (visible and non-visible) (in PCLKs) */
-#define EVE_PCLK_FREQ (0x08C1UL) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x08C1U) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
 #define EVE_SET_REG_PCLK_2X
 #define EVE_PCLKPOL (0L)         /* PCLK polarity (0 = rising edge, 1 = falling edge) */
 #define EVE_SWIZZLE (0L)         /* Defines the arrangement of the RGB pins */
@@ -1102,7 +1103,7 @@ typedef struct
 #define EVE_HSYNC1 (72L)         /* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
 #define EVE_HOFFSET (160L)       /* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
 #define EVE_HCYCLE (1440L)       /* Th Total length of line (visible and non-visible) (in PCLKs) */
-#define EVE_PCLK_FREQ (0x08C1UL) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x08C1U) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
 #define EVE_SET_REG_PCLK_2X
 #define EVE_PCLKPOL (1L)         /* PCLK polarity (0 = rising edge, 1 = falling edge) */
 #define EVE_SWIZZLE (0L)         /* Defines the arrangement of the RGB pins */

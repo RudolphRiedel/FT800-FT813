@@ -139,9 +139,9 @@ static inline uint8_t spi_receive(uint8_t data)
     return (uint8_t) SPI_DATA(SPI0);
 }
 
-static inline uint8_t fetch_flash_byte(const uint8_t *data)
+static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
-    return *data;
+    return *p_data;
 }
 
 #endif /* GD32C103 */

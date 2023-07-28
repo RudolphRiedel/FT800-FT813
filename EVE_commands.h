@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2023-06-24
+@date    2023-07-28
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -77,17 +77,26 @@ EVE_cmd_animstartram_burst()
 - added EVE_FAULT_RECOVERED to the list of return codes
 - added defines for the state of the external flash
 - added protype for EVE_get_and_reset_fault_state()
+- put E_OK and E_NOT_OK in #ifndef/#endif guards as these are usually defined
+  already in AUTOSAR projects
+- renamed EVE_FAIL_CHIPID_TIMEOUT to EVE_FAIL_REGID_TIMEOUT as suggested by #93 on github
 
 */
 
 #ifndef EVE_COMMANDS_H
 #define EVE_COMMANDS_H
 
-//#include "EVE.h"
+#include "EVE.h"
 
+#if !defined E_OK
 #define E_OK 0U
+#endif
+
+#if !defined E_NOT_OK
 #define E_NOT_OK 1U
-#define EVE_FAIL_CHIPID_TIMEOUT 2U
+#endif
+
+#define EVE_FAIL_REGID_TIMEOUT 2U
 #define EVE_FAIL_RESET_TIMEOUT 3U
 #define EVE_FAIL_PCLK_FREQ 4U
 #define EVE_FAIL_FLASH_STATUS_INIT 5U

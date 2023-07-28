@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2023-06-25
+@date    2023-06-28
 @author  Rudolph Riedel
 
 @section info
@@ -145,10 +145,11 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - new optional parameter in EVE_init(): EVE_BACKLIGHT_FREQ
 - fixed a couple of minor issues from static code analysis
 - reworked the burst part of private_string_write() to be less complex
+- renamed chipid references to regid as suggested by #93 on github
 
 */
 
-#include "EVE.h"
+#include "EVE_commands.h"
 
 /* EVE Memory Commands - used with EVE_memWritexx and EVE_memReadxx */
 #define MEM_WRITE 0x80U /* EVE Host Memory Write */
@@ -193,8 +194,7 @@ uint16_t EVE_memRead16(uint32_t const ft_address)
     spi_transmit_32(((ft_address >> 16U) & 0x0000007fUL) + (ft_address & 0x0000ff00UL) + ((ft_address & 0x000000ffUL) << 16U));
     uint8_t lowbyte = spi_receive(0U); /* read low byte */
     uint8_t hibyte = spi_receive(0U); /* read high byte */
-    data = (uint16_t) (hibyte << 8U);
-    data = (uint16_t) (data + lowbyte);
+    data = ((uint16_t) hibyte * 256U) | lowbyte;
     EVE_cs_clear();
     return data;
 }
@@ -319,7 +319,7 @@ static void CoprocessorFaultRecover(void)
 
         /* restore REG_PCLK in case it was set to zero by an error */
 #if (EVE_GEN > 3) && (defined EVE_PCLK_FREQ)
-        EVE_memWrite16(REG_PCLK_FREQ, EVE_PCLK_FREQ);
+        EVE_memWrite16(REG_PCLK_FREQ, (uint16_t) EVE_PCLK_FREQ);
         EVE_memWrite8(REG_PCLK, 1U); /* enable extsync mode */
 #else
         EVE_memWrite8(REG_PCLK, EVE_PCLK);
@@ -383,15 +383,19 @@ uint8_t EVE_busy(void)
     return ret;
 }
 
-/* Returns EVE_FAULT_RECOVERED if EVE_busy() detected a coprocessor fault */
-/* and tried to recover from it by resetting the coprocessor. */
-/* The internal fault indicator is cleared so it could be set by EVE_busy() again. */
-/* Returns E_OK if EVE_busy() did not detect a coprocessor fault. */
+/**
+ * @brief Helper function to check if EVE_busy() tried to recover from
+ * a coprocessor fault.
+ * The internal fault indicator is cleared so it could be set by EVE_busy() again.
+ *
+ * @return Returns EVE_FAULT_RECOVERED if EVE_busy() detected a coprocessor fault.
+ * Returns E_OK if EVE_busy() did not detect a coprocessor fault.
+ */
 uint8_t EVE_get_and_reset_fault_state(void)
 {
     uint8_t ret = E_OK;
 
-    if (fault_recovered)
+    if (EVE_FAULT_RECOVERED == fault_recovered)
     {
         ret = EVE_FAULT_RECOVERED;
         fault_recovered = E_OK;
@@ -449,6 +453,7 @@ void block_transfer(const uint8_t *p_data, uint32_t len)
     while (bytes_left > 0U)
     {
         uint32_t block_len;
+        uint32_t offset = 0U;
 
         block_len = (bytes_left > 3840UL) ? 3840UL : bytes_left;
 
@@ -456,9 +461,9 @@ void block_transfer(const uint8_t *p_data, uint32_t len)
         spi_transmit((uint8_t) 0xB0U); /* high-byte of REG_CMDB_WRITE + MEM_WRITE */
         spi_transmit((uint8_t) 0x25U); /* middle-byte of REG_CMDB_WRITE */
         spi_transmit((uint8_t) 0x78U); /* low-byte of REG_CMDB_WRITE */
-        private_block_write(p_data, (uint16_t) block_len);
+        private_block_write(&p_data[offset], (uint16_t) block_len);
         EVE_cs_clear();
-        p_data = &p_data[block_len];
+        offset += block_len;
         bytes_left -= block_len;
         EVE_execute_cmd();
     }
@@ -1324,26 +1329,26 @@ const uint8_t eve_gt911_data[1184U] PROGMEM = {
 }
 #endif
 
-static uint8_t wait_chipid(void)
+/**
+ * @brief Waits for either reading REG_ID with a value of 0x7c, indicating that
+ *  an EVE chip is present and ready to communicate, or untill a timeout of 400ms has passed.
+ *
+ * @return Returns E_OK in case of success, EVE_FAIL_REGID_TIMEOUT if the
+ * value of 0x7c could not be read.
+ */
+static uint8_t wait_regid(void)
 {
-    uint8_t ret = EVE_FAIL_CHIPID_TIMEOUT;
-    uint8_t chipid = 0U;
-    uint16_t timeout = 0U;
+    uint8_t ret = EVE_FAIL_REGID_TIMEOUT;
+    uint8_t regid = 0U;
 
-    for (;;)
+    for (uint16_t timeout = 0U; timeout < 400U; timeout++)
     {
         DELAY_MS(1U);
 
-        chipid = EVE_memRead8(REG_ID);
-        if (0x7cU == chipid) /* EVE is up and running */
+        regid = EVE_memRead8(REG_ID);
+        if (0x7cU == regid) /* EVE is up and running */
         {
             ret = E_OK;
-            break;
-        }
-
-        timeout++;
-        if (timeout > 400U) /* EVE might not be with us at all */
-        {
             break;
         }
     }
@@ -1351,13 +1356,20 @@ static uint8_t wait_chipid(void)
     return ret;
 }
 
+/**
+ * @brief Waits for either REG_CPURESET to indicate that the audio, touch and
+ * coprocessor units finished their respective reset cycles,
+ * or untill a timeout of 50ms has passed.
+ *
+ * @return Returns E_OK in case of success, EVE_FAIL_RESET_TIMEOUT if either the
+ * audio, touch or coprocessor unit indicate a fault by not returning from reset.
+ */
 static uint8_t wait_reset(void)
 {
     uint8_t ret = EVE_FAIL_RESET_TIMEOUT;
     uint8_t reset = 0U;
-    uint16_t timeout = 0U;
 
-    for (;;)
+    for (uint16_t timeout = 0U; timeout < 50U; timeout++)
     {
         DELAY_MS(1U);
 
@@ -1367,20 +1379,16 @@ static uint8_t wait_reset(void)
             ret = E_OK;
             break;
         }
-
-        timeout++;
-        if (timeout > 50U) /* audio, touch or coprocessor engine fault */
-        {
-            break;
-        }
     }
 
     return ret;
 }
 
-/* Writes all parameters defined for the display selected in EVE_config.h to */
-/* the corresponding registers, is used by EVE_init() and can be used to */
-/* refresh the register values if needed.*/
+/**
+ * @brief Writes all parameters defined for the display selected in EVE_config.h
+ * to the corresponding registers.
+ * It is used by EVE_init() and can be used to refresh the register values if needed.
+ */
 void EVE_write_display_parameters(void)
 {
     /* Initialize Display */
@@ -1417,7 +1425,7 @@ static void enable_pixel_clock(void)
     EVE_memWrite8(REG_GPIO, 0x80U); /* enable the DISP signal to the LCD panel, it is set to output in REG_GPIO_DIR by default */
 
 #if (EVE_GEN > 3) && (defined EVE_PCLK_FREQ)
-    EVE_memWrite16(REG_PCLK_FREQ, EVE_PCLK_FREQ);
+    EVE_memWrite16(REG_PCLK_FREQ, (uint16_t) EVE_PCLK_FREQ);
 
 #if defined (EVE_SET_REG_PCLK_2X)
     EVE_memWrite8(REG_PCLK_2X, 1U);
@@ -1464,7 +1472,7 @@ uint8_t EVE_init(void)
     EVE_cmdWrite(EVE_ACTIVE, 0U); /* start EVE */
     DELAY_MS(40U); /* give EVE a moment of silence to power up */
 
-    ret = wait_chipid();
+    ret = wait_regid();
     if (E_OK == ret)
     {
         ret = wait_reset();
@@ -1605,7 +1613,7 @@ static void private_string_write(const char *p_text)
             padding--;
         }
     }
-    else /* we are in burst mode so every transfer is 32 bits */
+    else /* we are in burst mode, so every transfer is 32 bits */
     {
         for (uint8_t textindex = 0U; textindex < 249U; textindex += 4U)
         {
@@ -1618,7 +1626,7 @@ static void private_string_write(const char *p_text)
                 if (0U == data)
                 {
                     spi_transmit_burst(calc);
-                    return;
+                    return; /* MISRA 2012 rule 15.5 (advisory) violation */
                 }
 
                 calc += ((uint32_t)data) << (index * 8U);
@@ -3385,21 +3393,23 @@ void EVE_calibrate_manual(uint16_t width, uint16_t height)
     int32_t touch_y[3U];
     uint32_t touch_value;
     int32_t tmp;
-    int32_t div;
+    int32_t divi;
     int32_t trans_matrix[6U];
     uint8_t count = 0U;
-    char num[2U];
+    uint8_t calc = 0U;
+    uint32_t calc32 = 0U;
+    char num[4U];
     uint8_t touch_lock = 1U;
 
     /* these values determine where your calibration points will be drawn on your display */
-    display_x[0U] = (int32_t) (width / 6U);
-    display_y[0U] = (int32_t) (height / 6U);
+    display_x[0U] = (int32_t) width / 6;
+    display_y[0U] = (int32_t) height / 6;
 
-    display_x[1U] = (int32_t) (width - (width / 8U));
-    display_y[1U] = (int32_t) (height / 2U);
+    display_x[1U] = (int32_t) width - ((int32_t) width / 8);
+    display_y[1U] = (int32_t) height / 2;
 
-    display_x[2U] = (int32_t) (width / 2U);
-    display_y[2U] = (int32_t) (height - (height / 8U));
+    display_x[2U] = (int32_t) width / 2;
+    display_y[2U] = (int32_t) height - ((int32_t) height / 8);
 
     while (count < 3U)
     {
@@ -3414,8 +3424,9 @@ void EVE_calibrate_manual(uint16_t width, uint16_t height)
         EVE_cmd_dl(VERTEX2F((uint32_t)(display_x[count]) * 16U, (uint32_t)((display_y[count])) * 16U));
         EVE_cmd_dl(DL_END);
         EVE_cmd_dl(DL_COLOR_RGB | 0xffffffUL);
-        EVE_cmd_text((int16_t)(width / 2U), 20, 26, EVE_OPT_CENTER, "tap on the dot");
-        num[0U] = (char) (count + 0x31U);
+        EVE_cmd_text((int16_t) width / 2, 20, 26, EVE_OPT_CENTER, "tap on the dot");
+        calc = count + 0x31U;
+        num[0U] = (char) calc;
         num[1U] = (char) 0U; /* null terminated string of one character */
         EVE_cmd_text((int16_t) display_x[count], (int16_t) display_y[count], 27, EVE_OPT_CENTER, num);
 
@@ -3438,8 +3449,10 @@ void EVE_calibrate_manual(uint16_t width, uint16_t height)
             {
                 if (0UL == (touch_value & 0x80000000UL)) /* check if a touch is detected */
                 {
-                    touch_x[count] = (int32_t) ((touch_value >> 16U) & 0x03FFU); /* raw Touchscreen Y coordinate */
-                    touch_y[count] = (int32_t) (touch_value & 0x03FFU);         /* raw Touchscreen Y coordinate */
+                    calc32 = ((touch_value >> 16U) & 0x03FFUL);
+                    touch_x[count] = (int32_t) calc32; /* raw Touchscreen X coordinate */
+                    calc32 = touch_value & 0x03FFUL;
+                    touch_y[count] = (int32_t) calc32; /* raw Touchscreen Y coordinate */
                     touch_lock = 1U;
                     count++;
                     break; /* leave for (;;) */
@@ -3448,33 +3461,33 @@ void EVE_calibrate_manual(uint16_t width, uint16_t height)
         }
     }
 
-    div = ((touch_x[0U] - touch_x[2U]) * (touch_y[1U] - touch_y[2U])) - ((touch_x[1U] - touch_x[2U]) * (touch_y[0U] - touch_y[2U]));
+    divi = ((touch_x[0U] - touch_x[2U]) * (touch_y[1U] - touch_y[2U])) - ((touch_x[1U] - touch_x[2U]) * (touch_y[0U] - touch_y[2U]));
 
     tmp = (((display_x[0U] - display_x[2U]) * (touch_y[1U] - touch_y[2U])) -
            ((display_x[1U] - display_x[2U]) * (touch_y[0U] - touch_y[2U])));
-    trans_matrix[0U] = (int32_t) (((int64_t) tmp * 65536) / div);
+    trans_matrix[0U] = (int32_t) (((int64_t) tmp * 65536) / divi);
 
     tmp = (((touch_x[0U] - touch_x[2U]) * (display_x[1U] - display_x[2U])) -
            ((display_x[0U] - display_x[2U]) * (touch_x[1U] - touch_x[2U])));
-    trans_matrix[1U] = (int32_t) (((int64_t) tmp * 65536) / div);
+    trans_matrix[1U] = (int32_t) (((int64_t) tmp * 65536) / divi);
 
     tmp = ((touch_y[0U] * (((touch_x[2U] * display_x[1U]) - (touch_x[1U] * display_x[2U])))) +
            (touch_y[1U] * (((touch_x[0U] * display_x[2U]) - (touch_x[2U] * display_x[0U])))) +
            (touch_y[2U] * (((touch_x[1U] * display_x[0U]) - (touch_x[0U] * display_x[1U])))));
-    trans_matrix[2U] = (int32_t) (((int64_t) tmp * 65536) / div);
+    trans_matrix[2U] = (int32_t) (((int64_t) tmp * 65536) / divi);
 
     tmp = (((display_y[0U] - display_y[2U]) * (touch_y[1U] - touch_y[2U])) -
            ((display_y[1U] - display_y[2U]) * (touch_y[0U] - touch_y[2U])));
-    trans_matrix[3U] = (int32_t) (((int64_t) tmp * 65536) / div);
+    trans_matrix[3U] = (int32_t) (((int64_t) tmp * 65536) / divi);
 
     tmp = (((touch_x[0U] - touch_x[2U]) * (display_y[1U] - display_y[2U])) -
            ((display_y[0U] - display_y[2U]) * (touch_x[1U] - touch_x[2U])));
-    trans_matrix[4U] = (int32_t) (((int64_t) tmp * 65536) / div);
+    trans_matrix[4U] = (int32_t) (((int64_t) tmp * 65536) / divi);
 
     tmp = ((touch_y[0U] * (((touch_x[2U] * display_y[1U]) - (touch_x[1U] * display_y[2U])))) +
            (touch_y[1U] * (((touch_x[0U] * display_y[2U]) - (touch_x[2U] * display_y[0U])))) +
            (touch_y[2U] * (((touch_x[1U] * display_y[0U]) - (touch_x[0U] * display_y[1U])))));
-    trans_matrix[5U] = (int32_t) (((int64_t) tmp * 65536) / div);
+    trans_matrix[5U] = (int32_t) (((int64_t) tmp * 65536) / divi);
 
     EVE_memWrite32(REG_TOUCH_TRANSFORM_A, (uint32_t) trans_matrix[0U]);
     EVE_memWrite32(REG_TOUCH_TRANSFORM_B, (uint32_t) trans_matrix[1U]);

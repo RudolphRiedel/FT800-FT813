@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-07-21
+@date    2023-07-28
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -83,6 +83,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - added ARDUINO_GIGA target
 - added ARDUINO_PORTENTA_H7 target
 - added generic Arduino STM32 target
+- fix: Tricore and V851 targets did not use the sub-folder for the EVE_target_xx.h file
 
 */
 
@@ -163,7 +164,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #if defined (__v851__)
 
-#include "EVE_target_V851.h"
+#include "EVE_target/EVE_target_V851.h"
 
 #endif /* V851 */
 
@@ -172,7 +173,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #if defined (__TRICORE__)
 
-#include "EVE_target_Tricore.h"
+#include "EVE_target/EVE_target_Tricore.h"
 
 #endif /* __TRICORE__ */
 

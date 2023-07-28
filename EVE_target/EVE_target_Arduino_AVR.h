@@ -117,12 +117,12 @@ static inline uint8_t spi_receive(uint8_t data)
     return wrapper_spi_receive(data);
 }
 
-static inline uint8_t fetch_flash_byte(const uint8_t *data)
+static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
 #if defined (RAMPZ)
-    return (pgm_read_byte_far(data));
+    return (pgm_read_byte_far(p_data));
 #else
-    return (pgm_read_byte_near(data));
+    return (pgm_read_byte_near(p_data));
 #endif
 }
 

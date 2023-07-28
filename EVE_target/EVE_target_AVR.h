@@ -165,7 +165,7 @@ static inline uint8_t spi_receive(uint8_t data)
 #endif
 }
 
-static inline uint8_t fetch_flash_byte(const uint8_t *data)
+static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
     /* do we have an AVR with more than 64kB FLASH memory? */
 #if defined (__AVR_HAVE_ELPM__) 
