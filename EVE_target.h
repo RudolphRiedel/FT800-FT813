@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-07-28
+@date    2023-08-01
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -84,6 +84,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - added ARDUINO_PORTENTA_H7 target
 - added generic Arduino STM32 target
 - fix: Tricore and V851 targets did not use the sub-folder for the EVE_target_xx.h file
+- fix: while working, the check for multiple different targets was not implemented correctly
 
 */
 
@@ -180,7 +181,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined (__SAMC21E18A__) || (__SAMC21J18A__) || (__SAMC21J17A__)
+#if defined (__SAMC21E18A__) \
+    || defined (__SAMC21J18A__) \
+    || defined (__SAMC21J17A__)
 /* note: target as set by AtmelStudio, valid  are all from the same family */
 
 #include "EVE_target/EVE_target_ATSAMC21.h"
@@ -190,7 +193,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined (__SAME51J19A__) || (__SAME51J18A__) || (__SAMD51P20A__) || (__SAMD51J19A__) || (__SAMD51G18A__)
+#if defined (__SAME51J19A__) \
+    || defined (__SAME51J18A__) \
+    || defined (__SAMD51P20A__) \
+    || defined (__SAMD51J19A__) \
+    || defined (__SAMD51G18A__)
 /* note: target as set by AtmelStudio, valid  are all from the same family */
 
 #include "EVE_target/EVE_target_ATSAMx5x.h"
@@ -209,7 +216,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined (STM32L0) || (STM32F0) || (STM32F1) || (STM32F3) || (STM32F4) || (STM32G4) || (STM32H7) || (STM32G0)
+#if defined (STM32L0) \
+    || defined (STM32F0) \
+    || defined (STM32F1) \
+    || defined (STM32F3) \
+    || defined (STM32F4) \
+    || defined (STM32G4) \
+    || defined (STM32H7) \
+    || defined (STM32G0)
 /* set with "build_flags" in platformio.ini or as defines in your build environment */
 
 #include "EVE_target/EVE_target_STM32.h"
@@ -238,7 +252,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined (CPU_S32K148) || (CPU_S32K144HFT0VLLT)
+#if defined (CPU_S32K148) \
+    || defined (CPU_S32K144HFT0VLLT)
 
 #include "EVE_target/EVE_target_S32K14x.h"
 
@@ -323,11 +338,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "EVE_target/EVE_target_Arduino_Nucleo_F446RE.h"
 
-#elif defined (WIZIOPICO) || (PICOPI)
+#elif defined (WIZIOPICO) || defined (PICOPI)
 
 #include "EVE_target/EVE_target_Arduino_RP2040.h"
 
-#elif defined (ARDUINO_TEENSY41) || (ARDUINO_TEENSY40)
+#elif defined (ARDUINO_TEENSY41) || defined (ARDUINO_TEENSY40)
 
 #include "EVE_target/EVE_target_Arduino_Teensy4.h"
 
@@ -339,7 +354,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "EVE_target/EVE_target_Arduino_XMC1100_XMC2GO.h"
 
-#elif defined (ARDUINO_UNOR4_MINIMA) || (ARDUINO_UNOR4_WIFI)
+#elif defined (ARDUINO_UNOR4_MINIMA) || defined (ARDUINO_UNOR4_WIFI)
 
 #include "EVE_target/EVE_target_Arduino_UNO_R4.h"
 
@@ -347,7 +362,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include  "EVE_target/EVE_target_Arduino_GIGA_R1.h"
 
-#elif defined (ARDUINO_PORTENTA_H7_M7) || (ARDUINO_PORTENTA_H7_M4)
+#elif defined (ARDUINO_PORTENTA_H7_M7) || defined (ARDUINO_PORTENTA_H7_M4)
 
 #include  "EVE_target/EVE_target_Arduino_Portenta_H7.h"
 

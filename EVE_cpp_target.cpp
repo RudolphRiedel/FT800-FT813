@@ -229,7 +229,9 @@ void EVE_start_dma_transfer(void)
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined (ARDUINO_TEENSY41) || (ARDUINO_TEENSY35) || (ARDUINO_TEENSY40)
+#if defined (ARDUINO_TEENSY41) \
+    || defined (ARDUINO_TEENSY35) \
+    || defined (ARDUINO_TEENSY40)
 
 #include "EVE_target.h"
 #include <SPI.h>
@@ -266,7 +268,7 @@ void EVE_start_dma_transfer(void)
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined (WIZIOPICO) || (PICOPI)
+#if defined (WIZIOPICO) || defined (PICOPI)
 /* note: set in platformio.ini by "build_flags = -D WIZIOPICO" */
 #include "EVE_target.h"
 #include "EVE_commands.h"
@@ -336,7 +338,7 @@ void EVE_start_dma_transfer(void)
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined (ARDUINO_UNOR4_MINIMA) || (ARDUINO_UNOR4_WIFI)
+#if defined (ARDUINO_UNOR4_MINIMA) || defined (ARDUINO_UNOR4_WIFI)
 
 //#include "EVE_target.h"
 #include "EVE.h"
@@ -453,7 +455,7 @@ void EVE_start_dma_transfer(void)
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined (ARDUINO_PORTENTA_H7_M7) || (ARDUINO_PORTENTA_H7_M4)
+#if defined (ARDUINO_PORTENTA_H7_M7) || defined (ARDUINO_PORTENTA_H7_M4)
 
 #include "EVE.h"
 #include <SPI.h>

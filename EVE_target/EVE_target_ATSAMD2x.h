@@ -80,7 +80,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #if !defined (ARDUINO)
 #if defined (__GNUC__)
 
-#if defined (__SAMD21E18A__) || (__SAMD21G18A__) || (__SAMD21J17A__)
+#if defined (__SAMD21E18A__) \
+    || defined (__SAMD21G18A__) \
+    || defined (__SAMD21J17A__)
 /* note: target as set by AtmelStudio, valid are all from the same family */
 
 #include "sam.h"

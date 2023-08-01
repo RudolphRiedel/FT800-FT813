@@ -58,7 +58,7 @@ extern "C"
 {
 #endif
 
-#if defined (WIZIOPICO) || (PICOPI)
+#if defined (WIZIOPICO) || defined (PICOPI)
 /* note: set in platformio.ini by "build_flags = -D WIZIOPICO" */
 
 #include "hardware/pio.h"

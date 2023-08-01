@@ -52,7 +52,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 extern "C" {
 #endif
 
-#if defined (ESP8266) || (ESP32)
+#if defined (ESP8266) || defined (ESP32)
     void wrapper_spi_transmit(uint8_t data)
     {
         SPI.write(data);
@@ -68,7 +68,7 @@ extern "C" {
         SPI.transfer(data);
     }
 
-#if defined (WIZIOPICO) || (XMC1100_XMC2GO)
+#if defined (WIZIOPICO) || defined (XMC1100_XMC2GO)
     void wrapper_spi_transmit_32(uint32_t data)
     {
         SPI.transfer((uint8_t *) &data, 4);

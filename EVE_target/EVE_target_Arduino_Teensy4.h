@@ -54,7 +54,7 @@ extern "C"
 {
 #endif
 
-#if defined (ARDUINO_TEENSY41) || (ARDUINO_TEENSY40)
+#if defined (ARDUINO_TEENSY41) || defined (ARDUINO_TEENSY40)
 
 /* you may define these in your build-environment to use different settings */
 #if !defined (EVE_CS)

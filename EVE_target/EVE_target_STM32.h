@@ -43,7 +43,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #if defined (__GNUC__)
 
 /* set with "build_flags" in platformio.ini or as defines in your build environment */
-#if defined (STM32L0) || (STM32F0) || (STM32F1) || (STM32F3) || (STM32F4) || (STM32G4) || (STM32H7) || (STM32G0)
+#if defined (STM32L0) \
+    || defined (STM32F0) \
+    || defined (STM32F1) \
+    || defined (STM32F3) \
+    || defined (STM32F4) \
+    || defined (STM32G4) \
+    || defined (STM32H7) \
+    || defined (STM32G0)
 
 #if defined (STM32L0) /* set with "build_flags = -D STM32L0" in platformio.ini */
 #include "stm32l0xx.h"
