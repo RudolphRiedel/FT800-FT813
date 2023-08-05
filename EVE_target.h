@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-08-01
+@date    2023-08-05
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -85,6 +85,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - added generic Arduino STM32 target
 - fix: Tricore and V851 targets did not use the sub-folder for the EVE_target_xx.h file
 - fix: while working, the check for multiple different targets was not implemented correctly
+- added ARDUINO_HLK_w80x target for W801, W806 and Air103 boards
 
 */
 
@@ -365,6 +366,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #elif defined (ARDUINO_PORTENTA_H7_M7) || defined (ARDUINO_PORTENTA_H7_M4)
 
 #include  "EVE_target/EVE_target_Arduino_Portenta_H7.h"
+
+#elif defined (ARDUINO_HLK_w80x)
+
+#include  "EVE_target/EVE_target_Arduino_W80x.h"
 
 #elif defined (ARDUINO_ARCH_STM32)
 
