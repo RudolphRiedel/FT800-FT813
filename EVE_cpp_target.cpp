@@ -2,7 +2,7 @@
 @file    EVE_target.cpp
 @brief   target specific functions for C++ targets, so far only Arduino targets
 @version 5.0
-@date    2023-07-22
+@date    2023-08-12
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -60,6 +60,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - added generic Arduino STM32 target
 - added check and code for optional macro parameter EVE_SPI_BOOST in generic Arduino STM32 target
 - fix: target ARDUINO_NUCLEO_F446RE did not build anymore
+- restored the ESP32 ESP-IDF code and made it selectable by macro EVE_USE_ESP_IDF
+- removed the switching of clock speeds for ESP32 Arduino buffer transfers to give back control to the application
 
  */
 
@@ -489,6 +491,52 @@ void EVE_start_dma_transfer(void)
 #include "EVE.h"
 #include <SPI.h>
 
+#if defined (EVE_USE_ESP_IDF)
+/* note: this is using the ESP-IDF driver as the Arduino class */
+/* and driver does not allow DMA for SPI */
+/* do not use this if you do not want to use the SPI exclusively for EVE */
+spi_device_handle_t EVE_spi_device = {};
+spi_device_handle_t EVE_spi_device_simple = {};
+
+static void eve_spi_post_transfer_callback(void)
+{
+    digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listen */
+
+    #if defined (EVE_DMA)
+        EVE_dma_busy = 0;
+    #endif
+}
+
+void EVE_init_spi(void)
+{
+    spi_bus_config_t buscfg = {};
+    spi_device_interface_config_t devcfg = {};
+
+    buscfg.mosi_io_num = EVE_MOSI;
+    buscfg.miso_io_num = EVE_MISO;
+    buscfg.sclk_io_num = EVE_SCK;
+    buscfg.quadwp_io_num = -1;
+    buscfg.quadhd_io_num = -1;
+    buscfg.max_transfer_sz= 4088;
+
+    devcfg.clock_speed_hz = 16UL * 1000000UL; /* clock = 16 MHz */
+    devcfg.mode = 0;          /* SPI mode 0 */
+    devcfg.spics_io_num = -1; /* CS pin operated by app */
+    devcfg.queue_size = 3;    /* we need only one transaction in the que */
+    devcfg.address_bits = 24; /* 24 bits for the address */
+    devcfg.command_bits = 0;  /* command operated by app */
+    devcfg.post_cb = (transaction_cb_t)eve_spi_post_transfer_callback;
+
+    spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO);
+    spi_bus_add_device(SPI2_HOST, &devcfg, &EVE_spi_device);
+
+    devcfg.address_bits = 0;
+    devcfg.post_cb = 0;
+    devcfg.clock_speed_hz = 10UL * 1000000UL; /* Clock = 10 MHz */
+    spi_bus_add_device(SPI2_HOST, &devcfg, &EVE_spi_device_simple);
+}
+#endif
+
 #if defined (EVE_DMA)
 
 uint32_t EVE_dma_buffer[1025U];
@@ -501,17 +549,23 @@ void EVE_init_dma(void)
 
 void EVE_start_dma_transfer(void)
 {
-    SPI.endTransaction();
-    SPI.beginTransaction(SPISettings(20000000, MSBFIRST, SPI_MODE0));
+#if defined (EVE_USE_ESP_IDF)
+    spi_transaction_t EVE_spi_transaction = {};
+    digitalWrite(EVE_CS, LOW); /* make EVE listen */
+    EVE_spi_transaction.tx_buffer = (uint8_t *) &EVE_dma_buffer[1];
+    EVE_spi_transaction.length = (EVE_dma_buffer_index-1) * 4U * 8U;
+    EVE_spi_transaction.addr = 0x00b02578U; /* WRITE + REG_CMDB_WRITE; */
+    spi_device_queue_trans(EVE_spi_device, &EVE_spi_transaction, portMAX_DELAY);
+    EVE_dma_busy = 42;
+#else
+/* no DMA for Arduino, but at least we can transfer a single large buffer */
     EVE_cs_set();
-//    SPI.transfer(((uint8_t *) &EVE_dma_buffer[0]) + 1U, (((EVE_dma_buffer_index) * 4U) - 1U));
     SPI.writeBytes(((uint8_t *) &EVE_dma_buffer[0]) + 1U, (((EVE_dma_buffer_index) * 4U) - 1U));
     EVE_cs_clear();
-    SPI.endTransaction();
-    SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+#endif
 }
+#endif /* EVE_DMA */
 
-#endif /* DMA */
 #endif /* ESP32 */
 
 /* ################################################################## */

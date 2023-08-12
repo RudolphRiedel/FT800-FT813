@@ -2,7 +2,7 @@
 @file    EVE_target_Arduino_ESP32.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-07-20
+@date    2023-08-12
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -39,6 +39,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   this is slower and blocking but Arduino-ESP32 got siginificantly faster by now
   and using only the SPI class allows other SPI devices more easily
 - changed wrapper_spi_transmit_32() to use SPI.write32() which requires a byte-swap
+- restored the ESP-IDF code and made it selectable by macro EVE_USE_ESP_IDF
 
 */
 
@@ -50,6 +51,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <stdint.h>
 #include <Arduino.h>
 #include "../EVE_cpp_wrapper.h"
+#include "driver/spi_master.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -90,17 +92,19 @@ static inline void EVE_pdn_clear(void)
     digitalWrite(EVE_PDN, HIGH); /* power up */
 }
 
-static inline void EVE_cs_set(void)
+static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
-    digitalWrite(EVE_CS, LOW); /* make EVE listen */
+    return *p_data;
 }
 
-static inline void EVE_cs_clear(void)
-{
-    digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listen */
-}
+/* do not use the Arduino SPI class but ESP-IDF */
+/* this enables real DMA transfers but is not compatible with the Arduino SPI class */
+/* preferred method of enabling this is by -DEVE_USE_ESP_IDF in your build environment */
+/* #define EVE_USE_ESP_IDF */
 
-#define EVE_DMA /* no DMA for now, "just" buffer transfers */
+/* real DMA with EVE_USE_ESP_IDF, "only" buffer transfers with Arduino */
+/* enabled by default for ESP32 as the necessary 4k buffer should be no issue */
+#define EVE_DMA
 
 #if defined (EVE_DMA)
 extern uint32_t EVE_dma_buffer[1025U];
@@ -110,6 +114,68 @@ extern volatile uint8_t EVE_dma_busy;
 void EVE_init_dma(void);
 void EVE_start_dma_transfer(void);
 #endif
+
+#if defined (EVE_USE_ESP_IDF) /* do not use the Arduino SPI class */
+void EVE_init_spi(void);
+
+extern spi_device_handle_t EVE_spi_device;
+extern spi_device_handle_t EVE_spi_device_simple;
+
+static inline void EVE_cs_set(void)
+{
+    spi_device_acquire_bus(EVE_spi_device_simple, portMAX_DELAY);
+    digitalWrite(EVE_CS, LOW); /* make EVE listen */
+}
+
+static inline void EVE_cs_clear(void)
+{
+    digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listen */
+    spi_device_release_bus(EVE_spi_device_simple);
+}
+
+static inline void spi_transmit(uint8_t data)
+{
+    spi_transaction_t trans = {};
+    trans.length = 8;
+    trans.rxlength = 0;
+    trans.flags = SPI_TRANS_USE_TXDATA;
+    trans.tx_data[0] = data;
+    spi_device_polling_transmit(EVE_spi_device_simple, &trans);
+}
+
+static inline void spi_transmit_32(uint32_t data)
+{
+    spi_transaction_t trans = {};
+    trans.length = 32;
+    trans.rxlength = 0;
+    trans.flags = 0;
+    trans.tx_buffer = &data;
+    spi_device_polling_transmit(EVE_spi_device_simple, &trans);
+}
+
+static inline uint8_t spi_receive(uint8_t data)
+{
+    spi_transaction_t trans = {};
+    trans.length = 8;
+    trans.rxlength = 8;
+    trans.flags = (SPI_TRANS_USE_TXDATA | SPI_TRANS_USE_RXDATA);
+    trans.tx_data[0] = data;
+    spi_device_polling_transmit(EVE_spi_device_simple, &trans);
+
+    return trans.rx_data[0];
+}
+
+#else /* Arduino SPI class compatible code */
+
+static inline void EVE_cs_set(void)
+{
+    digitalWrite(EVE_CS, LOW); /* make EVE listen */
+}
+
+static inline void EVE_cs_clear(void)
+{
+    digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listen */
+}
 
 static inline void spi_transmit(uint8_t data)
 {
@@ -121,6 +187,13 @@ static inline void spi_transmit_32(uint32_t data)
     wrapper_spi_transmit_32(__builtin_bswap32(data));
 }
 
+static inline uint8_t spi_receive(uint8_t data)
+{
+    return wrapper_spi_receive(data);
+}
+
+#endif
+
 /* spi_transmit_burst() is only used for cmd-FIFO commands */
 /* so it *always* has to transfer 4 bytes */
 static inline void spi_transmit_burst(uint32_t data)
@@ -130,16 +203,6 @@ static inline void spi_transmit_burst(uint32_t data)
 #else
     spi_transmit_32(data);
 #endif
-}
-
-static inline uint8_t spi_receive(uint8_t data)
-{
-    return wrapper_spi_receive(data);
-}
-
-static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
-{
-    return *p_data;
 }
 
 #ifdef __cplusplus
