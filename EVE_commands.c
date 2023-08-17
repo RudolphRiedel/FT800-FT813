@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2023-06-28
+@date    2023-08-17
 @author  Rudolph Riedel
 
 @section info
@@ -146,6 +146,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - fixed a couple of minor issues from static code analysis
 - reworked the burst part of private_string_write() to be less complex
 - renamed chipid references to regid as suggested by #93 on github
+- Bugfix: broke transfers of buffers larger than 3840 when fixing issues from static code analysis
 
 */
 
@@ -448,12 +449,12 @@ void block_transfer(const uint8_t *p_data, uint32_t len); /* prototype to comply
 void block_transfer(const uint8_t *p_data, uint32_t len)
 {
     uint32_t bytes_left;
+    uint32_t offset = 0U;
 
     bytes_left = len;
     while (bytes_left > 0U)
     {
         uint32_t block_len;
-        uint32_t offset = 0U;
 
         block_len = (bytes_left > 3840UL) ? 3840UL : bytes_left;
 
