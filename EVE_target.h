@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-08-05
+@date    2023-09-01
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -86,6 +86,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - fix: Tricore and V851 targets did not use the sub-folder for the EVE_target_xx.h file
 - fix: while working, the check for multiple different targets was not implemented correctly
 - added ARDUINO_HLK_w80x target for W801, W806 and Air103 boards
+- modified the RISC-V entry as there are ESP32 now with RISC-V core
 
 */
 
@@ -208,7 +209,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined (__riscv)
+#if defined (__riscv) && !defined (ESP_PLATFORM)
 
 #include "EVE_target/EVE_target_GD32VF103.h"
 
