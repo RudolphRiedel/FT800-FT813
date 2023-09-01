@@ -85,7 +85,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #if !defined (ARDUINO)
 #if defined (__GNUC__)
 
-#if defined (__SAMC21E18A__) || (__SAMC21J18A__) || (__SAMC21J17A__)
+#if defined (__SAMC21E18A__) \
+    || defined (__SAMC21J18A__) \
+    || defined (__SAMC21J17A__)
 /* note: target as set by AtmelStudio, valid are all from the same family */
 
 #include "sam.h"
@@ -105,7 +107,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define EVE_SPI 0U
 #endif
 
-#if defined(EVE_DMA) && !defined(EVE_DMA_CHANNEL)
+#if defined (EVE_DMA) && !defined (EVE_DMA_CHANNEL)
 #define EVE_DMA_CHANNEL 0U
 #endif
 
@@ -186,11 +188,11 @@ static inline void spi_transmit_32(uint32_t data)
 /* so it *always* has to transfer 4 bytes */
 static inline void spi_transmit_burst(uint32_t data)
 {
-    #if defined (EVE_DMA)
-        EVE_dma_buffer[EVE_dma_buffer_index++] = data;
-    #else
-        spi_transmit_32(data);
-    #endif
+#if defined (EVE_DMA)
+    EVE_dma_buffer[EVE_dma_buffer_index++] = data;
+#else
+    spi_transmit_32(data);
+#endif
 }
 
 static inline uint8_t spi_receive(uint8_t data)
@@ -200,9 +202,9 @@ static inline uint8_t spi_receive(uint8_t data)
     return EVE_SPI_SERCOM->SPI.DATA.reg;
 }
 
-static inline uint8_t fetch_flash_byte(const uint8_t *data)
+static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
-    return *data;
+    return *p_data;
 }
 
 #endif /* SAMC2x */

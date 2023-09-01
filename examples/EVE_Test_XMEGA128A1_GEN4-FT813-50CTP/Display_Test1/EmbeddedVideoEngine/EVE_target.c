@@ -68,7 +68,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined (__SAMC21E18A__) || (__SAMC21J18A__) || (__SAMC21J17A__) || (__SAMC21J16A__)
+#if defined (__SAMC21E18A__) \
+    || defined (__SAMC21J18A__) \
+    || defined (__SAMC21J17A__) \
+    || defined (__SAMC21J16A__)
 /* note: target as set by AtmelStudio, valid  are all from the same family */
 
 void DELAY_MS(uint16_t val)
@@ -141,7 +144,11 @@ void DMAC_Handler()
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined (__SAME51J19A__) || (__SAME51J18A__) || (__SAMD51P20A__) || (__SAMD51J19A__) || (__SAMD51G18A__)
+#if defined (__SAME51J19A__) \
+    || defined (__SAME51J18A__) \
+    || defined (__SAMD51P20A__) \
+    || defined (__SAMD51J19A__) \
+    || defined (__SAMD51G18A__)
 /* note: target as set by AtmelStudio, valid  are all from the same family */
 
 void DELAY_MS(uint16_t val)
@@ -217,7 +224,14 @@ void DMAC_0_Handler()
 /* ################################################################## */
 
 /* set with "build_flags" in platformio.ini or as defines in your build environment */
-#if defined (STM32L0) || (STM32F0) || (STM32F1) || (STM32F3) || (STM32F4) || (STM32G4) || (STM32H7)
+#if defined (STM32L0) \
+    || defined (STM32F0) \
+    || defined (STM32F1) \
+    || defined (STM32F3) \
+    || defined (STM32F4) \
+    || defined (STM32G4) \
+    || defined (STM32H7) \
+    || defined (STM32G0)
 
 #include "EVE_target.h"
 #include "EVE_commands.h"
@@ -348,9 +362,9 @@ spi_device_handle_t EVE_spi_device_simple = {0};
 static void eve_spi_post_transfer_callback(void)
 {
     gpio_set_level(EVE_CS, 1); /* tell EVE to stop listen */
-    #if defined (EVE_DMA)
+#if defined (EVE_DMA)
         EVE_dma_busy = 0;
-    #endif
+#endif
 }
 
 void EVE_init_spi(void)
@@ -490,7 +504,7 @@ void EVE_start_dma_transfer(void)
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined (CPU_S32K148) || (CPU_S32K144HFT0VLLT)
+#if defined (CPU_S32K148) || defined (CPU_S32K144HFT0VLLT)
 
 void DELAY_MS(uint16_t val)
 {

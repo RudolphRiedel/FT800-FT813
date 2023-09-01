@@ -103,13 +103,13 @@ static inline uint8_t spi_receive(uint8_t data)
     return EVE_SPI.DATA;
 }
 
-static inline uint8_t fetch_flash_byte(const uint8_t *data)
+static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
-    #if defined (__AVR_HAVE_ELPM__) /* we have an AVR with more than 64kB FLASH memory */
-    return (pgm_read_byte_far(data));
-    #else
-    return (pgm_read_byte_near(data));
-    #endif
+#if defined (__AVR_HAVE_ELPM__) /* we have an AVR with more than 64kB FLASH memory */
+    return (pgm_read_byte_far(p_data));
+#else
+    return (pgm_read_byte_near(p_data));
+#endif
 }
 
 #endif /* XMEGA */

@@ -16,9 +16,9 @@ TFT_touch() - this polls the EVE chip for touch events and processes them, meant
 TFT_display() - this builds the display list and either sends it to the EVE chip directly or triggers DMA transfer, meant to be called every 20ms  
 
 tft_data.c  
-logo[239] - my "logo", displayed in the top right, 56x56 pixel, ARGB1555 format and zlib compressed  
-pic[3844] - a test-image, 100x100 pixel, .jpg format  
-flash[8199] - a zlib compressed flash-container to be used with BT81x modules, it contains a glyph-reduced UTF-8 font  
+logo[206] - my "logo", displayed in the top right, 56x56 pixel, ARGB1555 format and zlib compressed  
+pic[3391] - a test-image, 100x100 pixel, .jpg format  
+flash[7765] - a zlib compressed flash-container to be used with BT81x modules, it contains a glyph-reduced UTF-8 font  
 
 The library code itself is downloaded from my Github repository by PlatformIO.  
 
@@ -26,8 +26,8 @@ The library code itself is downloaded from my Github repository by PlatformIO.
 
 This is an example for Arduino and it builds for a number of different boards:
 
-Environment                Status    Duration
--------------------------  --------  ------------
+Environment                Status
+-------------------------  --------
 uno                        SUCCESS
 avr_pro                    SUCCESS
 nano328                    SUCCESS
@@ -47,10 +47,11 @@ bbcmicrobit_v2             SUCCESS
 teensy35                   SUCCESS
 xmc1100_xmc2go             SUCCESS
 pico                       SUCCESS
-wizio-pico                 SUCCESS
 dueUSB                     SUCCESS
 portenta_h7_m4             SUCCESS
 portenta_h7_m7             SUCCESS
+uno_r4_minima              SUCCESS
+uno_r4_wifi                SUCCESS
 uno_r4_minima_pio          SUCCESS
 
 These all share a single "EVE_Test.cpp" which contains the setup() and loop() functions.

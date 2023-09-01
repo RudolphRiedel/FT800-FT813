@@ -1,8 +1,8 @@
 /*
 @file    EVE_Test.cpp
 @brief   Main file for PlatformIO/Arduino EVE test-code
-@version 2.12
-@date    2022-12-10
+@version 2.13
+@date    2023-09-01
 @author  Rudolph Riedel
 */
 
@@ -18,19 +18,33 @@ void setup()
     pinMode(EVE_PDN, OUTPUT);
     digitalWrite(EVE_PDN, LOW);
 
-/* we are not using the Arduino SPI class since we want DMA */
-#if (ARDUINO_NUCLEO_F446RE) || (WIZIOPICO) || (PICOPI)
+#if defined (ESP32)
+#if defined (EVE_USE_ESP_IDF) /* not using the Arduino SPI class in order to use DMA */
+    EVE_init_spi();
+#else /* using the Arduino SPI class to be compatible with other devices */
+    SPI.begin(EVE_SCK, EVE_MISO, EVE_MOSI);
+#endif
+/* not using the Arduino SPI class in order to use DMA */
+#elif defined (ARDUINO_NUCLEO_F446RE) || defined (WIZIOPICO) || defined (PICOPI)
     EVE_init_spi();
 #else
     SPI.begin(); /* sets up the SPI to run in Mode 0 and 1 MHz */
-    SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+    SPI.beginTransaction(SPISettings(8UL * 1000000UL, MSBFIRST, SPI_MODE0));
 #endif
 
     TFT_init();
-    // SPI.beginTransaction(SPISettings(20000000, MSBFIRST, SPI_MODE0));
 
-#if defined(ESP8266)
-    SPI.setFrequency(16000000);
+#if defined (__AVR__)
+    SPI.endTransaction();
+    SPI.beginTransaction(SPISettings(8UL * 1000000UL, MSBFIRST, SPI_MODE0));
+#elif defined(ESP8266)
+    SPI.setFrequency(16UL * 1000000UL);
+#elif defined (ARDUINO_HLK_w80x)
+    SPI.endTransaction();
+    SPI.beginTransaction(SPISettings(20UL * 1000000UL, MSBFIRST, SPI_MODE0));
+#else
+    SPI.endTransaction();
+    SPI.beginTransaction(SPISettings(16UL * 1000000UL, MSBFIRST, SPI_MODE0));
 #endif
 }
 

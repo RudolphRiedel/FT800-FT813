@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-06-24
+@date    2023-09-01
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -79,6 +79,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - fix: wrong target definition file names for XMEGA and AVR
 - added STM32G0
 - added ARDUINO_TEENSY40 to the Teensy 4 target
+- added ARDUINO_UNOR4_MINIMA and ARDUINO_UNOR4_WIFI targets
+- added ARDUINO_GIGA target
+- added ARDUINO_PORTENTA_H7 target
+- added generic Arduino STM32 target
+- fix: Tricore and V851 targets did not use the sub-folder for the EVE_target_xx.h file
+- fix: while working, the check for multiple different targets was not implemented correctly
+- added ARDUINO_HLK_w80x target for W801, W806 and Air103 boards
+- modified the RISC-V entry as there are ESP32 now with RISC-V core
 
 */
 
@@ -124,22 +132,22 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     is executed by the command co-processor.
 */
 
-#if !defined(ARDUINO)
+#if !defined (ARDUINO)
 
-#if defined(__IMAGECRAFT__)
-#if defined(_AVR)
+#if defined (__IMAGECRAFT__)
+#if defined (_AVR)
 
 #include "EVE_target/EVE_target_ICCAVR.h"
 
 #endif
 #endif
 
-#if defined(__GNUC__)
+#if defined (__GNUC__)
 
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined(__AVR_XMEGA__)
+#if defined (__AVR_XMEGA__)
 
 #include "EVE_target/EVE_target_XMEGA.h"
 
@@ -148,7 +156,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined(__AVR__) && !defined(__AVR_XMEGA__)
+#if defined (__AVR__) && !defined (__AVR_XMEGA__)
 
 #include "EVE_target/EVE_target_AVR.h"
 
@@ -157,25 +165,27 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined(__v851__)
+#if defined (__v851__)
 
-#include "EVE_target_V851.h"
+#include "EVE_target/EVE_target_V851.h"
 
 #endif /* V851 */
 
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined(__TRICORE__)
+#if defined (__TRICORE__)
 
-#include "EVE_target_Tricore.h"
+#include "EVE_target/EVE_target_Tricore.h"
 
 #endif /* __TRICORE__ */
 
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined(__SAMC21E18A__) || (__SAMC21J18A__) || (__SAMC21J17A__)
+#if defined (__SAMC21E18A__) \
+    || defined (__SAMC21J18A__) \
+    || defined (__SAMC21J17A__)
 /* note: target as set by AtmelStudio, valid  are all from the same family */
 
 #include "EVE_target/EVE_target_ATSAMC21.h"
@@ -185,7 +195,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined(__SAME51J19A__) || (__SAME51J18A__) || (__SAMD51P20A__) || (__SAMD51J19A__) || (__SAMD51G18A__)
+#if defined (__SAME51J19A__) \
+    || defined (__SAME51J18A__) \
+    || defined (__SAMD51P20A__) \
+    || defined (__SAMD51J19A__) \
+    || defined (__SAMD51G18A__)
 /* note: target as set by AtmelStudio, valid  are all from the same family */
 
 #include "EVE_target/EVE_target_ATSAMx5x.h"
@@ -195,7 +209,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined(__riscv)
+#if defined (__riscv) && !defined (ESP_PLATFORM)
 
 #include "EVE_target/EVE_target_GD32VF103.h"
 
@@ -204,7 +218,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined(STM32L0) || (STM32F0) || (STM32F1) || (STM32F3) || (STM32F4) || (STM32G4) || (STM32H7) || (STM32G0)
+#if defined (STM32L0) \
+    || defined (STM32F0) \
+    || defined (STM32F1) \
+    || defined (STM32F3) \
+    || defined (STM32F4) \
+    || defined (STM32G4) \
+    || defined (STM32H7) \
+    || defined (STM32G0)
 /* set with "build_flags" in platformio.ini or as defines in your build environment */
 
 #include "EVE_target/EVE_target_STM32.h"
@@ -214,7 +235,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined(ESP_PLATFORM)
+#if defined (ESP_PLATFORM)
 
 #include "EVE_target/EVE_target_ESP32.h"
 
@@ -223,7 +244,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined(RP2040)
+#if defined (RP2040)
 /* note: set in platformio.ini by "build_flags = -D RP2040" */
 
 #include "EVE_target/EVE_target_RP2040.h"
@@ -233,7 +254,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined(CPU_S32K148) || (CPU_S32K144HFT0VLLT)
+#if defined (CPU_S32K148) \
+    || defined (CPU_S32K144HFT0VLLT)
 
 #include "EVE_target/EVE_target_S32K14x.h"
 
@@ -242,7 +264,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined(CPU_K32L2B31VLH0A)
+#if defined (CPU_K32L2B31VLH0A)
 
 #include "EVE_target/EVE_target_K32L2B31.h"
 
@@ -251,7 +273,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined(GD32C103)
+#if defined (GD32C103)
 /* note: set in platformio.ini by "build_flags = -D GD32C103" */
 
 #include "EVE_target/EVE_target_GD32C103.h"
@@ -268,21 +290,20 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined(__TI_ARM__)
+#if defined (__TI_ARM__)
 
-#if defined(__MSP432P401R__)
+#if defined (__MSP432P401R__)
 
 #include "EVE_target/EVE_target_MSP432.h"
 
 #endif /* __MSP432P401R__ */
-
 #endif /* __TI_ARM */
 
 /* ################################################################## */
 /* ################################################################## */
 
 /* this is for TIs C2000 compiled with their ti-cgt-c2000 compiler which does not define this many symbols */
-#if defined(__TMS320C28XX__)
+#if defined (__TMS320C28XX__)
 
 #include "EVE_target/EVE_target_TMS320C28XX.h"
 
@@ -291,49 +312,70 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined(ARDUINO)
+#if defined (ARDUINO)
 
-#if defined(__AVR__)
-//  #if defined (ARDUINO_AVR_UNO)
+#if defined (__AVR__)
+//#if defined (ARDUINO_AVR_UNO)
 
 #include "EVE_target/EVE_target_Arduino_AVR.h"
 
-#elif defined(ARDUINO_BBC_MICROBIT_V2)
+#elif defined (ARDUINO_BBC_MICROBIT_V2)
 
 /* note: gave up and postponed implementation, this is not working, yet */
 #include "EVE_target/EVE_target_Arduino_BBC_Microbit_V2.h"
 
-#elif defined(ESP32)
+#elif defined (ESP32)
 
 #include "EVE_target/EVE_target_Arduino_ESP32.h"
 
-#elif defined(ESP8266)
+#elif defined (ESP8266)
 
 #include "EVE_target/EVE_target_Arduino_ESP8266.h"
 
-#elif defined(ARDUINO_METRO_M4)
+#elif defined (ARDUINO_METRO_M4)
 
 #include "EVE_target/EVE_target_Arduino_Metro_M4.h"
 
-#elif defined(ARDUINO_NUCLEO_F446RE)
+#elif defined (ARDUINO_NUCLEO_F446RE)
 
 #include "EVE_target/EVE_target_Arduino_Nucleo_F446RE.h"
 
-#elif defined(WIZIOPICO) || (PICOPI)
+#elif defined (WIZIOPICO) || defined (PICOPI)
 
 #include "EVE_target/EVE_target_Arduino_RP2040.h"
 
-#elif defined(ARDUINO_TEENSY41) || (ARDUINO_TEENSY40)
+#elif defined (ARDUINO_TEENSY41) || defined (ARDUINO_TEENSY40)
 
 #include "EVE_target/EVE_target_Arduino_Teensy4.h"
 
-#elif defined(ARDUINO_TEENSY35) /* note: this is mostly untested */
+#elif defined (ARDUINO_TEENSY35) /* note: this is mostly untested */
 
 #include "EVE_target/EVE_target_Arduino_Teensy35.h"
 
-#elif defined(XMC1100_XMC2GO)
+#elif defined (XMC1100_XMC2GO)
 
 #include "EVE_target/EVE_target_Arduino_XMC1100_XMC2GO.h"
+
+#elif defined (ARDUINO_UNOR4_MINIMA) || defined (ARDUINO_UNOR4_WIFI)
+
+#include "EVE_target/EVE_target_Arduino_UNO_R4.h"
+
+#elif defined (ARDUINO_GIGA)
+
+#include  "EVE_target/EVE_target_Arduino_GIGA_R1.h"
+
+#elif defined (ARDUINO_PORTENTA_H7_M7) || defined (ARDUINO_PORTENTA_H7_M4)
+
+#include  "EVE_target/EVE_target_Arduino_Portenta_H7.h"
+
+#elif defined (ARDUINO_HLK_w80x)
+
+#include  "EVE_target/EVE_target_Arduino_W80x.h"
+
+#elif defined (ARDUINO_ARCH_STM32)
+
+/* this is a generic STM32 target as fall-thru, it uses a buffer to transfer */
+#include  "EVE_target/EVE_target_Arduino_STM32_generic.h"
 
 #else
 

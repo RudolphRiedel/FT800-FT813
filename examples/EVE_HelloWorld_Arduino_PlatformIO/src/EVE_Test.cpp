@@ -1,8 +1,8 @@
 /*
 @file    EVE_HelloWorld.cpp
 @brief   Main file for PlatformIO/Arduino EVE HelloWorld
-@version 1.0
-@date    2023-04-02
+@version 1.1
+@date    2023-09-01
 @author  Rudolph Riedel
 */
 
@@ -17,12 +17,18 @@ void setup()
     pinMode(EVE_PDN, OUTPUT);
     digitalWrite(EVE_PDN, LOW);
 
-/* we are not using the Arduino SPI class since we want DMA */
-#if (ARDUINO_NUCLEO_F446RE) || (WIZIOPICO) || (PICOPI)
+#if defined (ESP32)
+#if defined (EVE_USE_ESP_IDF) /* not using the Arduino SPI class in order to use DMA */
+    EVE_init_spi();
+#else /* using the Arduino SPI class to be compatible with other devices */
+    SPI.begin(EVE_SCK, EVE_MISO, EVE_MOSI);
+#endif
+/* not using the Arduino SPI class in order to use DMA */
+#elif defined (ARDUINO_NUCLEO_F446RE) || defined (WIZIOPICO) || defined (PICOPI)
     EVE_init_spi();
 #else
-    SPI.begin(); /* sets up the SPI to run in Mode 0 and 8 MHz */
-    SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+    SPI.begin(); /* sets up the SPI to run in Mode 0 and 1 MHz */
+    SPI.beginTransaction(SPISettings(8UL * 1000000UL, MSBFIRST, SPI_MODE0));
 #endif
 
     if(E_OK == EVE_init()) /* make sure the init finished correctly */

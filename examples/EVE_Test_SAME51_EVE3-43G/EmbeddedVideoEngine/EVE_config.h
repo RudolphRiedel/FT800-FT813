@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2023-06-24
+@date    2023-07-28
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -77,6 +77,7 @@ the IOT5
 - added a configuration for Crystalfonts CFA240400E1-030Tx
 - added a configuration for Crystalfonts CFA240320Ex-024Sx
 - added EVE_BACKLIGHT_FREQ to all Riverdi modules with a value of 4kHz as recommended by Riverdi
+- EVE_PCLK_FREQ was incorrectly using "UL"
 
 */
 
@@ -155,7 +156,7 @@ the IOT5
 #define EVE_CFAF320240F_035T
 #define EVE_CFAF480128A0_039TC
 #define EVE_CFAF800480E0_050SC
-#define EVE_GEN4_FT81x_43
+#define EVE_GEN4_FT81X_43
 #define EVE_GEN4_FT812_50
 #define EVE_GEN4_FT812_70
 #define EVE_GEN4_FT813_50
@@ -169,6 +170,7 @@ the IOT5
 #define EVE_FT811CB_HY50HD
 #define EVE_CFA240400E1_030TX
 #define EVE_CFA240320EX_024SX
+#define EVE_GAMEDUINO3
 
 #endif
 
@@ -201,7 +203,7 @@ typedef struct
 /* ########## 320 x 240 ########## */
 
 /* EVE2-35A 320x240 3.5" Matrix Orbital, resistive, or non-touch, FT812 */
-#if defined(EVE_EVE2_35)
+#if defined (EVE_EVE2_35)
 #define Resolution_320x240
 
 #define EVE_PCLK (9L)
@@ -212,7 +214,7 @@ typedef struct
 #endif
 
 /* EVE2-35G 320x240 3.5" Matrix Orbital, capacitive touch, FT813 */
-#if defined(EVE_EVE2_35G)
+#if defined (EVE_EVE2_35G)
 #define Resolution_320x240
 
 #define EVE_PCLK (9L)
@@ -225,7 +227,7 @@ typedef struct
 
 /* untested */
 /* EVE3-35A 320x240 3.5" Matrix Orbital, resistive, or non-touch, BT816 */
-#if defined(EVE_EVE3_35)
+#if defined (EVE_EVE3_35)
 #define Resolution_320x240
 
 #define EVE_PCLK (11L)
@@ -237,7 +239,7 @@ typedef struct
 #endif
 
 /* EVE3-35G 320x240 3.5" Matrix Orbital, capacitive-touch, BT815 */
-#if defined(EVE_EVE3_35G)
+#if defined (EVE_EVE3_35G)
 #define Resolution_320x240
 
 #define EVE_PCLK (11L)
@@ -250,7 +252,7 @@ typedef struct
 #endif
 
 /* Crystalfonts CFAF320240F-035T 320x240 3.5" , FT810 resistive touch */
-#if defined(EVE_CFAF320240F_035T)
+#if defined (EVE_CFAF320240F_035T)
 #define EVE_HSIZE (320L)
 #define EVE_VSIZE (240L)
 
@@ -272,7 +274,7 @@ typedef struct
 /* Sunflower Arduino Shield, 320x240 3.5" from Cowfish, FT813 */
 // https://github.com/Cowfish-Studios/Cowfish_Sunflower_Shield_PCB
 /* note: CS is on pin D6 and PD is on pin D5 */
-#if defined(EVE_SUNFLOWER)
+#if defined (EVE_SUNFLOWER)
 #define Resolution_320x240
 
 #define EVE_PCLK (9L)
@@ -283,7 +285,7 @@ typedef struct
 #endif
 
 /* NHD-3.5-320240FT-CxXx-xxx 320x240 3.5" Newhaven, resistive or capacitive, FT81x */
-#if defined(EVE_NHD_35)
+#if defined (EVE_NHD_35)
 #define Resolution_320x240
 
 #define EVE_PCLK (9L)
@@ -296,7 +298,7 @@ typedef struct
 
 /* untested */
 /* 320x240 3.5" Riverdi, various options, BT815/BT816 */
-#if defined(EVE_RiTFT35)
+#if defined (EVE_RiTFT35)
 #define EVE_HSIZE (320L)
 #define EVE_VSIZE (240L)
 
@@ -314,14 +316,14 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
-#if !defined(EVE_BACKLIGHT_FREQ)
+#if !defined (EVE_BACKLIGHT_FREQ)
 #define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
 #endif
 #endif
 
 /* untested */
 /* RVT35HHBxxxxx 320x240 3.5" Riverdi, various options, BT817 */
-#if defined(EVE_RVT35H)
+#if defined (EVE_RVT35H)
 #define EVE_HSIZE (320L)
 #define EVE_VSIZE (240L)
 
@@ -339,7 +341,7 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
-#if !defined(EVE_BACKLIGHT_FREQ)
+#if !defined (EVE_BACKLIGHT_FREQ)
 #define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
 #endif
 #endif
@@ -348,7 +350,7 @@ typedef struct
 
 /* untested */
 /* EVE2-43A 480x272 4.3" Matrix Orbital, resistive or no touch, FT812 */
-#if defined(EVE_EVE2_43)
+#if defined (EVE_EVE2_43)
 #define Resolution_480x272
 
 #define EVE_PCLK (6L)
@@ -359,7 +361,7 @@ typedef struct
 #endif
 
 /* EVE2-43G 480x272 4.3" Matrix Orbital, capacitive touch, FT813 */
-#if defined(EVE_EVE2_43G)
+#if defined (EVE_EVE2_43G)
 #define Resolution_480x272
 
 #define EVE_PCLK (6L)
@@ -372,7 +374,7 @@ typedef struct
 
 /* untested */
 /* EVE3-43A 480x272 4.3" Matrix Orbital, resistive, or non-touch, BT816 */
-#if defined(EVE_EVE3_43)
+#if defined (EVE_EVE3_43)
 #define Resolution_480x272
 
 #define EVE_PCLK (7L)
@@ -384,7 +386,7 @@ typedef struct
 #endif
 
 /* EVE3-43G 480x272 4.3" Matrix Orbital, capacitive-touch, BT815 */
-#if defined(EVE_EVE3_43G)
+#if defined (EVE_EVE3_43G)
 #define Resolution_480x272
 
 #define EVE_PCLK (7L)
@@ -397,7 +399,7 @@ typedef struct
 #endif
 
 /* 480x272 4.3" Riverdi, various options, BT815/BT816 */
-#if defined(EVE_RiTFT43)
+#if defined (EVE_RiTFT43)
 #define Resolution_480x272
 
 #define EVE_PCLK (7L)
@@ -406,14 +408,14 @@ typedef struct
 #define EVE_CSPREAD (1L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
-#if !defined(EVE_BACKLIGHT_FREQ)
+#if !defined (EVE_BACKLIGHT_FREQ)
 #define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
 #endif
 #endif
 
 /* untested */
 /* RVT43HLBxxxxx 480x272 4.3" Riverdi, various options, BT817 */
-#if defined(EVE_RVT43H)
+#if defined (EVE_RVT43H)
 #define EVE_HSIZE (480L)
 #define EVE_VSIZE (272L)
 
@@ -431,14 +433,14 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
-#if !defined(EVE_BACKLIGHT_FREQ)
+#if !defined (EVE_BACKLIGHT_FREQ)
 #define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
 #endif
 #endif
 
 /* untested */
 /* PS817-043WQ-C-IPS 480x272 4.3" Panasys, BT817 */
-#if defined(EVE_PS817_043WQ_C_IPS)
+#if defined (EVE_PS817_043WQ_C_IPS)
 #define EVE_HSIZE (480L)
 #define EVE_VSIZE (272L)
 
@@ -460,7 +462,7 @@ typedef struct
 
 /* untested */
 /* PS816-043WQ-R-IPS 480x272 4.3" Panasys, resistive touch, BT816 */
-#if defined(EVE_PS816_043WQ_R_IPS)
+#if defined (EVE_PS816_043WQ_R_IPS)
 #define EVE_HSIZE (480L)
 #define EVE_VSIZE (272L)
 
@@ -482,7 +484,7 @@ typedef struct
 
 /* untested */
 /* NHD-4.3-480272FT-CxXx-xxx 480x272 4.3" Newhaven, resistive or capacitive, FT81x */
-#if defined(EVE_NHD_43)
+#if defined (EVE_NHD_43)
 #define Resolution_480x272
 
 #define EVE_PCLK (6L)
@@ -495,7 +497,7 @@ typedef struct
 
 /* untested */
 /* 4D-Systems GEN4-FT81x-43xx 480x272 4.3",resistive or capacitive, FT812 / FT813 */
-#if defined(EVE_GEN4_FT81x_43)
+#if defined (EVE_GEN4_FT81X_43)
 #define Resolution_480x272
 
 #define EVE_PCLK (6L)
@@ -508,7 +510,7 @@ typedef struct
 
 /* untested */
 /* Gameduino 3, 480x272 4.3",resistive touch, FT810 */
-#if defined(EVE_GEN4_FT81x_43)
+#if defined (EVE_GAMEDUINO3)
 #define Resolution_480x272
 
 #define EVE_PCLK (6L)
@@ -524,7 +526,7 @@ typedef struct
 /* NHD-4.3-800480FT-CSXP-CTP 800x480 4.3" Newhaven, capacitive touch, FT813 */
 /* there are at least two series of these, the older one is using a backlight controller that */
 /* works up to 1kHz and the newer one is using a backlight controller that works from 800Hz to 100kHz */
-#if defined(EVE_NHD_43_800480)
+#if defined (EVE_NHD_43_800480)
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -533,7 +535,7 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 2
-#if !defined(EVE_BACKLIGHT_FREQ)
+#if !defined (EVE_BACKLIGHT_FREQ)
 #define EVE_BACKLIGHT_FREQ (800U) /* if not overwritten in the project options, set 800Hz as a compromise */
 #endif
 #endif
@@ -541,8 +543,8 @@ typedef struct
 /* untested */
 /* FTDI/BRT EVE2 modules VM810C50A-D, ME812A-WH50R and ME813A-WH50C, 800x480 5.0" */
 /* 4D-Systems GEN4 FT812/FT813 5.0/7.0 */
-#if defined(EVE_VM810C) || defined(EVE_ME812A) || defined(EVE_ME813A) || defined(EVE_GEN4_FT812_50) || \
-    defined(EVE_GEN4_FT813_50) || defined(EVE_GEN4_FT812_70) || defined(EVE_GEN4_FT813_70)
+#if defined (EVE_VM810C) || defined (EVE_ME812A) || defined (EVE_ME813A) || defined (EVE_GEN4_FT812_50) || \
+    defined (EVE_GEN4_FT813_50) || defined (EVE_GEN4_FT812_70) || defined (EVE_GEN4_FT813_70)
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -556,7 +558,7 @@ typedef struct
 /* untested */
 /* PH800480T024-IFC03 800x480 7.0" FT813 from PowerTip */
 /* PH800480T013-IFC05 800x480 7.0" FT813 from PowerTip */
-#if defined(EVE_PH800480)
+#if defined (EVE_PH800480)
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -569,7 +571,7 @@ typedef struct
 
 /* untested */
 /* NHD-7.0-800480FT-CxXx-xxx 800x480 7.0" Newhaven, resistive or capacitive, FT81x */
-#if defined(EVE_NHD_70)
+#if defined (EVE_NHD_70)
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -582,7 +584,7 @@ typedef struct
 
 /* untested */
 /* Matrix Orbital EVE2 modules EVE2-50A, EVE2-70A : 800x480 5.0" and 7.0" resistive, or no touch, FT812 */
-#if defined(EVE_EVE2_50) || defined(EVE_EVE2_70)
+#if defined (EVE_EVE2_50) || defined (EVE_EVE2_70)
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -594,7 +596,7 @@ typedef struct
 
 /* Matrix Orbital EVE2 modules EVE2-50G, EVE2-70G : 800x480 5.0" and 7.0" capacitive touch, FT813 */
 /* Crystalfonts CFAF800480E0-050SC 800x480 5.0" , FT813 capacitive touch */
-#if defined(EVE_EVE2_50G) || defined(EVE_EVE2_70G) || defined(EVE_CFAF800480E0_050SC)
+#if defined (EVE_EVE2_50G) || defined (EVE_EVE2_70G) || defined (EVE_CFAF800480E0_050SC)
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -609,10 +611,10 @@ typedef struct
 /* Crystalfonts CFAF800480E1-050SC-A2 800x480 5.0" , BT817 capacitive touch */
 /* Crystalfonts CFAF800480E2-050SC-A2 800x480 5.0" , BT817 capacitive touch with overhanging glass bezel */
 /* this should also work with CFAF800480E2-050SN-A2 (no touch) and CFAF800480E2-050SR-A2 (resistive touch) */
-#if defined(EVE_CFAF800480Ex_050SC_A2)
+#if defined (EVE_CFAF800480Ex_050SC_A2)
 #define Resolution_800x480
 
-#define EVE_PCLK_FREQ (0x0451UL) /* value to be put into REG_PCLK_FREQ -> 30MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x0451U) /* value to be put into REG_PCLK_FREQ -> 30MHz, REG_PCLK is set to 1 */
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (0L)
@@ -625,10 +627,10 @@ typedef struct
 /* Crystalfonts CFAF800480E1-050SC-A2 800x480 5.0" , BT817 capacitive touch */
 /* note: there is a new variant of the CFAF800480E1-050SC-A2 which mimics a FT5316 as touch controller */
 /* this should also work with CFAF800480E2-050SN-A2 (no touch) and CFAF800480E2-050SR-A2 (resistive touch) */
-#if defined(EVE_CFAF800480E1_050SC_A2)
+#if defined (EVE_CFAF800480E1_050SC_A2)
 #define Resolution_800x480
 
-#define EVE_PCLK_FREQ (0x0451UL) /* value to be put into REG_PCLK_FREQ -> 30MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x0451U) /* value to be put into REG_PCLK_FREQ -> 30MHz, REG_PCLK is set to 1 */
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (0L)
@@ -642,10 +644,10 @@ typedef struct
 /* CFA800480E3-050SR - resistive touch */
 /* CFA800480E3-050SC - capacitive touch */
 /* CFA800480E3-050SW - capactive with wide glass bezel */
-#if defined(EVE_CFA800480E3_050SX)
+#if defined (EVE_CFA800480E3_050SX)
 #define Resolution_800x480
 
-#define EVE_PCLK_FREQ (0x0451UL) /* value to be put into REG_PCLK_FREQ -> 30MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x0451U) /* value to be put into REG_PCLK_FREQ -> 30MHz, REG_PCLK is set to 1 */
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (0L)
@@ -656,7 +658,7 @@ typedef struct
 /* untested */
 /* Matrix Orbital EVE3 modules EVE3-50A, EVE3-70A : 800x480 5.0" and 7.0" resistive, or no touch, BT816 */
 /* PAF90B5WFNWC01 800x480 9.0" Panasys, BT815 */
-#if defined(EVE_EVE3_50) || defined(EVE_EVE3_70) || defined(EVE_PAF90)
+#if defined (EVE_EVE3_50) || defined (EVE_EVE3_70) || defined (EVE_PAF90)
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -668,7 +670,7 @@ typedef struct
 #endif
 
 /* Matrix Orbital EVE3 modules EVE3-50G, EVE3-70G : 800x480 5.0" and 7.0" capacitive touch, BT815 */
-#if defined(EVE_EVE3_50G) || defined(EVE_EVE3_70G)
+#if defined (EVE_EVE3_50G) || defined (EVE_EVE3_70G)
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -682,7 +684,7 @@ typedef struct
 
 /* untested */
 /* Bridgtek 800x480 5.0" BT816 */
-#if defined(EVE_VM816C50AD)
+#if defined (EVE_VM816C50AD)
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -695,7 +697,7 @@ typedef struct
 
 /* RVT50xQFxxxxx 800x480 5.0" Riverdi, various options, FT812/FT813 */
 /* RVT70xQFxxxxx 800x480 7.0" Riverdi, various options, FT812/FT813, tested with RVT70UQFNWC0x */
-#if defined(EVE_RVT70) || defined(EVE_RVT50)
+#if defined (EVE_RVT70) || defined (EVE_RVT50)
 #define EVE_HSIZE (800L) /* Thd Length of visible part of line (in PCLKs) - display width */
 #define EVE_VSIZE (480L) /* Tvd Number of visible lines (in lines) - display height */
 
@@ -712,7 +714,7 @@ typedef struct
 #define EVE_SWIZZLE (0L)   /* Defines the arrangement of the RGB pins of the FT800 */
 #define EVE_CSPREAD (1L)
 #define EVE_GEN 2
-#if !defined(EVE_BACKLIGHT_FREQ)
+#if !defined (EVE_BACKLIGHT_FREQ)
 #define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
 #endif
 #endif
@@ -720,7 +722,7 @@ typedef struct
 /* untested but confirmed to be working */
 /* RVT50xQBxxxxx 800x480 5.0" Riverdi, various options, BT815/BT816 */
 /* not working properly? try the EVE_RiTFT70 profile */
-#if defined(EVE_RiTFT50)
+#if defined (EVE_RiTFT50)
 #define EVE_HSIZE (800L)
 #define EVE_VSIZE (480L)
 
@@ -738,7 +740,7 @@ typedef struct
 #define EVE_CSPREAD (1L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
-#if !defined(EVE_BACKLIGHT_FREQ)
+#if !defined (EVE_BACKLIGHT_FREQ)
 #define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
 #endif
 #endif
@@ -746,7 +748,7 @@ typedef struct
 /* untested but confirmed to be working */
 /* RVT70xQBxxxxx 800x480 7.0" Riverdi, various options, BT815/BT816 */
 /* not working properly? try the EVE_RiTFT50 profile */
-#if defined(EVE_RiTFT70)
+#if defined (EVE_RiTFT70)
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -755,14 +757,14 @@ typedef struct
 #define EVE_CSPREAD (1L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
-#if !defined(EVE_BACKLIGHT_FREQ)
+#if !defined (EVE_BACKLIGHT_FREQ)
 #define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
 #endif
 #endif
 
 /* untested */
 /* PS815-043W-C-IPS 800x480 4.3" Panasys, BT815 */
-#if defined(EVE_PS815_043W_C_IPS)
+#if defined (EVE_PS815_043W_C_IPS)
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -775,7 +777,7 @@ typedef struct
 
 /* untested */
 /* PS815-050W-C-IPS 800x480 5.0" Panasys, BT815 */
-#if defined(EVE_PS815_050W_C_IPS)
+#if defined (EVE_PS815_050W_C_IPS)
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -788,7 +790,7 @@ typedef struct
 
 /* untested */
 /* PS815-070W-C-IPS 800x480 7.0" Panasys, BT815 */
-#if defined(EVE_PS815_070W_C_IPS)
+#if defined (EVE_PS815_070W_C_IPS)
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -801,7 +803,7 @@ typedef struct
 
 /* untested */
 /* PS815-090W-C-IPS 800x480 9.0" Panasys, BT815 */
-#if defined(EVE_PS815_090W_C_IPS)
+#if defined (EVE_PS815_090W_C_IPS)
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -814,7 +816,7 @@ typedef struct
 
 /* Gameduino GD3X 7" shield with BT816 */
 /* note: CS is on pin D8 and there is no PD pin */
-#if defined(EVE_GD3X)
+#if defined (EVE_GD3X)
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -826,7 +828,7 @@ typedef struct
 
 /* untested */
 /* RVT50HQBxxxxx 800x480 5.0" Riverdi, various options, BT817 */
-#if defined(EVE_RVT50H)
+#if defined (EVE_RVT50H)
 #define EVE_HSIZE (800L)
 #define EVE_VSIZE (480L)
 
@@ -844,14 +846,14 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
-#if !defined(EVE_BACKLIGHT_FREQ)
+#if !defined (EVE_BACKLIGHT_FREQ)
 #define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
 #endif
 #endif
 
 /* untested */
 /* NHD-5.0-800480FT-CxXx-xxx 800x480 5.0" Newhaven, resistive or capacitive, FT81x */
-#if defined(EVE_NHD_50)
+#if defined (EVE_NHD_50)
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -863,7 +865,7 @@ typedef struct
 #endif
 
 /* FT810CB-HY50HD: FT810 800x480 5.0" HAOYU */
-#if defined(EVE_FT810CB_HY50HD)
+#if defined (EVE_FT810CB_HY50HD)
 #define EVE_HSIZE (800L)
 #define EVE_VSIZE (480L)
 
@@ -884,7 +886,7 @@ typedef struct
 #endif
 
 /* FT811CB-HY50HD: FT811 800x480 5.0" HAOYU */
-#if defined(EVE_FT811CB_HY50HD)
+#if defined (EVE_FT811CB_HY50HD)
 #define EVE_HSIZE (800L)
 #define EVE_VSIZE (480L)
 
@@ -906,7 +908,7 @@ typedef struct
 
 /* untested */
 /* G-ET0700G0DM6 800x480 7.0" Glyn */
-#if defined(EVE_ET07)
+#if defined (EVE_ET07)
 #define EVE_HSIZE (800L)
 #define EVE_VSIZE (480L)
 
@@ -928,7 +930,7 @@ typedef struct
 /* ########## 1024 x 600 ########## */
 
 /* ADAM101-LCP-SWVGA-NEW 1024x600 10.1" Glyn, capacitive, FT813 */
-#if defined(EVE_ADAM101)
+#if defined (EVE_ADAM101)
 #define EVE_HSIZE (1024L)
 #define EVE_VSIZE (600L)
 
@@ -950,7 +952,7 @@ typedef struct
 
 /* tested with RVT70HSBNWC00-B */
 /* RVT70HSBxxxxx 1024x600 7.0" Riverdi, various options, BT817 */
-#if defined(EVE_RVT70H)
+#if defined (EVE_RVT70H)
 #define EVE_HSIZE (1024L)
 #define EVE_VSIZE (600L)
 
@@ -962,20 +964,20 @@ typedef struct
 #define EVE_HSYNC1 (70L)
 #define EVE_HOFFSET (160L)
 #define EVE_HCYCLE (1344L)
-#define EVE_PCLK_FREQ (0x0D12UL) /* value to be put into REG_PCLK_FREQ -> 51MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x0D12U) /* value to be put into REG_PCLK_FREQ -> 51MHz, REG_PCLK is set to 1 */
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
-#if !defined(EVE_BACKLIGHT_FREQ)
+#if !defined (EVE_BACKLIGHT_FREQ)
 #define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
 #endif
 #endif
 
 /* untested but confirmed to be working */
 /* EVE4x-70G IPS 1024x600 7" Matrix Orbital, capacitive touch, BT817 */
-#if defined(EVE_EVE4_70G)
+#if defined (EVE_EVE4_70G)
 #define EVE_HSIZE (1024L)
 #define EVE_VSIZE (600L)
 
@@ -987,7 +989,7 @@ typedef struct
 #define EVE_HSYNC1 (70L)
 #define EVE_HOFFSET (160L)
 #define EVE_HCYCLE (1344L)
-#define EVE_PCLK_FREQ (0x0D12UL) /* value to be put into REG_PCLK_FREQ -> 51MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x0D12U) /* value to be put into REG_PCLK_FREQ -> 51MHz, REG_PCLK is set to 1 */
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (0L)
@@ -1014,14 +1016,14 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
-#define EVE_PCLK_FREQ (0x0D12UL) /* value to be put into REG_PCLK_FREQ -> 51MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x0D12U) /* value to be put into REG_PCLK_FREQ -> 51MHz, REG_PCLK is set to 1 */
 #endif
 
 /* ########## 1280 x 800 ########## */
 
 /* untested */
 /* EVE4-101G 1280x800 10.1" Matrix Orbital, capacitive touch, BT817 */
-#if defined(EVE_EVE4_101G)
+#if defined (EVE_EVE4_101G)
 #define EVE_HSIZE (1280L)         /* Thd Length of visible part of line (in PCLKs) - display width */
 #define EVE_VSIZE (800L)          /* Tvd Number of visible lines (in lines) - display height */
 #define EVE_VSYNC0 (11L)          /* Tvf Vertical Front Porch */
@@ -1032,7 +1034,7 @@ typedef struct
 #define EVE_HSYNC1 (80L)          /* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
 #define EVE_HOFFSET (158L)        /* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
 #define EVE_HCYCLE (1440L)        /* Th Total length of line (visible and non-visible) (in PCLKs) */
-#define EVE_PCLK_FREQ (0x08C1UL) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x08C1U) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
 #define EVE_SET_REG_PCLK_2X
 #define EVE_PCLKPOL (0L)          /* PCLK polarity (0 = rising edge, 1 = falling edge) */
 #define EVE_SWIZZLE (0L)          /* Defines the arrangement of the RGB pins */
@@ -1044,7 +1046,7 @@ typedef struct
 
 /* tested with RVT101HVBNWC00-B */
 /* RVT101HVBxxxxx 1280x800 7.0" Riverdi, various options, BT817 */
-#if defined(EVE_RVT101H)
+#if defined (EVE_RVT101H)
 #define EVE_HSIZE (1280L)
 #define EVE_VSIZE (800L)
 
@@ -1056,20 +1058,20 @@ typedef struct
 #define EVE_HSYNC1 (20L)
 #define EVE_HOFFSET (88L)
 #define EVE_HCYCLE (1440L)
-#define EVE_PCLK_FREQ (0x08C1UL) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x08C1U) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
 #define EVE_SET_REG_PCLK_2X
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 4
-#if !defined(EVE_BACKLIGHT_FREQ)
+#if !defined (EVE_BACKLIGHT_FREQ)
 #define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
 #endif
 #endif
 
 /* untested */
-#if defined(EVE_WXGA_TEST1)
+#if defined (EVE_WXGA_TEST1)
 #define EVE_HSIZE (1280L)        /* Thd Length of visible part of line (in PCLKs) - display width */
 #define EVE_VSIZE (800L)         /* Tvd Number of visible lines (in lines) - display height */
 #define EVE_VSYNC0 (0L)          /* Tvf Vertical Front Porch */
@@ -1080,7 +1082,7 @@ typedef struct
 #define EVE_HSYNC1 (72L)         /* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
 #define EVE_HOFFSET (160L)       /* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
 #define EVE_HCYCLE (1440L)       /* Th Total length of line (visible and non-visible) (in PCLKs) */
-#define EVE_PCLK_FREQ (0x08C1UL) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x08C1U) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
 #define EVE_SET_REG_PCLK_2X
 #define EVE_PCLKPOL (0L)         /* PCLK polarity (0 = rising edge, 1 = falling edge) */
 #define EVE_SWIZZLE (0L)         /* Defines the arrangement of the RGB pins */
@@ -1090,7 +1092,7 @@ typedef struct
 #endif
 
 /* untested */
-#if defined(EVE_WXGA_TEST2)
+#if defined (EVE_WXGA_TEST2)
 #define EVE_HSIZE (1280L)        /* Thd Length of visible part of line (in PCLKs) - display width */
 #define EVE_VSIZE (800L)         /* Tvd Number of visible lines (in lines) - display height */
 #define EVE_VSYNC0 (0L)          /* Tvf Vertical Front Porch */
@@ -1101,7 +1103,7 @@ typedef struct
 #define EVE_HSYNC1 (72L)         /* Thf + Thp Horizontal Front Porch plus Hsync Pulse width */
 #define EVE_HOFFSET (160L)       /* Thf + Thp + Thb Length of non-visible part of line (in PCLK cycles) */
 #define EVE_HCYCLE (1440L)       /* Th Total length of line (visible and non-visible) (in PCLKs) */
-#define EVE_PCLK_FREQ (0x08C1UL) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
+#define EVE_PCLK_FREQ (0x08C1U) /* value to be put into REG_PCLK_FREQ -> 72MHz, REG_PCLK is set to 1 */
 #define EVE_SET_REG_PCLK_2X
 #define EVE_PCLKPOL (1L)         /* PCLK polarity (0 = rising edge, 1 = falling edge) */
 #define EVE_SWIZZLE (0L)         /* Defines the arrangement of the RGB pins */
@@ -1116,7 +1118,7 @@ typedef struct
 /* Crystalfonts CFA240320Ex-024Sx 240x320 2.4" , FT811 */
 /* CFA240320E0-024SN - no touch */
 /* CFA240320E0-024SC - capacitve touch */
-#if defined(EVE_CFA240320EX_024SX)
+#if defined (EVE_CFA240320EX_024SX)
 #define EVE_HSIZE (240L)
 #define EVE_VSIZE (320L)
 
@@ -1138,7 +1140,7 @@ typedef struct
 /* untested */
 // timings are from here: https://github.com/MatrixOrbital/EVE2-Library/blob/master/Eve2_81x.c
 /* EVE2-29A 320x102 2.9" 1U Matrix Orbital, non-touch, FT812 */
-#if defined(EVE_EVE2_29)
+#if defined (EVE_EVE2_29)
 #define EVE_HSIZE (320L)
 #define EVE_VSIZE (102L)
 
@@ -1163,7 +1165,7 @@ typedef struct
 /* untested */
 // timings are from here: https://github.com/MatrixOrbital/EVE2-Library/blob/master/Eve2_81x.c
 /* EVE3-29A 320x102 2.9" 1U Matrix Orbital, non-touch, BT816 */
-#if defined(EVE_EVE3_29)
+#if defined (EVE_EVE3_29)
 #define EVE_HSIZE (320L)
 #define EVE_VSIZE (102L)
 
@@ -1186,7 +1188,7 @@ typedef struct
 #endif
 
 /* Crystalfonts CFAF240400C1-030SC 240x400 3.0" , FT811 capacitive touch */
-#if defined(EVE_CFAF240400C1_030SC)
+#if defined (EVE_CFAF240400C1_030SC)
 #define EVE_HSIZE (240L)
 #define EVE_VSIZE (400L)
 
@@ -1209,7 +1211,7 @@ typedef struct
 /* Crystalfonts CFA240400E1-030Tx 240x400 3.0" , FT811 */
 /* CFA240400E1-030TN - no touch */
 /* CFA240400E1-030TC - capacitve touch */
-#if defined(EVE_CFA240400E1_030TX)
+#if defined (EVE_CFA240400E1_030TX)
 #define EVE_HSIZE (240L)
 #define EVE_VSIZE (400L)
 
@@ -1230,7 +1232,7 @@ typedef struct
 
 /* EVE2-38A 480x116 3.8" 1U Matrix Orbital, resistive touch, FT812 */
 // timings are from here: https://github.com/MatrixOrbital/EVE2-Library/blob/master/Eve2_81x.c
-#if defined(EVE_EVE2_38)
+#if defined (EVE_EVE2_38)
 #define EVE_HSIZE (480L)
 #define EVE_VSIZE (272L)
 
@@ -1254,7 +1256,7 @@ typedef struct
 
 /* EVE2-38G 480x116 3.8" 1U Matrix Orbital, capacitive touch, FT813 */
 // timings are from here: https://github.com/MatrixOrbital/EVE2-Library/blob/master/Eve2_81x.c
-#if defined(EVE_EVE2_38G)
+#if defined (EVE_EVE2_38G)
 #define EVE_HSIZE (480L)
 #define EVE_VSIZE (272L)
 
@@ -1280,7 +1282,7 @@ typedef struct
 /* untested */
 /* EVE3x-38A 480x116 3.8" 1U Matrix Orbital, resistive touch, BT816 */
 // timings are from here: https://github.com/MatrixOrbital/EVE2-Library/blob/master/Eve2_81x.c
-#if defined(EVE_EVE3x_38)
+#if defined (EVE_EVE3x_38)
 #define EVE_HSIZE (480L)
 #define EVE_VSIZE (272L)
 
@@ -1304,7 +1306,7 @@ typedef struct
 /* untested */
 /* EVE3-38G 480x116 3.8" 1U Matrix Orbital, capacitive touch, BT815 */
 // timings are from here: https://github.com/MatrixOrbital/EVE2-Library/blob/master/Eve2_81x.c
-#if defined(EVE_EVE3x_38G)
+#if defined (EVE_EVE3x_38G)
 #define EVE_HSIZE (480L)
 #define EVE_VSIZE (272L)
 
@@ -1330,7 +1332,7 @@ typedef struct
 /* untested */
 // timings are from here: https://github.com/MatrixOrbital/EVE2-Library/blob/master/Eve2_81x.c
 /* EVE3x-39A 480x128 3.9" 1U Matrix Orbital, resistive touch, BT816 */
-#if defined(EVE_EVE3x_39)
+#if defined (EVE_EVE3x_39)
 #define EVE_HSIZE (480L)
 #define EVE_VSIZE (272L)
 
@@ -1356,7 +1358,7 @@ typedef struct
 /* untested */
 // timings are from here: https://github.com/MatrixOrbital/EVE2-Library/blob/master/Eve2_81x.c
 /* EVE3x-39G 480x128 3.9" 1U Matrix Orbital, capacitive touch, BT815 */
-#if defined(EVE_EVE3x_39G)
+#if defined (EVE_EVE3x_39G)
 #define EVE_HSIZE (480L)
 #define EVE_VSIZE (272L)
 
@@ -1381,7 +1383,7 @@ typedef struct
 #endif
 
 /* Crystalfonts CFAF480128A0-039TC 480x128 3.9" , FT811 capacitive touch */
-#if defined(EVE_CFAF480128A0_039TC)
+#if defined (EVE_CFAF480128A0_039TC)
 #define EVE_HSIZE (480L)
 #define EVE_VSIZE (128L)
 
@@ -1406,7 +1408,7 @@ typedef struct
 /* untested */
 /* note: timing parameters from Matrix Orbital, does not use the second pll, 58,64 FPS */
 /* EVE4-40G 720x720 4.0" Matrix Orbital, capacitive touch, BT817 */
-#if defined(EVE_EVE4_40G)
+#if defined (EVE_EVE4_40G)
 #define EVE_HSIZE (720L)
 #define EVE_VSIZE (720L)
 
@@ -1429,7 +1431,7 @@ typedef struct
 
 /* ########## Common Timings ########## */
 
-#if defined(Resolution_320x240)
+#if defined (Resolution_320x240)
 #define EVE_HSIZE (320L) /* Thd Length of visible part of line (in PCLKs) - display width */
 #define EVE_VSIZE (240L) /* Tvd Number of visible lines (in lines) - display height */
 
@@ -1443,7 +1445,7 @@ typedef struct
 #define EVE_HCYCLE (408L) /* Th Total length of line (visible and non-visible) (in PCLKs) */
 #endif
 
-#if defined(Resolution_480x272)
+#if defined (Resolution_480x272)
 #define EVE_HSIZE (480L) /* Thd Length of visible part of line (in PCLKs) - display width */
 #define EVE_VSIZE (272L) /* Tvd Number of visible lines (in lines) - display height */
 
@@ -1457,7 +1459,7 @@ typedef struct
 #define EVE_HCYCLE (548L) /* Th Total length of line (visible and non-visible) (in PCLKs) */
 #endif
 
-#if defined(Resolution_800x480)
+#if defined (Resolution_800x480)
 #define EVE_HSIZE (800L) /* Thd Length of visible part of line (in PCLKs) - display width */
 #define EVE_VSIZE (480L) /* Tvd Number of visible lines (in lines) - display height */
 
@@ -1471,7 +1473,7 @@ typedef struct
 #define EVE_HCYCLE (928L) /* Th Total length of line (visible and non-visible) (in PCLKs) */
 #endif
 
-#if !defined(EVE_HSIZE)
+#if !defined (EVE_HSIZE)
 #error "Please add a define for the desired display to your build-environment, e.g. -DEVE_EVE3_50G"
 #endif
 
