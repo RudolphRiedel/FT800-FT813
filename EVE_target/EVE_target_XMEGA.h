@@ -100,7 +100,7 @@ static inline uint8_t spi_receive(uint8_t data)
 {
     EVE_SPI.DATA = data;
     while (!(EVE_SPI.STATUS & 0x80)) {}  // wait for transmit complete
-    return EVE_SPI.DATA;
+    return (EVE_SPI.DATA);
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *p_data)

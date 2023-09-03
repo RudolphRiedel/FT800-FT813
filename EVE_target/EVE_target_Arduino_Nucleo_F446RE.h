@@ -145,16 +145,16 @@ static inline void spi_transmit_burst(uint32_t data)
 
 static inline uint8_t spi_receive(uint8_t data)
 {
-    // return SPI.transfer(data);
+    // return (SPI.transfer(data));
     LL_SPI_TransmitData8(EVE_SPI, data);
     while (!LL_SPI_IsActiveFlag_TXE(EVE_SPI)) {}
     while (!LL_SPI_IsActiveFlag_RXNE(EVE_SPI)) {}
-    return LL_SPI_ReceiveData8(EVE_SPI);
+    return (LL_SPI_ReceiveData8(EVE_SPI));
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
-    return *p_data;
+    return (*p_data);
 }
 
 #endif /* ARDUINO_NUCLEO_F446RE */

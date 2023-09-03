@@ -94,7 +94,7 @@ static inline void EVE_pdn_clear(void)
 
 static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
-    return *p_data;
+    return (*p_data);
 }
 
 /* do not use the Arduino SPI class but ESP-IDF */
@@ -162,7 +162,7 @@ static inline uint8_t spi_receive(uint8_t data)
     trans.tx_data[0] = data;
     spi_device_polling_transmit(EVE_spi_device_simple, &trans);
 
-    return trans.rx_data[0];
+    return (trans.rx_data[0]);
 }
 
 #else /* Arduino SPI class compatible code */
@@ -189,7 +189,7 @@ static inline void spi_transmit_32(uint32_t data)
 
 static inline uint8_t spi_receive(uint8_t data)
 {
-    return wrapper_spi_receive(data);
+    return (wrapper_spi_receive(data));
 }
 
 #endif

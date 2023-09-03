@@ -112,12 +112,12 @@ static inline uint8_t spi_receive(uint8_t data)
 {
         SPI_DATA(SPI0) = (uint32_t) data;
         while (SPI_STAT(SPI0) & SPI_STAT_TRANS) {}
-        return (uint8_t) SPI_DATA(SPI0);
+        return ((uint8_t) SPI_DATA(SPI0));
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
-    return *p_data;
+    return (*p_data);
 }
 
 #endif /* __riscv */

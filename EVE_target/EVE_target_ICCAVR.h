@@ -122,12 +122,12 @@ static inline uint8_t spi_receive(uint8_t data)
     SPDR = data; /* start transmission */
     /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
     while (!(SPSR & (1U << SPIF))) {}
-    return SPDR;
+    return (SPDR);
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
-    return *p_data;
+    return (*p_data);
 }
 
 #endif /* _AVR */

@@ -135,7 +135,7 @@ static inline uint8_t spi_receive(uint8_t data)
     SPDR = data; /* start transmission */
     /* wait for transmission to complete - 1us @ 8MHz SPI-Clock */
     while (!(SPSR & (1U << SPIF))) {}
-    return SPDR;
+    return (SPDR);
 #else
     uint8_t spiIndex  = 0x80U;
     uint8_t spiInByte = 0;
@@ -161,7 +161,7 @@ static inline uint8_t spi_receive(uint8_t data)
 
         spiIndex >>= 1U;
     }
-    return spiInByte;
+    return (spiInByte);
 #endif
 }
 

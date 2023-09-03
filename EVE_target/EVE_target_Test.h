@@ -149,7 +149,7 @@ static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
     Test_EVE_fetch_flash_byte.called = Test_EVE_fetch_flash_byte.called + 1U;
     (void) *p_data;
-    return 0x00;
+    return (0x00);
 }
 
 #endif /* SOFTWARE_TEST */

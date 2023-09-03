@@ -171,7 +171,7 @@ static inline void spi_transmit_burst(uint32_t data)
 static inline uint8_t spi_receive(uint8_t data)
 {
 #if !defined (EVE_SPI_BOOST)
-    return wrapper_spi_receive(data);
+    return (wrapper_spi_receive(data));
 #else
 #if defined(SPI_SR_TXP)
     while (!LL_SPI_IsActiveFlag_TXP(EVE_SPI));
@@ -185,13 +185,13 @@ static inline uint8_t spi_receive(uint8_t data)
 #else
       while (!LL_SPI_IsActiveFlag_RXNE(EVE_SPI));
 #endif
-      return LL_SPI_ReceiveData8(EVE_SPI);
+      return (LL_SPI_ReceiveData8(EVE_SPI));
 #endif
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
-    return *p_data;
+    return (*p_data);
 }
 
 #ifdef __cplusplus

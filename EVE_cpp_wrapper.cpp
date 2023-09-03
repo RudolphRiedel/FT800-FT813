@@ -84,7 +84,7 @@ extern "C" {
 
     uint8_t wrapper_spi_receive(uint8_t data)
     {
-        return SPI.transfer(data);
+        return (SPI.transfer(data));
     }
 
 #ifdef __cplusplus

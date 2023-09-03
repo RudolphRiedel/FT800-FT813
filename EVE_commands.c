@@ -185,7 +185,7 @@ uint8_t EVE_memRead8(uint32_t const ft_address)
     spi_transmit_32(((ft_address >> 16U) & 0x0000007fUL) + (ft_address & 0x0000ff00UL) + ((ft_address & 0x000000ffUL) << 16U));
     data = spi_receive(0U); /* read data byte by sending another dummy byte */
     EVE_cs_clear();
-    return data;
+    return (data);
 }
 
 uint16_t EVE_memRead16(uint32_t const ft_address)
@@ -197,7 +197,7 @@ uint16_t EVE_memRead16(uint32_t const ft_address)
     uint8_t hibyte = spi_receive(0U); /* read high byte */
     data = ((uint16_t) hibyte * 256U) | lowbyte;
     EVE_cs_clear();
-    return data;
+    return (data);
 }
 
 uint32_t EVE_memRead32(uint32_t const ft_address)
@@ -210,7 +210,7 @@ uint32_t EVE_memRead32(uint32_t const ft_address)
     data = ((uint32_t) spi_receive(0U) << 16U) | data;
     data = ((uint32_t) spi_receive(0U) << 24U) | data; /* read high byte */
     EVE_cs_clear();
-    return data;
+    return (data);
 }
 
 void EVE_memWrite8(uint32_t const ft_address, uint8_t const ft_data)
@@ -381,7 +381,7 @@ uint8_t EVE_busy(void)
     }
 #endif
 
-    return ret;
+    return (ret);
 }
 
 /**
@@ -401,7 +401,7 @@ uint8_t EVE_get_and_reset_fault_state(void)
         ret = EVE_FAULT_RECOVERED;
         fault_recovered = E_OK;
     }
-    return ret;
+    return (ret);
 }
 
 /* Wait for the co-processor to complete the FIFO queue.*/
@@ -1229,7 +1229,7 @@ uint8_t EVE_init_flash(void)
         ret_val = E_OK;
     }
 
-    return ret_val;
+    return (ret_val);
 }
 
 #endif /* EVE_GEN > 2 */
@@ -1354,7 +1354,7 @@ static uint8_t wait_regid(void)
         }
     }
 
-    return ret;
+    return (ret);
 }
 
 /**
@@ -1382,7 +1382,7 @@ static uint8_t wait_reset(void)
         }
     }
 
-    return ret;
+    return (ret);
 }
 
 /**
@@ -1537,7 +1537,7 @@ uint8_t EVE_init(void)
         }
     }
 
-    return ret;
+    return (ret);
 }
 
 /* ##################################################################
@@ -2012,7 +2012,7 @@ uint16_t EVE_cmd_bitmap_transform(int32_t xc0, int32_t yc0, int32_t xc1,
         spi_transmit_burst((uint32_t) ty2);
         spi_transmit_burst(0UL);
     }
-    return ret_val;
+    return (ret_val);
 }
 
 /* note: as this is meant for use in burst-mode display-list generation */

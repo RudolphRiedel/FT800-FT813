@@ -125,12 +125,12 @@ static inline void spi_transmit_burst(uint32_t data)
 
 static inline uint8_t spi_receive(uint8_t data)
 {
-    return wrapper_spi_receive(data);
+    return (wrapper_spi_receive(data));
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
-    return *p_data;
+    return (*p_data);
 }
 
 #ifdef __cplusplus

@@ -201,12 +201,12 @@ static inline uint8_t spi_receive(uint8_t data)
 {
     EVE_SPI_SERCOM->SPI.DATA.reg = data;
     while (0U == (EVE_SPI_SERCOM->SPI.INTFLAG.reg & SERCOM_SPI_INTFLAG_TXC)) {}
-    return EVE_SPI_SERCOM->SPI.DATA.reg;
+    return (EVE_SPI_SERCOM->SPI.DATA.reg);
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
-    return *p_data;
+    return (*p_data);
 }
 
 #endif /* SAMx5x */

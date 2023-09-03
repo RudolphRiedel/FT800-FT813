@@ -164,19 +164,19 @@ static inline uint8_t spi_receive(uint8_t data)
     EVE_SPI->DL = data;
     while (0U == (EVE_SPI->S & SPI_S_SPTEF_MASK)) {}
     while (0U == (EVE_SPI->S & SPI_S_SPRF_MASK)) {}
-    return EVE_SPI->DL;
+    return (EVE_SPI->DL);
 #else
     while (0U == (SPI_GetStatusFlags(EVE_SPI) & kSPI_TxBufferEmptyFlag)) {}
     SPI_WriteData(EVE_SPI, data);
     while (0U == (SPI_GetStatusFlags(EVE_SPI) & kSPI_TxBufferEmptyFlag)) {}
     while (0U == (SPI_GetStatusFlags(EVE_SPI) & kSPI_RxBufferFullFlag)) {}
-    return SPI_ReadData(EVE_SPI);
+    return (SPI_ReadData(EVE_SPI));
 #endif
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
-    return *p_data;
+    return (*p_data);
 }
 
 #endif /* K32L2B3 */

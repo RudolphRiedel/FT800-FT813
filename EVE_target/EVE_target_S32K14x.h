@@ -153,12 +153,12 @@ static inline uint8_t spi_receive(uint8_t data)
     EVE_SPI->SR |= LPSPI_SR_RDF_MASK; /* clear Receive Data Flag */
     EVE_SPI->TDR = data; /* transmit data */
     while (0U == (EVE_SPI->SR & LPSPI_SR_RDF_MASK));
-    return EVE_SPI->RDR;
+    return (EVE_SPI->RDR);
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
-    return *p_data;
+    return (*p_data);
 }
 
 #endif /* S32K14x */

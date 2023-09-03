@@ -1,8 +1,8 @@
 /*
-@file    EVE_target_Arduino_Metro_M4.h
+@file    EVE_target_Tricore_Tasking.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-06-24
+@date    2023-09-02
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -27,79 +27,56 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 @section History
 
 5.0
 - extracted from EVE_target.h
-- basic maintenance: checked for violations of white space and indent rules
-- split up the optional default defines to allow to only change what needs
-    changing thru the build-environment
-- changed #include "EVE_cpp_wrapper.h" to #include "../EVE_cpp_wrapper.h"
 
 */
 
-#ifndef EVE_TARGET_ARDUINO_METRO_M4_H
-#define EVE_TARGET_ARDUINO_METRO_M4_H
+#ifndef EVE_TARGET_TRICORE_H
+#define EVE_TARGET_TRICORE_H
 
-#if defined (ARDUINO)
+#if !defined (ARDUINO)
+#if defined(__TASKING__)
 
 #include <stdint.h>
-#include <Arduino.h>
-#include "../EVE_cpp_wrapper.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+#include "IfxPort.h"
+#include "Bsp.h"
 
-#if defined (ARDUINO_METRO_M4)
 
-/* you may define these in your build-environment to use different settings */
-#if !defined (EVE_CS)
-#define EVE_CS 10
-#endif
+#define EVE_PD  &MODULE_P14,4
+#define EVE_CS  &MODULE_P15,2
 
-#if !defined (EVE_PDN)
-#define EVE_PDN 8
-#endif
-/* you may define these in your build-environment to use different settings */
-
-#define EVE_DMA
-
-#if defined (EVE_DMA)
-extern uint32_t EVE_dma_buffer[1025U];
-extern volatile uint16_t EVE_dma_buffer_index;
-extern volatile uint8_t EVE_dma_busy;
-
-void EVE_init_dma(void);
-void EVE_start_dma_transfer(void);
-#endif
-
-#define DELAY_MS(ms) delay(ms)
+#define DELAY_MS(ms) (waitTime(IfxStm_getTicksFromMicroseconds(BSP_DEFAULT_TIMER, ms)))
 
 static inline void EVE_pdn_set(void)
 {
-    digitalWrite(EVE_PDN, LOW); /* go into power-down */
+    IfxPort_setPinLow(EVE_PD);
 }
 
 static inline void EVE_pdn_clear(void)
 {
-    digitalWrite(EVE_PDN, HIGH); /* power up */
+    IfxPort_setPinHigh(EVE_PD);
 }
 
 static inline void EVE_cs_set(void)
 {
-    digitalWrite(EVE_CS, LOW); /* make EVE listen */
+    IfxPort_setPinLow(EVE_CS);
 }
 
 static inline void EVE_cs_clear(void)
 {
-    digitalWrite(EVE_CS, HIGH); /* tell EVE to stop listen */
+    IfxPort_setPinHigh(EVE_CS);
 }
 
 static inline void spi_transmit(uint8_t data)
 {
-    wrapper_spi_transmit(data);
+    (void) data;
+    __nop();
+//    SPI_ReceiveByte(data);
 }
 
 static inline void spi_transmit_32(uint32_t data)
@@ -114,16 +91,14 @@ static inline void spi_transmit_32(uint32_t data)
 /* so it *always* has to transfer 4 bytes */
 static inline void spi_transmit_burst(uint32_t data)
 {
-#if defined (EVE_DMA)
-    EVE_dma_buffer[EVE_dma_buffer_index++] = data;
-#else
     spi_transmit_32(data);
-#endif
 }
 
 static inline uint8_t spi_receive(uint8_t data)
 {
-    return (wrapper_spi_receive(data));
+    (void) data;
+    return (0);
+//    return (SPI_ReceiveByte(data));
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
@@ -131,12 +106,7 @@ static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
     return (*p_data);
 }
 
-#endif /* ARDUINO_METRO_M4 */
+#endif /* __TASKING__ */
+#endif /* !Arduino */
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* Arduino */
-
-#endif /* EVE_TARGET_ARDUINO_METRO_M4_H */
+#endif /* EVE_TARGET_TRICORE_H */

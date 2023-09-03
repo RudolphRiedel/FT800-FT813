@@ -139,16 +139,16 @@ static inline uint8_t spi_receive(uint8_t data)
 {
 //  SPI_transmitData(EUSCI_B0_BASE, data);
 //  while (!(SPI_getInterruptStatus(EUSCI_B0_BASE,EUSCI_B_SPI_TRANSMIT_INTERRUPT)));
-//  return EUSCI_B_CMSIS(EUSCI_B0_BASE)->RXBUF;
+//  return (EUSCI_B_CMSIS(EUSCI_B0_BASE)->RXBUF);
 
     UCB0TXBUF_SPI = data;
     while (!(UCB0IFG_SPI & UCTXIFG)) {} /* wait for transmission to complete */
-    return UCB0RXBUF_SPI;
+    return (UCB0RXBUF_SPI);
     }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
-    return *p_data;
+    return (*p_data);
 }
 
 #endif /* __MSP432P401R__ */

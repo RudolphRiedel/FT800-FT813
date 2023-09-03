@@ -153,12 +153,12 @@ static inline uint8_t spi_receive(uint8_t data)
     trans.tx_data[0U] = data;
     spi_device_polling_transmit(EVE_spi_device_simple, &trans);
 
-    return trans.rx_data[0U];
+    return (trans.rx_data[0U]);
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
-    return *p_data;
+    return (*p_data);
 }
 
 #endif /* ESP_PLATFORM */

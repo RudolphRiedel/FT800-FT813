@@ -103,12 +103,12 @@ static inline uint8_t spi_receive(uint8_t data)
     CSIH0TX0H = data;
     /* wait for transmission to complete - 800ns @ 10MHz SPI-Clock */
     while (CSIH0STR0 & 0x00080U) {}
-    return (uint8_t) CSIH0RX0H;
+    return ((uint8_t) CSIH0RX0H);
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
-    return *p_data;
+    return (*p_data);
 }
 
 #endif /* V851 */
