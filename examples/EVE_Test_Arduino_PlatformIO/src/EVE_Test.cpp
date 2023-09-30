@@ -1,8 +1,8 @@
 /*
 @file    EVE_Test.cpp
 @brief   Main file for PlatformIO/Arduino EVE test-code
-@version 2.13
-@date    2023-09-01
+@version 2.14
+@date    2023-09-30
 @author  Rudolph Riedel
 */
 
@@ -25,7 +25,7 @@ void setup()
     SPI.begin(EVE_SCK, EVE_MISO, EVE_MOSI);
 #endif
 /* not using the Arduino SPI class in order to use DMA */
-#elif defined (ARDUINO_NUCLEO_F446RE) || defined (WIZIOPICO) || defined (PICOPI)
+#elif defined (ARDUINO_NUCLEO_F446RE) || defined (ARDUINO_RASPBERRY_PI_PICO)
     EVE_init_spi();
 #else
     SPI.begin(); /* sets up the SPI to run in Mode 0 and 1 MHz */
