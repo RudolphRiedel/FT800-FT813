@@ -2,7 +2,7 @@
 @file    EVE_target.cpp
 @brief   target specific functions for C++ targets, so far only Arduino targets
 @version 5.0
-@date    2023-08-12
+@date    2023-09-30
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -62,6 +62,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - fix: target ARDUINO_NUCLEO_F446RE did not build anymore
 - restored the ESP32 ESP-IDF code and made it selectable by macro EVE_USE_ESP_IDF
 - removed the switching of clock speeds for ESP32 Arduino buffer transfers to give back control to the application
+- removed the unfortunately defunct WIZIOPICO
+- switched from the custom PICOPI macro to ARDUINO_RASPBERRY_PI_PICO
 
  */
 
@@ -270,8 +272,8 @@ void EVE_start_dma_transfer(void)
 /* ################################################################## */
 /* ################################################################## */
 
-#if defined (WIZIOPICO) || defined (PICOPI)
-/* note: set in platformio.ini by "build_flags = -D WIZIOPICO" */
+#if defined (ARDUINO_RASPBERRY_PI_PICO)
+
 #include "EVE_target.h"
 #include "EVE_commands.h"
 
@@ -280,9 +282,7 @@ void EVE_init_spi(void)
     gpio_set_function(EVE_MISO, GPIO_FUNC_SPI);
     gpio_set_function(EVE_SCK, GPIO_FUNC_SPI);
     gpio_set_function(EVE_MOSI, GPIO_FUNC_SPI);
-#if defined (WIZIOPICO)
-        spi_init(EVE_SPI, 8000000U);
-#else
+
 /* trap:
     ArduinoCore-mbed/cores/arduino/mbed/targets/TARGET_RASPBERRYPI/TARGET_RP2040/pico-sdk/rp2_common/hardware_spi/include/hardware/spi.h 
     is not the same as:
@@ -290,7 +290,6 @@ void EVE_init_spi(void)
     The function spi_init() was renamed to _spi_init().
 */
         _spi_init(EVE_SPI, 8000000U);
-#endif
 }
 
 #if defined (EVE_DMA)
@@ -335,7 +334,7 @@ void EVE_start_dma_transfer(void)
 }
 
 #endif /* DMA */
-#endif /* WIZIOPICO */
+#endif /* ARDUINO_RASPBERRY_PI_PICO */
 
 /* ################################################################## */
 /* ################################################################## */

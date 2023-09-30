@@ -2,7 +2,7 @@
 @file    EVE_target_Arduino_RP2040.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-06-24
+@date    2023-09-30
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -36,6 +36,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - split up the optional default defines to allow to only change what needs
     changing thru the build-environment
 - changed #include "EVE_cpp_wrapper.h" to #include "../EVE_cpp_wrapper.h"
+- removed the unfortunately defunct WIZIOPICO
 
 */
 
@@ -46,9 +47,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <stdint.h>
 
-#if defined (PICOPI)
-#include <stdbool.h> /* only included to fix a bug in Common.h from https://github.com/arduino/ArduinoCore-API */
-#endif
+//#include <stdbool.h> /* only included to fix a bug in Common.h from https://github.com/arduino/ArduinoCore-API */
 
 #include <Arduino.h>
 #include "../EVE_cpp_wrapper.h"
@@ -57,9 +56,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 extern "C"
 {
 #endif
-
-#if defined (WIZIOPICO) || defined (PICOPI)
-/* note: set in platformio.ini by "build_flags = -D WIZIOPICO" */
 
 #include "hardware/pio.h"
 #include "hardware/spi.h"
@@ -156,8 +152,6 @@ static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
     return (*p_data);
 }
-
-#endif /* (WIZIOPICO) || (PICOPI) */
 
 #ifdef __cplusplus
 }

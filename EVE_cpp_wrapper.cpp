@@ -2,7 +2,7 @@
 @file    EVE_cpp_wrapper.cpp
 @brief   wrapper functions to make C++ class methods callable from C functions
 @version 5.0
-@date    2023-07-20
+@date    2023-09-30
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -38,6 +38,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - changed return type of wrapper_spi_transmit_32() to void as intended
 - added workaround for non-standard implementations of SPI.transfer(buffer, count)
 - optimized for ESP32 by using SPI.write() and SPI.write32()
+- removed the unfortunately defunct WIZIOPICO
 
 */
 
@@ -68,7 +69,7 @@ extern "C" {
         SPI.transfer(data);
     }
 
-#if defined (WIZIOPICO) || defined (XMC1100_XMC2GO)
+#if defined (XMC1100_XMC2GO)
     void wrapper_spi_transmit_32(uint32_t data)
     {
         SPI.transfer((uint8_t *) &data, 4);
