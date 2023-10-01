@@ -26,33 +26,32 @@ The library code itself is downloaded from my Github repository by PlatformIO.
 
 This is an example for Arduino and it builds for a number of different boards:
 
-Environment                Status
--------------------------  --------
-uno                        SUCCESS
-avr_pro                    SUCCESS
-nano328                    SUCCESS
-mega2560                   SUCCESS
-adafruit_metro_m4          SUCCESS
-samd21_m0-mini             SUCCESS
-samd21_seeed_xiao          SUCCESS
-ESP32                      SUCCESS
-ESP32-S3                   SUCCESS
-ESP32-C3                   SUCCESS
-ESP8266_d1_mini            SUCCESS
-nucleo_f446re              SUCCESS
-teensy40                   SUCCESS
-teensy41                   SUCCESS
-adafruit_feather_nrf52840  SUCCESS
-bbcmicrobit_v2             SUCCESS
-teensy35                   SUCCESS
-xmc1100_xmc2go             SUCCESS
-pico                       SUCCESS
-dueUSB                     SUCCESS
-portenta_h7_m4             SUCCESS
-portenta_h7_m7             SUCCESS
-uno_r4_minima              SUCCESS
-uno_r4_wifi                SUCCESS
-uno_r4_minima_pio          SUCCESS
+|Environment|Status|
+|---|---|
+|uno|SUCCESS|
+|avr_pro|SUCCESS|
+|nano328|SUCCESS|
+|mega2560|SUCCESS|
+|adafruit_metro_m4|SUCCESS|
+|samd21_m0-mini|SUCCESS|
+|samd21_seeed_xiao|SUCCESS|
+|ESP32|SUCCESS|
+|ESP32-S3|SUCCESS|
+|ESP32-C3|SUCCESS|
+|ESP8266_d1_mini|SUCCESS|
+|nucleo_f446re|SUCCESS|
+|teensy40|SUCCESS|
+|teensy41|SUCCESS|
+|adafruit_feather_nrf52840|SUCCESS|
+|bbcmicrobit_v2|SUCCESS|
+|teensy35|SUCCESS|
+|xmc1100_xmc2go|SUCCESS|
+|pico|SUCCESS|
+|dueUSB|SUCCESS|
+|portenta_h7_m4|SUCCESS|
+|portenta_h7_m7|SUCCESS|
+|uno_r4_minima|SUCCESS|
+|uno_r4_wifi|SUCCESS|
 
 These all share a single "EVE_Test.cpp" which contains the setup() and loop() functions.
 
