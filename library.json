@@ -14,12 +14,8 @@
     }
   ],
   "license": "MIT",
-  "export": {
-    "exclude": [
-        "example_pics",
-        "examples/EVE_Test_SAMC21_EVE2-50G",
-        "examples/EVE_Test_SAME51_EVE3-43G",
-        "examples/EVE_Test_XMEGA128A1_GEN4-FT813-50CTP"
-    ]
+  "build":
+  {
+      "libLDFMode": "chain+"
   }
 }
