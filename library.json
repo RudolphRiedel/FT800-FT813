@@ -16,6 +16,7 @@
   "license": "MIT",
   "build":
   {
-      "libLDFMode": "chain+"
+      "libLDFMode": "chain+",
+      "flags" : "-Wall -Wextra -pedantic"
   }
 }
