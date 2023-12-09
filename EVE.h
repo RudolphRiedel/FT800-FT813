@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 5.0
-@date    2023-06-24
+@date    2023-12-09
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -63,6 +63,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - added #ifdef __cplusplus / extern "C" to allow
     adding EVE_ functions to C++ code
 - fix: typo REG_COPRO_PATCH_DTR -> REG_COPRO_PATCH_PTR
+- started to convert the function-like macros to static inline functions to be
+    a little friendlier towards C++ in regards of type-safety
 
 */
 
@@ -149,14 +151,14 @@ extern "C"
 #define CLR_TAG       0x1U
 
 /* Host commands */
-#define EVE_ACTIVE       0x00U /* place FT8xx in active state */
-#define EVE_STANDBY      0x41U /* place FT8xx in Standby (clk running) */
-#define EVE_SLEEP        0x42U /* place FT8xx in Sleep (clk off) */
+#define EVE_ACTIVE       0x00U /* place EVE in active state */
+#define EVE_STANDBY      0x41U /* place EVE in Standby (clk running) */
+#define EVE_SLEEP        0x42U /* place EVE in Sleep (clk off) */
 #define EVE_CLKEXT       0x44U /* select external clock source */
 #if EVE_GEN < 4
 #define EVE_CLKINT       0x48U /* select internal clock source, not a valid option for BT817 / BT818 */
 #endif
-#define EVE_PWRDOWN      0x50U /* place FT8xx in Power Down (core off) */
+#define EVE_PWRDOWN      0x50U /* place EVE in Power Down (core off) */
 #define EVE_CLKSEL       0x61U /* configure system clock */
 #define EVE_RST_PULSE    0x68U /* reset core - all registers default and processors reset */
 #define EVE_CORERST      0x68U /* reset core - all registers default and processors reset */
@@ -610,7 +612,21 @@ extern "C"
 #define BLEND_FUNC(src,dst) ((DL_BLEND_FUNC) | (((src) & 7UL) << 3U) | ((dst) & 7UL))
 #define CALL(dest) ((DL_CALL) | ((dest) & 0xFFFFUL))
 #define CELL(cell) ((DL_CELL) | ((cell) & 0x7FUL))
-#define CLEAR(c,s,t) ((DL_CLEAR) | (((c) & 1UL) << 2U) | (((s) & 1UL) << 1U) | ((t) & 1UL))
+
+//#define CLEAR(c,s,t) ((DL_CLEAR) | (((c) & 1UL) << 2U) | (((s) & 1UL) << 1U) | ((t) & 1UL))
+/**
+ * @brief Clear buffers to preset values.
+ *
+ * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ */
+static inline uint32_t CLEAR(uint8_t c, uint8_t s, uint8_t t)
+{
+    c = (c & 1U) << 2U;
+    s = (s & 1U) << 1U;
+    t = (t & 1U) << 0U;
+    return (DL_CLEAR | c | s | t);
+}
+
 #define CLEAR_COLOR_A(alpha) ((DL_CLEAR_COLOR_A) | ((alpha) & 0xFFUL))
 #define CLEAR_COLOR_RGB(red,green,blue) ((DL_CLEAR_COLOR_RGB) | (((red) & 0xFFUL) << 16U) | (((green) & 0xFFUL) << 8U) | ((blue) & 0xFFUL))
 #define CLEAR_STENCIL(s) ((DL_CLEAR_STENCIL) | ((s) & 0xFFUL))
@@ -628,13 +644,90 @@ extern "C"
 #define STENCIL_FUNC(func,ref,mask) ((DL_STENCIL_FUNC) | (((func) & 7UL) << 16U) | (((ref) & 0xFFUL) << 8U)|((mask) & 0xFFUL))
 #define STENCIL_MASK(mask) ((DL_STENCIL_MASK) | ((mask) & 0xFFUL))
 #define STENCIL_OP(sfail,spass) ((DL_STENCIL_OP) | (((sfail) & 7UL) << 3U) | ((spass) & 7UL))
-#define TAG(s) ((DL_TAG) | ((s) & 0xFFUL))
-#define TAG_MASK(mask) ((DL_TAG_MASK) | ((mask) & 1UL))
-#define VERTEX2F(x,y) ((DL_VERTEX2F) | ((((uint32_t) (x)) & 0x7FFFUL) << 15U) | (((uint32_t) (y)) & 0x7FFFUL))
-#define VERTEX2II(x,y,handle,cell) ((DL_VERTEX2II) | (((x) & 0x1FFUL) << 21U) | (((y) & 0x1FFUL) << 12U) | (((handle) & 0x1FUL) << 7U) | ((cell) & 0x7FUL))
-#define VERTEX_FORMAT(frac) ((DL_VERTEX_FORMAT) | ((frac) & 7UL))
-#define VERTEX_TRANSLATE_X(x) ((DL_VERTEX_TRANSLATE_X) | ((x) & 0x1FFFFUL))
-#define VERTEX_TRANSLATE_Y(y) ((DL_VERTEX_TRANSLATE_Y) | ((y) & 0x1FFFFUL))
+
+//#define TAG(s) ((DL_TAG) | ((s) & 0xFFUL))
+/**
+ * @brief Attach the tag value for the following graphics objects drawn on the screen. 
+ *
+ * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ */
+static inline uint32_t TAG(uint8_t tagval)
+{
+    return (DL_TAG | tagval);
+}
+
+//#define TAG_MASK(mask) ((DL_TAG_MASK) | ((mask) & 1UL))
+/**
+ * @brief Control the writing of the tag buffer. 
+ *
+ * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ */
+static inline uint32_t TAG_MASK(uint8_t mask)
+{
+    return (DL_TAG_MASK | ((mask) & 1UL));
+}
+
+//#define VERTEX2F(x,y) ((DL_VERTEX2F) | ((((uint32_t) (x)) & 0x7FFFUL) << 15U) | (((uint32_t) (y)) & 0x7FFFUL))
+/**
+ * @brief Set coordinates for graphics primitves.
+ *
+ * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ */
+static inline uint32_t VERTEX2F(int16_t x, int16_t y)
+{
+    uint32_t xv = ((((uint32_t) (x)) & 0x7FFFUL) << 15U);
+    uint32_t yv = (((uint32_t) (y)) & 0x7FFFUL);
+    return (DL_VERTEX2F | xv | yv);
+}
+
+//#define VERTEX2II(x,y,handle,cell) ((DL_VERTEX2II) | (((x) & 0x1FFUL) << 21U) | (((y) & 0x1FFUL) << 12U) | (((handle) & 0x1FUL) << 7U) | ((cell) & 0x7FUL))
+/**
+ * @brief Set coordinates, bitmap-handle and cell-number for graphics primitves.
+ *
+ * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ */
+static inline uint32_t VERTEX2II(uint16_t x, uint16_t y, uint8_t handle, uint8_t cell)
+{
+    uint32_t xv = ((((uint32_t) x) & 0x1FFUL) << 21U);
+    uint32_t yv = ((((uint32_t) y) & 0x1FFUL) << 12U);
+    uint32_t handlev = ((((uint32_t) handle) & 0x1FUL) << 7U);
+    uint32_t cellv = (((uint32_t) cell) & 0x7FUL);
+    
+    return (DL_VERTEX2II | xv | yv | handlev | cellv);
+}
+
+//#define VERTEX_FORMAT(frac) ((DL_VERTEX_FORMAT) | ((frac) & 7UL))
+/**
+ * @brief Set the precision of VERTEX2F coordinates.
+ *
+ * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ */
+static inline uint32_t VERTEX_FORMAT(uint8_t frac)
+{
+    return (DL_VERTEX_FORMAT | ((frac) & 7UL));
+}
+
+//#define VERTEX_TRANSLATE_X(x) ((DL_VERTEX_TRANSLATE_X) | ((x) & 0x1FFFFUL))
+/**
+ * @brief Specify the vertex transformations X translation component.
+ *
+ * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ */
+static inline uint32_t VERTEX_TRANSLATE_X(int32_t x)
+{
+    return (DL_VERTEX_TRANSLATE_X | (((uint32_t) x) & 0x1FFFFUL));
+}
+
+//#define VERTEX_TRANSLATE_Y(y) ((DL_VERTEX_TRANSLATE_Y) | ((y) & 0x1FFFFUL))
+/**
+ * @brief Specify the vertex transformations Y translation component.
+ *
+ * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ */
+static inline uint32_t VERTEX_TRANSLATE_Y(int32_t y)
+{
+    return (DL_VERTEX_TRANSLATE_Y | (((uint32_t) y) & 0x1FFFFUL));
+}
 
 /* #define BEGIN(prim) ((DL_BEGIN) | ((prim) & 15UL)) */ /* use define DL_BEGIN */
 /* #define DISPLAY() ((DL_DISPLAY)) */ /* use define DL_DISPLAY */
