@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 5.0
-@date    2023-12-10
+@date    2023-12-17
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -67,6 +67,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     a little friendlier towards C++ in regards of type-safety
 - added type-casts to all simple macros
 - converted some more function-like macros to static inline functions
+- converted the rest of the function-like macros to static inline functions
 
 */
 
@@ -591,9 +592,9 @@ extern "C"
 
 //#define ALPHA_FUNC(func,ref) ((DL_ALPHA_FUNC) | (((func) & 7UL) << 8U) | ((ref) & 0xFFUL))
 /**
- * @brief Specify the alpha test function.
+ * @brief Set the alpha test function.
  *
- * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t ALPHA_FUNC(uint8_t func, uint8_t ref)
 {
@@ -603,8 +604,8 @@ static inline uint32_t ALPHA_FUNC(uint8_t func, uint8_t ref)
 
 //#define BITMAP_HANDLE(handle) ((DL_BITMAP_HANDLE) | ((handle) & 0x1FUL))
 /**
- * @brief Specify the bitmap handle.
- * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ * @brief Set the bitmap handle.
+ * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t BITMAP_HANDLE(uint8_t handle)
 {
@@ -613,8 +614,8 @@ static inline uint32_t BITMAP_HANDLE(uint8_t handle)
 
 //#define BITMAP_LAYOUT(format,linestride,height) ((DL_BITMAP_LAYOUT) | (((format) & 0x1FUL) << 19U) | (((linestride) & 0x3FFUL) << 9U) | ((height) & 0x1FFUL))
 /**
- * @brief Specify the source bitmap memory format and layout for the current handle.
- * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ * @brief Set the source bitmap memory format and layout for the current handle.
+ * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t BITMAP_LAYOUT(uint8_t format, uint16_t linestride, uint8_t height)
 {
@@ -625,29 +626,53 @@ static inline uint32_t BITMAP_LAYOUT(uint8_t format, uint16_t linestride, uint8_
 
 //#define BITMAP_SIZE(filter,wrapx,wrapy,width,height) ((DL_BITMAP_SIZE) | (((filter) & 1UL) << 20U) | (((wrapx) & 1UL) << 19U) | (((wrapy) & 1UL) << 18U) | (((width) & 0x1FFUL) << 9U) | ((height) & 0x1FFUL))
 /**
- * @brief Specify the source bitmap memory format and layout for the current handle.
- * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ * @brief Set the source bitmap memory format and layout for the current handle.
+ * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t BITMAP_SIZE(uint8_t filter, uint8_t wrapx, uint8_t wrapy, uint16_t width, uint16_t height)
 {
-    uint32_t const filterv = ((uint32_t) filter & 0x1UL) << 20U;
-    uint32_t const wrapxv = ((uint32_t) wrapx & 0x1UL) << 19U;
-    uint32_t const wrapyv = ((uint32_t) wrapy & 0x1UL) << 18U;
-    uint32_t const widthv = ((uint32_t) width & 0x1FFUL) << 9U;
-    uint32_t const heightv = ((uint32_t) height & 0x1FFUL) << 9U;
+    uint32_t const filterv = (filter & 0x1UL) << 20U;
+    uint32_t const wrapxv = (wrapx & 0x1UL) << 19U;
+    uint32_t const wrapyv = (wrapy & 0x1UL) << 18U;
+    uint32_t const widthv = (width & 0x1FFUL) << 9U;
+    uint32_t const heightv = (height & 0x1FFUL) << 9U;
     return (DL_BITMAP_SIZE | filterv | wrapxv | wrapyv | widthv | heightv);
 }
 
-/* beware, this is different to FTDIs implementation as this takes the original values as parameters and not only the upper bits */
-#define BITMAP_LAYOUT_H(linestride,height) ((DL_BITMAP_LAYOUT_H) | (((((linestride) & 0xC00U) >> 10U)&3UL) << 2U) | ((((height) & 0x600U) >> 9U) & 3UL))
+//#define BITMAP_LAYOUT_H(linestride,height) ((DL_BITMAP_LAYOUT_H) | (((((linestride) & 0xC00U) >> 10U)&3UL) << 2U) | ((((height) & 0x600U) >> 9U) & 3UL))
+/**
+ * @brief Set the 2 most significant bits of the source bitmap memory format and layout for the current handle.
+ * @param linestride 12-bit value specified to BITMAP_LAYOUT
+ * @param height 11-bit value specified to BITMAP_LAYOUT
+ * @note this is different to FTDIs implementation as this takes the original values as parameters and not only the upper bits
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t BITMAP_LAYOUT_H(uint16_t linestride, uint16_t height)
+{
+    uint32_t const linestridev = (uint32_t) ((((linestride & 0xC00U) >> 10U) &3UL) << 2U);
+    uint32_t const heightv = (uint32_t) (((height & 0x600U) >> 9U) & 3UL);
+    return (DL_BITMAP_LAYOUT_H | linestridev | heightv);
+}
 
-/* beware, this is different to FTDIs implementation as this takes the original values as parameters and not only the upper bits */
-#define BITMAP_SIZE_H(width,height) ((DL_BITMAP_SIZE_H) | (((((width) & 0x600U) >> 9U) & 3UL) << 2U) | ((((height) & 0x600U) >> 9U) & 3UL))
+//#define BITMAP_SIZE_H(width,height) ((DL_BITMAP_SIZE_H) | (((((width) & 0x600U) >> 9U) & 3UL) << 2U) | ((((height) & 0x600U) >> 9U) & 3UL))
+/**
+ * @brief Set the 2 most significant bits of bitmaps dimension for the current handle.
+ * @param linestride 11-bit value of bitmap width, the 2 most significant bits are used
+ * @param height 11-bit value of bitmap width, the 2 most significant bits are used
+ * @note this is different to FTDIs implementation as this takes the original values as parameters and not only the upper bits
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t BITMAP_SIZE_H(uint16_t width, uint16_t height)
+{
+    uint32_t const widthv = (uint32_t) ((((width & 0x600U) >> 9U) & 3UL) << 2U);
+    uint32_t const heightv = (uint32_t) (((height & 0x600U) >> 9U) & 3UL);
+    return ((DL_BITMAP_SIZE_H) | widthv | heightv);
+}
 
 //#define BITMAP_SOURCE(addr) ((DL_BITMAP_SOURCE) | ((addr) & 0x3FFFFFUL))
 /**
- * @brief Specify the source address of bitmap data in RAM_G or flash memory.
- * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ * @brief Set the source address of bitmap data in RAM_G or flash memory.
+ * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t BITMAP_SOURCE(uint32_t addr)
 {
@@ -655,72 +680,309 @@ static inline uint32_t BITMAP_SOURCE(uint32_t addr)
 }
 
 #if EVE_GEN < 3 /* only define these for FT81x */
-#define BITMAP_TRANSFORM_A(a) ((DL_BITMAP_TRANSFORM_A) | ((a) & 0x1FFFFUL))
-#define BITMAP_TRANSFORM_B(b) ((DL_BITMAP_TRANSFORM_B) | ((b) & 0x1FFFFUL))
-#define BITMAP_TRANSFORM_D(d) ((DL_BITMAP_TRANSFORM_D) | ((d) & 0x1FFFFUL))
+//#define BITMAP_TRANSFORM_A(a) ((DL_BITMAP_TRANSFORM_A) | ((a) & 0x1FFFFUL))
+/**
+ * @brief Set the A coefficient of the bitmap transform matrix.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t BITMAP_TRANSFORM_A(uint32_t val)
+{
+    return (DL_BITMAP_TRANSFORM_A | (val & 0x1FFFFUL));
+}
+
+//#define BITMAP_TRANSFORM_B(b) ((DL_BITMAP_TRANSFORM_B) | ((b) & 0x1FFFFUL))
+/**
+ * @brief Set the B coefficient of the bitmap transform matrix.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t BITMAP_TRANSFORM_B(uint32_t val)
+{
+    return (DL_BITMAP_TRANSFORM_B | (val & 0x1FFFFUL));
+}
+
+//#define BITMAP_TRANSFORM_D(d) ((DL_BITMAP_TRANSFORM_D) | ((d) & 0x1FFFFUL))
+/**
+ * @brief Set the D coefficient of the bitmap transform matrix.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t BITMAP_TRANSFORM_D(uint32_t val)
+{
+    return (DL_BITMAP_TRANSFORM_D | (val & 0x1FFFFUL));
+}
+
 #define BITMAP_TRANSFORM_E(e) ((DL_BITMAP_TRANSFORM_E) | ((e) & 0x1FFFFUL))
+/**
+ * @brief Set he E coefficient of the bitmap transform matrix.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t BITMAP_TRANSFORM_E(uint32_t val)
+{
+    return (DL_BITMAP_TRANSFORM_E | (val & 0x1FFFFUL));
+}
+
 #endif
 
-#define BITMAP_TRANSFORM_C(c) ((DL_BITMAP_TRANSFORM_C) | ((c) & 0x1FFFFUL))
-#define BITMAP_TRANSFORM_F(f) ((DL_BITMAP_TRANSFORM_F) | ((f) & 0x1FFFFUL))
+//#define BITMAP_TRANSFORM_C(c) ((DL_BITMAP_TRANSFORM_C) | ((c) & 0x1FFFFUL))
+/**
+ * @brief Set the C coefficient of the bitmap transform matrix.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t BITMAP_TRANSFORM_C(uint32_t val)
+{
+    return (DL_BITMAP_TRANSFORM_C | (val & 0x1FFFFUL));
+}
 
-#define BLEND_FUNC(src,dst) ((DL_BLEND_FUNC) | (((src) & 7UL) << 3U) | ((dst) & 7UL))
+//#define BITMAP_TRANSFORM_F(f) ((DL_BITMAP_TRANSFORM_F) | ((f) & 0x1FFFFUL))
+/**
+ * @brief Set the F coefficient of the bitmap transform matrix.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t BITMAP_TRANSFORM_F(uint32_t val)
+{
+    return (DL_BITMAP_TRANSFORM_F | (val & 0x1FFFFUL));
+}
+
+//#define BLEND_FUNC(src,dst) ((DL_BLEND_FUNC) | (((src) & 7UL) << 3U) | ((dst) & 7UL))
+/**
+ * @brief Execute a sequence of commands at another location in the display list.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t BLEND_FUNC(uint8_t src, uint8_t dst)
+{
+    uint32_t const srcv = (uint32_t) ((src & 7UL) << 3U);
+    uint32_t const dstv = (uint32_t) (dst & 7UL);
+    return (DL_BLEND_FUNC | srcv | dstv);
+}
 
 //#define CALL(dest) ((DL_CALL) | ((dest) & 0xFFFFUL))
 /**
  * @brief Execute a sequence of commands at another location in the display list.
- * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t CALL(uint16_t dest)
 {
-    return (DL_CALL | dest);
+    return (DL_CALL | (dest & 0x7FFUL));
+}
+
+//#define JUMP(dest) ((DL_JUMP) | ((dest) & 0xFFFFUL))
+/**
+ * @brief Execute commands at another location in the display list.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t JUMP(uint16_t dest)
+{
+    return (DL_JUMP | (dest & 0x7FFUL));
 }
 
 //#define CELL(cell) ((DL_CELL) | ((cell) & 0x7FUL))
 /**
- * @brief Specify the bitmap cell number for the VERTEX2F command.
- * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ * @brief Set the bitmap cell number for the VERTEX2F command.
+ * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t CELL(uint8_t cell)
 {
-    return (DL_CELL | ((cell) & 0x7FUL));
+    return (DL_CELL | (cell & 0x7FUL));
 }
 
 //#define CLEAR(c,s,t) ((DL_CLEAR) | (((c) & 1UL) << 2U) | (((s) & 1UL) << 1U) | ((t) & 1UL))
 /**
  * @brief Clear buffers to preset values.
- * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t CLEAR(uint8_t color, uint8_t stencil, uint8_t tag)
 {
-    uint32_t const colorv = ((uint32_t) color & 1U) << 2U;
-    uint32_t const stencilv = ((uint32_t) stencil & 1U) << 1U;
-    uint32_t const tagv = ((uint32_t) tag & 1U);
+    uint32_t const colorv = (color & 1UL) << 2U;
+    uint32_t const stencilv = (stencil & 1UL) << 1U;
+    uint32_t const tagv = (tag & 1UL);
     return (DL_CLEAR | colorv | stencilv | tagv);
 }
 
-#define CLEAR_COLOR_A(alpha) ((DL_CLEAR_COLOR_A) | ((alpha) & 0xFFUL))
-#define CLEAR_COLOR_RGB(red,green,blue) ((DL_CLEAR_COLOR_RGB) | (((red) & 0xFFUL) << 16U) | (((green) & 0xFFUL) << 8U) | ((blue) & 0xFFUL))
-#define CLEAR_STENCIL(s) ((DL_CLEAR_STENCIL) | ((s) & 0xFFUL))
-#define CLEAR_TAG(s) ((DL_CLEAR_TAG) | ((s) & 0xFFUL))
-#define COLOR_A(alpha) ((DL_COLOR_A) | ((alpha) & 0xFFUL))
-#define COLOR_MASK(r,g,b,a) ((DL_COLOR_MASK) | (((r) & 1UL) << 3U) | (((g) & 1UL) << 2U) | (((b) & 1UL) << 1U) | ((a) & 1UL))
-#define COLOR_RGB(red,green,blue) ((DL_COLOR_RGB) | (((red) & 0xFFUL) << 16U) | (((green) & 0xFFUL) << 8U) | ((blue) & 0xFFUL))
-#define JUMP(dest) ((DL_JUMP) | ((dest) & 0xFFFFUL))
-#define LINE_WIDTH(width) ((DL_LINE_WIDTH) | (((uint32_t) (width)) & 0xFFFUL))
-#define MACRO(m) ((DL_MACRO) | ((m) & 1UL))
-#define PALETTE_SOURCE(addr) ((DL_PALETTE_SOURCE) | ((addr) & 0x3FFFFF3UL))
-#define POINT_SIZE(size) ((DL_POINT_SIZE) | ((size) & 0x1FFFUL))
-#define SCISSOR_SIZE(width,height) ((DL_SCISSOR_SIZE) | (((width) & 0xFFFUL) << 12U) | ((height) & 0xFFFUL))
-#define SCISSOR_XY(x,y) ((DL_SCISSOR_XY) | (((x) & 0x7FFUL) << 11U) | ((y) & 0x7FFUL))
-#define STENCIL_FUNC(func,ref,mask) ((DL_STENCIL_FUNC) | (((func) & 7UL) << 16U) | (((ref) & 0xFFUL) << 8U)|((mask) & 0xFFUL))
-#define STENCIL_MASK(mask) ((DL_STENCIL_MASK) | ((mask) & 0xFFUL))
-#define STENCIL_OP(sfail,spass) ((DL_STENCIL_OP) | (((sfail) & 7UL) << 3U) | ((spass) & 7UL))
+//#define CLEAR_COLOR_A(alpha) ((DL_CLEAR_COLOR_A) | ((alpha) & 0xFFUL))
+/**
+ * @brief Set clear value for the alpha channel.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t CLEAR_COLOR_A(uint8_t alpha)
+{
+    return (DL_CLEAR_COLOR_A | alpha);
+}
+
+//#define CLEAR_COLOR_RGB(red,green,blue) ((DL_CLEAR_COLOR_RGB) | (((red) & 0xFFUL) << 16U) | (((green) & 0xFFUL) << 8U) | ((blue) & 0xFFUL))
+/**
+ * @brief Set clear values for red, green and blue channels.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t CLEAR_COLOR_RGB(uint8_t red, uint8_t green, uint8_t blue)
+{
+    uint32_t const redv = ((red & 0xFFUL) << 16U);
+    uint32_t const greenv = ((green & 0xFFUL) << 8U);
+    uint32_t const bluev = (blue & 0xFFUL);
+    return (DL_CLEAR_COLOR_RGB | redv | greenv | bluev);
+}
+
+//#define CLEAR_STENCIL(s) ((DL_CLEAR_STENCIL) | ((s) & 0xFFUL))
+/**
+ * @brief Set clear value for the stencil buffer.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t CLEAR_STENCIL(uint8_t val)
+{
+    return (DL_CLEAR_STENCIL | val);
+}
+
+//#define CLEAR_TAG(s) ((DL_CLEAR_TAG) | ((s) & 0xFFUL))
+/**
+ * @brief Set clear value for the tag buffer.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t CLEAR_TAG(uint8_t val)
+{
+    return (DL_CLEAR_TAG | val);
+}
+
+//#define COLOR_A(alpha) ((DL_COLOR_A) | ((alpha) & 0xFFUL))
+/**
+ * @brief Set the current color alpha.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t COLOR_A(uint8_t alpha)
+{
+    return (DL_COLOR_A | alpha);
+}
+
+//#define COLOR_MASK(r,g,b,a) ((DL_COLOR_MASK) | (((r) & 1UL) << 3U) | (((g) & 1UL) << 2U) | (((b) & 1UL) << 1U) | ((a) & 1UL))
+/**
+ * @brief Enable or disable writing of color components.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t COLOR_MASK(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha)
+{
+    uint32_t const redv = ((red & 1UL) << 3U);
+    uint32_t const greenv = ((green & 1UL) << 2U);
+    uint32_t const bluev = ((blue & 1UL) << 1U);
+    uint32_t const alphav = (alpha & 1UL);
+    return (DL_COLOR_MASK | redv | greenv | bluev | alphav);
+}
+
+//#define COLOR_RGB(red,green,blue) ((DL_COLOR_RGB) | (((red) & 0xFFUL) << 16U) | (((green) & 0xFFUL) << 8U) | ((blue) & 0xFFUL))
+/**
+ * @brief Set the current color red, green and blue.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t COLOR_RGB(uint8_t red, uint8_t green, uint8_t blue)
+{
+    uint32_t const redv = ((red & 0xFFUL) << 16U);
+    uint32_t const greenv = ((green & 0xFFUL) << 8U);
+    uint32_t const bluev = (blue & 0xFFUL);
+    return (DL_COLOR_RGB | redv | greenv | bluev);
+}
+
+//#define LINE_WIDTH(width) ((DL_LINE_WIDTH) | (((uint32_t) (width)) & 0xFFFUL))
+/**
+ * @brief Set the width of lines to be drawn with primitive LINES in 1/16 pixel precision.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t LINE_WIDTH(uint16_t width)
+{
+    return (DL_LINE_WIDTH | (width & 0xFFFUL));
+}
+
+//#define MACRO(m) ((DL_MACRO) | ((m) & 1UL))
+/**
+ * @brief Execute a single command from a macro register.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t MACRO(uint8_t macro)
+{
+    return (DL_MACRO | (macro & 0x1UL));
+}
+
+//#define PALETTE_SOURCE(addr) ((DL_PALETTE_SOURCE) | ((addr) & 0x3FFFFF3UL))
+/**
+ * @brief Set the base address of the palette.
+ * @note 2-byte alignment is required if pixel format is PALETTE4444 or PALETTE565.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t PALETTE_SOURCE(uint32_t addr)
+{
+    return (DL_PALETTE_SOURCE | (addr & 0x3FFFFFUL));
+}
+
+//#define POINT_SIZE(size) ((DL_POINT_SIZE) | ((size) & 0x1FFFUL))
+/**
+ * @brief Set the radius of points to be drawn with primitive POINTS in 1/16 pixel precision.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t POINT_SIZE(uint16_t size)
+{
+    return (DL_POINT_SIZE | (size & 0x1FFFUL));
+}
+
+//#define SCISSOR_SIZE(width,height) ((DL_SCISSOR_SIZE) | (((width) & 0xFFFUL) << 12U) | ((height) & 0xFFFUL))
+/**
+ * @brief Set the size of the scissor clip rectangle.
+ * @note valid range for width and height is from zero to 2048
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t SCISSOR_SIZE(uint16_t width, uint16_t height)
+{
+    uint32_t const widthv = (uint32_t) ((width & 0xFFFUL) << 12U);
+    uint32_t const heightv = (uint32_t) (height & 0xFFFUL);
+    return (DL_SCISSOR_SIZE | widthv | heightv);
+}
+
+//#define SCISSOR_XY(x,y) ((DL_SCISSOR_XY) | (((x) & 0x7FFUL) << 11U) | ((y) & 0x7FFUL))
+/**
+ * @brief Set the top left corner of the scissor clip rectangle.
+ * @note valid range for width and height is from zero to 2047
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t SCISSOR_XY(uint16_t xc0, uint16_t yc0)
+{
+    uint32_t const xc0v = (uint32_t) ((xc0 & 0x7FFUL) << 11U);
+    uint32_t const yc0v = (uint32_t) (yc0 & 0x7FFUL);
+    return (DL_SCISSOR_XY | xc0v | yc0v);
+}
+
+//#define STENCIL_FUNC(func,ref,mask) ((DL_STENCIL_FUNC) | (((func) & 7UL) << 16U) | (((ref) & 0xFFUL) << 8U)|((mask) & 0xFFUL))
+/**
+ * @brief Set function and reference value for stencil testing.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t STENCIL_FUNC(uint8_t func, uint8_t ref, uint8_t mask)
+{
+    uint32_t const funcv = (uint32_t) ((func & 7UL) << 16U);
+    uint32_t const refv = (uint32_t) ((ref & 0xFFUL) << 8U);
+    uint32_t const maskv = (uint32_t) (mask & 0xFFUL);
+    return (DL_STENCIL_FUNC | funcv | refv | maskv);
+}
+
+//#define STENCIL_MASK(mask) ((DL_STENCIL_MASK) | ((mask) & 0xFFUL))
+/**
+ * @brief Control the writing of individual bits in the stencil planes.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t STENCIL_MASK(uint8_t mask)
+{
+    return (DL_STENCIL_MASK | mask);
+}
+
+//#define STENCIL_OP(sfail,spass) ((DL_STENCIL_OP) | (((sfail) & 7UL) << 3U) | ((spass) & 7UL))
+/**
+ * @brief Set stencil test actions.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t STENCIL_OP(uint8_t sfail, uint8_t spass)
+{
+    uint32_t const sfailv = (uint32_t) ((sfail & 0x07UL) << 3U);
+    uint32_t const spassv = (uint32_t) (spass & 0x07UL);
+    return (DL_STENCIL_OP | sfailv | spassv);
+}
 
 //#define TAG(s) ((DL_TAG) | ((s) & 0xFFUL))
 /**
  * @brief Attach the tag value for the following graphics objects drawn on the screen.
- * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t TAG(uint8_t tagval)
 {
@@ -730,7 +992,7 @@ static inline uint32_t TAG(uint8_t tagval)
 //#define TAG_MASK(mask) ((DL_TAG_MASK) | ((mask) & 1UL))
 /**
  * @brief Control the writing of the tag buffer.
- * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t TAG_MASK(uint8_t mask)
 {
@@ -740,7 +1002,7 @@ static inline uint32_t TAG_MASK(uint8_t mask)
 //#define VERTEX2F(x,y) ((DL_VERTEX2F) | ((((uint32_t) (x)) & 0x7FFFUL) << 15U) | (((uint32_t) (y)) & 0x7FFFUL))
 /**
  * @brief Set coordinates for graphics primitves.
- * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t VERTEX2F(int16_t xc0, int16_t yc0)
 {
@@ -752,7 +1014,7 @@ static inline uint32_t VERTEX2F(int16_t xc0, int16_t yc0)
 //#define VERTEX2II(x,y,handle,cell) ((DL_VERTEX2II) | (((x) & 0x1FFUL) << 21U) | (((y) & 0x1FFUL) << 12U) | (((handle) & 0x1FUL) << 7U) | ((cell) & 0x7FUL))
 /**
  * @brief Set coordinates, bitmap-handle and cell-number for graphics primitves.
- * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t VERTEX2II(uint16_t xc0, uint16_t yc0, uint8_t handle, uint8_t cell)
 {
@@ -760,14 +1022,13 @@ static inline uint32_t VERTEX2II(uint16_t xc0, uint16_t yc0, uint8_t handle, uin
     uint32_t const yc0v = ((((uint32_t) yc0) & 0x1FFUL) << 12U);
     uint32_t const handlev = ((((uint32_t) handle) & 0x1FUL) << 7U);
     uint32_t const cellv = (((uint32_t) cell) & 0x7FUL);
-    
     return (DL_VERTEX2II | xc0v | yc0v | handlev | cellv);
 }
 
 //#define VERTEX_FORMAT(frac) ((DL_VERTEX_FORMAT) | ((frac) & 7UL))
 /**
  * @brief Set the precision of VERTEX2F coordinates.
- * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t VERTEX_FORMAT(uint8_t frac)
 {
@@ -776,8 +1037,8 @@ static inline uint32_t VERTEX_FORMAT(uint8_t frac)
 
 //#define VERTEX_TRANSLATE_X(x) ((DL_VERTEX_TRANSLATE_X) | ((x) & 0x1FFFFUL))
 /**
- * @brief Specify the vertex transformations X translation component.
- * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ * @brief Set the vertex transformations X translation component.
+ * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t VERTEX_TRANSLATE_X(int32_t xco)
 {
@@ -786,8 +1047,8 @@ static inline uint32_t VERTEX_TRANSLATE_X(int32_t xco)
 
 //#define VERTEX_TRANSLATE_Y(y) ((DL_VERTEX_TRANSLATE_Y) | ((y) & 0x1FFFFUL))
 /**
- * @brief Specify the vertex transformations Y translation component.
- * @return Returns a 32 bit word for use with EVE_cmd_dl().
+ * @brief Set the vertex transformations Y translation component.
+ * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t VERTEX_TRANSLATE_Y(int32_t yco)
 {
@@ -874,18 +1135,83 @@ static inline uint32_t VERTEX_TRANSLATE_Y(int32_t yco)
 #define REG_COPRO_PATCH_PTR    ((uint32_t) 0x00309162UL)
 
 /* Macros for BT815 / BT816 */
-#define BITMAP_EXT_FORMAT(format) ((DL_BITMAP_EXT_FORMAT) | ((format) & 0xFFFFUL))
-#define BITMAP_SWIZZLE(r,g,b,a) ((DL_BITMAP_SWIZZLE) | (((r) & 7UL) << 9U) | (((g) & 7UL) << 6U) | (((b) & 7UL) << 3U) | ((a) & 7UL))
 
-#define BITMAP_TRANSFORM_A_EXT(p,v) ((DL_BITMAP_TRANSFORM_A) | (((p) & 1UL) << 17U) | ((v) & 0x1FFFFUL))
-#define BITMAP_TRANSFORM_B_EXT(p,v) ((DL_BITMAP_TRANSFORM_B) | (((p) & 1UL) << 17U) | ((v) & 0x1FFFFUL))
-#define BITMAP_TRANSFORM_D_EXT(p,v) ((DL_BITMAP_TRANSFORM_D) | (((p) & 1UL) << 17U) | ((v) & 0x1FFFFUL))
-#define BITMAP_TRANSFORM_E_EXT(p,v) ((DL_BITMAP_TRANSFORM_E) | (((p) & 1UL) << 17U) | ((v) & 0x1FFFFUL))
+//#define BITMAP_EXT_FORMAT(format) ((DL_BITMAP_EXT_FORMAT) | ((format) & 0xFFFFUL))
+/**
+ * @brief Set the extended format of the bitmap.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t BITMAP_EXT_FORMAT(uint16_t format)
+{
+    return (DL_BITMAP_EXT_FORMAT | format);
+}
 
-#define BITMAP_TRANSFORM_A(a) BITMAP_TRANSFORM_A_EXT(0UL,(a))
-#define BITMAP_TRANSFORM_B(b) BITMAP_TRANSFORM_B_EXT(0UL,(b))
-#define BITMAP_TRANSFORM_D(d) BITMAP_TRANSFORM_D_EXT(0UL,(d))
-#define BITMAP_TRANSFORM_E(e) BITMAP_TRANSFORM_E_EXT(0UL,(e))
+//#define BITMAP_SWIZZLE(r,g,b,a) ((DL_BITMAP_SWIZZLE) | (((r) & 7UL) << 9U) | (((g) & 7UL) << 6U) | (((b) & 7UL) << 3U) | ((a) & 7UL))
+/**
+ * @brief Set the source for the red, green, blue and alpha channels of a bitmap.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t BITMAP_SWIZZLE(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha)
+{
+    uint32_t const redv = ((red & 7UL) << 9U);
+    uint32_t const greenv = ((green & 7UL) << 6U);
+    uint32_t const bluev = ((blue & 7UL) << 3U);
+    uint32_t const alphav = (alpha & 7UL);
+    return (DL_BITMAP_SWIZZLE | redv | greenv | bluev | alphav);
+}
+
+//#define BITMAP_TRANSFORM_A_EXT(p,v) ((DL_BITMAP_TRANSFORM_A) | (((p) & 1UL) << 17U) | ((v) & 0x1FFFFUL))
+/**
+ * @brief Set the A coefficient of the bitmap transform matrix.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t BITMAP_TRANSFORM_A(uint8_t prc, uint32_t val)
+{
+    uint32_t const prcv = ((prc & 1UL) << 17U);
+    uint32_t const valv = (val & 0x1FFFFUL);
+    return (DL_BITMAP_TRANSFORM_A | prcv | valv);
+}
+
+//#define BITMAP_TRANSFORM_B_EXT(p,v) ((DL_BITMAP_TRANSFORM_B) | (((p) & 1UL) << 17U) | ((v) & 0x1FFFFUL))
+/**
+ * @brief Set the B coefficient of the bitmap transform matrix.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t BITMAP_TRANSFORM_B(uint8_t prc, uint32_t val)
+{
+    uint32_t const prcv = ((prc & 1UL) << 17U);
+    uint32_t const valv = (val & 0x1FFFFUL);
+    return (DL_BITMAP_TRANSFORM_B | prcv | valv);
+}
+
+//#define BITMAP_TRANSFORM_D_EXT(p,v) ((DL_BITMAP_TRANSFORM_D) | (((p) & 1UL) << 17U) | ((v) & 0x1FFFFUL))
+/**
+ * @brief Set the D coefficient of the bitmap transform matrix.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t BITMAP_TRANSFORM_D(uint8_t prc, uint32_t val)
+{
+    uint32_t const prcv = ((prc & 1UL) << 17U);
+    uint32_t const valv = (val & 0x1FFFFUL);
+    return (DL_BITMAP_TRANSFORM_D | prcv | valv);
+}
+
+//#define BITMAP_TRANSFORM_E_EXT(p,v) ((DL_BITMAP_TRANSFORM_E) | (((p) & 1UL) << 17U) | ((v) & 0x1FFFFUL))
+/**
+ * @brief Set the E coefficient of the bitmap transform matrix.
+ * @return a 32 bit word for use with EVE_cmd_dl()
+ */
+static inline uint32_t BITMAP_TRANSFORM_E(uint8_t prc, uint32_t val)
+{
+    uint32_t const prcv = ((prc & 1UL) << 17U);
+    uint32_t const valv = (val & 0x1FFFFUL);
+    return (DL_BITMAP_TRANSFORM_E | prcv | valv);
+}
+
+//#define BITMAP_TRANSFORM_A(a) BITMAP_TRANSFORM_A_EXT(0UL,(a))
+//#define BITMAP_TRANSFORM_B(b) BITMAP_TRANSFORM_B_EXT(0UL,(b))
+//#define BITMAP_TRANSFORM_D(d) BITMAP_TRANSFORM_D_EXT(0UL,(d))
+//#define BITMAP_TRANSFORM_E(e) BITMAP_TRANSFORM_E_EXT(0UL,(e))
 
 #endif  /* EVE_GEN > 2 */
 
