@@ -2,7 +2,7 @@
 @file    EVE_supplemental.h
 @brief   prototypes for supplemental functions
 @version 5.0
-@date    2023-08-22
+@date    2023-12-23
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -31,7 +31,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 @section History
 
 5.0
-
+- added EVE_polar_cartesian()
 
 */
 
@@ -48,5 +48,6 @@ extern "C"
 
 void EVE_widget_circle(int16_t xc0, int16_t yc0, uint16_t radius, uint16_t border, uint32_t bgcolor);
 void EVE_widget_rectangle(int16_t xc0, int16_t yc0, int16_t wid, int16_t hgt, int16_t border, uint16_t linewidth, uint32_t bgcolor);
+void EVE_polar_cartesian(uint16_t length, uint16_t angle, int16_t *p_xc0, int16_t *p_yc0);
 
 #endif /* EVE_SUPPLEMENTAL_H */

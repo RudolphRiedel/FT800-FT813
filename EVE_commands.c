@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2023-12-17
+@date    2023-12-23
 @author  Rudolph Riedel
 
 @section info
@@ -151,6 +151,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
     updated BT81x series programming guide V2.4
 - did another linter pass and fixed some things
 - started to improve the embedded documentation
+- added more documentation
 
 */
 
@@ -1386,7 +1387,8 @@ void use_gt911(void)
 #else
 
 /* FT811 / FT813 binary-blob from FTDIs AN_336 to patch the touch-engine for Goodix GT911 / GT9271 touch controllers */
-const uint8_t eve_gt911_data[1184U] PROGMEM = {
+const uint8_t eve_gt911_data[1184U] PROGMEM =
+{
     26,  255, 255, 255, 32,  32,  48,  0,   4,   0,   0,   0,   2,   0,   0,   0,   34,  255, 255, 255, 0,   176, 48,
     0,   120, 218, 237, 84,  221, 111, 84,  69,  20,  63,  51,  179, 93,  160, 148, 101, 111, 76,  5,   44,  141, 123,
     111, 161, 11,  219, 154, 16,  9,   16,  17,  229, 156, 75,  26,  11,  13,  21,  227, 3,   16,  252, 184, 179, 45,
@@ -1438,7 +1440,8 @@ const uint8_t eve_gt911_data[1184U] PROGMEM = {
     188, 11,  55,  240, 31,  243, 122, 152, 226, 183, 207, 154, 73,  188, 39,  219, 43,  105, 222, 87,  41,  143, 141,
     140, 175, 73,  112, 184, 252, 61,  184, 16,  90,  250, 35,  168, 82,  119, 176, 57,  116, 94,  200, 150, 22,  190,
     179, 44,  104, 12,  235, 84,  149, 102, 252, 89,  154, 193, 99,  228, 106, 242, 125, 248, 64,  194, 255, 223, 127,
-    242, 83,  11,  255, 2,   70,  214, 226, 128, 0,   0};
+    242, 83,  11,  255, 2,   70,  214, 226, 128, 0,   0
+};
 
     EVE_cs_set();
     spi_transmit((uint8_t) 0xB0U); /* high-byte of REG_CMDB_WRITE + MEM_WRITE */
@@ -2269,7 +2272,6 @@ void EVE_cmd_rotatearound_burst(int32_t xc0, int32_t yc0, uint32_t angle,
 
 /**
  * @brief Draw a button with a label, varargs version.
- *
  * @param p_arguments[] pointer to an array of values converted to uint32_t to be used when using EVE_OPT_FORMAT
  * @param num_args the number of elements provided in p_arguments[]
  */
@@ -2329,7 +2331,6 @@ void EVE_cmd_button_var(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
 
 /**
  * @brief Draw a button with a label, varargs version, only works in burst-mode.
- *
  * @param p_arguments[] pointer to an array of values converted to uint32_t to be used when using EVE_OPT_FORMAT
  * @param num_args the number of elements provided in p_arguments[]
  */
@@ -2357,7 +2358,6 @@ void EVE_cmd_button_var_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t h
 
 /**
  * @brief Draw a text string, varargs version.
- *
  * @param p_arguments[] pointer to an array of values converted to uint32_t to be used when using EVE_OPT_FORMAT
  * @param num_args the number of elements provided in p_arguments[]
  */
@@ -2412,7 +2412,6 @@ void EVE_cmd_text_var(int16_t xc0, int16_t yc0, uint16_t font,
 
 /**
  * @brief Draw a text string, varargs version.
- *
  * @param p_arguments[] pointer to an array of values converted to uint32_t to be used when using EVE_OPT_FORMAT
  * @param num_args the number of elements provided in p_arguments[]
  */
@@ -2439,7 +2438,6 @@ void EVE_cmd_text_var_burst(int16_t xc0, int16_t yc0, uint16_t font,
 
 /**
  * @brief Draw a toggle switch with labels, varargs version.
- *
  * @param p_arguments[] pointer to an array of values converted to uint32_t to be used when using EVE_OPT_FORMAT
  * @param num_args the number of elements provided in p_arguments[]
  */
@@ -2499,7 +2497,6 @@ void EVE_cmd_toggle_var(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t font,
 
 /**
  * @brief Draw a toggle switch with labels, varargs version, only works in burst-mode.
- *
  * @param p_arguments[] pointer to an array of values converted to uint32_t to be used when using EVE_OPT_FORMAT
  * @param num_args the number of elements provided in p_arguments[]
  */
@@ -2527,18 +2524,14 @@ void EVE_cmd_toggle_var_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t f
 
 #endif /* EVE_GEN > 2 */
 
-/* generic function for: */
-/* all co-processor commands that have no arguments */
-/* all display-list commands */
-/*
- examples:
- EVE_cmd_dl(CMD_DLSTART);
- EVE_cmd_dl(CMD_SWAP);
- EVE_cmd_dl(CMD_SCREENSAVER);
- EVE_cmd_dl(LINE_WIDTH(1*16));
- EVE_cmd_dl(VERTEX2F(0,0));
- EVE_cmd_dl(DL_BEGIN | EVE_RECTS);
-*/
+/**
+ * @brief Generic function for display-list and coprocessor commands with no arguments, only works in burst-mode.
+ * @note - EVE_cmd_dl(CMD_DLSTART);
+ * @note - EVE_cmd_dl(CMD_SWAP);
+ * @note - EVE_cmd_dl(CMD_SCREENSAVER);
+ * @note - EVE_cmd_dl(VERTEX2F(0,0));
+ * @note - EVE_cmd_dl(DL_BEGIN | EVE_RECTS);
+ */
 void EVE_cmd_dl(uint32_t command)
 {
     if (0U == cmd_burst)
@@ -2552,11 +2545,17 @@ void EVE_cmd_dl(uint32_t command)
     }
 }
 
+/**
+ * @brief Generic function for display-list and coprocessor commands with no arguments, only works in burst-mode.
+ */
 void EVE_cmd_dl_burst(uint32_t command)
 {
     spi_transmit_burst(command);
 }
 
+/**
+ * @brief Appends commands from RAM_G to the display list.
+ */
 void EVE_cmd_append(uint32_t ptr, uint32_t num)
 {
     if (0U == cmd_burst)
@@ -2574,6 +2573,9 @@ void EVE_cmd_append(uint32_t ptr, uint32_t num)
     }
 }
 
+/**
+ * @brief Appends commands from RAM_G to the display list, only works in burst-mode.
+ */
 void EVE_cmd_append_burst(uint32_t ptr, uint32_t num)
 {
     spi_transmit_burst(CMD_APPEND);
@@ -2581,6 +2583,9 @@ void EVE_cmd_append_burst(uint32_t ptr, uint32_t num)
     spi_transmit_burst(num);
 }
 
+/**
+ * @brief Set the background color.
+ */
 void EVE_cmd_bgcolor(uint32_t color)
 {
     if (0U == cmd_burst)
@@ -2599,6 +2604,9 @@ void EVE_cmd_bgcolor(uint32_t color)
     }
 }
 
+/**
+ * @brief Set the background color, only works in burst-mode.
+ */
 void EVE_cmd_bgcolor_burst(uint32_t color)
 {
     spi_transmit_burst(CMD_BGCOLOR);
@@ -2652,6 +2660,10 @@ void EVE_cmd_button_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
     private_string_write(p_text);
 }
 
+/**
+ * @brief Execute the touch screen calibration routine.
+ * @note - does not support burst-mode
+ */
 void EVE_cmd_calibrate(void)
 {
     if (0U == cmd_burst)
@@ -2755,6 +2767,9 @@ void EVE_cmd_dial_burst(int16_t xc0, int16_t yc0, uint16_t rad, uint16_t options
     spi_transmit_burst(val);
 }
 
+/**
+ * @brief Set the foreground color.
+ */
 void EVE_cmd_fgcolor(uint32_t color)
 {
     if (0U == cmd_burst)
@@ -2773,6 +2788,9 @@ void EVE_cmd_fgcolor(uint32_t color)
     }
 }
 
+/**
+ * @brief Set the foreground color, only works in burst-mode.
+ */
 void EVE_cmd_fgcolor_burst(uint32_t color)
 {
     spi_transmit_burst(CMD_FGCOLOR);
@@ -2829,11 +2847,11 @@ void EVE_cmd_gauge_burst(int16_t xc0, int16_t yc0, uint16_t rad, uint16_t option
     spi_transmit_burst(((uint32_t) val) + (((uint32_t) range) << 16U));
 }
 
-/* EVE_cmd_getmatrix() is meant to be called with display-list building. */
-/* but it waits for completion as it returns values by writing */
-/* to the command-fifo, it can not be used with cmd-burst */
-/* gets the properties of the bitmap transform matrix and write the values */
-/* to the variables that are supplied by pointers */
+/**
+ * @brief Retrieves the current matrix within the context of the coprocessor engine.
+ * @note - waits for completion and reads values from RAM_CMD after completion
+ * @note - can not be used with cmd-burst
+ */
 void EVE_cmd_getmatrix(int32_t *p_a, int32_t *p_b, int32_t *p_c,
                         int32_t *p_d, int32_t *p_e, int32_t *p_f)
 {
@@ -2886,6 +2904,9 @@ void EVE_cmd_getmatrix(int32_t *p_a, int32_t *p_b, int32_t *p_c,
     }
 }
 
+/**
+ * @brief Set up the highlight color used in 3D effects for CMD_BUTTON and CMD_KEYS.
+ */
 void EVE_cmd_gradcolor(uint32_t color)
 {
     if (0U == cmd_burst)
@@ -2904,12 +2925,18 @@ void EVE_cmd_gradcolor(uint32_t color)
     }
 }
 
+/**
+ * @brief Set up the highlight color used in 3D effects for CMD_BUTTON and CMD_KEYS, only works in burst-mode.
+ */
 void EVE_cmd_gradcolor_burst(uint32_t color)
 {
     spi_transmit_burst(CMD_GRADCOLOR);
     spi_transmit_burst(color);
 }
 
+/**
+ * @brief Draw a smooth color gradient.
+ */
 void EVE_cmd_gradient(int16_t xc0, int16_t yc0, uint32_t rgb0, int16_t xc1,
                         int16_t yc1, uint32_t rgb1)
 {
@@ -2944,6 +2971,9 @@ void EVE_cmd_gradient(int16_t xc0, int16_t yc0, uint32_t rgb0, int16_t xc1,
     }
 }
 
+/**
+ * @brief Draw a smooth color gradient, only works in burst-mode.
+ */
 void EVE_cmd_gradient_burst(int16_t xc0, int16_t yc0, uint32_t rgb0, int16_t xc1,
                             int16_t yc1, uint32_t rgb1)
 {
@@ -2956,9 +2986,8 @@ void EVE_cmd_gradient_burst(int16_t xc0, int16_t yc0, uint32_t rgb0, int16_t xc1
 
 /**
  * @brief Draw a row of key buttons with labels.
- *
- * @note The tag value of each button is set to the ASCII value of its label.
- * @note Does not work with UTF-8.
+ * @note - The tag value of each button is set to the ASCII value of its label.
+ * @note - Does not work with UTF-8.
  */
 void EVE_cmd_keys(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
                     uint16_t font, uint16_t options, const char *p_text)
@@ -2993,9 +3022,8 @@ void EVE_cmd_keys(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
 
 /**
  * @brief Draw a row of key buttons with labels, only works in burst-mode.
- *
- * @note The tag value of each button is set to the ASCII value of its label.
- * @note Does not work with UTF-8.
+ * @note - The tag value of each button is set to the ASCII value of its label.
+ * @note - Does not work with UTF-8.
  */
 void EVE_cmd_keys_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
                         uint16_t font, uint16_t options, const char *p_text)
@@ -3098,12 +3126,10 @@ void EVE_cmd_progress_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt
     spi_transmit_burst((uint32_t) range);
 }
 
-/* Note: CMD_ROMFONT generates display list commands so it needs to be put in a display list. */
-/* A minimum display list to properly execute CMD_ROMFONT would be: */
-/* EVE_cmd_dl(CMD_DLSTART); */
-/* EVE_cmd_romfont(font, romslot); */
-/* ...other bitmap handle commands like more CMD_ROMFONT or CMD_SETFONT2 */
-/* EVE_cmd_dl(CMD_SWAP); */
+/**
+ * @brief Load a ROM font into bitmap handle.
+ * @note - generates display list commands, so it needs to be put in a display list
+ */
 void EVE_cmd_romfont(uint32_t font, uint32_t romslot)
 {
     if (0U == cmd_burst)
@@ -3121,6 +3147,10 @@ void EVE_cmd_romfont(uint32_t font, uint32_t romslot)
     }
 }
 
+/**
+ * @brief Load a ROM font into bitmap handle, only works in burst-mode.
+ * @note - generates display list commands, so it needs to be put in a display list
+ */
 void EVE_cmd_romfont_burst(uint32_t font, uint32_t romslot)
 {
     spi_transmit_burst(CMD_ROMFONT);
@@ -3155,6 +3185,9 @@ void EVE_cmd_rotate_burst(uint32_t angle)
     spi_transmit_burst(angle & 0xFFFFUL);
 }
 
+/**
+ * @brief Apply a scale to the current matrix.
+ */
 void EVE_cmd_scale(int32_t scx, int32_t scy)
 {
     if (0U == cmd_burst)
@@ -3172,6 +3205,9 @@ void EVE_cmd_scale(int32_t scx, int32_t scy)
     }
 }
 
+/**
+ * @brief Apply a scale to the current matrix, only works in burst-mode.
+ */
 void EVE_cmd_scale_burst(int32_t scx, int32_t scy)
 {
     spi_transmit_burst(CMD_SCALE);
@@ -3256,6 +3292,9 @@ void EVE_cmd_setbase_burst(uint32_t base)
     spi_transmit_burst(base);
 }
 
+/**
+ * @brief Generate the corresponding display list commands for given bitmap information.
+ */
 void EVE_cmd_setbitmap(uint32_t addr, uint16_t fmt, uint16_t width,
                         uint16_t height)
 {
@@ -3282,6 +3321,9 @@ void EVE_cmd_setbitmap(uint32_t addr, uint16_t fmt, uint16_t width,
     }
 }
 
+/**
+ * @brief Generate the corresponding display list commands for given bitmap information, only works in burst-mode.
+ */
 void EVE_cmd_setbitmap_burst(uint32_t addr, uint16_t fmt, uint16_t width,
                                 uint16_t height)
 {
@@ -3291,6 +3333,10 @@ void EVE_cmd_setbitmap_burst(uint32_t addr, uint16_t fmt, uint16_t width,
     spi_transmit_burst((uint32_t) height);
 }
 
+/**
+ * @brief Register one custom font into the coprocessor engine.
+ * @note - does not set up the bitmap parameters of the font
+ */
 void EVE_cmd_setfont(uint32_t font, uint32_t ptr)
 {
     if (0U == cmd_burst)
@@ -3308,6 +3354,10 @@ void EVE_cmd_setfont(uint32_t font, uint32_t ptr)
     }
 }
 
+/**
+ * @brief Register one custom font into the coprocessor engine, only works in burst-mode.
+ * @note - does not set up the bitmap parameters of the font
+ */
 void EVE_cmd_setfont_burst(uint32_t font, uint32_t ptr)
 {
     spi_transmit_burst(CMD_SETFONT);
@@ -3315,12 +3365,10 @@ void EVE_cmd_setfont_burst(uint32_t font, uint32_t ptr)
     spi_transmit_burst(ptr);
 }
 
-/* Note: CMD_SETFONT2 generates display list commands so it needs to be put in a display list. */
-/* A minimum display list to properly execute CMD_SETFONT2 would be: */
-/* EVE_cmd_dl(CMD_DLSTART); */
-/* EVE_cmd_setfont2(font, ptr, firstchar); */
-/* ...other bitmap handle commands like more CMD_SETFONT2 or CMD_ROMFONT */
-/* EVE_cmd_dl(CMD_SWAP); */
+/**
+ * @brief Set up a custom for use by the coprocessor engine.
+ * @note - generates display list commands, so it needs to be put in a display list
+ */
 void EVE_cmd_setfont2(uint32_t font, uint32_t ptr, uint32_t firstchar)
 {
     if (0U == cmd_burst)
@@ -3340,6 +3388,10 @@ void EVE_cmd_setfont2(uint32_t font, uint32_t ptr, uint32_t firstchar)
     }
 }
 
+/**
+ * @brief Set up a custom for use by the coprocessor engine, only works in burst-mode.
+ * @note - generates display list commands, so it needs to be put in a display list
+ */
 void EVE_cmd_setfont2_burst(uint32_t font, uint32_t ptr, uint32_t firstchar)
 {
     spi_transmit_burst(CMD_SETFONT2);
@@ -3348,6 +3400,9 @@ void EVE_cmd_setfont2_burst(uint32_t font, uint32_t ptr, uint32_t firstchar)
     spi_transmit_burst(firstchar);
 }
 
+/**
+ * @brief Set the scratch bitmap for widget use.
+ */
 void EVE_cmd_setscratch(uint32_t handle)
 {
     if (0U == cmd_burst)
@@ -3363,12 +3418,18 @@ void EVE_cmd_setscratch(uint32_t handle)
     }
 }
 
+/**
+ * @brief Set the scratch bitmap for widget use, only works in burst-mode.
+ */
 void EVE_cmd_setscratch_burst(uint32_t handle)
 {
     spi_transmit_burst(CMD_SETSCRATCH);
     spi_transmit_burst(handle);
 }
 
+/**
+ * @brief Start a continuous sketch update.
+ */
 void EVE_cmd_sketch(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
                     uint32_t ptr, uint16_t format)
 {
@@ -3400,6 +3461,9 @@ void EVE_cmd_sketch(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
     }
 }
 
+/**
+ * @brief Start a continuous sketch update, only works in burst-mode.
+ */
 void EVE_cmd_sketch_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
                             uint32_t ptr, uint16_t format)
 {
@@ -3460,6 +3524,9 @@ void EVE_cmd_slider_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
     spi_transmit_burst((uint32_t) range);
 }
 
+/**
+ * @brief Start an animated spinner.
+ */
 void EVE_cmd_spinner(int16_t xc0, int16_t yc0, uint16_t style, uint16_t scale)
 {
     if (0U == cmd_burst)
@@ -3483,6 +3550,9 @@ void EVE_cmd_spinner(int16_t xc0, int16_t yc0, uint16_t style, uint16_t scale)
     }
 }
 
+/**
+ * @brief Start an animated spinner, only works in burst-mode.
+ */
 void EVE_cmd_spinner_burst(int16_t xc0, int16_t yc0, uint16_t style,
                             uint16_t scale)
 {
@@ -3579,6 +3649,9 @@ void EVE_cmd_toggle_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t font,
     private_string_write(p_text);
 }
 
+/**
+ * @brief Apply a translation to the current matrix.
+ */
 void EVE_cmd_translate(int32_t tr_x, int32_t tr_y)
 {
     if (0U == cmd_burst)
@@ -3596,6 +3669,9 @@ void EVE_cmd_translate(int32_t tr_x, int32_t tr_y)
     }
 }
 
+/**
+ * @brief Apply a translation to the current matrix, only works in burst-mode.
+ */
 void EVE_cmd_translate_burst(int32_t tr_x, int32_t tr_y)
 {
     spi_transmit_burst(CMD_TRANSLATE);
@@ -3603,21 +3679,33 @@ void EVE_cmd_translate_burst(int32_t tr_x, int32_t tr_y)
     spi_transmit_burst((uint32_t) tr_y);
 }
 
+/**
+ * @brief Set the current color red, green and blue.
+ */
 void EVE_color_rgb(uint32_t color)
 {
     EVE_cmd_dl(DL_COLOR_RGB | (color & 0x00ffffffUL));
 }
 
+/**
+ * @brief Set the current color red, green and blue, only works in burst-mode.
+ */
 void EVE_color_rgb_burst(uint32_t color)
 {
     spi_transmit_burst(DL_COLOR_RGB | (color & 0x00ffffffUL));
 }
 
+/**
+ * @brief Set the current color alpha, green and blue.
+ */
 void EVE_color_a(uint8_t alpha)
 {
     EVE_cmd_dl(DL_COLOR_A | ((uint32_t) alpha));
 }
 
+/**
+ * @brief Set the current color alpha, green and blue, only works in burst-mode.
+ */
 void EVE_color_a_burst(uint8_t alpha)
 {
     spi_transmit_burst(DL_COLOR_A | ((uint32_t) alpha));
