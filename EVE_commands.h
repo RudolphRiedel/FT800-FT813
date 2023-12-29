@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2023-12-09
+@date    2023-12-29
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -82,6 +82,8 @@ EVE_cmd_animstartram_burst()
 - renamed EVE_FAIL_CHIPID_TIMEOUT to EVE_FAIL_REGID_TIMEOUT as suggested by #93 on github
 - changed a number of function parameters from signed to unsigned following the
     updated BT81x series programming guide V2.4
+- commented out EVE_cmd_regread() prototype
+- removed prototype for EVE_cmd_hsf_burst()
 
 */
 
@@ -182,15 +184,15 @@ void EVE_cmd_mediafifo(uint32_t ptr, uint32_t size);
 void EVE_cmd_memcpy(uint32_t dest, uint32_t src, uint32_t num);
 uint32_t EVE_cmd_memcrc(uint32_t ptr, uint32_t num);
 void EVE_cmd_memset(uint32_t ptr, uint8_t value, uint32_t num);
-/*(void EVE_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *p_data); */
 void EVE_cmd_memzero(uint32_t ptr, uint32_t num);
 void EVE_cmd_playvideo(uint32_t options, const uint8_t *p_data, uint32_t len);
-uint32_t EVE_cmd_regread(uint32_t ptr);
 void EVE_cmd_setrotate(uint32_t rotation);
 void EVE_cmd_snapshot(uint32_t ptr);
 void EVE_cmd_snapshot2(uint32_t fmt, uint32_t ptr, int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt);
 void EVE_cmd_track(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt, uint16_t tag);
 void EVE_cmd_videoframe(uint32_t dest, uint32_t result_ptr);
+/*void EVE_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *p_data);*/
+/*uint32_t EVE_cmd_regread(uint32_t ptr);*/
 
 /* ##################################################################
     patching and initialization
@@ -223,7 +225,6 @@ void EVE_cmd_calibratesub(uint16_t xc0, uint16_t yc0, uint16_t width, uint16_t h
 void EVE_cmd_calllist(uint32_t adr);
 void EVE_cmd_calllist_burst(uint32_t adr);
 void EVE_cmd_hsf(uint32_t hsf);
-void EVE_cmd_hsf_burst(uint32_t hsf);
 void EVE_cmd_runanim(uint32_t waitmask, uint32_t play);
 void EVE_cmd_runanim_burst(uint32_t waitmask, uint32_t play);
 
