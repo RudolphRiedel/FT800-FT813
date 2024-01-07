@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-09-01
+@date    2023-09-30
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -87,6 +87,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - fix: while working, the check for multiple different targets was not implemented correctly
 - added ARDUINO_HLK_w80x target for W801, W806 and Air103 boards
 - modified the RISC-V entry as there are ESP32 now with RISC-V core
+- added detection of the Tasking compiler and added tc38x and tc39xb targets
+- removed the unfortunately defunct WIZIOPICO
 
 */
 
@@ -285,8 +287,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #endif /* __GNUC__ */
 
-#endif /* !Arduino */
-
 /* ################################################################## */
 /* ################################################################## */
 
@@ -311,6 +311,20 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* ################################################################## */
 /* ################################################################## */
+
+#if defined(__TASKING__)
+
+#if (__CPU__ == tc38x) || (__CPU__ == tc39xb)
+
+#include "EVE_target/EVE_target_Tricore_Tasking.h"
+
+#endif
+#endif
+
+/* ################################################################## */
+/* ################################################################## */
+
+#endif /* !Arduino */
 
 #if defined (ARDUINO)
 
@@ -340,7 +354,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "EVE_target/EVE_target_Arduino_Nucleo_F446RE.h"
 
-#elif defined (WIZIOPICO) || defined (PICOPI)
+#elif defined (ARDUINO_RASPBERRY_PI_PICO)
 
 #include "EVE_target/EVE_target_Arduino_RP2040.h"
 
