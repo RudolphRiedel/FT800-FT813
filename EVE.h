@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 5.0
-@date    2023-12-17
+@date    2024-01-07
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -68,6 +68,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - added type-casts to all simple macros
 - converted some more function-like macros to static inline functions
 - converted the rest of the function-like macros to static inline functions
+- fix: forgot to comment out the EVE2 BITMAP_TRANSFORM_E when converting it to an inline function
 
 */
 
@@ -710,7 +711,7 @@ static inline uint32_t BITMAP_TRANSFORM_D(uint32_t val)
     return (DL_BITMAP_TRANSFORM_D | (val & 0x1FFFFUL));
 }
 
-#define BITMAP_TRANSFORM_E(e) ((DL_BITMAP_TRANSFORM_E) | ((e) & 0x1FFFFUL))
+//#define BITMAP_TRANSFORM_E(e) ((DL_BITMAP_TRANSFORM_E) | ((e) & 0x1FFFFUL))
 /**
  * @brief Set he E coefficient of the bitmap transform matrix.
  * @return a 32 bit word for use with EVE_cmd_dl()

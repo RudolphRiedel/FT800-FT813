@@ -96,6 +96,15 @@ This library currently has nine files that I hope are named to make clear what t
 - EVE_cpp_wrapper.cpp - this is for Arduino C++ targets
 - EVE_cpp_wrapper.h - this is for Arduino C++ targets
 
+Addtionally there are these two:
+- EVE_supplemental.c
+- EVE_suppplemental.h
+
+This has the prototype and implementation for extra functions, so far:
+- EVE_widget_circle() - widget function to draw a circle
+- EVE_widget_rectangle() - widget function to draw a rectangle
+- EVE_polar_cartesian() - calculate coordinates from an angle and a length
+
 ## Examples
 
 Generate a basic display list and tell EVE to use it:
