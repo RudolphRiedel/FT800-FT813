@@ -487,7 +487,7 @@ typedef struct
 #if defined (EVE_NHD_43)
 #define Resolution_480x272
 
-#define EVE_PCLK (6L)
+#define EVE_PCLK (5L)
 #define EVE_PCLKPOL (1L)
 #define EVE_SWIZZLE (0L)
 #define EVE_CSPREAD (1L)
