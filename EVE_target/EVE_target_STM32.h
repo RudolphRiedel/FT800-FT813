@@ -2,14 +2,14 @@
 @file    EVE_target_STM32.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-06-24
+@date    2024-01-24
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2023 Rudolph Riedel
+Copyright (c) 2016-2024 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -33,6 +33,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 5.0
 - extracted from EVE_target.h
 - basic maintenance: checked for violations of white space and indent rules
+- added STM32WB55xx
 
 */
 
@@ -50,7 +51,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     || defined (STM32F4) \
     || defined (STM32G4) \
     || defined (STM32H7) \
-    || defined (STM32G0)
+    || defined (STM32G0) \
+	|| defined (STM32WB55xx)
 
 #if defined (STM32L0) /* set with "build_flags = -D STM32L0" in platformio.ini */
 #include "stm32l0xx.h"
@@ -99,6 +101,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "stm32g0xx_hal.h"
 #include "stm32g0xx_ll_spi.h"
 #endif
+
+#if defined (STM32WB55xx) /* set with "build_flags = -D STM32WB55xx" in platformio.ini */
+#include "stm32wbxx.h"
+#include "stm32wbxx_hal.h"
+#include "stm32wbxx_ll_spi.h"
+#endif
+
 
 /* you may define these in your build-environment to use different settings */
 #if !defined (EVE_CS)

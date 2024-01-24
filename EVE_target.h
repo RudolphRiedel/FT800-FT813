@@ -2,14 +2,14 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-09-30
+@date    2024-01-24
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2023 Rudolph Riedel
+Copyright (c) 2016-2024 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -89,6 +89,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - modified the RISC-V entry as there are ESP32 now with RISC-V core
 - added detection of the Tasking compiler and added tc38x and tc39xb targets
 - removed the unfortunately defunct WIZIOPICO
+- added STM32WB55xx
 
 */
 
@@ -227,7 +228,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     || defined (STM32F4) \
     || defined (STM32G4) \
     || defined (STM32H7) \
-    || defined (STM32G0)
+    || defined (STM32G0) \
+	|| defined (STM32WB) \
+	|| defined (STM32WB55xx)
 /* set with "build_flags" in platformio.ini or as defines in your build environment */
 
 #include "EVE_target/EVE_target_STM32.h"
