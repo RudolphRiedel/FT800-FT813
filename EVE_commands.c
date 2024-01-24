@@ -1572,6 +1572,11 @@ static void enable_pixel_clock(void)
 {
     EVE_memWrite8(REG_GPIO, 0x80U); /* enable the DISP signal to the LCD panel, it is set to output in REG_GPIO_DIR by default */
 
+	/*NHD 4.3 display requires the PWM frequency between 800 to 10Khz. Default value for FT81x is 250. This has to be set or backlight won't turn on.*/
+#if defined (EVE_NHD_43)
+	EVE_memWrite16(REG_PWM_HZ,0x352);
+#endif
+
 #if (EVE_GEN > 3) && (defined EVE_PCLK_FREQ)
     EVE_memWrite16(REG_PCLK_FREQ, (uint16_t) EVE_PCLK_FREQ);
 
