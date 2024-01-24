@@ -294,6 +294,9 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 2
+#if !defined (EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (800U) /* if not overwritten in the project options, set 800Hz as a compromise */
+#endif
 #endif
 
 /* untested */
@@ -493,6 +496,9 @@ typedef struct
 #define EVE_CSPREAD (1L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 2
+#if !defined (EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (800U) /* if not overwritten in the project options, set 800Hz as a compromise */
+#endif
 #endif
 
 /* untested */
@@ -580,6 +586,9 @@ typedef struct
 #define EVE_CSPREAD (1L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 2
+#if !defined (EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (800U) /* if not overwritten in the project options, set 800Hz as a compromise */
+#endif
 #endif
 
 /* untested */
@@ -862,6 +871,9 @@ typedef struct
 #define EVE_CSPREAD (1L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 2
+#if !defined (EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (800U) /* if not overwritten in the project options, set 800Hz as a compromise */
+#endif
 #endif
 
 /* FT810CB-HY50HD: FT810 800x480 5.0" HAOYU */
