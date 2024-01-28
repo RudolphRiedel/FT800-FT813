@@ -1,6 +1,6 @@
 {
   "name": "EmbeddedVideoEngine",
-  "version": "5.0.8",
+  "version": "5.0.9",
   "keywords": "TFT, SPI, EVE2, EVE3, EVE4 ,Bridgetek, F81x, FT813, BT81x, BT815, BT817",
   "description": "Code library for EVE2/EVE3/EVE4 graphics controller ICs from FTDI/Bridgetek",
   "repository": {
