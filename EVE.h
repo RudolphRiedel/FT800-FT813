@@ -759,21 +759,23 @@ static inline uint32_t BLEND_FUNC(uint8_t src, uint8_t dst)
 //#define CALL(dest) ((DL_CALL) | ((dest) & 0xFFFFUL))
 /**
  * @brief Execute a sequence of commands at another location in the display list.
+ * @note valid range for dest is from zero to 2047
  * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t CALL(uint16_t dest)
 {
-    return (DL_CALL | dest);
+    return (DL_CALL | (dest & 0x7FFUL));
 }
 
 //#define JUMP(dest) ((DL_JUMP) | ((dest) & 0xFFFFUL))
 /**
  * @brief Execute commands at another location in the display list.
+ * @note valid range for dest is from zero to 2047
  * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t JUMP(uint16_t dest)
 {
-    return (DL_JUMP | dest);
+    return (DL_JUMP | (dest & 0x7FFUL));
 }
 
 //#define CELL(cell) ((DL_CELL) | ((cell) & 0x7FUL))
