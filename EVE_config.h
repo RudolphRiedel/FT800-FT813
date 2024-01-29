@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2024-01-24
+@date    2024-01-29
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -79,6 +79,7 @@ the IOT5
 - added EVE_BACKLIGHT_FREQ to all Riverdi modules with a value of 4kHz as recommended by Riverdi
 - EVE_PCLK_FREQ was incorrectly using "UL"
 - added EVE_BACKLIGHT_FREQ to all Newhaven modules with a value of 800Hz
+- added EVE_SOFT_RESET to EVE_GD3X profile
 
 */
 
@@ -848,6 +849,7 @@ typedef struct
 #define EVE_SWIZZLE (3L)
 #define EVE_CSPREAD (0L)
 #define EVE_GEN 3
+#define EVE_SOFT_RESET
 #endif
 
 /* untested */
