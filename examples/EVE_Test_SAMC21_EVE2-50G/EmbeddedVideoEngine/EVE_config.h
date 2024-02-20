@@ -2,14 +2,14 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2023-07-28
+@date    2024-01-31
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2023 Rudolph Riedel
+Copyright (c) 2016-2024 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -78,6 +78,9 @@ the IOT5
 - added a configuration for Crystalfonts CFA240320Ex-024Sx
 - added EVE_BACKLIGHT_FREQ to all Riverdi modules with a value of 4kHz as recommended by Riverdi
 - EVE_PCLK_FREQ was incorrectly using "UL"
+- added EVE_BACKLIGHT_FREQ to all Newhaven modules with a value of 800Hz
+- added EVE_SOFT_RESET to EVE_GD3X profile
+- added EVE_CUSTOM_MODULE_H to allow loading a custom configuration from an extra header file
 
 */
 
@@ -200,6 +203,12 @@ typedef struct
 
 /* display timing parameters below */
 
+/* use this to add a header file with your custom module configuration */
+/* -DEVE_CUSTOM_MODULE_H='"..\mycfg.h"' */
+#if defined (EVE_CUSTOM_MODULE_H)
+#include EVE_CUSTOM_MODULE_H
+#endif
+
 /* ########## 320 x 240 ########## */
 
 /* EVE2-35A 320x240 3.5" Matrix Orbital, resistive, or non-touch, FT812 */
@@ -294,6 +303,13 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 2
+
+/* there are at least two series of these, the older one is using a backlight controller that */
+/* works up to 1kHz and the newer one is using a backlight controller that works from 800Hz to 100kHz */
+// https://github.com/RudolphRiedel/FT800-FT813/discussions/90#discussioncomment-6201237
+#if !defined (EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (800U) /* if not overwritten in the project options, set 800Hz as a compromise */
+#endif
 #endif
 
 /* untested */
@@ -493,6 +509,13 @@ typedef struct
 #define EVE_CSPREAD (1L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 2
+
+/* there are at least two series of these, the older one is using a backlight controller that */
+/* works up to 1kHz and the newer one is using a backlight controller that works from 800Hz to 100kHz */
+// https://github.com/RudolphRiedel/FT800-FT813/discussions/90#discussioncomment-6201237
+#if !defined (EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (800U) /* if not overwritten in the project options, set 800Hz as a compromise */
+#endif
 #endif
 
 /* untested */
@@ -524,8 +547,6 @@ typedef struct
 
 /* untested */
 /* NHD-4.3-800480FT-CSXP-CTP 800x480 4.3" Newhaven, capacitive touch, FT813 */
-/* there are at least two series of these, the older one is using a backlight controller that */
-/* works up to 1kHz and the newer one is using a backlight controller that works from 800Hz to 100kHz */
 #if defined (EVE_NHD_43_800480)
 #define Resolution_800x480
 
@@ -535,6 +556,10 @@ typedef struct
 #define EVE_CSPREAD (0L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 2
+
+/* there are at least two series of these, the older one is using a backlight controller that */
+/* works up to 1kHz and the newer one is using a backlight controller that works from 800Hz to 100kHz */
+// https://github.com/RudolphRiedel/FT800-FT813/discussions/90#discussioncomment-6201237
 #if !defined (EVE_BACKLIGHT_FREQ)
 #define EVE_BACKLIGHT_FREQ (800U) /* if not overwritten in the project options, set 800Hz as a compromise */
 #endif
@@ -580,6 +605,13 @@ typedef struct
 #define EVE_CSPREAD (1L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 2
+
+/* there are at least two series of these, the older one is using a backlight controller that */
+/* works up to 1kHz and the newer one is using a backlight controller that works from 800Hz to 100kHz */
+// https://github.com/RudolphRiedel/FT800-FT813/discussions/90#discussioncomment-6201237
+#if !defined (EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (800U) /* if not overwritten in the project options, set 800Hz as a compromise */
+#endif
 #endif
 
 /* untested */
@@ -824,6 +856,7 @@ typedef struct
 #define EVE_SWIZZLE (3L)
 #define EVE_CSPREAD (0L)
 #define EVE_GEN 3
+#define EVE_SOFT_RESET
 #endif
 
 /* untested */
@@ -862,6 +895,13 @@ typedef struct
 #define EVE_CSPREAD (1L)
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 2
+
+/* there are at least two series of these, the older one is using a backlight controller that */
+/* works up to 1kHz and the newer one is using a backlight controller that works from 800Hz to 100kHz */
+// https://github.com/RudolphRiedel/FT800-FT813/discussions/90#discussioncomment-6201237
+#if !defined (EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (800U) /* if not overwritten in the project options, set 800Hz as a compromise */
+#endif
 #endif
 
 /* FT810CB-HY50HD: FT810 800x480 5.0" HAOYU */

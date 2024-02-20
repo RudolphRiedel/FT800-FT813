@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions for plain C targets
 @version 5.0
-@date    2023-06-24
+@date    2023-10-01
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -55,12 +55,15 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - ESP32: changed a couple of {0} to {}
 - ESP32: changed back a couple of {} to {0} as C and C++ are not the same thing...
 - Bugfix issue #89: ESP32 not initializing if GPIO pin number > 31
+- moved the include for EVE_target.h to avoid the empty translation unit warning
+ from -Wpedantic when building for Arduino
 
  */
 
+#include "EVE_target.h"
+
 #if !defined (ARDUINO)
 
-#include "EVE_target.h"
 #include "EVE_commands.h"
 
 #if defined (__GNUC__)

@@ -2,14 +2,14 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 5.0
-@date    2024-01-07
+@date    2024-01-28
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2023 Rudolph Riedel
+Copyright (c) 2016-2024 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -618,11 +618,12 @@ static inline uint32_t BITMAP_HANDLE(uint8_t handle)
  * @brief Set the source bitmap memory format and layout for the current handle.
  * @return a 32 bit word for use with EVE_cmd_dl()
  */
-static inline uint32_t BITMAP_LAYOUT(uint8_t format, uint16_t linestride, uint8_t height)
+static inline uint32_t BITMAP_LAYOUT(uint8_t format, uint16_t linestride, uint16_t height)
 {
     uint32_t const formatv = ((uint32_t) format & 0x1FUL) << 19U;
     uint32_t const linestridev = ((uint32_t) linestride & 0x3FFUL) << 9U;
-    return (DL_BITMAP_LAYOUT | formatv | linestridev | height);
+    uint32_t const heightv = height & 0x1FFUL;
+    return (DL_BITMAP_LAYOUT | formatv | linestridev | heightv);
 }
 
 //#define BITMAP_SIZE(filter,wrapx,wrapy,width,height) ((DL_BITMAP_SIZE) | (((filter) & 1UL) << 20U) | (((wrapx) & 1UL) << 19U) | (((wrapy) & 1UL) << 18U) | (((width) & 0x1FFUL) << 9U) | ((height) & 0x1FFUL))
@@ -636,7 +637,7 @@ static inline uint32_t BITMAP_SIZE(uint8_t filter, uint8_t wrapx, uint8_t wrapy,
     uint32_t const wrapxv = (wrapx & 0x1UL) << 19U;
     uint32_t const wrapyv = (wrapy & 0x1UL) << 18U;
     uint32_t const widthv = (width & 0x1FFUL) << 9U;
-    uint32_t const heightv = (height & 0x1FFUL) << 9U;
+    uint32_t const heightv = height & 0x1FFUL;
     return (DL_BITMAP_SIZE | filterv | wrapxv | wrapyv | widthv | heightv);
 }
 
@@ -758,6 +759,7 @@ static inline uint32_t BLEND_FUNC(uint8_t src, uint8_t dst)
 //#define CALL(dest) ((DL_CALL) | ((dest) & 0xFFFFUL))
 /**
  * @brief Execute a sequence of commands at another location in the display list.
+ * @note valid range for dest is from zero to 2047
  * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t CALL(uint16_t dest)
@@ -768,6 +770,7 @@ static inline uint32_t CALL(uint16_t dest)
 //#define JUMP(dest) ((DL_JUMP) | ((dest) & 0xFFFFUL))
 /**
  * @brief Execute commands at another location in the display list.
+ * @note valid range for dest is from zero to 2047
  * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t JUMP(uint16_t dest)

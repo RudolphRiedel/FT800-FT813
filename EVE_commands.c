@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2024-01-29
+@date    2024-02-20
 @author  Rudolph Riedel
 
 @section info
@@ -2624,7 +2624,7 @@ void EVE_cmd_toggle_var_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t f
 #endif /* EVE_GEN > 2 */
 
 /**
- * @brief Generic function for display-list and coprocessor commands with no arguments, only works in burst-mode.
+ * @brief Generic function for display-list and coprocessor commands with no arguments.
  * @note - EVE_cmd_dl(CMD_DLSTART);
  * @note - EVE_cmd_dl(CMD_SWAP);
  * @note - EVE_cmd_dl(CMD_SCREENSAVER);

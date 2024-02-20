@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2023-12-29
+@date    2024-02-20
 @author  Rudolph Riedel
 
 @section info
@@ -15,7 +15,7 @@ The c-standard is C99.
 
 MIT License
 
-Copyright (c) 2016-2023 Rudolph Riedel
+Copyright (c) 2016-2024 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -153,6 +153,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - started to improve the embedded documentation
 - added more documentation
 - removed EVE_cmd_hsf_burst()
+- new parameter for EVE_init(): EVE_SOFT_RESET
 
 */
 
@@ -1595,6 +1596,7 @@ static void enable_pixel_clock(void)
  * @note - needs a set of calibration values for the selected rotation since this rotates before calibration!
  * @note - EVE_BACKLIGHT_FREQ - configure the backlight frequency, default is not writing it which results in 250Hz.
  * @note - EVE_BACKLIGHT_PWM - configure the backlight pwm, defaults to 0x20 / 25%.
+ * @note - EVE_SOFT_RESET - if defined the host command RST_PULSE is send
  */
 uint8_t EVE_init(void)
 {
@@ -1605,7 +1607,7 @@ uint8_t EVE_init(void)
     EVE_pdn_clear();
     DELAY_MS(21U); /* minimum time to allow from rising PD_N to first access is 20ms */
 
-#if defined (EVE_GD3X)
+#if defined (EVE_SOFT_RESET)
     EVE_cmdWrite(EVE_RST_PULSE,0U); /* reset, only required for warm-start if PowerDown line is not used */
 #endif
 
@@ -2622,7 +2624,7 @@ void EVE_cmd_toggle_var_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t f
 #endif /* EVE_GEN > 2 */
 
 /**
- * @brief Generic function for display-list and coprocessor commands with no arguments, only works in burst-mode.
+ * @brief Generic function for display-list and coprocessor commands with no arguments.
  * @note - EVE_cmd_dl(CMD_DLSTART);
  * @note - EVE_cmd_dl(CMD_SWAP);
  * @note - EVE_cmd_dl(CMD_SCREENSAVER);
