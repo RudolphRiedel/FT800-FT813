@@ -36,7 +36,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
 
-#include "EVE_suppplemental.h"
+#include "EVE_supplemental.h"
 
 /* define NULL if it not already is */
 #ifndef NULL

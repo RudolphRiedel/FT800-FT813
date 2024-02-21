@@ -98,7 +98,7 @@ This library currently has nine files that I hope are named to make clear what t
 
 Addtionally there are these two:
 - EVE_supplemental.c
-- EVE_suppplemental.h
+- EVE_supplemental.h
 
 This has the prototype and implementation for extra functions, so far:
 - EVE_widget_circle() - widget function to draw a circle
