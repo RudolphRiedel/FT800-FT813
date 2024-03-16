@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2024-02-20
+@date    2024-03-16
 @author  Rudolph Riedel
 
 @section info
@@ -292,7 +292,7 @@ void EVE_memWrite_flash_buffer(uint32_t const ft_address, const uint8_t *p_data,
         }
 
         EVE_cs_clear();
-    }    
+    }
 }
 
 /**
@@ -334,7 +334,7 @@ void EVE_memRead_sram_buffer(uint32_t const ft_address, uint8_t *p_data, uint32_
         }
 
         EVE_cs_clear();
-    }    
+    }
 }
 
 static void CoprocessorFaultRecover(void)
@@ -631,7 +631,7 @@ void EVE_cmd_linetime(uint32_t dest)
 }
 
 /**
- * @brief Starts the compilation of a command list into RAM_G. 
+ * @brief Starts the compilation of a command list into RAM_G.
  * @note - Meant to be called outside display-list building.
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
@@ -3137,8 +3137,7 @@ void EVE_cmd_keys_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
 /**
  * @brief Draw a number.
  */
-void EVE_cmd_number(int16_t xc0, int16_t yc0, uint16_t font,
-                    uint16_t options, int32_t number)
+void EVE_cmd_number(int16_t xc0, int16_t yc0, uint16_t font, uint16_t options, int32_t number)
 {
     if (0U == cmd_burst)
     {
@@ -3166,8 +3165,7 @@ void EVE_cmd_number(int16_t xc0, int16_t yc0, uint16_t font,
 /**
  * @brief Draw a number, only works in burst-mode.
  */
-void EVE_cmd_number_burst(int16_t xc0, int16_t yc0, uint16_t font,
-                            uint16_t options, int32_t number)
+void EVE_cmd_number_burst(int16_t xc0, int16_t yc0, uint16_t font, uint16_t options, int32_t number)
 {
     spi_transmit_burst(CMD_NUMBER);
     spi_transmit_burst(((uint32_t) ((uint16_t) xc0)) + (((uint32_t) ((uint16_t) yc0)) << 16U));
@@ -3393,9 +3391,9 @@ void EVE_cmd_setbase_burst(uint32_t base)
 
 /**
  * @brief Generate the corresponding display list commands for given bitmap information.
+ * @note - when used with ASTC images from flash, the source-address is a block of 32 bytes
  */
-void EVE_cmd_setbitmap(uint32_t addr, uint16_t fmt, uint16_t width,
-                        uint16_t height)
+void EVE_cmd_setbitmap(uint32_t addr, uint16_t fmt, uint16_t width, uint16_t height)
 {
     if (0U == cmd_burst)
     {
@@ -3422,9 +3420,9 @@ void EVE_cmd_setbitmap(uint32_t addr, uint16_t fmt, uint16_t width,
 
 /**
  * @brief Generate the corresponding display list commands for given bitmap information, only works in burst-mode.
+ * @note - when used with ASTC images from flash, the source-address is a block of 32 bytes
  */
-void EVE_cmd_setbitmap_burst(uint32_t addr, uint16_t fmt, uint16_t width,
-                                uint16_t height)
+void EVE_cmd_setbitmap_burst(uint32_t addr, uint16_t fmt, uint16_t width, uint16_t height)
 {
     spi_transmit_burst(CMD_SETBITMAP);
     spi_transmit_burst(addr);
@@ -3465,7 +3463,7 @@ void EVE_cmd_setfont_burst(uint32_t font, uint32_t ptr)
 }
 
 /**
- * @brief Set up a custom for use by the coprocessor engine.
+ * @brief Set up a custom font for use by the coprocessor engine.
  * @note - generates display list commands, so it needs to be put in a display list
  */
 void EVE_cmd_setfont2(uint32_t font, uint32_t ptr, uint32_t firstchar)
@@ -3488,7 +3486,7 @@ void EVE_cmd_setfont2(uint32_t font, uint32_t ptr, uint32_t firstchar)
 }
 
 /**
- * @brief Set up a custom for use by the coprocessor engine, only works in burst-mode.
+ * @brief Set up a custom font for use by the coprocessor engine, only works in burst-mode.
  * @note - generates display list commands, so it needs to be put in a display list
  */
 void EVE_cmd_setfont2_burst(uint32_t font, uint32_t ptr, uint32_t firstchar)
@@ -3652,8 +3650,7 @@ void EVE_cmd_spinner(int16_t xc0, int16_t yc0, uint16_t style, uint16_t scale)
 /**
  * @brief Start an animated spinner, only works in burst-mode.
  */
-void EVE_cmd_spinner_burst(int16_t xc0, int16_t yc0, uint16_t style,
-                            uint16_t scale)
+void EVE_cmd_spinner_burst(int16_t xc0, int16_t yc0, uint16_t style, uint16_t scale)
 {
     spi_transmit_burst(CMD_SPINNER);
     spi_transmit_burst(((uint32_t) ((uint16_t) xc0)) + (((uint32_t) ((uint16_t) yc0)) << 16U));
@@ -3663,8 +3660,7 @@ void EVE_cmd_spinner_burst(int16_t xc0, int16_t yc0, uint16_t style,
 /**
  * @brief Draw a text string.
  */
-void EVE_cmd_text(int16_t xc0, int16_t yc0, uint16_t font, uint16_t options,
-                    const char *p_text)
+void EVE_cmd_text(int16_t xc0, int16_t yc0, uint16_t font, uint16_t options, const char *p_text)
 {
     if (0U == cmd_burst)
     {
@@ -3692,8 +3688,7 @@ void EVE_cmd_text(int16_t xc0, int16_t yc0, uint16_t font, uint16_t options,
 /**
  * @brief Draw a text string, only works in burst-mode.
  */
-void EVE_cmd_text_burst(int16_t xc0, int16_t yc0, uint16_t font,
-                        uint16_t options, const char *p_text)
+void EVE_cmd_text_burst(int16_t xc0, int16_t yc0, uint16_t font, uint16_t options, const char *p_text)
 {
     spi_transmit_burst(CMD_TEXT);
     spi_transmit_burst(((uint32_t) ((uint16_t) xc0)) + (((uint32_t) ((uint16_t) yc0)) << 16U));
