@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2024-03-16
+@date    2024-03-19
 @author  Rudolph Riedel
 
 @section info
@@ -154,6 +154,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - added more documentation
 - removed EVE_cmd_hsf_burst()
 - new parameter for EVE_init(): EVE_SOFT_RESET
+- Bugfix: while this worked, the PLL range for BT81x was configured incorrectly
 
 */
 
@@ -1618,7 +1619,7 @@ uint8_t EVE_init(void)
 #endif
 
 #if EVE_GEN > 2
-    EVE_cmdWrite(EVE_CLKSEL, 0x46U); /* set clock to 72 MHz */
+    EVE_cmdWrite(EVE_CLKSEL, 0x86U); /* set clock to 72 MHz */
 #endif
 
     EVE_cmdWrite(EVE_ACTIVE, 0U); /* start EVE */
