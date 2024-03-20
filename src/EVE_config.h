@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2024-01-31
+@date    2024-03-20
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -81,6 +81,8 @@ the IOT5
 - added EVE_BACKLIGHT_FREQ to all Newhaven modules with a value of 800Hz
 - added EVE_SOFT_RESET to EVE_GD3X profile
 - added EVE_CUSTOM_MODULE_H to allow loading a custom configuration from an extra header file
+- changed the backlight frequency for Riverdi FT81x / BT815 / BT816 modules to 250Hz as at least the RVT5UQBNWC01
+ is populated with a CAT4238 and it's PWM range is 100Hz to 2kHz
 
 */
 
@@ -333,7 +335,7 @@ typedef struct
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
 #if !defined (EVE_BACKLIGHT_FREQ)
-#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#define EVE_BACKLIGHT_FREQ (250U)
 #endif
 #endif
 
@@ -425,7 +427,7 @@ typedef struct
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
 #if !defined (EVE_BACKLIGHT_FREQ)
-#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#define EVE_BACKLIGHT_FREQ (250U)
 #endif
 #endif
 
@@ -747,7 +749,7 @@ typedef struct
 #define EVE_CSPREAD (1L)
 #define EVE_GEN 2
 #if !defined (EVE_BACKLIGHT_FREQ)
-#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#define EVE_BACKLIGHT_FREQ (250U)
 #endif
 #endif
 
@@ -773,7 +775,7 @@ typedef struct
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
 #if !defined (EVE_BACKLIGHT_FREQ)
-#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#define EVE_BACKLIGHT_FREQ (250U)
 #endif
 #endif
 
@@ -790,7 +792,7 @@ typedef struct
 #define EVE_HAS_CRYSTAL
 #define EVE_GEN 3
 #if !defined (EVE_BACKLIGHT_FREQ)
-#define EVE_BACKLIGHT_FREQ (4000U) /* if not overwritten in the project options, set 4kHz as recommended by Riverdi */
+#define EVE_BACKLIGHT_FREQ (250U)
 #endif
 #endif
 
