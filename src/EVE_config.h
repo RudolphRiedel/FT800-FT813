@@ -2,7 +2,7 @@
 @file    EVE_config.h
 @brief   configuration information for some TFTs
 @version 5.0
-@date    2024-03-20
+@date    2024-04-16
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -83,6 +83,7 @@ the IOT5
 - added EVE_CUSTOM_MODULE_H to allow loading a custom configuration from an extra header file
 - changed the backlight frequency for Riverdi FT81x / BT815 / BT816 modules to 250Hz as at least the RVT5UQBNWC01
  is populated with a CAT4238 and it's PWM range is 100Hz to 2kHz
+- added PS817-070WS-C-IPS and RVT121H
 
 */
 
@@ -98,6 +99,7 @@ the IOT5
 #define EVE_RVT50H
 #define EVE_RVT70H
 #define EVE_RVT101H
+#define EVE_RVT121H
 #define EVE_EVE4_40G
 #define EVE_EVE4_70G
 #define EVE_EVE4_101G
@@ -106,6 +108,8 @@ the IOT5
 #define EVE_CFAF1024600B0_070SC_A1
 #define EVE_CFA800480E3_050SX
 #define EVE_PS817_043WQ_C_IPS
+#define EVE_PS817_070WS_C_IPS
+
 
 /* BT815 / BT816 */
 #define EVE_VM816C50AD
@@ -570,8 +574,14 @@ typedef struct
 /* untested */
 /* FTDI/BRT EVE2 modules VM810C50A-D, ME812A-WH50R and ME813A-WH50C, 800x480 5.0" */
 /* 4D-Systems GEN4 FT812/FT813 5.0/7.0 */
-#if defined (EVE_VM810C) || defined (EVE_ME812A) || defined (EVE_ME813A) || defined (EVE_GEN4_FT812_50) || \
-    defined (EVE_GEN4_FT813_50) || defined (EVE_GEN4_FT812_70) || defined (EVE_GEN4_FT813_70)
+#if defined (EVE_VM810C) \
+    || defined (EVE_ME812A) \
+    || defined (EVE_ME813A) \
+    || defined (EVE_GEN4_FT812_50) \
+    || defined (EVE_GEN4_FT813_50) \
+    || defined (EVE_GEN4_FT812_70) \
+    || defined (EVE_GEN4_FT813_70)
+
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -618,7 +628,9 @@ typedef struct
 
 /* untested */
 /* Matrix Orbital EVE2 modules EVE2-50A, EVE2-70A : 800x480 5.0" and 7.0" resistive, or no touch, FT812 */
-#if defined (EVE_EVE2_50) || defined (EVE_EVE2_70)
+#if defined (EVE_EVE2_50) \
+    || defined (EVE_EVE2_70)
+
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -630,7 +642,10 @@ typedef struct
 
 /* Matrix Orbital EVE2 modules EVE2-50G, EVE2-70G : 800x480 5.0" and 7.0" capacitive touch, FT813 */
 /* Crystalfonts CFAF800480E0-050SC 800x480 5.0" , FT813 capacitive touch */
-#if defined (EVE_EVE2_50G) || defined (EVE_EVE2_70G) || defined (EVE_CFAF800480E0_050SC)
+#if defined (EVE_EVE2_50G) \
+    || defined (EVE_EVE2_70G) \
+    || defined (EVE_CFAF800480E0_050SC)
+
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -692,7 +707,10 @@ typedef struct
 /* untested */
 /* Matrix Orbital EVE3 modules EVE3-50A, EVE3-70A : 800x480 5.0" and 7.0" resistive, or no touch, BT816 */
 /* PAF90B5WFNWC01 800x480 9.0" Panasys, BT815 */
-#if defined (EVE_EVE3_50) || defined (EVE_EVE3_70) || defined (EVE_PAF90)
+#if defined (EVE_EVE3_50) \
+    || defined (EVE_EVE3_70) \
+    || defined (EVE_PAF90)
+
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -704,7 +722,9 @@ typedef struct
 #endif
 
 /* Matrix Orbital EVE3 modules EVE3-50G, EVE3-70G : 800x480 5.0" and 7.0" capacitive touch, BT815 */
-#if defined (EVE_EVE3_50G) || defined (EVE_EVE3_70G)
+#if defined (EVE_EVE3_50G) \
+    || defined (EVE_EVE3_70G)
+
 #define Resolution_800x480
 
 #define EVE_PCLK (2L)
@@ -731,7 +751,9 @@ typedef struct
 
 /* RVT50xQFxxxxx 800x480 5.0" Riverdi, various options, FT812/FT813 */
 /* RVT70xQFxxxxx 800x480 7.0" Riverdi, various options, FT812/FT813, tested with RVT70UQFNWC0x */
-#if defined (EVE_RVT70) || defined (EVE_RVT50)
+#if defined (EVE_RVT70) \
+    || defined (EVE_RVT50)
+
 #define EVE_HSIZE (800L) /* Thd Length of visible part of line (in PCLKs) - display width */
 #define EVE_VSIZE (480L) /* Tvd Number of visible lines (in lines) - display height */
 
@@ -1017,6 +1039,31 @@ typedef struct
 #endif
 #endif
 
+/* untested */
+/* PS817-070WS-C-IPS 1024x600 7.0" Panasys, BT817 */
+#if defined (EVE_PS817_070WS_C_IPS)
+#define EVE_HSIZE (1024L)
+#define EVE_VSIZE (600L)
+
+#define EVE_VSYNC0 (0L)
+#define EVE_VSYNC1 (10L)
+#define EVE_VOFFSET (23L)
+#define EVE_VCYCLE (635L)
+#define EVE_HSYNC0 (0L)
+#define EVE_HSYNC1 (70L)
+#define EVE_HOFFSET (160L)
+#define EVE_HCYCLE (1344L)
+#define EVE_PCLK_FREQ (0x0D12U) /* value to be put into REG_PCLK_FREQ -> 51MHz, REG_PCLK is set to 1 */
+#define EVE_PCLKPOL (1L)
+#define EVE_SWIZZLE (0L)
+#define EVE_CSPREAD (0L)
+#define EVE_HAS_CRYSTAL
+#define EVE_GEN 4
+#if !defined (EVE_BACKLIGHT_FREQ)
+#define EVE_BACKLIGHT_FREQ (250U) /* backlight driver unknown -> set to default with the option to override */
+#endif
+#endif
+
 /* untested but confirmed to be working */
 /* EVE4x-70G IPS 1024x600 7" Matrix Orbital, capacitive touch, BT817 */
 #if defined (EVE_EVE4_70G)
@@ -1087,8 +1134,11 @@ typedef struct
 #endif
 
 /* tested with RVT101HVBNWC00-B */
-/* RVT101HVBxxxxx 1280x800 7.0" Riverdi, various options, BT817 */
-#if defined (EVE_RVT101H)
+/* RVT101HVBxxxxx 1280x800 10.1" Riverdi, various options, BT817 */
+/* RVT121HVBxxxxx 1280x800 12.1" Riverdi, various options, BT817 */
+#if defined (EVE_RVT101H) \
+    || defined (EVE_RVT121H)
+
 #define EVE_HSIZE (1280L)
 #define EVE_VSIZE (800L)
 
