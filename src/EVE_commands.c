@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2024-03-19
+@date    2024-04-20
 @author  Rudolph Riedel
 
 @section info
@@ -155,6 +155,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - removed EVE_cmd_hsf_burst()
 - new parameter for EVE_init(): EVE_SOFT_RESET
 - Bugfix: while this worked, the PLL range for BT81x was configured incorrectly
+- Compliance: fixed BARR-C:2018 Rule 6.2c violation in private_string_write()
 
 */
 
@@ -1132,7 +1133,7 @@ void EVE_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *p_data)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-/*
+#if 0
 uint32_t EVE_cmd_regread(uint32_t ptr)
 {
     uint16_t cmdoffset;
@@ -1142,12 +1143,12 @@ uint32_t EVE_cmd_regread(uint32_t ptr)
     spi_transmit_32(0UL);
     EVE_cs_clear();
     EVE_execute_cmd();
-    cmdoffset = EVE_memRead16(REG_CMD_WRITE); // read the coprocessor write pointer
+    cmdoffset = EVE_memRead16(REG_CMD_WRITE); /* read the coprocessor write pointer */
     cmdoffset -= 4U;
     cmdoffset &= 0x0fffU;
     return (EVE_memRead32(EVE_RAM_CMD + cmdoffset));
 }
-*/
+#endif
 
 /**
  * @brief Write zero to RAM_G.
@@ -1773,7 +1774,9 @@ static void private_string_write(const char *p_text)
     }
     else /* we are in burst mode, so every transfer is 32 bits */
     {
-        for (uint8_t textindex = 0U; textindex < 249U; textindex += 4U)
+        uint8_t exit_flag = 0U;
+
+        for (uint8_t textindex = 0U; (textindex < 249U) && (0U == exit_flag); textindex += 4U)
         {
             uint32_t calc = 0U;
 
@@ -1785,17 +1788,19 @@ static void private_string_write(const char *p_text)
 
                 if (0U == data)
                 {
-                    spi_transmit_burst(calc);
-                    return; /* MISRA 2012 rule 15.5 (advisory) violation */
+                    exit_flag = 1U; /* leave outer loop */
+                    break; /* leave inner loop */
                 }
-
                 calc += ((uint32_t)data) << (index * 8U);
             }
 
             spi_transmit_burst(calc);
         }
 
-        spi_transmit_burst(0U); /* executed when the line is too long */
+        if(0U == exit_flag) /* left outer loop because the string is too long, send zeroes to terminate the string */
+        {
+            spi_transmit_burst(0U);
+        }
     }
 }
 
