@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2024-01-24
+@date    2024-06-23
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -90,6 +90,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - added detection of the Tasking compiler and added tc38x and tc39xb targets
 - removed the unfortunately defunct WIZIOPICO
 - added STM32WB55xx
+- added XMC4700_Relax_Kit
+- changed the Infineon XMC include to EVE_target_Arduino_Infineon_XMC.h
 
 */
 
@@ -369,9 +371,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "EVE_target/EVE_target_Arduino_Teensy35.h"
 
-#elif defined (XMC1100_XMC2GO)
+#elif defined (XMC1100_XMC2GO) || defined (XMC4700_Relax_Kit)
 
-#include "EVE_target/EVE_target_Arduino_XMC1100_XMC2GO.h"
+#include "EVE_target/EVE_target_Arduino_Infineon_XMC.h"
 
 #elif defined (ARDUINO_UNOR4_MINIMA) || defined (ARDUINO_UNOR4_WIFI)
 

@@ -1,15 +1,15 @@
 /*
-@file    EVE_target_Arduino_XMC1100_XMC2GO.h
+@file    EVE_target_Arduino_Infineon_XMC.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2023-06-24
+@date    2024-06-23
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2023 Rudolph Riedel
+Copyright (c) 2016-2024 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -35,11 +35,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - split up the optional default defines to allow to only change what needs
     changing thru the build-environment
 - changed #include "EVE_cpp_wrapper.h" to #include "../EVE_cpp_wrapper.h"
+- renamed to EVE_target_Arduino_Infineon_XMC.h
+- removed the extra layer of #if defined protection for the target
 
 */
 
-#ifndef EVE_TARGET_ARDUINO_XMC1100_XMC2GO_H
-#define EVE_TARGET_ARDUINO_XMC1100_XMC2GO_H
+#ifndef EVE_TARGET_ARDUINO_INFINEON_XMC_H
+#define EVE_TARGET_ARDUINO_INFINEON_XMC_H
 
 #if defined (ARDUINO)
 
@@ -51,8 +53,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 extern "C"
 {
 #endif
-
-#if defined (XMC1100_XMC2GO)
 
 /* you may define these in your build-environment to use different settings */
 #if !defined (EVE_CS)
@@ -116,12 +116,10 @@ static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
     return (*p_data);
 }
 
-#endif /* XMC1100_XMC2GO */
-
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* Arduino */
 
-#endif /* EVE_TARGET_ARDUINO_XMC1100_XMC2GO_H */
+#endif /* EVE_TARGET_ARDUINO_INFINEON_XMC_H */

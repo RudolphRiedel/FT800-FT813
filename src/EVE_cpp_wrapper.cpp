@@ -2,14 +2,14 @@
 @file    EVE_cpp_wrapper.cpp
 @brief   wrapper functions to make C++ class methods callable from C functions
 @version 5.0
-@date    2023-09-30
+@date    2024-06-23
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2023 Rudolph Riedel
+Copyright (c) 2016-2024 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -39,6 +39,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - added workaround for non-standard implementations of SPI.transfer(buffer, count)
 - optimized for ESP32 by using SPI.write() and SPI.write32()
 - removed the unfortunately defunct WIZIOPICO
+- added XMC4700_Relax_Kit
 
 */
 
@@ -69,7 +70,7 @@ extern "C" {
         SPI.transfer(data);
     }
 
-#if defined (XMC1100_XMC2GO)
+#if defined (XMC1100_XMC2GO) || defined (XMC4700_Relax_Kit)
     void wrapper_spi_transmit_32(uint32_t data)
     {
         SPI.transfer((uint8_t *) &data, 4);
