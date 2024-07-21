@@ -24,6 +24,8 @@ I have used it so far with:
 - S32K144 (DMA)
 - GD32C103CBT6 (DMA)
 - STM32G0B1CET6
+- STM32F407 (STM32F407G-DISC1) (DMA)
+- STM32H755 (NUCLEO-H755ZI-Q) CM4 and CM7 - DMA still refuses to work
 
 I have reports of successfully using it with:
 
