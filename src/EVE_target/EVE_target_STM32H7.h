@@ -1,5 +1,5 @@
 /*
-@file    EVE_target_STM32.h
+@file    EVE_target_STM32H7.h
 @brief   target specific includes, definitions and functions
 @version 5.0
 @date    2024-07-21
@@ -31,83 +31,24 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 @section History
 
 5.0
-- extracted from EVE_target.h
-- basic maintenance: checked for violations of white space and indent rules
-- added STM32WB55xx
-- reworked
+- split from EVE_target_STM32.h
 
 */
 
-#ifndef EVE_TARGET_STM32_H
-#define EVE_TARGET_STM32_H
+#ifndef EVE_TARGET_STM32H7_H
+#define EVE_TARGET_STM32H7_H
 
 #if !defined (ARDUINO)
 #if defined (__GNUC__)
 
 /* set with "build_flags" in platformio.ini or as defines in your build environment */
-#if defined (STM32L0) \
-    || defined (STM32F0) \
-    || defined (STM32F1) \
-    || defined (STM32F3) \
-    || defined (STM32F4) \
-    || defined (STM32G4) \
-    || defined (STM32G0) \
-    || defined (STM32WB55xx)
+#if defined (STM32H7)
 
-#if defined (STM32L0) /* set with "build_flags = -D STM32L0" in platformio.ini */
-#include "stm32l0xx.h"
-#include "stm32l0xx_hal.h"
-#include "stm32l0xx_ll_spi.h"
-#include "stm32l0xx_ll_gpio.h"
-#endif
-
-#if defined (STM32F0) /* set with "build_flags = -D STM32F0" in platformio.ini */
-#include "stm32f0xx.h"
-#include "stm32f0xx_hal.h"
-#include "stm32f0xx_ll_spi.h"
-#include "stm32f0xx_ll_gpio.h"
-#endif
-
-#if defined (STM32F1) /* set with "build_flags = -D STM32F1" in platformio.ini */
-#include "stm32f1xx.h"
-#include "stm32f1xx_hal.h"
-#include "stm32f1xx_ll_spi.h"
-#include "stm32f1xx_ll_gpio.h"
-#endif
-
-#if defined (STM32F3) /* set with "build_flags = -D STM32F3" in platformio.ini */
-#include "stm32f3xx.h"
-#include "stm32f3xx_hal.h"
-#include "stm32f3xx_ll_spi.h"
-#include "stm32f3xx_ll_gpio.h"
-#endif
-
-#if defined (STM32F4) /* set with "build_flags = -D STM32F4" in platformio.ini */
-#include "stm32f4xx.h"
-#include "stm32f4xx_hal.h"
-#include "stm32f4xx_ll_spi.h"
-#include "stm32f4xx_ll_gpio.h"
-#endif
-
-#if defined (STM32G4) /* set with "build_flags = -D STM32G4" in platformio.ini */
-#include "stm32g4xx.h"
-#include "stm32g4xx_hal.h"
-#include "stm32g4xx_ll_spi.h"
-#include "stm32g4xx_ll_gpio.h"
-#endif
-
-#if defined (STM32G0) /* set with "build_flags = -D STM32G0" in platformio.ini */
-#include "stm32g0xx.h"
-#include "stm32g0xx_hal.h"
-#include "stm32g0xx_ll_spi.h"
-#include "stm32g0xx_ll_gpio.h"
-#endif
-
-#if defined (STM32WB55xx) /* set with "build_flags = -D STM32WB55xx" in platformio.ini */
-#include "stm32wbxx.h"
-#include "stm32wbxx_hal.h"
-#include "stm32wbxx_ll_spi.h"
-#include "stm32wbxx_ll_gpio.h"
+#if defined (STM32H7) /* set with "build_flags = -D STM32H7" in platformio.ini */
+#include "stm32h7xx.h"
+#include "stm32h7xx_hal.h"
+#include "stm32h7xx_ll_spi.h"
+#include "stm32h7xx_ll_gpio.h"
 #endif
 
 /* you may define these in your build-environment to use different settings */
@@ -221,13 +162,17 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 void EVE_init_spi(void);
 extern SPI_HandleTypeDef eve_spi_handle;
 
-/* tested with: STM32F407 */
-#if defined (EVE_DMA) /* to be defined in the build-environment */
+/* do not activate, it is not working, yet */
+//#define EVE_DMA /* to be defined in the build-environment */
+
+#if defined (EVE_DMA)
 
 #if !defined (EVE_DMA_UNIT_NUM)
-    #define EVE_DMA_UNIT_NUM 2U
-    #define EVE_DMA_STREAM_NUM 0U
-    #define EVE_DMA_CHANNEL_NUM 4U
+    #define EVE_DMA_UNIT_NUM 1U
+#endif
+
+#if !defined (EVE_DMA_STREAM_NUM)
+    #define EVE_DMA_STREAM_NUM 1U
 #endif
 
 #if EVE_DMA_UNIT_NUM == 1U
@@ -284,22 +229,18 @@ extern SPI_HandleTypeDef eve_spi_handle;
     #endif
 #endif
 
-#if EVE_DMA_CHANNEL_NUM == 0U
-    #define EVE_DMA_CHANNEL DMA_CHANNEL_0
-#elif EVE_DMA_CHANNEL_NUM == 1U
-    #define EVE_DMA_CHANNEL DMA_CHANNEL_1
-#elif EVE_DMA_CHANNEL_NUM == 2U
-    #define EVE_DMA_CHANNEL DMA_CHANNEL_2
-#elif EVE_DMA_CHANNEL_NUM == 3U
-    #define EVE_DMA_CHANNEL DMA_CHANNEL_3
-#elif EVE_DMA_CHANNEL_NUM == 4U
-    #define EVE_DMA_CHANNEL DMA_CHANNEL_4
-#elif EVE_DMA_CHANNEL_NUM == 5U
-    #define EVE_DMA_CHANNEL DMA_CHANNEL_5
-#elif EVE_DMA_CHANNEL_NUM == 6U
-    #define EVE_DMA_CHANNEL DMA_CHANNEL_6
-#elif EVE_DMA_CHANNEL_NUM == 7U
-    #define EVE_DMA_CHANNEL DMA_CHANNEL_7
+#if EVE_SPI_NUM == 1U
+    #define EVE_DMA_REQUEST DMA_REQUEST_SPI1_TX
+#elif EVE_SPI_NUM == 2U
+    #define EVE_DMA_REQUEST DMA_REQUEST_SPI2_TX
+#elif EVE_SPI_NUM == 3U
+    #define EVE_DMA_REQUEST DMA_REQUEST_SPI3_TX
+#elif EVE_SPI_NUM == 4U
+    #define EVE_DMA_REQUEST DMA_REQUEST_SPI4_TX
+#elif EVE_SPI_NUM == 5U
+    #define EVE_DMA_REQUEST DMA_REQUEST_SPI5_TX
+#elif EVE_SPI_NUM == 6U
+    #define EVE_DMA_REQUEST DMA_REQUEST_SPI6_TX
 #endif
 
 extern volatile uint32_t EVE_dma_buffer[1025U];
@@ -313,7 +254,7 @@ void EVE_start_dma_transfer(void);
 
 static inline void EVE_cs_clear(void)
 {
-    while (LL_SPI_IsActiveFlag_BSY(EVE_SPI)) {}
+    while (0 == LL_SPI_IsActiveFlag_TXC(EVE_SPI)) {} /* wait for the last transfer to complete */
     LL_GPIO_SetOutputPin(EVE_CS_PORT, EVE_CS);
 }
 
@@ -336,12 +277,10 @@ static inline void EVE_cs_set(void)
 
 static inline void spi_transmit(uint8_t data)
 {
-    if (LL_SPI_IsActiveFlag_RXNE(EVE_SPI)) /* if the previous transmit left data in the RX buffer, we need to clear it */
-    { /* this is significantly faster than to wait after each transfer for RX to finish */
-        (void) EVE_SPI->DR; /* dummy read to clear SPI_SR_RXNE */
-    }
     LL_SPI_TransmitData8(EVE_SPI, data);
-    while (!LL_SPI_IsActiveFlag_TXE(EVE_SPI)) {}
+    while (!LL_SPI_IsActiveFlag_TXP(EVE_SPI)) {}
+//    while (!LL_SPI_IsActiveFlag_RXP(EVE_SPI)) {}
+//    (void) EVE_SPI->RXDR; /* dummy read to flush RX FIFO */
 }
 
 static inline void spi_transmit_32(uint32_t data)
@@ -365,16 +304,24 @@ static inline void spi_transmit_burst(uint32_t data)
 
 static inline uint8_t spi_receive(uint8_t data)
 {
-    if (LL_SPI_IsActiveFlag_BSY(EVE_SPI)) /* set when switching from write-only to read-write -> need to flush the RX buffer */
-    {
-        while (LL_SPI_IsActiveFlag_BSY(EVE_SPI)) {}
-        (void) EVE_SPI->DR; /* dummy read to clear SPI_SR_RXNE */
-    }
+    while (0 == LL_SPI_IsActiveFlag_TXC(EVE_SPI)) {} /* wait for the last transfer to complete */
+
+    LL_SPI_Disable(EVE_SPI);
+    while (LL_SPI_IsEnabled(EVE_SPI)) {}
+    LL_SPI_SetTransferDirection(EVE_SPI, SPI_DIRECTION_2LINES);
+    LL_SPI_Enable(EVE_SPI);
+    LL_SPI_StartMasterTransfer(EVE_SPI);
 
     LL_SPI_TransmitData8(EVE_SPI, data);
-    while (!LL_SPI_IsActiveFlag_TXE(EVE_SPI)) {}
-    while (!LL_SPI_IsActiveFlag_RXNE(EVE_SPI)) {}
+    while (!LL_SPI_IsActiveFlag_TXP(EVE_SPI)) {}
+    while (!LL_SPI_IsActiveFlag_RXP(EVE_SPI)) {}
     return (LL_SPI_ReceiveData8(EVE_SPI));
+
+    LL_SPI_Disable(EVE_SPI);
+    while (LL_SPI_IsEnabled(EVE_SPI)) {}
+    LL_SPI_SetTransferDirection(EVE_SPI, SPI_DIRECTION_2LINES_TXONLY );
+    LL_SPI_Enable(EVE_SPI);
+    LL_SPI_StartMasterTransfer(EVE_SPI);
 }
 
 static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
@@ -382,8 +329,8 @@ static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
     return (*p_data);
 }
 
-#endif  /* STM32 */
+#endif /* STM32 H7 */
 
 #endif /* __GNUC__ */
 #endif /* !Arduino */
-#endif /* EVE_TARGET_STM32_H */
+#endif /* EVE_TARGET_STM32H7_H */

@@ -2,7 +2,7 @@
 @file    EVE_target.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2024-06-23
+@date    2024-07-21
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -92,6 +92,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - added STM32WB55xx
 - added XMC4700_Relax_Kit
 - changed the Infineon XMC include to EVE_target_Arduino_Infineon_XMC.h
+- reworked STM32 support
 
 */
 
@@ -229,13 +230,18 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     || defined (STM32F3) \
     || defined (STM32F4) \
     || defined (STM32G4) \
-    || defined (STM32H7) \
     || defined (STM32G0) \
-	|| defined (STM32WB) \
-	|| defined (STM32WB55xx)
+    || defined (STM32WB) \
+    || defined (STM32WB55xx)
 /* set with "build_flags" in platformio.ini or as defines in your build environment */
 
 #include "EVE_target/EVE_target_STM32.h"
+
+#endif /* STM32 */
+
+#if defined (STM32H7)
+
+#include "EVE_target/EVE_target_STM32H7.h"
 
 #endif /* STM32 */
 
