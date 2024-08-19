@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2024-04-20
+@date    2024-08-19
 @author  Rudolph Riedel
 
 @section info
@@ -156,6 +156,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - new parameter for EVE_init(): EVE_SOFT_RESET
 - Bugfix: while this worked, the PLL range for BT81x was configured incorrectly
 - Compliance: fixed BARR-C:2018 Rule 6.2c violation in private_string_write()
+- fix: added two EVE_cmd_memzero() calls to EVE_cmd_clearcache() to run CMD_CLEARCACHE on empty display lists
 
 */
 
@@ -698,10 +699,12 @@ void EVE_cmd_wait(uint32_t usec)
  */
 void EVE_cmd_clearcache(void)
 {
+    EVE_cmd_memzero(EVE_RAM_DL, 16);
     EVE_cmd_dl(CMD_DLSTART);
     EVE_cmd_dl(CMD_SWAP);
     EVE_execute_cmd();
-
+    
+    EVE_cmd_memzero(EVE_RAM_DL, 16);
     EVE_cmd_dl(CMD_DLSTART);
     EVE_cmd_dl(CMD_SWAP);
     EVE_execute_cmd();
