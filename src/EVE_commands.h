@@ -2,14 +2,14 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2023-12-29
+@date    2024-10-13
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2023 Rudolph Riedel
+Copyright (c) 2016-2024 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -84,6 +84,7 @@ EVE_cmd_animstartram_burst()
     updated BT81x series programming guide V2.4
 - commented out EVE_cmd_regread() prototype
 - removed prototype for EVE_cmd_hsf_burst()
+- added static inline functions: i16_i16_to_u32(), u16_u16_to_u32() and i32_to_u32()
 
 */
 
@@ -118,6 +119,25 @@ EVE_cmd_animstartram_burst()
 #define EVE_FLASH_STATUS_DETACHED 1U
 #define EVE_FLASH_STATUS_BASIC 2U
 #define EVE_FLASH_STATUS_FULL 3U
+
+/* ##################################################################
+    functions that convert to uint32
+##################################################################### */
+
+static inline uint32_t i16_i16_to_u32(const int16_t arg1, const int16_t arg2)
+{
+    return (((uint32_t) ((uint16_t) arg1)) + (((uint32_t) ((uint16_t) arg2)) << 16U));
+}
+
+static inline uint32_t u16_u16_to_u32(const uint16_t arg1, const uint16_t arg2)
+{
+    return (((uint32_t) arg1) + (((uint32_t) arg2) << 16U));
+}
+
+static inline uint32_t i32_to_u32(const int32_t arg1)
+{
+    return ((uint32_t) arg1);
+}
 
 /* ##################################################################
     helper functions

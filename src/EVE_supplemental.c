@@ -2,7 +2,7 @@
 @file    EVE_supplemental.h
 @brief   supplemental functions
 @version 5.0
-@date    2024-02-20
+@date    2024-10-13
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -33,6 +33,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 5.0
 - added EVE_polar_cartesian()
 - fix: EVE_cmd_dl_burst() -> EVE_cmd_dl()
+- Compliance: fixed linter violation in EVE_widget_circle()
 
 */
 
@@ -59,7 +60,7 @@ void EVE_widget_circle(int16_t xc0, int16_t yc0, uint16_t radius, uint16_t borde
     EVE_cmd_dl(POINT_SIZE(radius));
     EVE_cmd_dl(VERTEX2F(xc0, yc0));
     EVE_color_rgb(bgcolor);
-    EVE_cmd_dl(POINT_SIZE(radius - border));
+    EVE_cmd_dl(POINT_SIZE((uint16_t) (radius - border)));
     EVE_cmd_dl(VERTEX2F(xc0, yc0));
     EVE_cmd_dl(DL_END);
     EVE_cmd_dl(DL_RESTORE_CONTEXT);
