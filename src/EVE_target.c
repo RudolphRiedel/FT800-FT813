@@ -2,7 +2,7 @@
 @file    EVE_target.c
 @brief   target specific functions for plain C targets
 @version 5.0
-@date    2024-07-21
+@date    2024-10-16
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -59,6 +59,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  from -Wpedantic when building for Arduino
 - added STM32WB55xx to the STM32 target
 - reworked STM32 support, DMA is working for at least the F407, DMA for the H7 is still WIP
+- Bugfix: #136 thanks to Jwf68 on Github, EVE_PDN_PORT_NUM -> EVE_PD_PORT_NUM
 
  */
 
@@ -246,39 +247,39 @@ SPI_HandleTypeDef eve_spi_handle = {0};
 void EVE_init_spi(void)
 {
 
-#if (EVE_CS_PORT_NUM == 1U) || (EVE_PDN_PORT_NUM == 1U) || (EVE_SPI_PORT_NUM == 1U)
+#if (EVE_CS_PORT_NUM == 1U) || (EVE_PD_PORT_NUM == 1U) || (EVE_SPI_PORT_NUM == 1U)
     __HAL_RCC_GPIOA_CLK_ENABLE();
 #endif
 
-#if (EVE_CS_PORT_NUM == 2U) || (EVE_PDN_PORT_NUM == 2U) || (EVE_SPI_PORT_NUM == 2U)
+#if (EVE_CS_PORT_NUM == 2U) || (EVE_PD_PORT_NUM == 2U) || (EVE_SPI_PORT_NUM == 2U)
     __HAL_RCC_GPIOB_CLK_ENABLE();
 #endif
 
-#if (EVE_CS_PORT_NUM == 3U) || (EVE_PDN_PORT_NUM == 3U) || (EVE_SPI_PORT_NUM == 3U)
+#if (EVE_CS_PORT_NUM == 3U) || (EVE_PD_PORT_NUM == 3U) || (EVE_SPI_PORT_NUM == 3U)
     __HAL_RCC_GPIOC_CLK_ENABLE();
 #endif
 
-#if (EVE_CS_PORT_NUM == 4U) || (EVE_PDN_PORT_NUM == 4U) || (EVE_SPI_PORT_NUM == 4U)
+#if (EVE_CS_PORT_NUM == 4U) || (EVE_PD_PORT_NUM == 4U) || (EVE_SPI_PORT_NUM == 4U)
     __HAL_RCC_GPIOD_CLK_ENABLE();
 #endif
 
-#if (EVE_CS_PORT_NUM == 5U) || (EVE_PDN_PORT_NUM == 5U) || (EVE_SPI_PORT_NUM == 5U)
+#if (EVE_CS_PORT_NUM == 5U) || (EVE_PD_PORT_NUM == 5U) || (EVE_SPI_PORT_NUM == 5U)
     __HAL_RCC_GPIOE_CLK_ENABLE();
 #endif
 
-#if (EVE_CS_PORT_NUM == 6U) || (EVE_PDN_PORT_NUM == 6U) || (EVE_SPI_PORT_NUM == 6U)
+#if (EVE_CS_PORT_NUM == 6U) || (EVE_PD_PORT_NUM == 6U) || (EVE_SPI_PORT_NUM == 6U)
     __HAL_RCC_GPIOF_CLK_ENABLE();
 #endif
 
-#if (EVE_CS_PORT_NUM == 7U) || (EVE_PDN_PORT_NUM == 7U) || (EVE_SPI_PORT_NUM == 7U)
+#if (EVE_CS_PORT_NUM == 7U) || (EVE_PD_PORT_NUM == 7U) || (EVE_SPI_PORT_NUM == 7U)
     __HAL_RCC_GPIOG_CLK_ENABLE();
 #endif
 
-#if (EVE_CS_PORT_NUM == 8U) || (EVE_PDN_PORT_NUM == 8U) || (EVE_SPI_PORT_NUM == 8U)
+#if (EVE_CS_PORT_NUM == 8U) || (EVE_PD_PORT_NUM == 8U) || (EVE_SPI_PORT_NUM == 8U)
     __HAL_RCC_GPIOH_CLK_ENABLE();
 #endif
 
-#if (EVE_CS_PORT_NUM == 9U) || (EVE_PDN_PORT_NUM == 9U) || (EVE_SPI_PORT_NUM == 9U)
+#if (EVE_CS_PORT_NUM == 9U) || (EVE_PD_PORT_NUM == 9U) || (EVE_SPI_PORT_NUM == 9U)
     __HAL_RCC_GPIOI_CLK_ENABLE();
 #endif
 
@@ -449,39 +450,39 @@ SPI_HandleTypeDef eve_spi_handle = {0};
 
 void EVE_init_spi(void)
 {
-#if (EVE_CS_PORT_NUM == 1U) || (EVE_PDN_PORT_NUM == 1U) || (EVE_SPI_PORT_NUM == 1U)
+#if (EVE_CS_PORT_NUM == 1U) || (EVE_PD_PORT_NUM == 1U) || (EVE_SPI_PORT_NUM == 1U)
     __HAL_RCC_GPIOA_CLK_ENABLE();
 #endif
 
-#if (EVE_CS_PORT_NUM == 2U) || (EVE_PDN_PORT_NUM == 2U) || (EVE_SPI_PORT_NUM == 2U)
+#if (EVE_CS_PORT_NUM == 2U) || (EVE_PD_PORT_NUM == 2U) || (EVE_SPI_PORT_NUM == 2U)
     __HAL_RCC_GPIOB_CLK_ENABLE();
 #endif
 
-#if (EVE_CS_PORT_NUM == 3U) || (EVE_PDN_PORT_NUM == 3U) || (EVE_SPI_PORT_NUM == 3U)
+#if (EVE_CS_PORT_NUM == 3U) || (EVE_PD_PORT_NUM == 3U) || (EVE_SPI_PORT_NUM == 3U)
     __HAL_RCC_GPIOC_CLK_ENABLE();
 #endif
 
-#if (EVE_CS_PORT_NUM == 4U) || (EVE_PDN_PORT_NUM == 4U) || (EVE_SPI_PORT_NUM == 4U)
+#if (EVE_CS_PORT_NUM == 4U) || (EVE_PD_PORT_NUM == 4U) || (EVE_SPI_PORT_NUM == 4U)
     __HAL_RCC_GPIOD_CLK_ENABLE();
 #endif
 
-#if (EVE_CS_PORT_NUM == 5U) || (EVE_PDN_PORT_NUM == 5U) || (EVE_SPI_PORT_NUM == 5U)
+#if (EVE_CS_PORT_NUM == 5U) || (EVE_PD_PORT_NUM == 5U) || (EVE_SPI_PORT_NUM == 5U)
     __HAL_RCC_GPIOE_CLK_ENABLE();
 #endif
 
-#if (EVE_CS_PORT_NUM == 6U) || (EVE_PDN_PORT_NUM == 6U) || (EVE_SPI_PORT_NUM == 6U)
+#if (EVE_CS_PORT_NUM == 6U) || (EVE_PD_PORT_NUM == 6U) || (EVE_SPI_PORT_NUM == 6U)
     __HAL_RCC_GPIOF_CLK_ENABLE();
 #endif
 
-#if (EVE_CS_PORT_NUM == 7U) || (EVE_PDN_PORT_NUM == 7U) || (EVE_SPI_PORT_NUM == 7U)
+#if (EVE_CS_PORT_NUM == 7U) || (EVE_PD_PORT_NUM == 7U) || (EVE_SPI_PORT_NUM == 7U)
     __HAL_RCC_GPIOG_CLK_ENABLE();
 #endif
 
-#if (EVE_CS_PORT_NUM == 8U) || (EVE_PDN_PORT_NUM == 8U) || (EVE_SPI_PORT_NUM == 8U)
+#if (EVE_CS_PORT_NUM == 8U) || (EVE_PD_PORT_NUM == 8U) || (EVE_SPI_PORT_NUM == 8U)
     __HAL_RCC_GPIOH_CLK_ENABLE();
 #endif
 
-#if (EVE_CS_PORT_NUM == 9U) || (EVE_PDN_PORT_NUM == 9U) || (EVE_SPI_PORT_NUM == 9U)
+#if (EVE_CS_PORT_NUM == 9U) || (EVE_PD_PORT_NUM == 9U) || (EVE_SPI_PORT_NUM == 9U)
     __HAL_RCC_GPIOI_CLK_ENABLE();
 #endif
 
