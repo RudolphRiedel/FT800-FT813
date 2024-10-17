@@ -2,7 +2,7 @@
 @file    EVE_target_STM32H7.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2024-07-21
+@date    2024-10-17
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -32,6 +32,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 5.0
 - split from EVE_target_STM32.h
+- fix: switched EVE_cs_clear() and EVE_cs_set() from using LL to using HAL after making
+  the very weird observation that CS was not rising high in between two consecutive
+  host commands while sending three host commands was just fine - see issue #136
 
 */
 
@@ -178,28 +181,28 @@ extern SPI_HandleTypeDef eve_spi_handle;
 #if EVE_DMA_UNIT_NUM == 1U
     #if EVE_DMA_STREAM_NUM == 0U
         #define EVE_DMA_INSTANCE DMA1_Stream0
-        #define EVE_DMA_IRQ DMA1_Stream0_IRQn
+		#define EVE_DMA_IRQ DMA1_Stream0_IRQn
     #elif EVE_DMA_STREAM_NUM == 1U
         #define EVE_DMA_INSTANCE DMA1_Stream1
-        #define EVE_DMA_IRQ DMA1_Stream1_IRQn
+		#define EVE_DMA_IRQ DMA1_Stream1_IRQn
     #elif EVE_DMA_STREAM_NUM == 2U
         #define EVE_DMA_INSTANCE DMA1_Stream2
-        #define EVE_DMA_IRQ DMA1_Stream2_IRQn
+		#define EVE_DMA_IRQ DMA1_Stream2_IRQn
     #elif EVE_DMA_STREAM_NUM == 3U
         #define EVE_DMA_INSTANCE DMA1_Stream3
-        #define EVE_DMA_IRQ DMA1_Stream3_IRQn
+		#define EVE_DMA_IRQ DMA1_Stream3_IRQn
     #elif EVE_DMA_STREAM_NUM == 4U
         #define EVE_DMA_INSTANCE DMA1_Stream4
-        #define EVE_DMA_IRQ DMA1_Stream4_IRQn
+		#define EVE_DMA_IRQ DMA1_Stream4_IRQn
     #elif EVE_DMA_STREAM_NUM == 5U
         #define EVE_DMA_INSTANCE DMA1_Stream5
-        #define EVE_DMA_IRQ DMA1_Stream5_IRQn
+		#define EVE_DMA_IRQ DMA1_Stream5_IRQn
     #elif EVE_DMA_STREAM_NUM == 6U
         #define EVE_DMA_INSTANCE DMA1_Stream6
-        #define EVE_DMA_IRQ DMA1_Stream6_IRQn
+		#define EVE_DMA_IRQ DMA1_Stream6_IRQn
     #elif EVE_DMA_STREAM_NUM == 7U
         #define EVE_DMA_INSTANCE DMA1_Stream7
-        #define EVE_DMA_IRQ DMA1_Stream7_IRQn
+		#define EVE_DMA_IRQ DMA1_Stream7_IRQn
     #endif
 #elif EVE_DMA_UNIT_NUM == 2U
     #if EVE_DMA_STREAM_NUM == 0U
@@ -217,7 +220,7 @@ extern SPI_HandleTypeDef eve_spi_handle;
     #elif EVE_DMA_STREAM_NUM == 4U
         #define EVE_DMA_INSTANCE DMA2_Stream4
         #define EVE_DMA_IRQ DMA2_Stream4_IRQn
-    #elif EVE_DMA_STREAM_NUM == 5U
+	#elif EVE_DMA_STREAM_NUM == 5U
         #define EVE_DMA_INSTANCE DMA2_Stream5
         #define EVE_DMA_IRQ DMA2_Stream5_IRQn
     #elif EVE_DMA_STREAM_NUM == 6U
@@ -226,7 +229,7 @@ extern SPI_HandleTypeDef eve_spi_handle;
     #elif EVE_DMA_STREAM_NUM == 7U
         #define EVE_DMA_INSTANCE DMA2_Stream7
         #define EVE_DMA_IRQ DMA2_Stream7_IRQn
-    #endif
+	#endif
 #endif
 
 #if EVE_SPI_NUM == 1U
@@ -252,13 +255,14 @@ void EVE_start_dma_transfer(void);
 
 #endif /* EVE_DMA */
 
+#define DELAY_MS(ms) HAL_Delay(ms)
+
 static inline void EVE_cs_clear(void)
 {
     while (0 == LL_SPI_IsActiveFlag_TXC(EVE_SPI)) {} /* wait for the last transfer to complete */
-    LL_GPIO_SetOutputPin(EVE_CS_PORT, EVE_CS);
+//    LL_GPIO_SetOutputPin(EVE_CS_PORT, EVE_CS);
+    HAL_GPIO_WritePin(EVE_CS_PORT, EVE_CS, GPIO_PIN_SET);
 }
-
-#define DELAY_MS(ms) HAL_Delay(ms)
 
 static inline void EVE_pdn_clear(void)
 {
@@ -272,7 +276,8 @@ static inline void EVE_pdn_set(void)
 
 static inline void EVE_cs_set(void)
 {
-    LL_GPIO_ResetOutputPin(EVE_CS_PORT, EVE_CS);
+//    LL_GPIO_ResetOutputPin(EVE_CS_PORT, EVE_CS);
+    HAL_GPIO_WritePin(EVE_CS_PORT, EVE_CS, GPIO_PIN_RESET);
 }
 
 static inline void spi_transmit(uint8_t data)

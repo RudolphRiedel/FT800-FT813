@@ -2,7 +2,7 @@
 @file    EVE_target_STM32.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2024-07-21
+@date    2024-10-17
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -35,6 +35,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - basic maintenance: checked for violations of white space and indent rules
 - added STM32WB55xx
 - reworked
+- fix: switched EVE_cs_clear() and EVE_cs_set() from using LL to using HAL after making
+  the very weird observation that CS was not rising high in between two consecutive
+  host commands while sending three host commands was just fine - see issue #136
 
 */
 
@@ -311,13 +314,14 @@ void EVE_start_dma_transfer(void);
 
 #endif /* EVE_DMA */
 
+#define DELAY_MS(ms) HAL_Delay(ms)
+
 static inline void EVE_cs_clear(void)
 {
     while (LL_SPI_IsActiveFlag_BSY(EVE_SPI)) {}
-    LL_GPIO_SetOutputPin(EVE_CS_PORT, EVE_CS);
+//    LL_GPIO_SetOutputPin(EVE_CS_PORT, EVE_CS);
+    HAL_GPIO_WritePin(EVE_CS_PORT, EVE_CS, GPIO_PIN_SET);
 }
-
-#define DELAY_MS(ms) HAL_Delay(ms)
 
 static inline void EVE_pdn_clear(void)
 {
@@ -331,7 +335,8 @@ static inline void EVE_pdn_set(void)
 
 static inline void EVE_cs_set(void)
 {
-    LL_GPIO_ResetOutputPin(EVE_CS_PORT, EVE_CS);
+//    LL_GPIO_ResetOutputPin(EVE_CS_PORT, EVE_CS);
+    HAL_GPIO_WritePin(EVE_CS_PORT, EVE_CS, GPIO_PIN_RESET);
 }
 
 static inline void spi_transmit(uint8_t data)
