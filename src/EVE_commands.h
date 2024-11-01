@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2024-10-13
+@date    2024-11-01
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -85,6 +85,24 @@ EVE_cmd_animstartram_burst()
 - commented out EVE_cmd_regread() prototype
 - removed prototype for EVE_cmd_hsf_burst()
 - added static inline functions: i16_i16_to_u32(), u16_u16_to_u32() and i32_to_u32()
+- added EVE_cmd_dlstart() / EVE_cmd_dlstart_burst()
+- added EVE_clear_color_rgb() / EVE_clear_color_rgb_burst()
+- added EVE_clear() / EVE_clear_burst()
+- moved EVE_calibrate_manual() to EVE_supplemental
+- added EVE_tag() / EVE_tag_burst()
+- added EVE_save_context() / EVE_save_context_burst()
+- added EVE_cmd_loadidentity() / EVE_cmd_loadidentity_burst()
+- added EVE_cmd_setmatrix() / EVE_cmd_setmatrix_burst()
+- added EVE_begin() / EVE_begin_burst()
+- added EVE_end() / EVE_end_burst()
+- added EVE_cmd_swap() / EVE_cmd_swap_burst()
+- added EVE_restore_context() / EVE_restore_context_burst()
+- added EVE_display() / EVE_display_burst()
+- added EVE_vertex2f() / EVE_vertex2f_burst(), EVE_vertex2ii() / EVE_vertex2ii_burst()
+- added EVE_vertex_format() / EVE_vertex_format_burst()
+- added EVE_line_width() / EVE_line_width_burst()
+- added EVE_point_size() / EVE_point_size_burst()
+- added EVE_cmd_stop() / EVE_cmd_stop_burst()
 
 */
 
@@ -285,8 +303,8 @@ void EVE_cmd_toggle_var_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t f
 
 #endif /* EVE_GEN > 2 */
 
-void EVE_cmd_dl(uint32_t command);
-void EVE_cmd_dl_burst(uint32_t command);
+void EVE_cmd_dl(uint32_t command); /* close to beeing set to depreciated */
+void EVE_cmd_dl_burst(uint32_t command); /* close to beeing set to depreciated */
 
 void EVE_cmd_append(uint32_t ptr, uint32_t num);
 void EVE_cmd_append_burst(uint32_t ptr, uint32_t num);
@@ -299,6 +317,8 @@ void EVE_cmd_clock(int16_t xc0, int16_t yc0, uint16_t rad, uint16_t options, uin
 void EVE_cmd_clock_burst(int16_t xc0, int16_t yc0, uint16_t rad, uint16_t options, uint16_t hours, uint16_t mins, uint16_t secs, uint16_t msecs);
 void EVE_cmd_dial(int16_t xc0, int16_t yc0, uint16_t rad, uint16_t options, uint16_t val);
 void EVE_cmd_dial_burst(int16_t xc0, int16_t yc0, uint16_t rad, uint16_t options, uint16_t val);
+void EVE_cmd_dlstart(void);
+void EVE_cmd_dlstart_burst(void);
 void EVE_cmd_fgcolor(uint32_t color);
 void EVE_cmd_fgcolor_burst(uint32_t color);
 void EVE_cmd_gauge(int16_t xc0, int16_t yc0, uint16_t rad, uint16_t options, uint16_t major, uint16_t minor, uint16_t val, uint16_t range);
@@ -310,6 +330,8 @@ void EVE_cmd_gradient(int16_t xc0, int16_t yc0, uint32_t rgb0, int16_t xc1, int1
 void EVE_cmd_gradient_burst(int16_t xc0, int16_t yc0, uint32_t rgb0, int16_t xc1, int16_t yc1, uint32_t rgb1);
 void EVE_cmd_keys(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt, uint16_t font, uint16_t options, const char *p_text);
 void EVE_cmd_keys_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt, uint16_t font, uint16_t options, const char *p_text);
+void EVE_cmd_loadidentity(void);
+void EVE_cmd_loadidentity_burst(void);
 void EVE_cmd_number(int16_t xc0, int16_t yc0, uint16_t font, uint16_t options, int32_t number);
 void EVE_cmd_number_burst(int16_t xc0, int16_t yc0, uint16_t font, uint16_t options, int32_t number);
 void EVE_cmd_progress(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt, uint16_t options, uint16_t val, uint16_t range);
@@ -330,6 +352,8 @@ void EVE_cmd_setfont(uint32_t font, uint32_t ptr);
 void EVE_cmd_setfont_burst(uint32_t font, uint32_t ptr);
 void EVE_cmd_setfont2(uint32_t font, uint32_t ptr, uint32_t firstchar);
 void EVE_cmd_setfont2_burst(uint32_t font, uint32_t ptr, uint32_t firstchar);
+void EVE_cmd_setmatrix(void);
+void EVE_cmd_setmatrix_burst(void);
 void EVE_cmd_setscratch(uint32_t handle);
 void EVE_cmd_setscratch_burst(uint32_t handle);
 void EVE_cmd_sketch(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt, uint32_t ptr, uint16_t format);
@@ -338,6 +362,10 @@ void EVE_cmd_slider(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt, uint16
 void EVE_cmd_slider_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt, uint16_t options, uint16_t val, uint16_t range);
 void EVE_cmd_spinner(int16_t xc0, int16_t yc0, uint16_t style, uint16_t scale);
 void EVE_cmd_spinner_burst(int16_t xc0, int16_t yc0, uint16_t style, uint16_t scale);
+void EVE_cmd_stop(void);
+void EVE_cmd_stop_burst(void);
+void EVE_cmd_swap(void);
+void EVE_cmd_swap_burst(void);
 void EVE_cmd_text(int16_t xc0, int16_t yc0, uint16_t font, uint16_t options, const char *p_text);
 void EVE_cmd_text_burst(int16_t xc0, int16_t yc0, uint16_t font, uint16_t options, const char *p_text);
 void EVE_cmd_toggle(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t font, uint16_t options, uint16_t state, const char *p_text);
@@ -345,15 +373,37 @@ void EVE_cmd_toggle_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t font,
 void EVE_cmd_translate(int32_t tr_x, int32_t tr_y);
 void EVE_cmd_translate_burst(int32_t tr_x, int32_t tr_y);
 
+/* display list commands */
+
+void EVE_begin(uint32_t prim);
+void EVE_begin_burst(uint32_t prim);
+void EVE_clear(const uint8_t color, const uint8_t stencil, const uint8_t tag);
+void EVE_clear_burst(const uint8_t color, const uint8_t stencil, const uint8_t tag);
+void EVE_clear_color_rgb(uint32_t color);
+void EVE_clear_color_rgb_burst(uint32_t color);
 void EVE_color_rgb(uint32_t color);
 void EVE_color_rgb_burst(uint32_t color);
 void EVE_color_a(uint8_t alpha);
 void EVE_color_a_burst(uint8_t alpha);
-
-/* ##################################################################
-    special purpose functions
-##################################################################### */
-
-void EVE_calibrate_manual(uint16_t width, uint16_t height);
+void EVE_display(void);
+void EVE_display_burst(void);
+void EVE_end(void);
+void EVE_end_burst(void);
+void EVE_line_width(const uint16_t width);
+void EVE_line_width_burst(const uint16_t width);
+void EVE_point_size(const uint16_t size);
+void EVE_point_size_burst(const uint16_t size);
+void EVE_restore_context(void);
+void EVE_restore_context_burst(void);
+void EVE_save_context(void);
+void EVE_save_context_burst(void);
+void EVE_tag(uint8_t tag);
+void EVE_tag_burst(uint8_t tag);
+void EVE_vertex2f(const int16_t xc0, const int16_t yc0);
+void EVE_vertex2f_burst(const int16_t xc0, const int16_t yc0);
+void EVE_vertex2ii(const uint16_t xc0, const uint16_t yc0, const uint8_t handle, const uint8_t cell);
+void EVE_vertex2ii_burst(const uint16_t xc0, const uint16_t yc0, const uint8_t handle, const uint8_t cell);
+void EVE_vertex_format(const uint8_t frac);
+void EVE_vertex_format_burst(const uint8_t frac);
 
 #endif /* EVE_COMMANDS_H */
