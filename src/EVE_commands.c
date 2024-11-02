@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2024-11-01
+@date    2024-11-02
 @author  Rudolph Riedel
 
 @section info
@@ -175,6 +175,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - added EVE_vertex_format() / EVE_vertex_format_burst()
 - added EVE_point_size() / EVE_point_size_burst()
 - added EVE_cmd_stop() / EVE_cmd_stop_burst()
+- Bugfix: broke GT911 support for EVE2 and AVR almost two years ago...
 
 */
 
@@ -1393,15 +1394,6 @@ uint8_t EVE_init_flash(void)
 #else
 #define PROGMEM
 #endif
-#endif
-
-void use_gt911(void);
-
-void use_gt911(void)
-{
-#if EVE_GEN > 2
-    EVE_memWrite16(REG_TOUCH_CONFIG, 0x05d0U); /* switch to Goodix touch controller */
-#else
 
 /* FT811 / FT813 binary-blob from FTDIs AN_336 to patch the touch-engine for Goodix GT911 / GT9271 touch controllers */
 const uint8_t eve_gt911_data[1184U] PROGMEM =
@@ -1459,7 +1451,15 @@ const uint8_t eve_gt911_data[1184U] PROGMEM =
     179, 44,  104, 12,  235, 84,  149, 102, 252, 89,  154, 193, 99,  228, 106, 242, 125, 248, 64,  194, 255, 223, 127,
     242, 83,  11,  255, 2,   70,  214, 226, 128, 0,   0
 };
+#endif
 
+void use_gt911(void);
+
+void use_gt911(void)
+{
+#if EVE_GEN > 2
+    EVE_memWrite16(REG_TOUCH_CONFIG, 0x05d0U); /* switch to Goodix touch controller */
+#else
     EVE_cs_set();
     spi_transmit((uint8_t) 0xB0U); /* high-byte of REG_CMDB_WRITE + MEM_WRITE */
     spi_transmit((uint8_t) 0x25U); /* middle-byte of REG_CMDB_WRITE */
