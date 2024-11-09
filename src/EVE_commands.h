@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2024-11-01
+@date    2024-11-09
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -103,6 +103,9 @@ EVE_cmd_animstartram_burst()
 - added EVE_line_width() / EVE_line_width_burst()
 - added EVE_point_size() / EVE_point_size_burst()
 - added EVE_cmd_stop() / EVE_cmd_stop_burst()
+- added EVE_macro() / EVE_macro_burst()
+- added EVE_cmd_screensaver() / EVE_cmd_screensaver_burst()
+- added EVE_cmd_logo(), EVE_cmd_coldstart(), EVE_cmd_videostart(), EVE_cmd_videostartf()
 
 */
 
@@ -210,14 +213,17 @@ void EVE_cmd_flashspitx(uint32_t num, const uint8_t *p_data);
 void EVE_cmd_flashupdate(uint32_t dest, uint32_t src, uint32_t num);
 void EVE_cmd_flashwrite(uint32_t ptr, uint32_t num, const uint8_t *p_data);
 void EVE_cmd_inflate2(uint32_t ptr, uint32_t options, const uint8_t *p_data, uint32_t len);
+void EVE_cmd_videostartf(void);
 
 #endif /* EVE_GEN > 2 */
 
+void EVE_cmd_coldstart(void);
 void EVE_cmd_getprops(uint32_t *p_pointer, uint32_t *p_width, uint32_t *p_height);
 uint32_t EVE_cmd_getptr(void);
 void EVE_cmd_inflate(uint32_t ptr, const uint8_t *p_data, uint32_t len);
 void EVE_cmd_interrupt(uint32_t msec);
 void EVE_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *p_data, uint32_t len);
+void EVE_cmd_logo(void);
 void EVE_cmd_mediafifo(uint32_t ptr, uint32_t size);
 void EVE_cmd_memcpy(uint32_t dest, uint32_t src, uint32_t num);
 uint32_t EVE_cmd_memcrc(uint32_t ptr, uint32_t num);
@@ -229,6 +235,7 @@ void EVE_cmd_snapshot(uint32_t ptr);
 void EVE_cmd_snapshot2(uint32_t fmt, uint32_t ptr, int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt);
 void EVE_cmd_track(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt, uint16_t tag);
 void EVE_cmd_videoframe(uint32_t dest, uint32_t result_ptr);
+void EVE_cmd_videostart(void);
 /*void EVE_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *p_data);*/
 /*uint32_t EVE_cmd_regread(uint32_t ptr);*/
 
@@ -342,6 +349,8 @@ void EVE_cmd_rotate(uint32_t angle);
 void EVE_cmd_rotate_burst(uint32_t angle);
 void EVE_cmd_scale(int32_t scx, int32_t scy);
 void EVE_cmd_scale_burst(int32_t scx, int32_t scy);
+void EVE_cmd_screensaver(void);
+void EVE_cmd_screensaver_burst(void);
 void EVE_cmd_scrollbar(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt, uint16_t options, uint16_t val, uint16_t size, uint16_t range);
 void EVE_cmd_scrollbar_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt, uint16_t options, uint16_t val, uint16_t size, uint16_t range);
 void EVE_cmd_setbase(uint32_t base);
@@ -391,6 +400,8 @@ void EVE_end(void);
 void EVE_end_burst(void);
 void EVE_line_width(const uint16_t width);
 void EVE_line_width_burst(const uint16_t width);
+void EVE_macro(const uint8_t macro);
+void EVE_macro_burst(const uint8_t macro);
 void EVE_point_size(const uint16_t size);
 void EVE_point_size_burst(const uint16_t size);
 void EVE_restore_context(void);

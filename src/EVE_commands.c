@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2024-11-02
+@date    2024-11-09
 @author  Rudolph Riedel
 
 @section info
@@ -176,6 +176,9 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - added EVE_point_size() / EVE_point_size_burst()
 - added EVE_cmd_stop() / EVE_cmd_stop_burst()
 - Bugfix: broke GT911 support for EVE2 and AVR almost two years ago...
+- added EVE_macro() / EVE_macro_burst()
+- added EVE_cmd_screensaver() / EVE_cmd_screensaver_burst()
+- added EVE_cmd_logo(), EVE_cmd_coldstart(), EVE_cmd_videostart(), EVE_cmd_videostartf()
 
 */
 
@@ -939,7 +942,33 @@ void EVE_cmd_inflate2(uint32_t ptr, uint32_t options, const uint8_t *p_data, uin
     }
 }
 
+/**
+ * @brief Initialize video frame decoder for video from the flash memory.
+ * @note - Meant to be called outside display-list building.
+ * @note - Includes executing the command and waiting for completion.
+ * @note - Does not support burst-mode.
+ */
+void EVE_cmd_videostartf(void)
+{
+    eve_begin_cmd(CMD_VIDEOSTARTF);
+    EVE_cs_clear();
+    EVE_execute_cmd();
+}
+
 #endif /* EVE_GEN > 2 */
+
+/**
+ * @brief Set the coprocessor engine to default reset states.
+ * @note - Includes executing the command and waiting for completion.
+ * @note - Does not support burst-mode.
+ *
+ */
+void EVE_cmd_coldstart(void)
+{
+    eve_begin_cmd(CMD_COLDSTART);
+    EVE_cs_clear();
+    EVE_execute_cmd();
+}
 
 /**
  * @brief Returns the source address and size of the bitmap loaded by the previous CMD_LOADIMAGE.
@@ -1053,6 +1082,20 @@ void EVE_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *p_data, ui
             block_transfer(p_data, len);
         }
     }
+}
+
+/**
+ * @brief Ask the coprocessor engine to play back a short animation of the FTDI or Bridgetek logo.
+ * @note - Takes 2.5s to complete during which RAM_CMD and RAM_DL must not be written to.
+ * @note - Use EVE_execute_cmd() for a blocking wait for completion.
+ * @note - Or call EVE_busy() in your state-machine untill it returns E_OK.
+ * @note - Meant to be called outside display-list building.
+ * @note - Does not support burst-mode.
+ */
+void EVE_cmd_logo(void)
+{
+    eve_begin_cmd(CMD_LOGO);
+    EVE_cs_clear();
 }
 
 /**
@@ -1288,6 +1331,19 @@ void EVE_cmd_videoframe(uint32_t dest, uint32_t result_ptr)
     eve_begin_cmd(CMD_VIDEOFRAME);
     spi_transmit_32(dest);
     spi_transmit_32(result_ptr);
+    EVE_cs_clear();
+    EVE_execute_cmd();
+}
+
+/**
+ * @brief Initialize video frame decoder for video provided using the media FIFO.
+ * @note - Meant to be called outside display-list building.
+ * @note - Includes executing the command and waiting for completion.
+ * @note - Does not support burst-mode.
+ */
+void EVE_cmd_videostart(void)
+{
+    eve_begin_cmd(CMD_VIDEOSTART);
     EVE_cs_clear();
     EVE_execute_cmd();
 }
@@ -3227,6 +3283,30 @@ void EVE_cmd_scale_burst(int32_t scx, int32_t scy)
 }
 
 /**
+ * @brief Start an animated screensaver.
+ */
+void EVE_cmd_screensaver(void)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(CMD_SCREENSAVER);
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(CMD_SCREENSAVER);
+    }
+}
+
+/**
+ * @brief Start an animated screensaver, only works in burst-mode.
+ */
+void EVE_cmd_screensaver_burst(void)
+{
+    spi_transmit_burst(CMD_SCREENSAVER);
+}
+
+/**
  * @brief Draw a scroll bar.
  */
 void EVE_cmd_scrollbar(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
@@ -3895,8 +3975,31 @@ void EVE_line_width_burst(const uint16_t width)
     spi_transmit_burst(LINE_WIDTH(width));
 }
 
-void EVE_point_size(const uint16_t size);
-void EVE_point_size_burst(const uint16_t size);
+/**
+ * @brief Execute a single command from a macro register.
+ * @param macro Macro registers to read. 0 for REG_MACRO_0, 1 for REG_MACRO_1.
+ */
+void EVE_macro(const uint8_t macro)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(MACRO(macro));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(MACRO(macro));
+    }
+}
+
+/**
+ * @brief Execute a single command from a macro register, only works in burst-mode.
+ * @param macro Macro registers to read. 0 for REG_MACRO_0, 1 for REG_MACRO_1.
+ */
+void EVE_macro_burst(const uint8_t macro)
+{
+    spi_transmit_burst(MACRO(macro));
+}
 
 /**
  * @brief Specify the radius of points in 1/16 pixel precision.
