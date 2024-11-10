@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2024-11-09
+@date    2024-11-10
 @author  Rudolph Riedel
 
 @section info
@@ -179,6 +179,13 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - added EVE_macro() / EVE_macro_burst()
 - added EVE_cmd_screensaver() / EVE_cmd_screensaver_burst()
 - added EVE_cmd_logo(), EVE_cmd_coldstart(), EVE_cmd_videostart(), EVE_cmd_videostartf()
+- added EVE_cmd_sync() / EVE_cmd_sync_burst(), EVE_cmd_resetfonts()
+- reworked EVE_cmd_memcpy(), added EVE_cmd_memcpy_burst()
+- added EVE_cmd_testcard(), EVE_cmd_endlist(), EVE_cmd_return(), EVE_cmd_return_burst()
+- commented out EVE_cmd_linetime()
+- added EVE_bitmap_ext_format() / EVE_bitmap_ext_format_burst()
+- added EVE_bitmap_swizzle(), EVE_bitmap_swizzle_burst()
+- added EVE_alpha_func(), EVE_alpha_func_burst()
 
 */
 
@@ -530,11 +537,23 @@ void block_transfer(const uint8_t *p_data, uint32_t len)
 
 /* ##################################################################
     coprocessor commands that are not used in displays lists,
-    these are not to be used with burst transfers
+    most of these are not to be used with burst transfers
 ################################################################### */
 
 /* BT817 / BT818 */
 #if EVE_GEN > 3
+
+/**
+ * @brief Terminates the compilation of a command list into RAM_G.
+ * @note - Includes executing the command and waiting for completion.
+ * @note - Does not support burst-mode.
+ */
+void EVE_cmd_endlist(void)
+{
+    eve_begin_cmd(CMD_ENDLIST);
+    EVE_cs_clear();
+    EVE_execute_cmd();
+}
 
 /**
  * @brief Write "num" bytes from src in RAM_G to the previously erased external flash of a BT81x at address dest.
@@ -645,10 +664,12 @@ void EVE_cmd_getimage(uint32_t *p_source, uint32_t *p_fmt, uint32_t *p_width, ui
 
 /**
  * @brief Undocumented command.
+ * @note - Commented out as it not known what this does.
  * @note - Meant to be called outside display-list building.
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
+#if 0
 void EVE_cmd_linetime(uint32_t dest)
 {
     eve_begin_cmd(CMD_LINETIME);
@@ -656,6 +677,7 @@ void EVE_cmd_linetime(uint32_t dest)
     EVE_cs_clear();
     EVE_execute_cmd();
 }
+#endif
 
 /**
  * @brief Starts the compilation of a command list into RAM_G.
@@ -693,6 +715,19 @@ uint32_t EVE_cmd_pclkfreq(uint32_t ftarget, int32_t rounding)
     cmdoffset -= 4U;
     cmdoffset &= 0x0fffU;
     return (EVE_memRead32(EVE_RAM_CMD + cmdoffset));
+}
+
+/**
+ * @brief Display a tescard graphic.
+ * @note - Meant to be called outside display-list building.
+ * @note - Includes executing the command and waiting for completion.
+ * @note - Does not support burst-mode.
+ */
+void EVE_cmd_testcard(void)
+{
+    eve_begin_cmd(CMD_TESTCARD);
+    EVE_cs_clear();
+    EVE_execute_cmd();
 }
 
 /**
@@ -943,6 +978,45 @@ void EVE_cmd_inflate2(uint32_t ptr, uint32_t options, const uint8_t *p_data, uin
 }
 
 /**
+ * @brief Load bitmap handles 16-31 with their default fonts.
+ * @note - Meant to be called outside display-list building.
+ * @note - Includes executing the command and waiting for completion.
+ * @note - Does not support burst-mode.
+ */
+void EVE_cmd_resetfonts(void)
+{
+    eve_begin_cmd(CMD_RESETFONTS);
+    EVE_cs_clear();
+    EVE_execute_cmd();
+}
+
+/**
+ * @brief Wait for the end of the video scan out period.
+ * @note - Meant to be called outside display-list building.
+ * @note - This does not go into the display list, this is for the coprocessor.
+ */
+void EVE_cmd_sync(void)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(CMD_SYNC);
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(CMD_SYNC);
+    }
+}
+
+/**
+ * @brief Wait for the end of the video scan out period, only works in burst-mode.
+ */
+void EVE_cmd_sync_burst(void)
+{
+    spi_transmit_burst(CMD_SYNC);
+}
+
+/**
  * @brief Initialize video frame decoder for video from the flash memory.
  * @note - Meant to be called outside display-list building.
  * @note - Includes executing the command and waiting for completion.
@@ -1114,19 +1188,38 @@ void EVE_cmd_mediafifo(uint32_t ptr, uint32_t size)
 }
 
 /**
- * @brief Copy a block of RAM_G.
+ * @brief Copy a block of memory with the coprocessor.
  * @note - Meant to be called outside display-list building.
- * @note - Includes executing the command and waiting for completion.
- * @note - Does not support burst-mode.
+ * @note - For use with CMD_SYNC for example.
  */
 void EVE_cmd_memcpy(uint32_t dest, uint32_t src, uint32_t num)
 {
-    eve_begin_cmd(CMD_MEMCPY);
-    spi_transmit_32(dest);
-    spi_transmit_32(src);
-    spi_transmit_32(num);
-    EVE_cs_clear();
-    EVE_execute_cmd();
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(CMD_MEMCPY);
+        spi_transmit_32(dest);
+        spi_transmit_32(src);
+        spi_transmit_32(num);
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(CMD_MEMCPY);
+        spi_transmit_burst(dest);
+        spi_transmit_burst(src);
+        spi_transmit_burst(num);
+    }
+}
+
+/**
+ * @brief Copy a block of memory with the coprocessor, only works in burst-mode.
+ */
+void EVE_cmd_memcpy_burst(uint32_t dest, uint32_t src, uint32_t num)
+{
+    spi_transmit_burst(CMD_MEMCPY);
+    spi_transmit_burst(dest);
+    spi_transmit_burst(src);
+    spi_transmit_burst(num);
 }
 
 /**
@@ -1168,13 +1261,13 @@ void EVE_cmd_memset(uint32_t ptr, uint8_t value, uint32_t num)
 }
 
 /**
- * @brief Write bytes into RAM_G using the coprocessor.
+ * @brief Write bytes into memory using the coprocessor.
  * @note - Commented out, just use one of the EVE_memWrite* helper functions to directly write to EVEs memory.
  * @note - Meant to be called outside display-list building.
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-/*
+#if 0
 void EVE_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *p_data)
 {
     eve_begin_cmd(CMD_MEMWRITE);
@@ -1190,30 +1283,6 @@ void EVE_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *p_data)
 
     EVE_cs_clear();
     EVE_execute_cmd();
-}
-*/
-
-/**
- * @brief Read a register value using the coprocessor.
- * @note - Commented out, just read the register directly.
- * @note - Meant to be called outside display-list building.
- * @note - Includes executing the command and waiting for completion.
- * @note - Does not support burst-mode.
- */
-#if 0
-uint32_t EVE_cmd_regread(uint32_t ptr)
-{
-    uint16_t cmdoffset;
-
-    eve_begin_cmd(CMD_REGREAD);
-    spi_transmit_32(ptr);
-    spi_transmit_32(0UL);
-    EVE_cs_clear();
-    EVE_execute_cmd();
-    cmdoffset = EVE_memRead16(REG_CMD_WRITE); /* read the coprocessor write pointer */
-    cmdoffset -= 4U;
-    cmdoffset &= 0x0fffU;
-    return (EVE_memRead32(EVE_RAM_CMD + cmdoffset));
 }
 #endif
 
@@ -1258,6 +1327,30 @@ void EVE_cmd_playvideo(uint32_t options, const uint8_t *p_data, uint32_t len)
         }
     }
 }
+
+/**
+ * @brief Read a register value using the coprocessor.
+ * @note - Commented out, just read the register directly.
+ * @note - Meant to be called outside display-list building.
+ * @note - Includes executing the command and waiting for completion.
+ * @note - Does not support burst-mode.
+ */
+#if 0
+uint32_t EVE_cmd_regread(uint32_t ptr)
+{
+    uint16_t cmdoffset;
+
+    eve_begin_cmd(CMD_REGREAD);
+    spi_transmit_32(ptr);
+    spi_transmit_32(0UL);
+    EVE_cs_clear();
+    EVE_execute_cmd();
+    cmdoffset = EVE_memRead16(REG_CMD_WRITE); /* read the coprocessor write pointer */
+    cmdoffset -= 4U;
+    cmdoffset &= 0x0fffU;
+    return (EVE_memRead32(EVE_RAM_CMD + cmdoffset));
+}
+#endif
 
 /**
  * @brief Rotate the screen and set up transform matrix accordingly.
@@ -1999,6 +2092,30 @@ void EVE_cmd_calllist_burst(uint32_t adr)
 }
 
 /**
+ * @brief Indicate the end of a command list.
+ */
+void EVE_cmd_return(void)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(CMD_RETURN);
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(CMD_RETURN);
+    }
+}
+
+/**
+ * @brief Indicate the end of a command list, only works in burst-mode.
+ */
+void EVE_cmd_return_burst(void)
+{
+    spi_transmit_burst(CMD_RETURN);
+}
+
+/**
  * @brief Setup the Horizontal Scan out Filter for non-square pixel LCD support.
  * @note - Does not support burst-mode.
  */
@@ -2046,6 +2163,16 @@ void EVE_cmd_runanim_burst(uint32_t waitmask, uint32_t play)
 
 /* BT815 / BT816 */
 #if EVE_GEN > 2
+
+/* ##################################################################
+    display list command functions for use with the coprocessor
+##################################################################### */
+
+
+
+/* ##################################################################
+    functions for display lists
+##################################################################### */
 
 /**
  * @brief Draw one or more active animations.
@@ -2636,36 +2763,63 @@ void EVE_cmd_toggle_var_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t f
     }
 }
 
-#endif /* EVE_GEN > 2 */
+/* ##################################################################
+    display list command functions for use with the coprocessor
+##################################################################### */
 
 /**
- * @brief Generic function for display-list and coprocessor commands with no arguments.
- * @note - EVE_cmd_dl(CMD_DLSTART);
- * @note - EVE_cmd_dl(CMD_SWAP);
- * @note - EVE_cmd_dl(CMD_SCREENSAVER);
- * @note - EVE_cmd_dl(VERTEX2F(0,0));
- * @note - EVE_cmd_dl(DL_BEGIN | EVE_RECTS);
+ * @brief Specify the extended format of the bitmap.
  */
-void EVE_cmd_dl(uint32_t command)
+void EVE_bitmap_ext_format(const uint16_t format)
 {
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(command);
+        eve_begin_cmd(BITMAP_EXT_FORMAT(format));
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(command);
+        spi_transmit_burst(BITMAP_EXT_FORMAT(format));
     }
 }
 
 /**
- * @brief Generic function for display-list and coprocessor commands with no arguments, only works in burst-mode.
+ * @brief Specify the extended format of the bitmap, only works in burst-mode.
  */
-void EVE_cmd_dl_burst(uint32_t command)
+void EVE_bitmap_ext_format_burst(const uint16_t format)
 {
-    spi_transmit_burst(command);
+    spi_transmit_burst(BITMAP_EXT_FORMAT(format));
 }
+
+/**
+ * @brief Set the source for the red, green, blue and alpha channels of a bitmap.
+ */
+void EVE_bitmap_swizzle(const uint8_t red, const uint8_t green, const uint8_t blue, const uint8_t alpha)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(BITMAP_SWIZZLE(red, green, blue, alpha));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(BITMAP_SWIZZLE(red, green, blue, alpha));
+    }
+}
+
+/**
+ * @brief Set the source for the red, green, blue and alpha channels of a bitmap, only works in burst-mode.
+ */
+void EVE_bitmap_swizzle_burst(const uint8_t red, const uint8_t green, const uint8_t blue, const uint8_t alpha)
+{
+    spi_transmit_burst(BITMAP_SWIZZLE(red, green, blue, alpha));
+}
+
+#endif /* EVE_GEN > 2 */
+
+/* ##################################################################
+    functions for display lists
+##################################################################### */
 
 /**
  * @brief Appends commands from RAM_G to the display list.
@@ -3780,8 +3934,61 @@ void EVE_cmd_translate_burst(int32_t tr_x, int32_t tr_y)
 }
 
 /* ##################################################################
-    display list commands
+    display list command functions for use with the coprocessor
 ##################################################################### */
+
+/**
+ * @brief Generic function for display-list and coprocessor commands with no arguments.
+ * @note - EVE_cmd_dl(CMD_DLSTART);
+ * @note - EVE_cmd_dl(CMD_SWAP);
+ * @note - EVE_cmd_dl(CMD_SCREENSAVER);
+ * @note - EVE_cmd_dl(VERTEX2F(0,0));
+ * @note - EVE_cmd_dl(DL_BEGIN | EVE_RECTS);
+ */
+void EVE_cmd_dl(uint32_t command)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(command);
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(command);
+    }
+}
+
+/**
+ * @brief Generic function for display-list and coprocessor commands with no arguments, only works in burst-mode.
+ */
+void EVE_cmd_dl_burst(uint32_t command)
+{
+    spi_transmit_burst(command);
+}
+
+/**
+ * @brief Specify the alpha test function.
+ */
+void EVE_alpha_func(const uint8_t func, const uint8_t ref)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(ALPHA_FUNC(func, ref));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(ALPHA_FUNC(func, ref));
+    }
+}
+
+/**
+ * @brief Specify the alpha test function, only works in burst-mode.
+ */
+void EVE_alpha_func_burst(const uint8_t func, const uint8_t ref)
+{
+    spi_transmit_burst(ALPHA_FUNC(func, ref));
+}
 
 /**
  * @brief Begin drawing a graphics primitive.

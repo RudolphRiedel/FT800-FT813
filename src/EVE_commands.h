@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2024-11-09
+@date    2024-11-10
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -106,6 +106,13 @@ EVE_cmd_animstartram_burst()
 - added EVE_macro() / EVE_macro_burst()
 - added EVE_cmd_screensaver() / EVE_cmd_screensaver_burst()
 - added EVE_cmd_logo(), EVE_cmd_coldstart(), EVE_cmd_videostart(), EVE_cmd_videostartf()
+- added EVE_cmd_sync() / EVE_cmd_sync_burst(), EVE_cmd_resetfonts()
+- reworked EVE_cmd_memcpy(), added EVE_cmd_memcpy_burst()
+- added EVE_cmd_testcard(), EVE_cmd_endlist(), EVE_cmd_return(), EVE_cmd_return_burst()
+- commented out EVE_cmd_linetime()
+- added EVE_bitmap_ext_format() / EVE_bitmap_ext_format_burst()
+- added EVE_bitmap_swizzle(), EVE_bitmap_swizzle_burst()
+- added EVE_alpha_func(), EVE_alpha_func_burst()
 
 */
 
@@ -186,13 +193,15 @@ void EVE_execute_cmd(void);
 /* EVE4: BT817 / BT818 */
 #if EVE_GEN > 3
 
+void EVE_cmd_endlist(void);
 void EVE_cmd_flashprogram(uint32_t dest, uint32_t src, uint32_t num);
 void EVE_cmd_fontcache(uint32_t font, uint32_t ptr, uint32_t num);
 void EVE_cmd_fontcachequery(uint32_t *p_total, uint32_t *p_used);
 void EVE_cmd_getimage(uint32_t *p_source, uint32_t *p_fmt, uint32_t *p_width, uint32_t *p_height, uint32_t *p_palette);
-void EVE_cmd_linetime(uint32_t dest);
+/*void EVE_cmd_linetime(uint32_t dest);*/
 void EVE_cmd_newlist(uint32_t adr);
 uint32_t EVE_cmd_pclkfreq(uint32_t ftarget, int32_t rounding);
+void EVE_cmd_testcard(void);
 void EVE_cmd_wait(uint32_t usec);
 
 #endif /* EVE_GEN > 3 */
@@ -213,6 +222,9 @@ void EVE_cmd_flashspitx(uint32_t num, const uint8_t *p_data);
 void EVE_cmd_flashupdate(uint32_t dest, uint32_t src, uint32_t num);
 void EVE_cmd_flashwrite(uint32_t ptr, uint32_t num, const uint8_t *p_data);
 void EVE_cmd_inflate2(uint32_t ptr, uint32_t options, const uint8_t *p_data, uint32_t len);
+void EVE_cmd_resetfonts(void);
+void EVE_cmd_sync(void);
+void EVE_cmd_sync_burst(void);
 void EVE_cmd_videostartf(void);
 
 #endif /* EVE_GEN > 2 */
@@ -226,6 +238,7 @@ void EVE_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *p_data, ui
 void EVE_cmd_logo(void);
 void EVE_cmd_mediafifo(uint32_t ptr, uint32_t size);
 void EVE_cmd_memcpy(uint32_t dest, uint32_t src, uint32_t num);
+void EVE_cmd_memcpy_burst(uint32_t dest, uint32_t src, uint32_t num);
 uint32_t EVE_cmd_memcrc(uint32_t ptr, uint32_t num);
 void EVE_cmd_memset(uint32_t ptr, uint8_t value, uint32_t num);
 void EVE_cmd_memzero(uint32_t ptr, uint32_t num);
@@ -269,6 +282,8 @@ void EVE_cmd_apilevel_burst(uint32_t level);
 void EVE_cmd_calibratesub(uint16_t xc0, uint16_t yc0, uint16_t width, uint16_t height);
 void EVE_cmd_calllist(uint32_t adr);
 void EVE_cmd_calllist_burst(uint32_t adr);
+void EVE_cmd_return(void);
+void EVE_cmd_return_burst(void);
 void EVE_cmd_hsf(uint32_t hsf);
 void EVE_cmd_runanim(uint32_t waitmask, uint32_t play);
 void EVE_cmd_runanim_burst(uint32_t waitmask, uint32_t play);
@@ -308,10 +323,21 @@ void EVE_cmd_text_var_burst(int16_t xc0, int16_t yc0, uint16_t font, uint16_t op
 void EVE_cmd_toggle_var(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t font, uint16_t options, uint16_t state, const char *p_text, uint8_t num_args, const uint32_t p_arguments[]);
 void EVE_cmd_toggle_var_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t font, uint16_t options, uint16_t state, const char *p_text, uint8_t num_args, const uint32_t p_arguments[]);
 
+/* ##################################################################
+    display list command functions for use with the coprocessor
+##################################################################### */
+
+void EVE_bitmap_ext_format(const uint16_t format);
+void EVE_bitmap_ext_format_burst(const uint16_t format);
+void EVE_bitmap_swizzle(const uint8_t red, const uint8_t green, const uint8_t blue, const uint8_t alpha);
+void EVE_bitmap_swizzle_burst(const uint8_t red, const uint8_t green, const uint8_t blue, const uint8_t alpha);
+
+
 #endif /* EVE_GEN > 2 */
 
-void EVE_cmd_dl(uint32_t command); /* close to beeing set to depreciated */
-void EVE_cmd_dl_burst(uint32_t command); /* close to beeing set to depreciated */
+/* ##################################################################
+    functions for display lists
+##################################################################### */
 
 void EVE_cmd_append(uint32_t ptr, uint32_t num);
 void EVE_cmd_append_burst(uint32_t ptr, uint32_t num);
@@ -382,8 +408,15 @@ void EVE_cmd_toggle_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t font,
 void EVE_cmd_translate(int32_t tr_x, int32_t tr_y);
 void EVE_cmd_translate_burst(int32_t tr_x, int32_t tr_y);
 
-/* display list commands */
+/* ##################################################################
+    display list command functions for use with the coprocessor
+##################################################################### */
 
+void EVE_cmd_dl(uint32_t command); /* close to beeing set to depreciated */
+void EVE_cmd_dl_burst(uint32_t command); /* close to beeing set to depreciated */
+
+void EVE_alpha_func(const uint8_t func, const uint8_t ref);
+void EVE_alpha_func_burst(const uint8_t func, const uint8_t ref);
 void EVE_begin(uint32_t prim);
 void EVE_begin_burst(uint32_t prim);
 void EVE_clear(const uint8_t color, const uint8_t stencil, const uint8_t tag);
