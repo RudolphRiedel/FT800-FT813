@@ -2,7 +2,7 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2024-11-10
+@date    2024-11-17
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -113,6 +113,13 @@ EVE_cmd_animstartram_burst()
 - added EVE_bitmap_ext_format() / EVE_bitmap_ext_format_burst()
 - added EVE_bitmap_swizzle(), EVE_bitmap_swizzle_burst()
 - added EVE_alpha_func(), EVE_alpha_func_burst()
+- dropped CMD_SYNC a tier from EVE3 to EVE2
+- added EVE_bitmap_handle() / EVE_bitmap_handle_burst()
+- added EVE_bitmap_layout() / EVE_bitmap_layout_burst()
+- added EVE_bitmap_layout_h() / EVE_bitmap_layout_h_burst()
+- added EVE_bitmap_size() / EVE_bitmap_size_burst()
+- added EVE_bitmap_size_h() / EVE_bitmap_size_h_burst()
+- added EVE_bitmap_source() / EVE_bitmap_source_burst()
 
 */
 
@@ -223,8 +230,6 @@ void EVE_cmd_flashupdate(uint32_t dest, uint32_t src, uint32_t num);
 void EVE_cmd_flashwrite(uint32_t ptr, uint32_t num, const uint8_t *p_data);
 void EVE_cmd_inflate2(uint32_t ptr, uint32_t options, const uint8_t *p_data, uint32_t len);
 void EVE_cmd_resetfonts(void);
-void EVE_cmd_sync(void);
-void EVE_cmd_sync_burst(void);
 void EVE_cmd_videostartf(void);
 
 #endif /* EVE_GEN > 2 */
@@ -246,6 +251,8 @@ void EVE_cmd_playvideo(uint32_t options, const uint8_t *p_data, uint32_t len);
 void EVE_cmd_setrotate(uint32_t rotation);
 void EVE_cmd_snapshot(uint32_t ptr);
 void EVE_cmd_snapshot2(uint32_t fmt, uint32_t ptr, int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt);
+void EVE_cmd_sync(void);
+void EVE_cmd_sync_burst(void);
 void EVE_cmd_track(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt, uint16_t tag);
 void EVE_cmd_videoframe(uint32_t dest, uint32_t result_ptr);
 void EVE_cmd_videostart(void);
@@ -417,8 +424,20 @@ void EVE_cmd_dl_burst(uint32_t command); /* close to beeing set to depreciated *
 
 void EVE_alpha_func(const uint8_t func, const uint8_t ref);
 void EVE_alpha_func_burst(const uint8_t func, const uint8_t ref);
-void EVE_begin(uint32_t prim);
-void EVE_begin_burst(uint32_t prim);
+void EVE_begin(const uint32_t prim);
+void EVE_begin_burst(const uint32_t prim);
+void EVE_bitmap_handle(const uint8_t handle);
+void EVE_bitmap_handle_burst(const uint8_t handle);
+void EVE_bitmap_layout(const uint8_t format, const uint16_t linestride, const uint16_t height);
+void EVE_bitmap_layout_burst(const uint8_t format, const uint16_t linestride, const uint16_t height);
+void EVE_bitmap_layout_h(const uint16_t linestride, const uint16_t height);
+void EVE_bitmap_layout_h_burst(const uint16_t linestride, const uint16_t height);
+void EVE_bitmap_size(const uint8_t filter, const uint8_t wrapx, const uint8_t wrapy, const uint16_t width, const uint16_t height);
+void EVE_bitmap_size_burst(const uint8_t filter, const uint8_t wrapx, const uint8_t wrapy, const uint16_t width, const uint16_t height);
+void EVE_bitmap_size_h(const uint16_t width, const uint16_t height);
+void EVE_bitmap_size_h_burst(const uint16_t width, const uint16_t height);
+void EVE_bitmap_source(const uint32_t addr);
+void EVE_bitmap_source_burst(const uint32_t addr);
 void EVE_clear(const uint8_t color, const uint8_t stencil, const uint8_t tag);
 void EVE_clear_burst(const uint8_t color, const uint8_t stencil, const uint8_t tag);
 void EVE_clear_color_rgb(uint32_t color);

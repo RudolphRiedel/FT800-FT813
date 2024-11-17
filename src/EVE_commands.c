@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2024-11-10
+@date    2024-11-17
 @author  Rudolph Riedel
 
 @section info
@@ -186,6 +186,13 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - added EVE_bitmap_ext_format() / EVE_bitmap_ext_format_burst()
 - added EVE_bitmap_swizzle(), EVE_bitmap_swizzle_burst()
 - added EVE_alpha_func(), EVE_alpha_func_burst()
+- dropped CMD_SYNC a tier from EVE3 to EVE2
+- added EVE_bitmap_handle() / EVE_bitmap_handle_burst()
+- added EVE_bitmap_layout() / EVE_bitmap_layout_burst()
+- added EVE_bitmap_layout_h() / EVE_bitmap_layout_h_burst()
+- added EVE_bitmap_size() / EVE_bitmap_size_burst()
+- added EVE_bitmap_size_h() / EVE_bitmap_size_h_burst()
+- added EVE_bitmap_source() / EVE_bitmap_source_burst()
 
 */
 
@@ -991,32 +998,6 @@ void EVE_cmd_resetfonts(void)
 }
 
 /**
- * @brief Wait for the end of the video scan out period.
- * @note - Meant to be called outside display-list building.
- * @note - This does not go into the display list, this is for the coprocessor.
- */
-void EVE_cmd_sync(void)
-{
-    if (0U == cmd_burst)
-    {
-        eve_begin_cmd(CMD_SYNC);
-        EVE_cs_clear();
-    }
-    else
-    {
-        spi_transmit_burst(CMD_SYNC);
-    }
-}
-
-/**
- * @brief Wait for the end of the video scan out period, only works in burst-mode.
- */
-void EVE_cmd_sync_burst(void)
-{
-    spi_transmit_burst(CMD_SYNC);
-}
-
-/**
  * @brief Initialize video frame decoder for video from the flash memory.
  * @note - Meant to be called outside display-list building.
  * @note - Includes executing the command and waiting for completion.
@@ -1395,6 +1376,32 @@ void EVE_cmd_snapshot2(uint32_t fmt, uint32_t ptr, int16_t xc0, int16_t yc0, uin
     spi_transmit_32(u16_u16_to_u32(wid, hgt));
     EVE_cs_clear();
     EVE_execute_cmd();
+}
+
+/**
+ * @brief Wait for the end of the video scan out period.
+ * @note - Meant to be called outside display-list building.
+ * @note - This does not go into the display list, this is for the coprocessor.
+ */
+void EVE_cmd_sync(void)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(CMD_SYNC);
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(CMD_SYNC);
+    }
+}
+
+/**
+ * @brief Wait for the end of the video scan out period, only works in burst-mode.
+ */
+void EVE_cmd_sync_burst(void)
+{
+    spi_transmit_burst(CMD_SYNC);
 }
 
 /**
@@ -4009,9 +4016,157 @@ void EVE_begin(uint32_t prim)
 /**
  * @brief Begin drawing a graphics primitive, only works in burst-mode.
  */
-void EVE_begin_burst(uint32_t prim)
+void EVE_begin_burst(const uint32_t prim)
 {
     spi_transmit_burst(DL_BEGIN | prim);
+}
+
+/**
+ * @brief Specify the bitmap handle.
+ */
+void EVE_bitmap_handle(const uint8_t handle)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(BITMAP_HANDLE(handle));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(BITMAP_HANDLE(handle));
+    }
+}
+
+/**
+ * @brief Specify the bitmap handle, only works in burst-mode.
+ */
+void EVE_bitmap_handle_burst(const uint8_t handle)
+{
+    spi_transmit_burst(BITMAP_HANDLE(handle));
+}
+
+/**
+ * @brief Specify the source bitmap memory format and layout for the current handle.
+ */
+void EVE_bitmap_layout(const uint8_t format, const uint16_t linestride, const uint16_t height)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(BITMAP_LAYOUT(format , linestride, height));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(BITMAP_LAYOUT(format , linestride, height));
+    }
+}
+
+/**
+ * @brief Specify the source bitmap memory format and layout for the current handle, only works in burst-mode.
+ * @note this is different to FTDIs implementation as this takes the original values as parameters and not only the upper bits
+ */
+void EVE_bitmap_layout_burst(const uint8_t format, const uint16_t linestride, const uint16_t height)
+{
+    spi_transmit_burst(BITMAP_LAYOUT(format , linestride, height));
+}
+
+/**
+ * @brief Specify the 2 most significant bits of the source bitmap memory format and layout for the current handle.
+ * @note this is different to FTDIs implementation as this takes the original values as parameters and not only the upper bits
+ */
+void EVE_bitmap_layout_h(const uint16_t linestride, const uint16_t height)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(BITMAP_LAYOUT_H(linestride, height));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(BITMAP_LAYOUT_H(linestride, height));
+    }
+}
+
+/**
+ * @brief Specify the 2 most significant bits of the source bitmap memory format and layout for the current handle, only works in burst-mode.
+ */
+void EVE_bitmap_layout_h_burst(const uint16_t linestride, const uint16_t height)
+{
+    spi_transmit_burst(BITMAP_LAYOUT_H(linestride, height));
+}
+
+/**
+ * @brief Specify the screen drawing of bitmaps for the current handle.
+ */
+void EVE_bitmap_size(const uint8_t filter, const uint8_t wrapx, const uint8_t wrapy, const uint16_t width, const uint16_t height)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(BITMAP_SIZE(filter, wrapx, wrapy, width, height));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(BITMAP_SIZE(filter, wrapx, wrapy, width, height));
+    }
+}
+
+/**
+ * @brief Specify the screen drawing of bitmaps for the current handle, only works in burst-mode.
+ */
+void EVE_bitmap_size_burst(const uint8_t filter, const uint8_t wrapx, const uint8_t wrapy, const uint16_t width, const uint16_t height)
+{
+    spi_transmit_burst(BITMAP_SIZE(filter, wrapx, wrapy, width, height));
+}
+
+/**
+ * @brief Specify the 2 most significant bits of bitmaps dimension for the current handle.
+ * @note this is different to FTDIs implementation as this takes the original values as parameters and not only the upper bits
+ */
+void EVE_bitmap_size_h(const uint16_t width, const uint16_t height)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(BITMAP_SIZE_H(width, height));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(BITMAP_SIZE_H(width, height));
+    }
+}
+
+/**
+ * @brief Specify the 2 most significant bits of bitmaps dimension for the current handle, only works in burst-mode.
+ * @note this is different to FTDIs implementation as this takes the original values as parameters and not only the upper bits
+ */
+void EVE_bitmap_size_h_burst(const uint16_t width, const uint16_t height)
+{
+    spi_transmit_burst(BITMAP_SIZE_H(width, height));
+}
+
+/**
+ * @brief Specify the source address of bitmap data.
+ */
+void EVE_bitmap_source(const uint32_t addr)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(BITMAP_SOURCE(addr));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(BITMAP_SOURCE(addr));
+    }
+}
+
+/**
+ * @brief Specify the source address of bitmap data, only works in burst-mode.
+ */
+void EVE_bitmap_source_burst(const uint32_t addr)
+{
+    spi_transmit_burst(BITMAP_SOURCE(addr));
 }
 
 /**

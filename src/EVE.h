@@ -2,7 +2,7 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 5.0
-@date    2024-10-13
+@date    2024-11-17
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -71,6 +71,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - fix: forgot to comment out the EVE2 BITMAP_TRANSFORM_E when converting it to an inline function
 - replaced the last function-like macro with a static inline function: EVE_PIPS(n)
 - Compliance: fixed BARR-C:2018 Rule 1.8b violations
+- dropped CMD_SYNC a tier from EVE3 to EVE2
 
 */
 
@@ -485,6 +486,7 @@ static inline uint8_t EVE_PIPS(const uint8_t num)
 #define CMD_SPINNER      ((uint32_t) 0xFFFFFF16UL)
 #define CMD_STOP         ((uint32_t) 0xFFFFFF17UL)
 #define CMD_SWAP         ((uint32_t) 0xFFFFFF01UL)
+#define CMD_SYNC         ((uint32_t) 0xFFFFFF42UL)
 #define CMD_TEXT         ((uint32_t) 0xFFFFFF0CUL)
 #define CMD_TOGGLE       ((uint32_t) 0xFFFFFF12UL)
 #define CMD_TRACK        ((uint32_t) 0xFFFFFF2CUL)
@@ -1115,7 +1117,6 @@ static inline uint32_t VERTEX_TRANSLATE_Y(const int32_t yco)
 
 /* Commands for BT815 / BT816 */
 #define CMD_BITMAP_TRANSFORM ((uint32_t) 0xFFFFFF21UL)
-#define CMD_SYNC             ((uint32_t) 0xFFFFFF42UL) /* does not need a dedicated function, just use EVE_cmd_dl(CMD_SYNC) */
 #define CMD_FLASHERASE       ((uint32_t) 0xFFFFFF44UL) /* does not need a dedicated function, just use EVE_cmd_dl(CMD_FLASHERASE) */
 #define CMD_FLASHWRITE       ((uint32_t) 0xFFFFFF45UL)
 #define CMD_FLASHREAD        ((uint32_t) 0xFFFFFF46UL)
