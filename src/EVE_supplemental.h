@@ -2,7 +2,7 @@
 @file    EVE_supplemental.h
 @brief   prototypes for supplemental functions
 @version 5.0
-@date    2024-11-01
+@date    2024-12-16
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -34,6 +34,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - added EVE_polar_cartesian()
 - moved EVE_calibrate_manual() over from EVE_commands
 - added EVE_calibrate_write() and EVE_calibrate_read()
+- added "const" statements for BARR-C:2018 / CERT C compliance
 
 */
 
@@ -48,12 +49,12 @@ extern "C"
 {
 #endif
 
-void EVE_widget_circle(int16_t xc0, int16_t yc0, uint16_t radius, uint16_t border, uint32_t bgcolor);
-void EVE_widget_rectangle(int16_t xc0, int16_t yc0, int16_t wid, int16_t hgt, int16_t border, uint16_t linewidth, uint32_t bgcolor);
-void EVE_polar_cartesian(uint16_t length, uint16_t angle, int16_t *p_xc0, int16_t *p_yc0);
+void EVE_widget_circle(const int16_t xc0, const int16_t yc0, const uint16_t radius, const uint16_t border, const uint32_t bgcolor);
+void EVE_widget_rectangle(const int16_t xc0, const int16_t yc0, const int16_t wid, const int16_t hgt, const int16_t border, const uint16_t linewidth, const uint32_t bgcolor);
+void EVE_polar_cartesian(const uint16_t length, const uint16_t angle, int16_t * const p_xc0, int16_t * const p_yc0);
 
-void EVE_calibrate_write(uint32_t tta, uint32_t ttb, uint32_t ttc, uint32_t ttd, uint32_t tte, uint32_t ttf);
-void EVE_calibrate_read(uint32_t *p_tta, uint32_t *p_ttb, uint32_t *p_ttc, uint32_t *p_ttd, uint32_t *p_tte, uint32_t *p_ttf);
-void EVE_calibrate_manual(uint16_t width, uint16_t height);
+void EVE_calibrate_write(const uint32_t tta, const uint32_t ttb, const uint32_t ttc, const uint32_t ttd, const uint32_t tte, const uint32_t ttf);
+void EVE_calibrate_read(uint32_t * const p_tta, uint32_t * const p_ttb, uint32_t * const p_ttc, uint32_t * const p_ttd, uint32_t * const p_tte, uint32_t * const p_ttf);
+void EVE_calibrate_manual(const uint16_t width, const uint16_t height);
 
 #endif /* EVE_SUPPLEMENTAL_H */

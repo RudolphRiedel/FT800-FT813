@@ -759,7 +759,7 @@ static inline uint32_t BITMAP_TRANSFORM_F(const uint32_t val)
 
 //#define BLEND_FUNC(src,dst) ((DL_BLEND_FUNC) | (((src) & 7UL) << 3U) | ((dst) & 7UL))
 /**
- * @brief Execute a sequence of commands at another location in the display list.
+ * @brief Specify how new color values are combined with the values already in the color buffer.
  * @return a 32 bit word for use with EVE_cmd_dl()
  */
 static inline uint32_t BLEND_FUNC(const uint8_t src, const uint8_t dst)

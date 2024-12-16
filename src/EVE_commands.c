@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2024-11-17
+@date    2024-12-16
 @author  Rudolph Riedel
 
 @section info
@@ -193,6 +193,23 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - added EVE_bitmap_size() / EVE_bitmap_size_burst()
 - added EVE_bitmap_size_h() / EVE_bitmap_size_h_burst()
 - added EVE_bitmap_source() / EVE_bitmap_source_burst()
+- added EVE_blend_func() / EVE_blend_func_burst(), EVE_call(), EVE_call_burst()
+- added EVE_cell() / EVE_cell_burst(), EVE_clear_color_a() / EVE_clear_color_a_burst()
+- added EVE_clear_stencil() / EVE_clear_stencil_burst()
+- added EVE_clear_tag() / EVE_clear_tag_burst()
+- added EVE_color_mask() / EVE_color_mask_burst()
+- added EVE_jump() / EVE_jump_burst(), EVE_nop() / EVE_nop_burst()
+- added EVE_palette_source() / EVE_palette_source_burst()
+- added EVE_return() / EVE_return_burst()
+- added EVE_scissor_size() / EVE_scissor_size_burst()
+- added EVE_scissor_xy() / EVE_scissor_xy_burst()
+- added EVE_stencil_func() / EVE_stencil_func_burst()
+- added EVE_stencil_mask() / EVE_stencil_mask_burst()
+- added EVE_stencil_op() / EVE_stencil_op_burst()
+- added EVE_tag_mask() / EVE_tag_mask_burst()
+- added EVE_vertex_translate_x() / EVE_vertex_translate_x_burst()
+- added EVE_vertex_translate_y() / EVE_vertex_translate_y_burst()
+- added "const" statements for BARR-C:2018 / CERT C compliance
 
 */
 
@@ -316,7 +333,7 @@ void EVE_memWrite32(uint32_t const ft_address, uint32_t const ft_data)
 /**
  * @brief Helper function, write a block of memory from the FLASH of the host controller to EVE.
  */
-void EVE_memWrite_flash_buffer(uint32_t const ft_address, const uint8_t *p_data, uint32_t const len)
+void EVE_memWrite_flash_buffer(uint32_t const ft_address, const uint8_t * const p_data, uint32_t const len)
 {
     if (p_data != NULL)
     {
@@ -339,7 +356,7 @@ void EVE_memWrite_flash_buffer(uint32_t const ft_address, const uint8_t *p_data,
 /**
  * @brief Helper function, write a block of memory from the SRAM of the host controller to EVE.
  */
-void EVE_memWrite_sram_buffer(uint32_t const ft_address, const uint8_t *p_data, uint32_t const len)
+void EVE_memWrite_sram_buffer(uint32_t const ft_address, const uint8_t * const p_data, uint32_t const len)
 {
     if (p_data != NULL)
     {
@@ -362,7 +379,7 @@ void EVE_memWrite_sram_buffer(uint32_t const ft_address, const uint8_t *p_data, 
 /**
  * @brief Helper function, read a block of memory from EVE to the SRAM of the host controller.
  */
-void EVE_memRead_sram_buffer(uint32_t const ft_address, uint8_t *p_data, uint32_t const len)
+void EVE_memRead_sram_buffer(uint32_t const ft_address, uint8_t * const p_data, uint32_t const len)
 {
     if (p_data != NULL)
     {
@@ -485,7 +502,7 @@ void EVE_execute_cmd(void)
 }
 
 /* begin a coprocessor command, this is used for non-display-list and non-burst-mode commands.*/
-static void eve_begin_cmd(uint32_t command)
+static void eve_begin_cmd(const uint32_t command)
 {
     EVE_cs_set();
     spi_transmit((uint8_t) 0xB0U); /* high-byte of REG_CMDB_WRITE + MEM_WRITE */
@@ -494,9 +511,9 @@ static void eve_begin_cmd(uint32_t command)
     spi_transmit_32(command);
 }
 
-void private_block_write(const uint8_t *p_data, uint16_t len); /* prototype to comply with MISRA */
+void private_block_write(const uint8_t * const p_data, const uint16_t len); /* prototype to comply with MISRA */
 
-void private_block_write(const uint8_t *p_data, uint16_t len)
+void private_block_write(const uint8_t * const p_data, const uint16_t len)
 {
     uint8_t padding;
 
@@ -516,9 +533,9 @@ void private_block_write(const uint8_t *p_data, uint16_t len)
     }
 }
 
-void block_transfer(const uint8_t *p_data, uint32_t len); /* prototype to comply with MISRA */
+void block_transfer(const uint8_t * const p_data, const uint32_t len); /* prototype to comply with MISRA */
 
-void block_transfer(const uint8_t *p_data, uint32_t len)
+void block_transfer(const uint8_t * const p_data, const uint32_t len)
 {
     uint32_t bytes_left;
     uint32_t offset = 0U;
@@ -572,7 +589,7 @@ void EVE_cmd_endlist(void)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_flashprogram(uint32_t dest, uint32_t src, uint32_t num)
+void EVE_cmd_flashprogram(const uint32_t dest, const uint32_t src, const uint32_t num)
 {
     eve_begin_cmd(CMD_FLASHPROGRAM);
     spi_transmit_32(dest);
@@ -588,7 +605,7 @@ void EVE_cmd_flashprogram(uint32_t dest, uint32_t src, uint32_t num)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_fontcache(uint32_t font, uint32_t ptr, uint32_t num)
+void EVE_cmd_fontcache(const uint32_t font, const uint32_t ptr, const uint32_t num)
 {
     eve_begin_cmd(CMD_FONTCACHE);
     spi_transmit_32(font);
@@ -604,7 +621,7 @@ void EVE_cmd_fontcache(uint32_t font, uint32_t ptr, uint32_t num)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_fontcachequery(uint32_t *p_total, uint32_t *p_used)
+void EVE_cmd_fontcachequery(uint32_t * const p_total, uint32_t * const p_used)
 {
     uint16_t cmdoffset;
 
@@ -632,7 +649,7 @@ void EVE_cmd_fontcachequery(uint32_t *p_total, uint32_t *p_used)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_getimage(uint32_t *p_source, uint32_t *p_fmt, uint32_t *p_width, uint32_t *p_height, uint32_t *p_palette)
+void EVE_cmd_getimage(uint32_t * const p_source, uint32_t * const p_fmt, uint32_t * const p_width, uint32_t * const p_height, uint32_t * const p_palette)
 {
     uint16_t cmdoffset;
 
@@ -692,7 +709,7 @@ void EVE_cmd_linetime(uint32_t dest)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_newlist(uint32_t adr)
+void EVE_cmd_newlist(const uint32_t adr)
 {
     eve_begin_cmd(CMD_NEWLIST);
     spi_transmit_32(adr);
@@ -708,7 +725,7 @@ void EVE_cmd_newlist(uint32_t adr)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-uint32_t EVE_cmd_pclkfreq(uint32_t ftarget, int32_t rounding)
+uint32_t EVE_cmd_pclkfreq(const uint32_t ftarget, const int32_t rounding)
 {
     uint16_t cmdoffset;
 
@@ -743,7 +760,7 @@ void EVE_cmd_testcard(void)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_wait(uint32_t usec)
+void EVE_cmd_wait(const uint32_t usec)
 {
     eve_begin_cmd(CMD_WAIT);
     spi_transmit_32(usec);
@@ -863,7 +880,7 @@ void EVE_cmd_flashspidesel(void)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_flashread(uint32_t dest, uint32_t src, uint32_t num)
+void EVE_cmd_flashread(const uint32_t dest, const uint32_t src, const uint32_t num)
 {
     eve_begin_cmd(CMD_FLASHREAD);
     spi_transmit_32(dest);
@@ -882,7 +899,7 @@ void EVE_cmd_flashread(uint32_t dest, uint32_t src, uint32_t num)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_flashsource(uint32_t ptr)
+void EVE_cmd_flashsource(const uint32_t ptr)
 {
     eve_begin_cmd(CMD_FLASHSOURCE);
     spi_transmit_32(ptr);
@@ -897,7 +914,7 @@ void EVE_cmd_flashsource(uint32_t ptr)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_flashspirx(uint32_t dest, uint32_t num)
+void EVE_cmd_flashspirx(const uint32_t dest, const uint32_t num)
 {
     eve_begin_cmd(CMD_FLASHSPIRX);
     spi_transmit_32(dest);
@@ -913,7 +930,7 @@ void EVE_cmd_flashspirx(uint32_t dest, uint32_t num)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_flashspitx(uint32_t num, const uint8_t *p_data)
+void EVE_cmd_flashspitx(const uint32_t num, const uint8_t * const p_data)
 {
     eve_begin_cmd(CMD_FLASHSPITX);
     spi_transmit_32(num);
@@ -930,7 +947,7 @@ void EVE_cmd_flashspitx(uint32_t num, const uint8_t *p_data)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_flashupdate(uint32_t dest, uint32_t src, uint32_t num)
+void EVE_cmd_flashupdate(const uint32_t dest, const uint32_t src, const uint32_t num)
 {
     eve_begin_cmd(CMD_FLASHUPDATE);
     spi_transmit_32(dest);
@@ -949,7 +966,7 @@ void EVE_cmd_flashupdate(uint32_t dest, uint32_t src, uint32_t num)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_flashwrite(uint32_t ptr, uint32_t num, const uint8_t *p_data)
+void EVE_cmd_flashwrite(const uint32_t ptr, const uint32_t num, const uint8_t * const p_data)
 {
     eve_begin_cmd(CMD_FLASHWRITE);
     spi_transmit_32(ptr);
@@ -968,7 +985,7 @@ void EVE_cmd_flashwrite(uint32_t ptr, uint32_t num, const uint8_t *p_data)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_inflate2(uint32_t ptr, uint32_t options, const uint8_t *p_data, uint32_t len)
+void EVE_cmd_inflate2(const uint32_t ptr, const uint32_t options, const uint8_t * const p_data, const uint32_t len)
 {
     eve_begin_cmd(CMD_INFLATE2);
     spi_transmit_32(ptr);
@@ -1031,7 +1048,7 @@ void EVE_cmd_coldstart(void)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_getprops(uint32_t *p_pointer, uint32_t *p_width, uint32_t *p_height)
+void EVE_cmd_getprops(uint32_t * const p_pointer, uint32_t * const p_width, uint32_t * const p_height)
 {
     uint16_t cmdoffset;
 
@@ -1084,7 +1101,7 @@ uint32_t EVE_cmd_getptr(void)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_inflate(uint32_t ptr, const uint8_t *p_data, uint32_t len)
+void EVE_cmd_inflate(const uint32_t ptr, const uint8_t * const p_data, const uint32_t len)
 {
     eve_begin_cmd(CMD_INFLATE);
     spi_transmit_32(ptr);
@@ -1101,7 +1118,7 @@ void EVE_cmd_inflate(uint32_t ptr, const uint8_t *p_data, uint32_t len)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_interrupt(uint32_t msec)
+void EVE_cmd_interrupt(const uint32_t msec)
 {
     eve_begin_cmd(CMD_INTERRUPT);
     spi_transmit_32(msec);
@@ -1118,7 +1135,7 @@ void EVE_cmd_interrupt(uint32_t msec)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_loadimage(uint32_t ptr, uint32_t options, const uint8_t *p_data, uint32_t len)
+void EVE_cmd_loadimage(const uint32_t ptr, const uint32_t options, const uint8_t * const p_data, const uint32_t len)
 {
     eve_begin_cmd(CMD_LOADIMAGE);
     spi_transmit_32(ptr);
@@ -1159,7 +1176,7 @@ void EVE_cmd_logo(void)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_mediafifo(uint32_t ptr, uint32_t size)
+void EVE_cmd_mediafifo(const uint32_t ptr, const uint32_t size)
 {
     eve_begin_cmd(CMD_MEDIAFIFO);
     spi_transmit_32(ptr);
@@ -1173,7 +1190,7 @@ void EVE_cmd_mediafifo(uint32_t ptr, uint32_t size)
  * @note - Meant to be called outside display-list building.
  * @note - For use with CMD_SYNC for example.
  */
-void EVE_cmd_memcpy(uint32_t dest, uint32_t src, uint32_t num)
+void EVE_cmd_memcpy(const uint32_t dest, const uint32_t src, const uint32_t num)
 {
     if (0U == cmd_burst)
     {
@@ -1195,7 +1212,7 @@ void EVE_cmd_memcpy(uint32_t dest, uint32_t src, uint32_t num)
 /**
  * @brief Copy a block of memory with the coprocessor, only works in burst-mode.
  */
-void EVE_cmd_memcpy_burst(uint32_t dest, uint32_t src, uint32_t num)
+void EVE_cmd_memcpy_burst(const uint32_t dest, const uint32_t src, const uint32_t num)
 {
     spi_transmit_burst(CMD_MEMCPY);
     spi_transmit_burst(dest);
@@ -1209,7 +1226,7 @@ void EVE_cmd_memcpy_burst(uint32_t dest, uint32_t src, uint32_t num)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-uint32_t EVE_cmd_memcrc(uint32_t ptr, uint32_t num)
+uint32_t EVE_cmd_memcrc(const uint32_t ptr, const uint32_t num)
 {
     uint16_t cmdoffset;
 
@@ -1231,7 +1248,7 @@ uint32_t EVE_cmd_memcrc(uint32_t ptr, uint32_t num)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_memset(uint32_t ptr, uint8_t value, uint32_t num)
+void EVE_cmd_memset(const uint32_t ptr, const uint8_t value, const uint32_t num)
 {
     eve_begin_cmd(CMD_MEMSET);
     spi_transmit_32(ptr);
@@ -1273,7 +1290,7 @@ void EVE_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *p_data)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_memzero(uint32_t ptr, uint32_t num)
+void EVE_cmd_memzero(const uint32_t ptr, const uint32_t num)
 {
     eve_begin_cmd(CMD_MEMZERO);
     spi_transmit_32(ptr);
@@ -1289,7 +1306,7 @@ void EVE_cmd_memzero(uint32_t ptr, uint32_t num)
  * @note - Does not support burst-mode.
  * @note - Does not wait for completion in order to allow the video to be paused or terminated by REG_PLAY_CONTROL
  */
-void EVE_cmd_playvideo(uint32_t options, const uint8_t *p_data, uint32_t len)
+void EVE_cmd_playvideo(const uint32_t options, const uint8_t * const p_data, const uint32_t len)
 {
     eve_begin_cmd(CMD_PLAYVIDEO);
     spi_transmit_32(options);
@@ -1339,7 +1356,7 @@ uint32_t EVE_cmd_regread(uint32_t ptr)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_setrotate(uint32_t rotation)
+void EVE_cmd_setrotate(const uint32_t rotation)
 {
     eve_begin_cmd(CMD_SETROTATE);
     spi_transmit_32(rotation);
@@ -1353,7 +1370,7 @@ void EVE_cmd_setrotate(uint32_t rotation)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_snapshot(uint32_t ptr)
+void EVE_cmd_snapshot(const uint32_t ptr)
 {
     eve_begin_cmd(CMD_SNAPSHOT);
     spi_transmit_32(ptr);
@@ -1367,7 +1384,7 @@ void EVE_cmd_snapshot(uint32_t ptr)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_snapshot2(uint32_t fmt, uint32_t ptr, int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt)
+void EVE_cmd_snapshot2(const uint32_t fmt, const uint32_t ptr, const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt)
 {
     eve_begin_cmd(CMD_SNAPSHOT2);
     spi_transmit_32(fmt);
@@ -1410,7 +1427,7 @@ void EVE_cmd_sync_burst(void)
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_track(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt, uint16_t tag)
+void EVE_cmd_track(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt, const uint16_t tag)
 {
     eve_begin_cmd(CMD_TRACK);
     spi_transmit_32(i16_i16_to_u32(xc0, yc0));
@@ -1426,7 +1443,7 @@ void EVE_cmd_track(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt, uint16_
  * @note - Includes executing the command and waiting for completion.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_videoframe(uint32_t dest, uint32_t result_ptr)
+void EVE_cmd_videoframe(const uint32_t dest, const uint32_t result_ptr)
 {
     eve_begin_cmd(CMD_VIDEOFRAME);
     spi_transmit_32(dest);
@@ -1899,7 +1916,7 @@ void EVE_end_cmd_burst(void)
 
 /* write a string to coprocessor memory in context of a command: */
 /* no chip-select, just plain SPI-transfers */
-static void private_string_write(const char *p_text)
+static void private_string_write(const char * const p_text)
 {
     /* treat the array as bunch of bytes */
     const uint8_t *const p_bytes = (const uint8_t *)p_text;
@@ -1965,7 +1982,7 @@ static void private_string_write(const char *p_text)
 /**
  * @brief Render one frame in RAM_G of an animation.
  */
-void EVE_cmd_animframeram(int16_t xc0, int16_t yc0, uint32_t aoptr, uint32_t frame)
+void EVE_cmd_animframeram(const int16_t xc0, const int16_t yc0, const uint32_t aoptr, const uint32_t frame)
 {
     if (0U == cmd_burst)
     {
@@ -1987,8 +2004,7 @@ void EVE_cmd_animframeram(int16_t xc0, int16_t yc0, uint32_t aoptr, uint32_t fra
 /**
  * @brief Render one frame in RAM_G of an animation, only works in burst-mode.
  */
-void EVE_cmd_animframeram_burst(int16_t xc0, int16_t yc0, uint32_t aoptr,
-                                uint32_t frame)
+void EVE_cmd_animframeram_burst(const int16_t xc0, const int16_t yc0, const uint32_t aoptr, const uint32_t frame)
 {
     spi_transmit_burst(CMD_ANIMFRAMERAM);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -1999,7 +2015,7 @@ void EVE_cmd_animframeram_burst(int16_t xc0, int16_t yc0, uint32_t aoptr,
 /**
  * @brief Start an animation in RAM_G.
  */
-void EVE_cmd_animstartram(int32_t chnl, uint32_t aoptr, uint32_t loop)
+void EVE_cmd_animstartram(const int32_t chnl, const uint32_t aoptr, const uint32_t loop)
 {
     if (0U == cmd_burst)
     {
@@ -2021,7 +2037,7 @@ void EVE_cmd_animstartram(int32_t chnl, uint32_t aoptr, uint32_t loop)
 /**
  * @brief Start an animation in RAM_G, only works in burst-mode.
  */
-void EVE_cmd_animstartram_burst(int32_t chnl, uint32_t aoptr, uint32_t loop)
+void EVE_cmd_animstartram_burst(const int32_t chnl, const uint32_t aoptr, const uint32_t loop)
 {
     spi_transmit_burst(CMD_ANIMSTARTRAM);
     spi_transmit_burst(i32_to_u32(chnl));
@@ -2032,7 +2048,7 @@ void EVE_cmd_animstartram_burst(int32_t chnl, uint32_t aoptr, uint32_t loop)
 /**
  * @brief Sets the API level used by the coprocessor.
  */
-void EVE_cmd_apilevel(uint32_t level)
+void EVE_cmd_apilevel(const uint32_t level)
 {
     if (0U == cmd_burst)
     {
@@ -2050,7 +2066,7 @@ void EVE_cmd_apilevel(uint32_t level)
 /**
  * @brief Sets the API level used by the coprocessor, only works in burst-mode.
  */
-void EVE_cmd_apilevel_burst(uint32_t level)
+void EVE_cmd_apilevel_burst(const uint32_t level)
 {
     spi_transmit_burst(CMD_APILEVEL);
     spi_transmit_burst(level);
@@ -2060,7 +2076,7 @@ void EVE_cmd_apilevel_burst(uint32_t level)
  * @brief Execute the touch screen calibration routine for a sub-window.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_calibratesub(uint16_t xc0, uint16_t yc0, uint16_t width, uint16_t height)
+void EVE_cmd_calibratesub(const uint16_t xc0, const uint16_t yc0, const uint16_t width, const uint16_t height)
 {
     if (0U == cmd_burst)
     {
@@ -2074,7 +2090,7 @@ void EVE_cmd_calibratesub(uint16_t xc0, uint16_t yc0, uint16_t width, uint16_t h
 /**
  * @brief Calls a command list in RAM_G.
  */
-void EVE_cmd_calllist(uint32_t adr)
+void EVE_cmd_calllist(const uint32_t adr)
 {
     if (0U == cmd_burst)
     {
@@ -2092,7 +2108,7 @@ void EVE_cmd_calllist(uint32_t adr)
 /**
  * @brief Calls a command list in RAM_G, only works in burst-mode.
  */
-void EVE_cmd_calllist_burst(uint32_t adr)
+void EVE_cmd_calllist_burst(const uint32_t adr)
 {
     spi_transmit_burst(CMD_CALLLIST);
     spi_transmit_burst(adr);
@@ -2126,7 +2142,7 @@ void EVE_cmd_return_burst(void)
  * @brief Setup the Horizontal Scan out Filter for non-square pixel LCD support.
  * @note - Does not support burst-mode.
  */
-void EVE_cmd_hsf(uint32_t hsf)
+void EVE_cmd_hsf(const uint32_t hsf)
 {
     if (0U == cmd_burst)
     {
@@ -2139,7 +2155,7 @@ void EVE_cmd_hsf(uint32_t hsf)
 /**
  * @brief Play/run animations until complete.
  */
-void EVE_cmd_runanim(uint32_t waitmask, uint32_t play)
+void EVE_cmd_runanim(const uint32_t waitmask, const uint32_t play)
 {
     if (0U == cmd_burst)
     {
@@ -2159,7 +2175,7 @@ void EVE_cmd_runanim(uint32_t waitmask, uint32_t play)
 /**
  * @brief Play/run animations until complete, only works in burst-mode.
  */
-void EVE_cmd_runanim_burst(uint32_t waitmask, uint32_t play)
+void EVE_cmd_runanim_burst(const uint32_t waitmask, const uint32_t play)
 {
     spi_transmit_burst(CMD_RUNANIM);
     spi_transmit_burst(waitmask);
@@ -2184,7 +2200,7 @@ void EVE_cmd_runanim_burst(uint32_t waitmask, uint32_t play)
 /**
  * @brief Draw one or more active animations.
  */
-void EVE_cmd_animdraw(int32_t chnl)
+void EVE_cmd_animdraw(const int32_t chnl)
 {
     if (0U == cmd_burst)
     {
@@ -2202,7 +2218,7 @@ void EVE_cmd_animdraw(int32_t chnl)
 /**
  * @brief Draw one or more active animations, only works in burst-mode.
  */
-void EVE_cmd_animdraw_burst(int32_t chnl)
+void EVE_cmd_animdraw_burst(const int32_t chnl)
 {
     spi_transmit_burst(CMD_ANIMDRAW);
     spi_transmit_burst(i32_to_u32(chnl));
@@ -2211,7 +2227,7 @@ void EVE_cmd_animdraw_burst(int32_t chnl)
 /**
  * @brief Draw the specified frame of an animation.
  */
-void EVE_cmd_animframe(int16_t xc0, int16_t yc0, uint32_t aoptr, uint32_t frame)
+void EVE_cmd_animframe(const int16_t xc0, const int16_t yc0, const uint32_t aoptr, const uint32_t frame)
 {
     if (0U == cmd_burst)
     {
@@ -2233,8 +2249,7 @@ void EVE_cmd_animframe(int16_t xc0, int16_t yc0, uint32_t aoptr, uint32_t frame)
 /**
  * @brief Draw the specified frame of an animation, only works in burst-mode.
  */
-void EVE_cmd_animframe_burst(int16_t xc0, int16_t yc0, uint32_t aoptr,
-                                uint32_t frame)
+void EVE_cmd_animframe_burst(const int16_t xc0, const int16_t yc0, const uint32_t aoptr, const uint32_t frame)
 {
     spi_transmit_burst(CMD_ANIMFRAME);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -2245,7 +2260,7 @@ void EVE_cmd_animframe_burst(int16_t xc0, int16_t yc0, uint32_t aoptr,
 /**
  * @brief Start an animation.
  */
-void EVE_cmd_animstart(int32_t chnl, uint32_t aoptr, uint32_t loop)
+void EVE_cmd_animstart(const int32_t chnl, const uint32_t aoptr, const uint32_t loop)
 {
     if (0U == cmd_burst)
     {
@@ -2267,7 +2282,7 @@ void EVE_cmd_animstart(int32_t chnl, uint32_t aoptr, uint32_t loop)
 /**
  * @brief Start an animation, only works in burst-mode.
  */
-void EVE_cmd_animstart_burst(int32_t chnl, uint32_t aoptr, uint32_t loop)
+void EVE_cmd_animstart_burst(const int32_t chnl, const uint32_t aoptr, const uint32_t loop)
 {
     spi_transmit_burst(CMD_ANIMSTART);
     spi_transmit_burst(i32_to_u32(chnl));
@@ -2278,7 +2293,7 @@ void EVE_cmd_animstart_burst(int32_t chnl, uint32_t aoptr, uint32_t loop)
 /**
  * @brief Stops one or more active animations.
  */
-void EVE_cmd_animstop(int32_t chnl)
+void EVE_cmd_animstop(const int32_t chnl)
 {
     if (0U == cmd_burst)
     {
@@ -2296,7 +2311,7 @@ void EVE_cmd_animstop(int32_t chnl)
 /**
  * @brief Stops one or more active animations, only works in burst-mode.
  */
-void EVE_cmd_animstop_burst(int32_t chnl)
+void EVE_cmd_animstop_burst(const int32_t chnl)
 {
     spi_transmit_burst(CMD_ANIMSTOP);
     spi_transmit_burst(i32_to_u32(chnl));
@@ -2305,7 +2320,7 @@ void EVE_cmd_animstop_burst(int32_t chnl)
 /**
  * @brief Sets the coordinates of an animation.
  */
-void EVE_cmd_animxy(int32_t chnl, int16_t xc0, int16_t yc0)
+void EVE_cmd_animxy(const int32_t chnl, const int16_t xc0, const int16_t yc0)
 {
     if (0U == cmd_burst)
     {
@@ -2325,7 +2340,7 @@ void EVE_cmd_animxy(int32_t chnl, int16_t xc0, int16_t yc0)
 /**
  * @brief Sets the coordinates of an animation, only works in burst-mode.
  */
-void EVE_cmd_animxy_burst(int32_t chnl, int16_t xc0, int16_t yc0)
+void EVE_cmd_animxy_burst(const int32_t chnl, const int16_t xc0, const int16_t yc0)
 {
     spi_transmit_burst(CMD_ANIMXY);
     spi_transmit_burst(i32_to_u32(chnl));
@@ -2335,7 +2350,7 @@ void EVE_cmd_animxy_burst(int32_t chnl, int16_t xc0, int16_t yc0)
 /**
  * @brief Append flash data to the display list.
  */
-void EVE_cmd_appendf(uint32_t ptr, uint32_t num)
+void EVE_cmd_appendf(const uint32_t ptr, const uint32_t num)
 {
     if (0U == cmd_burst)
     {
@@ -2355,7 +2370,7 @@ void EVE_cmd_appendf(uint32_t ptr, uint32_t num)
 /**
  * @brief Append flash data to the display list, only works in burst-mode.
  */
-void EVE_cmd_appendf_burst(uint32_t ptr, uint32_t num)
+void EVE_cmd_appendf_burst(const uint32_t ptr, const uint32_t num)
 {
     spi_transmit_burst(CMD_APPENDF);
     spi_transmit_burst(ptr);
@@ -2365,10 +2380,10 @@ void EVE_cmd_appendf_burst(uint32_t ptr, uint32_t num)
 /**
  * @brief Computes a bitmap transform and appends commands BITMAP_TRANSFORM_A...BITMAP_TRANSFORM_F to the display list.
  */
-uint16_t EVE_cmd_bitmap_transform(int32_t xc0, int32_t yc0, int32_t xc1,
-                                int32_t yc1, int32_t xc2, int32_t yc2,
-                                int32_t tx0, int32_t ty0, int32_t tx1,
-                                int32_t ty1, int32_t tx2, int32_t ty2)
+uint16_t EVE_cmd_bitmap_transform(const int32_t xc0, const int32_t yc0, const int32_t xc1,
+                                    const int32_t yc1, const int32_t xc2, const int32_t yc2,
+                                    const int32_t tx0, const int32_t ty0, const int32_t tx1,
+                                    const int32_t ty1, const int32_t tx2,const int32_t ty2)
 {
     uint16_t ret_val = 0U;
 
@@ -2421,10 +2436,10 @@ uint16_t EVE_cmd_bitmap_transform(int32_t xc0, int32_t yc0, int32_t xc1,
  * @brief Computes a bitmap transform and appends commands BITMAP_TRANSFORM_A...BITMAP_TRANSFORM_F to the display list.
  * @note - Only works in burst-mode, the result parameter is ignored.
  */
-void EVE_cmd_bitmap_transform_burst(int32_t xc0, int32_t yc0, int32_t xc1,
-                                int32_t yc1, int32_t xc2, int32_t yc2,
-                                int32_t tx0, int32_t ty0, int32_t tx1,
-                                int32_t ty1, int32_t tx2, int32_t ty2)
+void EVE_cmd_bitmap_transform_burst(const int32_t xc0, const int32_t yc0, const int32_t xc1,
+                                    const int32_t yc1, const int32_t xc2, const int32_t yc2,
+                                    const int32_t tx0, const int32_t ty0, const int32_t tx1,
+                                    const int32_t ty1, const int32_t tx2, const int32_t ty2)
 {
     spi_transmit_burst(CMD_BITMAP_TRANSFORM);
     spi_transmit_burst(i32_to_u32(xc0));
@@ -2445,7 +2460,7 @@ void EVE_cmd_bitmap_transform_burst(int32_t xc0, int32_t yc0, int32_t xc1,
 /**
  * @brief Sets the pixel fill width for CMD_TEXT,CMD_BUTTON,CMD_BUTTON with the OPT_FILL option.
  */
-void EVE_cmd_fillwidth(uint32_t pixel)
+void EVE_cmd_fillwidth(const uint32_t pixel)
 {
     if (0U == cmd_burst)
     {
@@ -2464,7 +2479,7 @@ void EVE_cmd_fillwidth(uint32_t pixel)
  * @brief Sets the pixel fill width for CMD_TEXT,CMD_BUTTON,CMD_BUTTON with the OPT_FILL option.
  * @note - Only works in burst-mode.
  */
-void EVE_cmd_fillwidth_burst(uint32_t pixel)
+void EVE_cmd_fillwidth_burst(const uint32_t pixel)
 {
     spi_transmit_burst(CMD_FILLWIDTH);
     spi_transmit_burst(pixel);
@@ -2473,7 +2488,7 @@ void EVE_cmd_fillwidth_burst(uint32_t pixel)
 /**
  * @brief Draw a smooth color gradient with transparency.
  */
-void EVE_cmd_gradienta(int16_t xc0, int16_t yc0, uint32_t argb0, int16_t xc1, int16_t yc1, uint32_t argb1)
+void EVE_cmd_gradienta(const int16_t xc0, const int16_t yc0, const uint32_t argb0, const int16_t xc1, const int16_t yc1, const uint32_t argb1)
 {
     if (0U == cmd_burst)
     {
@@ -2497,7 +2512,7 @@ void EVE_cmd_gradienta(int16_t xc0, int16_t yc0, uint32_t argb0, int16_t xc1, in
 /**
  * @brief Draw a smooth color gradient with transparency, only works in burst-mode.
  */
-void EVE_cmd_gradienta_burst(int16_t xc0, int16_t yc0, uint32_t argb0, int16_t xc1, int16_t yc1, uint32_t argb1)
+void EVE_cmd_gradienta_burst(const int16_t xc0, const int16_t yc0, const uint32_t argb0, const int16_t xc1, const int16_t yc1, const uint32_t argb1)
 {
     spi_transmit_burst(CMD_GRADIENTA);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -2509,7 +2524,7 @@ void EVE_cmd_gradienta_burst(int16_t xc0, int16_t yc0, uint32_t argb0, int16_t x
 /**
  * @brief Apply a rotation and scale around a specified coordinate.
  */
-void EVE_cmd_rotatearound(int32_t xc0, int32_t yc0, uint32_t angle, int32_t scale)
+void EVE_cmd_rotatearound(const int32_t xc0, const int32_t yc0, const uint32_t angle, const int32_t scale)
 {
     if (0U == cmd_burst)
     {
@@ -2533,8 +2548,7 @@ void EVE_cmd_rotatearound(int32_t xc0, int32_t yc0, uint32_t angle, int32_t scal
 /**
  * @brief Apply a rotation and scale around a specified coordinate, only works in burst-mode.
  */
-void EVE_cmd_rotatearound_burst(int32_t xc0, int32_t yc0, uint32_t angle,
-                                int32_t scale)
+void EVE_cmd_rotatearound_burst(const int32_t xc0, const int32_t yc0, const uint32_t angle, const int32_t scale)
 {
     spi_transmit_burst(CMD_ROTATEAROUND);
     spi_transmit_burst(i32_to_u32(xc0));
@@ -2548,9 +2562,9 @@ void EVE_cmd_rotatearound_burst(int32_t xc0, int32_t yc0, uint32_t angle,
  * @param p_arguments[] pointer to an array of values converted to uint32_t to be used when using EVE_OPT_FORMAT
  * @param num_args the number of elements provided in p_arguments[]
  */
-void EVE_cmd_button_var(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
-                        uint16_t font, uint16_t options, const char *p_text,
-                        uint8_t num_args, const uint32_t p_arguments[])
+void EVE_cmd_button_var(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
+                        const uint16_t font, const uint16_t options, const char * const p_text,
+                        const uint8_t num_args, const uint32_t * const p_arguments)
 {
     if (0U == cmd_burst)
     {
@@ -2598,9 +2612,9 @@ void EVE_cmd_button_var(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
  * @param p_arguments[] pointer to an array of values converted to uint32_t to be used when using EVE_OPT_FORMAT
  * @param num_args the number of elements provided in p_arguments[]
  */
-void EVE_cmd_button_var_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
-                              uint16_t font, uint16_t options, const char *p_text,
-                              uint8_t num_args, const uint32_t p_arguments[])
+void EVE_cmd_button_var_burst(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
+                              const uint16_t font, const uint16_t options, const char * const p_text,
+                              const uint8_t num_args, const uint32_t * const p_arguments)
 {
     spi_transmit_burst(CMD_BUTTON);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -2625,8 +2639,8 @@ void EVE_cmd_button_var_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t h
  * @param p_arguments[] pointer to an array of values converted to uint32_t to be used when using EVE_OPT_FORMAT
  * @param num_args the number of elements provided in p_arguments[]
  */
-void EVE_cmd_text_var(int16_t xc0, int16_t yc0, uint16_t font, uint16_t options,
-                        const char *p_text, uint8_t num_args, const uint32_t p_arguments[])
+void EVE_cmd_text_var(const int16_t xc0, const int16_t yc0, const uint16_t font, const uint16_t options,
+                        const char * const p_text, const uint8_t num_args, const uint32_t * const p_arguments)
 {
     if (0U == cmd_burst)
     {
@@ -2672,9 +2686,9 @@ void EVE_cmd_text_var(int16_t xc0, int16_t yc0, uint16_t font, uint16_t options,
  * @param p_arguments[] pointer to an array of values converted to uint32_t to be used when using EVE_OPT_FORMAT
  * @param num_args the number of elements provided in p_arguments[]
  */
-void EVE_cmd_text_var_burst(int16_t xc0, int16_t yc0, uint16_t font,
-                            uint16_t options, const char *p_text,
-                            uint8_t num_args, const uint32_t p_arguments[])
+void EVE_cmd_text_var_burst(const int16_t xc0, const int16_t yc0, const uint16_t font,
+                            const uint16_t options, const char * const p_text,
+                            const uint8_t num_args, const uint32_t * const p_arguments)
 {
     spi_transmit_burst(CMD_TEXT);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -2698,9 +2712,9 @@ void EVE_cmd_text_var_burst(int16_t xc0, int16_t yc0, uint16_t font,
  * @param p_arguments[] pointer to an array of values converted to uint32_t to be used when using EVE_OPT_FORMAT
  * @param num_args the number of elements provided in p_arguments[]
  */
-void EVE_cmd_toggle_var(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t font,
-                        uint16_t options, uint16_t state, const char *p_text,
-                        uint8_t num_args, const uint32_t p_arguments[])
+void EVE_cmd_toggle_var(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t font,
+                        const uint16_t options, const uint16_t state, const char * const p_text,
+                        const uint8_t num_args, const uint32_t * const p_arguments)
 {
     if (0U == cmd_burst)
     {
@@ -2748,9 +2762,9 @@ void EVE_cmd_toggle_var(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t font,
  * @param p_arguments[] pointer to an array of values converted to uint32_t to be used when using EVE_OPT_FORMAT
  * @param num_args the number of elements provided in p_arguments[]
  */
-void EVE_cmd_toggle_var_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t font,
-                            uint16_t options, uint16_t state, const char *p_text,
-                            uint8_t num_args, const uint32_t p_arguments[])
+void EVE_cmd_toggle_var_burst(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t font,
+                            const uint16_t options, const uint16_t state, const char * const p_text,
+                            const uint8_t num_args, const uint32_t * const p_arguments)
 {
     spi_transmit_burst(CMD_TOGGLE);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -2831,7 +2845,7 @@ void EVE_bitmap_swizzle_burst(const uint8_t red, const uint8_t green, const uint
 /**
  * @brief Appends commands from RAM_G to the display list.
  */
-void EVE_cmd_append(uint32_t ptr, uint32_t num)
+void EVE_cmd_append(const uint32_t ptr, const uint32_t num)
 {
     if (0U == cmd_burst)
     {
@@ -2851,7 +2865,7 @@ void EVE_cmd_append(uint32_t ptr, uint32_t num)
 /**
  * @brief Appends commands from RAM_G to the display list, only works in burst-mode.
  */
-void EVE_cmd_append_burst(uint32_t ptr, uint32_t num)
+void EVE_cmd_append_burst(const uint32_t ptr, const uint32_t num)
 {
     spi_transmit_burst(CMD_APPEND);
     spi_transmit_burst(ptr);
@@ -2861,7 +2875,7 @@ void EVE_cmd_append_burst(uint32_t ptr, uint32_t num)
 /**
  * @brief Set the background color.
  */
-void EVE_cmd_bgcolor(uint32_t color)
+void EVE_cmd_bgcolor(const uint32_t color)
 {
     if (0U == cmd_burst)
     {
@@ -2879,7 +2893,7 @@ void EVE_cmd_bgcolor(uint32_t color)
 /**
  * @brief Set the background color, only works in burst-mode.
  */
-void EVE_cmd_bgcolor_burst(uint32_t color)
+void EVE_cmd_bgcolor_burst(const uint32_t color)
 {
     spi_transmit_burst(CMD_BGCOLOR);
     spi_transmit_burst(color);
@@ -2888,8 +2902,8 @@ void EVE_cmd_bgcolor_burst(uint32_t color)
 /**
  * @brief Draw a button with a label.
  */
-void EVE_cmd_button(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
-                    uint16_t font, uint16_t options, const char *p_text)
+void EVE_cmd_button(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
+                    const uint16_t font, const uint16_t options, const char * const p_text)
 {
     if (0U == cmd_burst)
     {
@@ -2913,8 +2927,8 @@ void EVE_cmd_button(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
 /**
  * @brief Draw a button with a label, only works in burst-mode.
  */
-void EVE_cmd_button_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
-                            uint16_t font, uint16_t options, const char *p_text)
+void EVE_cmd_button_burst(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
+                            const uint16_t font, const uint16_t options, const char * const p_text)
 {
     spi_transmit_burst(CMD_BUTTON);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -2940,8 +2954,8 @@ void EVE_cmd_calibrate(void)
 /**
  * @brief Draw an analog clock.
  */
-void EVE_cmd_clock(int16_t xc0, int16_t yc0, uint16_t rad, uint16_t options,
-                    uint16_t hours, uint16_t mins, uint16_t secs, uint16_t msecs)
+void EVE_cmd_clock(const int16_t xc0, const int16_t yc0, const uint16_t rad, const uint16_t options,
+                    const uint16_t hours, const uint16_t mins, const uint16_t secs, const uint16_t msecs)
 {
     if (0U == cmd_burst)
     {
@@ -2965,8 +2979,8 @@ void EVE_cmd_clock(int16_t xc0, int16_t yc0, uint16_t rad, uint16_t options,
 /**
  * @brief Draw an analog clock, only works in burst-mode.
  */
-void EVE_cmd_clock_burst(int16_t xc0, int16_t yc0, uint16_t rad, uint16_t options, uint16_t hours,
-                            uint16_t mins, uint16_t secs, uint16_t msecs)
+void EVE_cmd_clock_burst(const int16_t xc0, const int16_t yc0, const uint16_t rad, const uint16_t options,
+                            const uint16_t hours, const uint16_t mins, const uint16_t secs, const uint16_t msecs)
 {
     spi_transmit_burst(CMD_CLOCK);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -2978,7 +2992,7 @@ void EVE_cmd_clock_burst(int16_t xc0, int16_t yc0, uint16_t rad, uint16_t option
 /**
  * @brief Draw a rotary dial control.
  */
-void EVE_cmd_dial(int16_t xc0, int16_t yc0, uint16_t rad, uint16_t options, uint16_t val)
+void EVE_cmd_dial(const int16_t xc0, const int16_t yc0, const uint16_t rad, const uint16_t options, const uint16_t val)
 {
     if (0U == cmd_burst)
     {
@@ -3000,8 +3014,7 @@ void EVE_cmd_dial(int16_t xc0, int16_t yc0, uint16_t rad, uint16_t options, uint
 /**
  * @brief Draw a rotary dial control, only works in burst-mode.
  */
-void EVE_cmd_dial_burst(int16_t xc0, int16_t yc0, uint16_t rad, uint16_t options,
-                        uint16_t val)
+void EVE_cmd_dial_burst(const int16_t xc0, const int16_t yc0, const uint16_t rad, const uint16_t options, const uint16_t val)
 {
     spi_transmit_burst(CMD_DIAL);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -3036,7 +3049,7 @@ void EVE_cmd_dlstart_burst(void)
 /**
  * @brief Set the foreground color.
  */
-void EVE_cmd_fgcolor(uint32_t color)
+void EVE_cmd_fgcolor(const uint32_t color)
 {
     if (0U == cmd_burst)
     {
@@ -3054,7 +3067,7 @@ void EVE_cmd_fgcolor(uint32_t color)
 /**
  * @brief Set the foreground color, only works in burst-mode.
  */
-void EVE_cmd_fgcolor_burst(uint32_t color)
+void EVE_cmd_fgcolor_burst(const uint32_t color)
 {
     spi_transmit_burst(CMD_FGCOLOR);
     spi_transmit_burst(color);
@@ -3063,8 +3076,8 @@ void EVE_cmd_fgcolor_burst(uint32_t color)
 /**
  * @brief Draw a gauge.
  */
-void EVE_cmd_gauge(int16_t xc0, int16_t yc0, uint16_t rad, uint16_t options,
-                    uint16_t major, uint16_t minor, uint16_t val, uint16_t range)
+void EVE_cmd_gauge(const int16_t xc0, const int16_t yc0, const uint16_t rad, const uint16_t options,
+                    const uint16_t major, const uint16_t minor, const uint16_t val, const uint16_t range)
 {
     if (0U == cmd_burst)
     {
@@ -3088,8 +3101,8 @@ void EVE_cmd_gauge(int16_t xc0, int16_t yc0, uint16_t rad, uint16_t options,
 /**
  * @brief Draw a gauge, only works in burst-mode.
  */
-void EVE_cmd_gauge_burst(int16_t xc0, int16_t yc0, uint16_t rad, uint16_t options,
-                            uint16_t major, uint16_t minor, uint16_t val, uint16_t range)
+void EVE_cmd_gauge_burst(const int16_t xc0, const int16_t yc0, const uint16_t rad, const uint16_t options,
+                            const uint16_t major, const uint16_t minor, const uint16_t val, const uint16_t range)
 {
     spi_transmit_burst(CMD_GAUGE);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -3103,7 +3116,7 @@ void EVE_cmd_gauge_burst(int16_t xc0, int16_t yc0, uint16_t rad, uint16_t option
  * @note - waits for completion and reads values from RAM_CMD after completion
  * @note - can not be used with cmd-burst
  */
-void EVE_cmd_getmatrix(int32_t *p_a, int32_t *p_b, int32_t *p_c, int32_t *p_d, int32_t *p_e, int32_t *p_f)
+void EVE_cmd_getmatrix(int32_t * const p_a, int32_t * const p_b, int32_t * const p_c, int32_t * const p_d, int32_t * const p_e, int32_t * const p_f)
 {
     if (0U == cmd_burst)
     {
@@ -3157,7 +3170,7 @@ void EVE_cmd_getmatrix(int32_t *p_a, int32_t *p_b, int32_t *p_c, int32_t *p_d, i
 /**
  * @brief Set up the highlight color used in 3D effects for CMD_BUTTON and CMD_KEYS.
  */
-void EVE_cmd_gradcolor(uint32_t color)
+void EVE_cmd_gradcolor(const uint32_t color)
 {
     if (0U == cmd_burst)
     {
@@ -3175,7 +3188,7 @@ void EVE_cmd_gradcolor(uint32_t color)
 /**
  * @brief Set up the highlight color used in 3D effects for CMD_BUTTON and CMD_KEYS, only works in burst-mode.
  */
-void EVE_cmd_gradcolor_burst(uint32_t color)
+void EVE_cmd_gradcolor_burst(const uint32_t color)
 {
     spi_transmit_burst(CMD_GRADCOLOR);
     spi_transmit_burst(color);
@@ -3184,7 +3197,7 @@ void EVE_cmd_gradcolor_burst(uint32_t color)
 /**
  * @brief Draw a smooth color gradient.
  */
-void EVE_cmd_gradient(int16_t xc0, int16_t yc0, uint32_t rgb0, int16_t xc1, int16_t yc1, uint32_t rgb1)
+void EVE_cmd_gradient(const int16_t xc0, const int16_t yc0, const uint32_t rgb0, const int16_t xc1, const int16_t yc1, const uint32_t rgb1)
 {
     if (0U == cmd_burst)
     {
@@ -3208,7 +3221,7 @@ void EVE_cmd_gradient(int16_t xc0, int16_t yc0, uint32_t rgb0, int16_t xc1, int1
 /**
  * @brief Draw a smooth color gradient, only works in burst-mode.
  */
-void EVE_cmd_gradient_burst(int16_t xc0, int16_t yc0, uint32_t rgb0, int16_t xc1, int16_t yc1, uint32_t rgb1)
+void EVE_cmd_gradient_burst(const int16_t xc0, const int16_t yc0, const uint32_t rgb0, const int16_t xc1, const int16_t yc1, const uint32_t rgb1)
 {
     spi_transmit_burst(CMD_GRADIENT);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -3222,8 +3235,8 @@ void EVE_cmd_gradient_burst(int16_t xc0, int16_t yc0, uint32_t rgb0, int16_t xc1
  * @note - The tag value of each button is set to the ASCII value of its label.
  * @note - Does not work with UTF-8.
  */
-void EVE_cmd_keys(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
-                    uint16_t font, uint16_t options, const char *p_text)
+void EVE_cmd_keys(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
+                    const uint16_t font, const uint16_t options, const char * const p_text)
 {
     if (0U == cmd_burst)
     {
@@ -3249,8 +3262,8 @@ void EVE_cmd_keys(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
  * @note - The tag value of each button is set to the ASCII value of its label.
  * @note - Does not work with UTF-8.
  */
-void EVE_cmd_keys_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
-                        uint16_t font, uint16_t options, const char *p_text)
+void EVE_cmd_keys_burst(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
+                        const uint16_t font, const uint16_t options, const char * const p_text)
 {
     spi_transmit_burst(CMD_KEYS);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -3286,7 +3299,7 @@ void EVE_cmd_loadidentity_burst(void)
 /**
  * @brief Draw a number.
  */
-void EVE_cmd_number(int16_t xc0, int16_t yc0, uint16_t font, uint16_t options, int32_t number)
+void EVE_cmd_number(const int16_t xc0, const int16_t yc0, const uint16_t font, const uint16_t options, const int32_t number)
 {
     if (0U == cmd_burst)
     {
@@ -3308,7 +3321,7 @@ void EVE_cmd_number(int16_t xc0, int16_t yc0, uint16_t font, uint16_t options, i
 /**
  * @brief Draw a number, only works in burst-mode.
  */
-void EVE_cmd_number_burst(int16_t xc0, int16_t yc0, uint16_t font, uint16_t options, int32_t number)
+void EVE_cmd_number_burst(const int16_t xc0, const int16_t yc0, const uint16_t font, const uint16_t options, const int32_t number)
 {
     spi_transmit_burst(CMD_NUMBER);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -3319,8 +3332,8 @@ void EVE_cmd_number_burst(int16_t xc0, int16_t yc0, uint16_t font, uint16_t opti
 /**
  * @brief Draw a progress bar.
  */
-void EVE_cmd_progress(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
-                        uint16_t options, uint16_t val, uint16_t range)
+void EVE_cmd_progress(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
+                        const uint16_t options, const uint16_t val, const uint16_t range)
 {
     if (0U == cmd_burst)
     {
@@ -3344,8 +3357,8 @@ void EVE_cmd_progress(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
 /**
  * @brief Draw a progress bar, only works in burst-mode.
  */
-void EVE_cmd_progress_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
-                            uint16_t options, uint16_t val, uint16_t range)
+void EVE_cmd_progress_burst(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
+                            const uint16_t options, const uint16_t val, const uint16_t range)
 {
     spi_transmit_burst(CMD_PROGRESS);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -3358,7 +3371,7 @@ void EVE_cmd_progress_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt
  * @brief Load a ROM font into bitmap handle.
  * @note - generates display list commands, so it needs to be put in a display list
  */
-void EVE_cmd_romfont(uint32_t font, uint32_t romslot)
+void EVE_cmd_romfont(const uint32_t font, const uint32_t romslot)
 {
     if (0U == cmd_burst)
     {
@@ -3379,7 +3392,7 @@ void EVE_cmd_romfont(uint32_t font, uint32_t romslot)
  * @brief Load a ROM font into bitmap handle, only works in burst-mode.
  * @note - generates display list commands, so it needs to be put in a display list
  */
-void EVE_cmd_romfont_burst(uint32_t font, uint32_t romslot)
+void EVE_cmd_romfont_burst(const uint32_t font, const uint32_t romslot)
 {
     spi_transmit_burst(CMD_ROMFONT);
     spi_transmit_burst(font);
@@ -3388,8 +3401,9 @@ void EVE_cmd_romfont_burst(uint32_t font, uint32_t romslot)
 
 /**
  * @brief Apply a rotation to the current matrix.
+ * @note - range for angle is 0...65535
  */
-void EVE_cmd_rotate(uint32_t angle)
+void EVE_cmd_rotate(const uint32_t angle)
 {
     if (0U == cmd_burst)
     {
@@ -3407,7 +3421,7 @@ void EVE_cmd_rotate(uint32_t angle)
 /**
  * @brief Apply a rotation to the current matrix, only works in burst-mode.
  */
-void EVE_cmd_rotate_burst(uint32_t angle)
+void EVE_cmd_rotate_burst(const uint32_t angle)
 {
     spi_transmit_burst(CMD_ROTATE);
     spi_transmit_burst(angle & 0xFFFFUL);
@@ -3416,7 +3430,7 @@ void EVE_cmd_rotate_burst(uint32_t angle)
 /**
  * @brief Apply a scale to the current matrix.
  */
-void EVE_cmd_scale(int32_t scx, int32_t scy)
+void EVE_cmd_scale(const int32_t scx, const int32_t scy)
 {
     if (0U == cmd_burst)
     {
@@ -3436,7 +3450,7 @@ void EVE_cmd_scale(int32_t scx, int32_t scy)
 /**
  * @brief Apply a scale to the current matrix, only works in burst-mode.
  */
-void EVE_cmd_scale_burst(int32_t scx, int32_t scy)
+void EVE_cmd_scale_burst(const int32_t scx, const int32_t scy)
 {
     spi_transmit_burst(CMD_SCALE);
     spi_transmit_burst(i32_to_u32(scx));
@@ -3470,8 +3484,8 @@ void EVE_cmd_screensaver_burst(void)
 /**
  * @brief Draw a scroll bar.
  */
-void EVE_cmd_scrollbar(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
-            uint16_t options, uint16_t val, uint16_t size, uint16_t range)
+void EVE_cmd_scrollbar(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
+                        const uint16_t options, const uint16_t val, const uint16_t size, const uint16_t range)
 {
     if (0U == cmd_burst)
     {
@@ -3495,8 +3509,8 @@ void EVE_cmd_scrollbar(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
 /**
  * @brief Draw a scroll bar, only works in burst-mode.
  */
-void EVE_cmd_scrollbar_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
-                uint16_t options, uint16_t val, uint16_t size, uint16_t range)
+void EVE_cmd_scrollbar_burst(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
+                                const uint16_t options, const uint16_t val, const uint16_t size, const uint16_t range)
 {
     spi_transmit_burst(CMD_SCROLLBAR);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -3508,7 +3522,7 @@ void EVE_cmd_scrollbar_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hg
 /**
  * @brief Set the base for number output.
  */
-void EVE_cmd_setbase(uint32_t base)
+void EVE_cmd_setbase(const uint32_t base)
 {
     if (0U == cmd_burst)
     {
@@ -3526,7 +3540,7 @@ void EVE_cmd_setbase(uint32_t base)
 /**
  * @brief Set the base for number output, only works in burst-mode.
  */
-void EVE_cmd_setbase_burst(uint32_t base)
+void EVE_cmd_setbase_burst(const uint32_t base)
 {
     spi_transmit_burst(CMD_SETBASE);
     spi_transmit_burst(base);
@@ -3536,7 +3550,7 @@ void EVE_cmd_setbase_burst(uint32_t base)
  * @brief Generate the corresponding display list commands for given bitmap information.
  * @note - when used with ASTC images from flash, the source-address is a block of 32 bytes
  */
-void EVE_cmd_setbitmap(uint32_t addr, uint16_t fmt, uint16_t width, uint16_t height)
+void EVE_cmd_setbitmap(const uint32_t addr, const uint16_t fmt, const uint16_t width, const uint16_t height)
 {
     if (0U == cmd_burst)
     {
@@ -3559,7 +3573,7 @@ void EVE_cmd_setbitmap(uint32_t addr, uint16_t fmt, uint16_t width, uint16_t hei
  * @brief Generate the corresponding display list commands for given bitmap information, only works in burst-mode.
  * @note - when used with ASTC images from flash, the source-address is a block of 32 bytes
  */
-void EVE_cmd_setbitmap_burst(uint32_t addr, uint16_t fmt, uint16_t width, uint16_t height)
+void EVE_cmd_setbitmap_burst(const uint32_t addr, const uint16_t fmt, const uint16_t width, const uint16_t height)
 {
     spi_transmit_burst(CMD_SETBITMAP);
     spi_transmit_burst(addr);
@@ -3571,7 +3585,7 @@ void EVE_cmd_setbitmap_burst(uint32_t addr, uint16_t fmt, uint16_t width, uint16
  * @brief Register one custom font into the coprocessor engine.
  * @note - does not set up the bitmap parameters of the font
  */
-void EVE_cmd_setfont(uint32_t font, uint32_t ptr)
+void EVE_cmd_setfont(const uint32_t font, const uint32_t ptr)
 {
     if (0U == cmd_burst)
     {
@@ -3592,7 +3606,7 @@ void EVE_cmd_setfont(uint32_t font, uint32_t ptr)
  * @brief Register one custom font into the coprocessor engine, only works in burst-mode.
  * @note - does not set up the bitmap parameters of the font
  */
-void EVE_cmd_setfont_burst(uint32_t font, uint32_t ptr)
+void EVE_cmd_setfont_burst(const uint32_t font, const uint32_t ptr)
 {
     spi_transmit_burst(CMD_SETFONT);
     spi_transmit_burst(font);
@@ -3603,7 +3617,7 @@ void EVE_cmd_setfont_burst(uint32_t font, uint32_t ptr)
  * @brief Set up a custom font for use by the coprocessor engine.
  * @note - generates display list commands, so it needs to be put in a display list
  */
-void EVE_cmd_setfont2(uint32_t font, uint32_t ptr, uint32_t firstchar)
+void EVE_cmd_setfont2(const uint32_t font, const uint32_t ptr, const uint32_t firstchar)
 {
     if (0U == cmd_burst)
     {
@@ -3626,7 +3640,7 @@ void EVE_cmd_setfont2(uint32_t font, uint32_t ptr, uint32_t firstchar)
  * @brief Set up a custom font for use by the coprocessor engine, only works in burst-mode.
  * @note - generates display list commands, so it needs to be put in a display list
  */
-void EVE_cmd_setfont2_burst(uint32_t font, uint32_t ptr, uint32_t firstchar)
+void EVE_cmd_setfont2_burst(const uint32_t font, const uint32_t ptr, const uint32_t firstchar)
 {
     spi_transmit_burst(CMD_SETFONT2);
     spi_transmit_burst(font);
@@ -3661,7 +3675,7 @@ void EVE_cmd_setmatrix_burst(void)
 /**
  * @brief Set the scratch bitmap for widget use.
  */
-void EVE_cmd_setscratch(uint32_t handle)
+void EVE_cmd_setscratch(const uint32_t handle)
 {
     if (0U == cmd_burst)
     {
@@ -3679,7 +3693,7 @@ void EVE_cmd_setscratch(uint32_t handle)
 /**
  * @brief Set the scratch bitmap for widget use, only works in burst-mode.
  */
-void EVE_cmd_setscratch_burst(uint32_t handle)
+void EVE_cmd_setscratch_burst(const uint32_t handle)
 {
     spi_transmit_burst(CMD_SETSCRATCH);
     spi_transmit_burst(handle);
@@ -3688,8 +3702,8 @@ void EVE_cmd_setscratch_burst(uint32_t handle)
 /**
  * @brief Start a continuous sketch update.
  */
-void EVE_cmd_sketch(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
-                    uint32_t ptr, uint16_t format)
+void EVE_cmd_sketch(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
+                    const uint32_t ptr, const uint16_t format)
 {
     if (0U == cmd_burst)
     {
@@ -3713,8 +3727,8 @@ void EVE_cmd_sketch(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
 /**
  * @brief Start a continuous sketch update, only works in burst-mode.
  */
-void EVE_cmd_sketch_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
-                            uint32_t ptr, uint16_t format)
+void EVE_cmd_sketch_burst(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
+                            const uint32_t ptr, const uint16_t format)
 {
     spi_transmit_burst(CMD_SKETCH);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -3726,8 +3740,8 @@ void EVE_cmd_sketch_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
 /**
  * @brief Draw a slider.
  */
-void EVE_cmd_slider(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
-                    uint16_t options, uint16_t val, uint16_t range)
+void EVE_cmd_slider(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
+                    const uint16_t options, const uint16_t val, const uint16_t range)
 {
     if (0U == cmd_burst)
     {
@@ -3751,8 +3765,8 @@ void EVE_cmd_slider(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
 /**
  * @brief Draw a slider, only works in burst-mode.
  */
-void EVE_cmd_slider_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
-                            uint16_t options, uint16_t val, uint16_t range)
+void EVE_cmd_slider_burst(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
+                            const uint16_t options, const uint16_t val, const uint16_t range)
 {
     spi_transmit_burst(CMD_SLIDER);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -3764,7 +3778,7 @@ void EVE_cmd_slider_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t hgt,
 /**
  * @brief Start an animated spinner.
  */
-void EVE_cmd_spinner(int16_t xc0, int16_t yc0, uint16_t style, uint16_t scale)
+void EVE_cmd_spinner(const int16_t xc0, const int16_t yc0, const uint16_t style, const uint16_t scale)
 {
     if (0U == cmd_burst)
     {
@@ -3784,7 +3798,7 @@ void EVE_cmd_spinner(int16_t xc0, int16_t yc0, uint16_t style, uint16_t scale)
 /**
  * @brief Start an animated spinner, only works in burst-mode.
  */
-void EVE_cmd_spinner_burst(int16_t xc0, int16_t yc0, uint16_t style, uint16_t scale)
+void EVE_cmd_spinner_burst(const int16_t xc0, const int16_t yc0, const uint16_t style, const uint16_t scale)
 {
     spi_transmit_burst(CMD_SPINNER);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -3842,7 +3856,7 @@ void EVE_cmd_swap_burst(void)
 /**
  * @brief Draw a text string.
  */
-void EVE_cmd_text(int16_t xc0, int16_t yc0, uint16_t font, uint16_t options, const char *p_text)
+void EVE_cmd_text(const int16_t xc0, const int16_t yc0, const uint16_t font, const uint16_t options, const char * const p_text)
 {
     if (0U == cmd_burst)
     {
@@ -3864,7 +3878,7 @@ void EVE_cmd_text(int16_t xc0, int16_t yc0, uint16_t font, uint16_t options, con
 /**
  * @brief Draw a text string, only works in burst-mode.
  */
-void EVE_cmd_text_burst(int16_t xc0, int16_t yc0, uint16_t font, uint16_t options, const char *p_text)
+void EVE_cmd_text_burst(const int16_t xc0, const int16_t yc0, const uint16_t font, const uint16_t options, const char * const p_text)
 {
     spi_transmit_burst(CMD_TEXT);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -3875,8 +3889,8 @@ void EVE_cmd_text_burst(int16_t xc0, int16_t yc0, uint16_t font, uint16_t option
 /**
  * @brief Draw a toggle switch with labels.
  */
-void EVE_cmd_toggle(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t font,
-                    uint16_t options, uint16_t state, const char *p_text)
+void EVE_cmd_toggle(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t font,
+                    const uint16_t options, const uint16_t state, const char * const p_text)
 {
     if (0U == cmd_burst)
     {
@@ -3900,8 +3914,8 @@ void EVE_cmd_toggle(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t font,
 /**
  * @brief Draw a toggle switch with labels, only works in burst-mode.
  */
-void EVE_cmd_toggle_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t font,
-                            uint16_t options, uint16_t state, const char *p_text)
+void EVE_cmd_toggle_burst(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t font,
+                            const uint16_t options, const uint16_t state, const char * const p_text)
 {
     spi_transmit_burst(CMD_TOGGLE);
     spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
@@ -3913,7 +3927,7 @@ void EVE_cmd_toggle_burst(int16_t xc0, int16_t yc0, uint16_t wid, uint16_t font,
 /**
  * @brief Apply a translation to the current matrix.
  */
-void EVE_cmd_translate(int32_t tr_x, int32_t tr_y)
+void EVE_cmd_translate(const int32_t tr_x, const int32_t tr_y)
 {
     if (0U == cmd_burst)
     {
@@ -3933,7 +3947,7 @@ void EVE_cmd_translate(int32_t tr_x, int32_t tr_y)
 /**
  * @brief Apply a translation to the current matrix, only works in burst-mode.
  */
-void EVE_cmd_translate_burst(int32_t tr_x, int32_t tr_y)
+void EVE_cmd_translate_burst(const int32_t tr_x, const int32_t tr_y)
 {
     spi_transmit_burst(CMD_TRANSLATE);
     spi_transmit_burst(i32_to_u32(tr_x));
@@ -3951,8 +3965,9 @@ void EVE_cmd_translate_burst(int32_t tr_x, int32_t tr_y)
  * @note - EVE_cmd_dl(CMD_SCREENSAVER);
  * @note - EVE_cmd_dl(VERTEX2F(0,0));
  * @note - EVE_cmd_dl(DL_BEGIN | EVE_RECTS);
+ * @note - use when keeping the binary size small is more important than beeing close to ESE / BRT_AN025
  */
-void EVE_cmd_dl(uint32_t command)
+void EVE_cmd_dl(const uint32_t command)
 {
     if (0U == cmd_burst)
     {
@@ -3968,7 +3983,7 @@ void EVE_cmd_dl(uint32_t command)
 /**
  * @brief Generic function for display-list and coprocessor commands with no arguments, only works in burst-mode.
  */
-void EVE_cmd_dl_burst(uint32_t command)
+void EVE_cmd_dl_burst(const uint32_t command)
 {
     spi_transmit_burst(command);
 }
@@ -4000,7 +4015,7 @@ void EVE_alpha_func_burst(const uint8_t func, const uint8_t ref)
 /**
  * @brief Begin drawing a graphics primitive.
  */
-void EVE_begin(uint32_t prim)
+void EVE_begin(const uint32_t prim)
 {
     if (0U == cmd_burst)
     {
@@ -4170,6 +4185,80 @@ void EVE_bitmap_source_burst(const uint32_t addr)
 }
 
 /**
+ * @brief Specify how new color values are combined with the values already in the color buffer.
+ */
+void EVE_blend_func(const uint8_t src, const uint8_t dst)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(BLEND_FUNC(src, dst));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(BLEND_FUNC(src, dst));
+    }
+}
+
+/**
+ * @brief Specify how new color values are combined with the values already in the color buffer, only works in burst-mode.
+ */
+void EVE_blend_func_burst(const uint8_t src, const uint8_t dst)
+{
+    spi_transmit_burst(BLEND_FUNC(src, dst));
+}
+
+/**
+ * @brief Execute a sequence of commands at another location in the display list.
+ * @note valid range for dest is from zero to 2047
+ */
+void EVE_call(const uint16_t dest)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(CALL(dest));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(CALL(dest));
+    }
+}
+
+/**
+ * @brief Execute a sequence of commands at another location in the display list, only works in burst-mode.
+ * @note valid range for dest is from zero to 2047
+ */
+void EVE_call_burst(const uint16_t dest)
+{
+    spi_transmit_burst(CALL(dest));
+}
+
+/**
+ * @brief Set the bitmap cell number for the VERTEX2F command.
+ */
+void EVE_cell(const uint8_t cell)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(CELL(cell));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(CELL(cell));
+    }
+}
+
+/**
+ * @brief Set the bitmap cell number for the VERTEX2F command, only works in burst-mode.
+ */
+void EVE_cell_burst(const uint8_t cell)
+{
+    spi_transmit_burst(CELL(cell));
+}
+
+/**
  * @brief Clear buffers to preset values.
  */
 void EVE_clear(const uint8_t color, const uint8_t stencil, const uint8_t tag)
@@ -4194,9 +4283,33 @@ void EVE_clear_burst(const uint8_t color, const uint8_t stencil, const uint8_t t
 }
 
 /**
+ * @brief Set clear value for the alpha channel.
+ */
+void EVE_clear_color_a(const uint8_t alpha)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(CLEAR_COLOR_A(alpha));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(CLEAR_COLOR_A(alpha));
+    }
+}
+
+/**
+ * @brief Set clear value for the alpha channel, only works in burst-mode.
+ */
+void EVE_clear_color_a_burst(const uint8_t alpha)
+{
+    spi_transmit_burst(CLEAR_COLOR_A(alpha));
+}
+
+/**
  * @brief Specify clear values for red, green and blue channels.
  */
-void EVE_clear_color_rgb(uint32_t color)
+void EVE_clear_color_rgb(const uint32_t color)
 {
     if (0U == cmd_burst)
     {
@@ -4212,15 +4325,64 @@ void EVE_clear_color_rgb(uint32_t color)
 /**
  * @brief Specify clear values for red, green and blue channels, only works in burst-mode.
  */
-void EVE_clear_color_rgb_burst(uint32_t color)
+void EVE_clear_color_rgb_burst(const uint32_t color)
 {
     spi_transmit_burst(DL_CLEAR_COLOR_RGB | (color & 0x00ffffffUL));
 }
 
 /**
+ * @brief Set clear value for the stencil buffer.
+ */
+void EVE_clear_stencil(const uint8_t val)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(CLEAR_STENCIL(val));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(CLEAR_STENCIL(val));
+    }
+}
+
+/**
+ * @brief Set clear value for the stencil buffer, only works in burst-mode.
+ */
+void EVE_clear_stencil_burst(const uint8_t val)
+{
+    spi_transmit_burst(CLEAR_STENCIL(val));
+}
+
+/**
+ * @brief Set clear value for the tag buffer.
+ */
+void EVE_clear_tag(const uint8_t val)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(CLEAR_TAG(val));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(CLEAR_TAG(val));
+    }
+}
+
+/**
+ * @brief Set clear value for the tag buffer, only works in burst-mode.
+ */
+void EVE_clear_tag_burst(const uint8_t val)
+{
+    spi_transmit_burst(CLEAR_TAG(val));
+}
+
+
+/**
  * @brief Set the current color red, green and blue.
  */
-void EVE_color_rgb(uint32_t color)
+void EVE_color_rgb(const uint32_t color)
 {
     if (0U == cmd_burst)
     {
@@ -4236,7 +4398,7 @@ void EVE_color_rgb(uint32_t color)
 /**
  * @brief Set the current color red, green and blue, only works in burst-mode.
  */
-void EVE_color_rgb_burst(uint32_t color)
+void EVE_color_rgb_burst(const uint32_t color)
 {
     spi_transmit_burst(DL_COLOR_RGB | (color & 0x00ffffffUL));
 }
@@ -4244,7 +4406,7 @@ void EVE_color_rgb_burst(uint32_t color)
 /**
  * @brief Set the current color alpha, green and blue.
  */
-void EVE_color_a(uint8_t alpha)
+void EVE_color_a(const uint8_t alpha)
 {
     if (0U == cmd_burst)
     {
@@ -4260,9 +4422,33 @@ void EVE_color_a(uint8_t alpha)
 /**
  * @brief Set the current color alpha, green and blue, only works in burst-mode.
  */
-void EVE_color_a_burst(uint8_t alpha)
+void EVE_color_a_burst(const uint8_t alpha)
 {
     spi_transmit_burst(DL_COLOR_A | ((uint32_t) alpha));
+}
+
+/**
+ * @brief Enable or disable writing of color components.
+ */
+void EVE_color_mask(const uint8_t red, const uint8_t green, const uint8_t blue, const uint8_t alpha)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(COLOR_MASK(red, green, blue, alpha));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(COLOR_MASK(red, green, blue, alpha));
+    }
+}
+
+/**
+ * @brief Enable or disable writing of color components, only works in burst-mode.
+ */
+void EVE_color_mask_burst(const uint8_t red, const uint8_t green, const uint8_t blue, const uint8_t alpha)
+{
+    spi_transmit_burst(COLOR_MASK(red, green, blue, alpha));
 }
 
 /**
@@ -4311,6 +4497,32 @@ void EVE_end(void)
 void EVE_end_burst(void)
 {
     spi_transmit_burst(DL_END);
+}
+
+/**
+ * @brief Execute commands at another location in the display list.
+ * @note valid range for dest is from zero to 2047
+ */
+void EVE_jump(const uint16_t dest)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(JUMP(dest));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(JUMP(dest));
+    }
+}
+
+/**
+ * @brief Execute commands at another location in the display list.
+ * @note valid range for dest is from zero to 2047
+ */
+void EVE_jump_burst(const uint16_t dest)
+{
+    spi_transmit_burst(JUMP(dest));
 }
 
 /**
@@ -4364,6 +4576,56 @@ void EVE_macro_burst(const uint8_t macro)
 }
 
 /**
+ * @brief No operation.
+ * @note Does nothing. May be used as a spacer in display lists, if required.
+ */
+void EVE_nop(void)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(DL_NOP);
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(DL_NOP);
+    }
+}
+
+/**
+ * @brief No operation, only works in burst-mode.
+ */
+void EVE_nop_burst(void)
+{
+    spi_transmit_burst(DL_NOP);
+}
+
+/**
+ * @brief Set the base address of the palette.
+ * @note 2-byte alignment is required if pixel format is PALETTE4444 or PALETTE565.
+ */
+void EVE_palette_source(const uint32_t addr)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(PALETTE_SOURCE(addr));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(PALETTE_SOURCE(addr));
+    }
+}
+
+/**
+ * @brief Set the base address of the palette, only works in burst-mode.
+ */
+void EVE_palette_source_burst(const uint32_t addr)
+{
+    spi_transmit_burst(PALETTE_SOURCE(addr));
+}
+
+/**
  * @brief Specify the radius of points in 1/16 pixel precision.
  */
 void EVE_point_size(const uint16_t size)
@@ -4388,7 +4650,7 @@ void EVE_point_size_burst(const uint16_t size)
 }
 
 /**
- * @brief PRestore the current graphics context from the context stack.
+ * @brief Restore the current graphics context from the context stack.
  */
 void EVE_restore_context(void)
 {
@@ -4409,6 +4671,30 @@ void EVE_restore_context(void)
 void EVE_restore_context_burst(void)
 {
     spi_transmit_burst(DL_RESTORE_CONTEXT);
+}
+
+/**
+ * @brief Return from a previous CALL command..
+ */
+void EVE_return(void)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(DL_RETURN);
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(DL_RETURN);
+    }
+}
+
+/**
+ * @brief Return from a previous CALL command..
+ */
+void EVE_return_burst(void)
+{
+    spi_transmit_burst(DL_RETURN);
 }
 
 /**
@@ -4436,9 +4722,131 @@ void EVE_save_context_burst(void)
 }
 
 /**
+ * @brief Set the size of the scissor clip rectangle.
+ * @note valid range for width and height is from zero to 2048
+ */
+void EVE_scissor_size(const uint16_t width, const uint16_t height)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(SCISSOR_SIZE(width, height));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(SCISSOR_SIZE(width, height));
+    }
+}
+
+/**
+ * @brief Set the size of the scissor clip rectangle, only works in burst-mode.
+ */
+void EVE_scissor_size_burst(const uint16_t width, const uint16_t height)
+{
+    spi_transmit_burst(SCISSOR_SIZE(width, height));
+}
+
+/**
+ * @brief Specify the top left corner of the scissor clip rectangle.
+ * @note valid range for width and height is from zero to 2047
+ */
+void EVE_scissor_xy(const uint16_t xc0, const uint16_t yc0)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(SCISSOR_XY(xc0, yc0));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(SCISSOR_XY(xc0, yc0));
+    }
+}
+
+/**
+ * @brief Specify the top left corner of the scissor clip rectangle, only works in burst-mode.
+ */
+void EVE_scissor_xy_burst(const uint16_t xc0, const uint16_t yc0)
+{
+    spi_transmit_burst(SCISSOR_XY(xc0, yc0));
+}
+
+/**
+ * @brief Set function and reference value for stencil testing.
+ */
+void EVE_stencil_func(const uint8_t func, const uint8_t ref, const uint8_t mask)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(STENCIL_FUNC(func, ref, mask));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(STENCIL_FUNC(func, ref, mask));
+    }
+}
+
+/**
+ * @brief Set function and reference value for stencil testing, only works in burst-mode.
+ */
+void EVE_stencil_func_burst(const uint8_t func, const uint8_t ref, const uint8_t mask)
+{
+    spi_transmit_burst(STENCIL_FUNC(func, ref, mask));
+}
+
+/**
+ * @brief Control the writing of individual bits in the stencil planes.
+ */
+void EVE_stencil_mask(const uint8_t mask)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(STENCIL_MASK(mask));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(STENCIL_MASK(mask));
+    }
+}
+
+/**
+ * @brief Control the writing of individual bits in the stencil planes, only works in burst-mode.
+ */
+void EVE_stencil_mask_burst(const uint8_t mask)
+{
+    spi_transmit_burst(STENCIL_MASK(mask));
+}
+
+/**
+ * @brief Set stencil test actions.
+ */
+void EVE_stencil_op(const uint8_t sfail, const uint8_t spass)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(STENCIL_OP(sfail, spass));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(STENCIL_OP(sfail, spass));
+    }
+}
+
+/**
+ * @brief Set stencil test actions, only works in burst-mode.
+ */
+void EVE_stencil_op_burst(const uint8_t sfail, const uint8_t spass)
+{
+    spi_transmit_burst(STENCIL_OP(sfail, spass));
+}
+
+/**
  * @brief Attach the tag value for the following graphics objects drawn on the screen.
  */
-void EVE_tag(uint8_t tag)
+void EVE_tag(const uint8_t tag)
 {
     if (0U == cmd_burst)
     {
@@ -4454,9 +4862,33 @@ void EVE_tag(uint8_t tag)
 /**
  * @brief Attach the tag value for the following graphics objects drawn on the screen, only works in burst-mode.
  */
-void EVE_tag_burst(uint8_t tag)
+void EVE_tag_burst(const uint8_t tag)
 {
     spi_transmit_burst(DL_TAG | tag);
+}
+
+/**
+ * @brief Control the writing of the tag buffer.
+ */
+void EVE_tag_mask(const uint8_t mask)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(TAG_MASK(mask));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(TAG_MASK(mask));
+    }
+}
+
+/**
+ * @brief Control the writing of the tag buffer, only works in burst-mode.
+ */
+void EVE_tag_mask_burst(const uint8_t mask)
+{
+    spi_transmit_burst(TAG_MASK(mask));
 }
 
 /**
@@ -4529,4 +4961,52 @@ void EVE_vertex_format(const uint8_t frac)
 void EVE_vertex_format_burst(const uint8_t frac)
 {
     spi_transmit_burst(VERTEX_FORMAT(frac));
+}
+
+/**
+ * @brief Set the vertex transformations X translation component.
+ */
+void EVE_vertex_translate_x(const int32_t xco)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(VERTEX_TRANSLATE_X(xco));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(VERTEX_TRANSLATE_X(xco));
+    }
+}
+
+/**
+ * @brief Set the vertex transformations X translation component, only works in burst-mode.
+ */
+void EVE_vertex_translate_x_burst(const int32_t xco)
+{
+    spi_transmit_burst(VERTEX_TRANSLATE_X(xco));
+}
+
+/**
+ * @brief Set the vertex transformations Y translation component.
+ */
+void EVE_vertex_translate_y(const int32_t yco)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(VERTEX_TRANSLATE_Y(yco));
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(VERTEX_TRANSLATE_Y(yco));
+    }
+}
+
+/**
+ * @brief Set the vertex transformations Y translation component, only works in burst-mode.
+ */
+void EVE_vertex_translate_y_burst(const int32_t yco)
+{
+    spi_transmit_burst(VERTEX_TRANSLATE_Y(yco));
 }
