@@ -2,14 +2,14 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 5.0
-@date    2024-11-17
+@date    2025-06-02
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2024 Rudolph Riedel
+Copyright (c) 2016-2025 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -72,6 +72,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - replaced the last function-like macro with a static inline function: EVE_PIPS(n)
 - Compliance: fixed BARR-C:2018 Rule 1.8b violations
 - dropped CMD_SYNC a tier from EVE3 to EVE2
+- fixed BITMAP_SOURCE to use 24 bit and therefore allow FLASH sources on BT81x
 
 */
 
@@ -691,7 +692,7 @@ static inline uint32_t BITMAP_SIZE_H(const uint16_t width, const uint16_t height
  */
 static inline uint32_t BITMAP_SOURCE(const uint32_t addr)
 {
-    return (DL_BITMAP_SOURCE | (addr & 0x3FFFFFUL));
+    return (DL_BITMAP_SOURCE | (addr & 0xFFFFFFUL));
 }
 
 #if EVE_GEN < 3 /* only define these for FT81x */
