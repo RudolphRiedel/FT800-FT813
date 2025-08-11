@@ -1062,4 +1062,93 @@ void EVE_SPI_Init(void)
 #endif /* __MSP432P401R__ */
 #endif /* __TI_ARM__ */
 
+#if defined (LINUX_LIBGPIOD)
+
+static struct gpiod_chip *gpio_chip = NULL;
+struct gpiod_line *pd_n_line = NULL;
+struct gpiod_line *cs_line = NULL;
+spi_handle_t spi_fd = -1;
+
+eve_init_spi_ret_code_t EVE_init_spi(void)
+{
+    spi_fd = open(EVE_SPI, O_RDWR);
+    if (spi_fd < 0) {
+        return EVE_INIT_SPI_OPEN_ERR;
+    }
+    uint8_t mode = EVE_SPI_MODE;
+    int ret = ioctl(spi_fd, SPI_IOC_WR_MODE, &mode);
+    if (ret < 0) {
+        close(spi_fd);
+        return EVE_INIT_SPI_SET_MODE_ERR;
+    }
+
+    uint8_t bits = EVE_SPI_BITS_PER_WORD;
+    ret = ioctl(spi_fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
+    if (ret < 0) {
+        close(spi_fd);
+        return EVE_INIT_SPI_SET_BITS_PER_WORD_ERR;
+    }
+
+    uint32_t speed = EVE_SPI_SPEED;
+    ret = ioctl(spi_fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
+    if (ret < 0) {
+        close(spi_fd);
+        return EVE_INIT_SPI_SET_MAX_SPEED_ERR;
+    }
+
+    return EVE_INIT_SPI_OK;
+}
+
+void EVE_deinit_spi(void)
+{
+    close(spi_fd);
+}
+
+eve_init_gpio_ret_code_t EVE_init_gpio(void)
+{
+    gpio_chip = gpiod_chip_open_by_name(EVE_GPIO_CHIP);
+    if (!gpio_chip) {
+        return EVE_INIT_GPIO_CHIP_ERR;
+    }
+
+    pd_n_line = gpiod_chip_get_line(gpio_chip, EVE_PDN);
+    if (!pd_n_line) {
+        gpiod_chip_close(gpio_chip);
+        return -2;
+        return EVE_INIT_GPIO_PDN_GET_LINE_ERR;
+    }
+
+    cs_line = gpiod_chip_get_line(gpio_chip, EVE_CS);
+    if (!cs_line) {
+        gpiod_line_release(pd_n_line);
+        gpiod_chip_close(gpio_chip);
+        return EVE_INIT_GPIO_CS_GET_LINE_ERR;
+    }
+
+    if (gpiod_line_request_output(pd_n_line, "EVE", 1) < 0) {
+        gpiod_line_release(pd_n_line);
+        gpiod_line_release(cs_line);
+        gpiod_chip_close(gpio_chip);
+        return EVE_INIT_GPIO_PDN_REQUEST_OUTPUT_ERR;
+    }
+
+    if (gpiod_line_request_output(cs_line, "EVE", 1) < 0) {
+        gpiod_line_release(pd_n_line);
+        gpiod_line_release(cs_line);
+        gpiod_chip_close(gpio_chip);
+        return EVE_INIT_GPIO_CS_REQUEST_OUTPUT_ERR;
+    }
+
+    return EVE_INIT_GPIO_OK;
+}
+
+void EVE_deinit_gpio(void)
+{
+    gpiod_line_release(pd_n_line);
+    gpiod_line_release(cs_line);
+    gpiod_chip_close(gpio_chip);
+}
+
+#endif /* LINUX_LIBGPIOD */
+
 #endif
