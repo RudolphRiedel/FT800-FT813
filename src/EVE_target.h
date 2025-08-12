@@ -335,6 +335,15 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* ################################################################## */
 /* ################################################################## */
 
+#if defined (LINUX_LIBGPIOD)
+
+#include "EVE_target/EVE_target_Linux_libgpiod.h"
+
+#endif /* LINUX_LIBGPIOD */
+
+/* ################################################################## */
+/* ################################################################## */
+
 #endif /* !Arduino */
 
 #if defined (ARDUINO)
