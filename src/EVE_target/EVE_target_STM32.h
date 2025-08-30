@@ -2,14 +2,14 @@
 @file    EVE_target_STM32.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2024-10-17
+@date    2025-08-30
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2024 Rudolph Riedel
+Copyright (c) 2016-2025 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -38,6 +38,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - fix: switched EVE_cs_clear() and EVE_cs_set() from using LL to using HAL after making
   the very weird observation that CS was not rising high in between two consecutive
   host commands while sending three host commands was just fine - see issue #136
+- Bugfix: STM32F103 does not use gpio_init.Alternate for HAL_GPIO_Init()
 
 */
 
@@ -134,7 +135,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 
 #if !defined (EVE_SPI_GPIO_ALT_FUNCTION)
+#if !defined (STM32F1) /* we need this on all families except STM32F1 */
 #error "EVE_SPI_GPIO_ALT_FUNCTION must be defined in order to configure the SPI GPIO pins (e.g. -DEVE_SPI_GPIO_ALT_FUNCTION=GPIO_AF5_SPI4)"
+#endif
 #endif
 
 /* you may define these in your build-environment to use different settings */

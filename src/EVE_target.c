@@ -2,14 +2,14 @@
 @file    EVE_target.c
 @brief   target specific functions for plain C targets
 @version 5.0
-@date    2024-10-16
+@date    2025-08-30
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2024 Rudolph Riedel
+Copyright (c) 2016-2025 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -60,6 +60,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - added STM32WB55xx to the STM32 target
 - reworked STM32 support, DMA is working for at least the F407, DMA for the H7 is still WIP
 - Bugfix: #136 thanks to Jwf68 on Github, EVE_PDN_PORT_NUM -> EVE_PD_PORT_NUM
+- Bugfix: STM32F103 does not use gpio_init.Alternate for HAL_GPIO_Init()
 
  */
 
@@ -320,7 +321,9 @@ void EVE_init_spi(void)
     gpio_init.Mode = GPIO_MODE_AF_PP;
     gpio_init.Pull = GPIO_NOPULL;
     gpio_init.Speed = GPIO_SPEED_FREQ_HIGH;
+#if !defined (STM32F1) /* we need this on all families except STM32F1 */
     gpio_init.Alternate = EVE_SPI_GPIO_ALT_FUNCTION;
+#endif
     HAL_GPIO_Init(EVE_SPI_PORT, &gpio_init);
 
     eve_spi_handle.Instance = EVE_SPI;
