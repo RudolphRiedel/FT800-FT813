@@ -192,6 +192,12 @@
     <Compile Include="EmbeddedVideoEngine\EVE_config.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="EmbeddedVideoEngine\EVE_supplemental.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="EmbeddedVideoEngine\EVE_supplemental.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="EmbeddedVideoEngine\EVE_target.c">
       <SubType>compile</SubType>
     </Compile>
