@@ -9,7 +9,7 @@
 
 MIT License
 
-Copyright (c) 2016-2023 Rudolph Riedel
+Copyright (c) 2016-2025 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -71,7 +71,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #if defined (ARDUINO_METRO_M4)
 
-#include "EVE_target.h"
+#include "EVE.h"
 #include "EVE_commands.h"
 
 #include <Adafruit_ZeroDMA.h>
@@ -127,7 +127,7 @@ void EVE_start_dma_transfer(void)
 
 #if defined (ARDUINO_NUCLEO_F446RE)
 
-#include "EVE_target.h"
+#include "EVE.h"
 #include "EVE_commands.h"
 
 SPI_HandleTypeDef eve_spi_handle;
@@ -237,7 +237,7 @@ void EVE_start_dma_transfer(void)
     || defined (ARDUINO_TEENSY35) \
     || defined (ARDUINO_TEENSY40)
 
-#include "EVE_target.h"
+#include "EVE.h"
 #include <SPI.h>
 
 #if defined (EVE_DMA)
@@ -274,7 +274,7 @@ void EVE_start_dma_transfer(void)
 
 #if defined (ARDUINO_RASPBERRY_PI_PICO)
 
-#include "EVE_target.h"
+#include "EVE.h"
 #include "EVE_commands.h"
 
 void EVE_init_spi(void)
@@ -284,9 +284,9 @@ void EVE_init_spi(void)
     gpio_set_function(EVE_MOSI, GPIO_FUNC_SPI);
 
 /* trap:
-    ArduinoCore-mbed/cores/arduino/mbed/targets/TARGET_RASPBERRYPI/TARGET_RP2040/pico-sdk/rp2_common/hardware_spi/include/hardware/spi.h 
+    ArduinoCore-mbed/cores/arduino/mbed/targets/TARGET_RASPBERRYPI/TARGET_RP2040/pico-sdk/rp2_common/hardware_spi/include/hardware/spi.h
     is not the same as:
-    pico-sdk/src/rp2_common/hardware_spi/include/hardware/spi.h 
+    pico-sdk/src/rp2_common/hardware_spi/include/hardware/spi.h
     The function spi_init() was renamed to _spi_init().
 */
         _spi_init(EVE_SPI, 8000000U);
@@ -341,7 +341,7 @@ void EVE_start_dma_transfer(void)
 
 #if defined (ARDUINO_UNOR4_MINIMA) || defined (ARDUINO_UNOR4_WIFI)
 
-//#include "EVE_target.h"
+
 #include "EVE.h"
 #include <SPI.h>
 
@@ -486,7 +486,7 @@ void EVE_start_dma_transfer(void)
 
 #if defined (ESP32)
 
-#include "EVE_target.h"
+
 #include "EVE.h"
 #include <SPI.h>
 

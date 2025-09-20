@@ -9,7 +9,7 @@
 
 MIT License
 
-Copyright (c) 2016-2023 Rudolph Riedel
+Copyright (c) 2016-2025 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -168,7 +168,7 @@ static inline uint8_t spi_receive(uint8_t data)
 static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 {
     /* do we have an AVR with more than 64kB FLASH memory? */
-#if defined (__AVR_HAVE_ELPM__) 
+#if defined (__AVR_HAVE_ELPM__)
     return (pgm_read_byte_far(data));
 #else
     return (pgm_read_byte_near(data));

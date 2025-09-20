@@ -308,7 +308,7 @@ extern SPI_HandleTypeDef eve_spi_handle;
     #define EVE_DMA_CHANNEL DMA_CHANNEL_7
 #endif
 
-extern volatile uint32_t EVE_dma_buffer[1025U];
+extern volatile uint32_t EVE_dma_buffer[];
 extern volatile uint16_t EVE_dma_buffer_index;
 extern volatile uint8_t EVE_dma_busy;
 
@@ -354,7 +354,7 @@ static inline void spi_transmit(uint8_t data)
 
 static inline void spi_transmit_32(uint32_t data)
 {
-    spi_transmit((uint8_t)(data & 0x000000ff));
+    spi_transmit((uint8_t)(data & 0x000000ffUL));
     spi_transmit((uint8_t)(data >> 8));
     spi_transmit((uint8_t)(data >> 16));
     spi_transmit((uint8_t)(data >> 24));

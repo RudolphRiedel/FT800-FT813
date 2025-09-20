@@ -9,7 +9,7 @@
 
 MIT License
 
-Copyright (c) 2016-2023 Rudolph Riedel
+Copyright (c) 2016-2025 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -134,7 +134,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 
 #if defined (EVE_DMA)
-    extern uint32_t EVE_dma_buffer[1025U];
+    extern uint32_t EVE_dma_buffer[];
     extern volatile uint16_t EVE_dma_buffer_index;
     extern volatile uint8_t EVE_dma_busy;
 
