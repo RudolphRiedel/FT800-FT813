@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2024-12-16
+@date    2026-01-10
 @author  Rudolph Riedel
 
 @section info
@@ -15,7 +15,7 @@ The c-standard is C99.
 
 MIT License
 
-Copyright (c) 2016-2024 Rudolph Riedel
+Copyright (c) 2016-2026 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -210,6 +210,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - added EVE_vertex_translate_x() / EVE_vertex_translate_x_burst()
 - added EVE_vertex_translate_y() / EVE_vertex_translate_y_burst()
 - added "const" statements for BARR-C:2018 / CERT C compliance
+- implemented EVE_cmd_memwrite() and EVE_cmd_memwrite_burst()
 
 */
 
@@ -1257,32 +1258,6 @@ void EVE_cmd_memset(const uint32_t ptr, const uint8_t value, const uint32_t num)
     EVE_cs_clear();
     EVE_execute_cmd();
 }
-
-/**
- * @brief Write bytes into memory using the coprocessor.
- * @note - Commented out, just use one of the EVE_memWrite* helper functions to directly write to EVEs memory.
- * @note - Meant to be called outside display-list building.
- * @note - Includes executing the command and waiting for completion.
- * @note - Does not support burst-mode.
- */
-#if 0
-void EVE_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *p_data)
-{
-    eve_begin_cmd(CMD_MEMWRITE);
-    spi_transmit_32(dest);
-    spi_transmit_32(num);
-
-    num = (num + 3U) & (~3U);
-
-    for (uint32_t count = 0U; count<len; count++)
-    {
-        spi_transmit(pgm_read_byte_far(p_data + count));
-    }
-
-    EVE_cs_clear();
-    EVE_execute_cmd();
-}
-#endif
 
 /**
  * @brief Write zero to RAM_G.
@@ -3294,6 +3269,88 @@ void EVE_cmd_loadidentity(void)
 void EVE_cmd_loadidentity_burst(void)
 {
     spi_transmit_burst(CMD_LOADIDENTITY);
+}
+
+/**
+ * @brief Use the coprocessor to write to memory.
+ * @note: this does NOT check the length, this is meant to be used with
+ * display list updates, you need to make sure that you are not overfilling RAM_CMD
+ */
+void EVE_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *p_data)
+{
+    if (0U == cmd_burst)
+    {
+        eve_begin_cmd(CMD_MEMWRITE);
+        spi_transmit_32(dest);
+        spi_transmit_32(num);
+
+        num = (num + 3U) & (~3U);
+
+        for (uint32_t count = 0U; count<num; count++)
+        {
+            spi_transmit(p_data[count]);
+        }
+
+        EVE_cs_clear();
+    }
+    else
+    {
+        spi_transmit_burst(CMD_MEMWRITE);
+        spi_transmit_burst(dest);
+        spi_transmit_burst(num);
+
+        uint32_t num_words  = (num + 3U) / 4;
+
+        for (uint32_t wordindex = 0U; wordindex < num_words; wordindex++)
+        {
+            uint32_t calc = 0U;
+            for (uint8_t index = 0U; index < 4U; index++)
+            {
+                uint32_t bytepos = (wordindex * 4U) + index;
+                uint8_t data = 0U;
+
+                if (bytepos < num)
+                {
+                    data = p_data[bytepos];
+                }
+
+                calc += ((uint32_t)data) << (index * 8U);
+            }
+            spi_transmit_burst(calc);
+        }
+    }
+}
+
+/**
+ * @brief Use the coprocessor to write to memory, only works in burst-mode.
+ * @note: this does NOT check the length, this is meant to be used with
+ * display list updates, you need to make sure that you are not overfilling RAM_CMD
+ */
+void EVE_cmd_memwrite_burst(uint32_t dest, uint32_t num, const uint8_t *p_data)
+{
+    spi_transmit_burst(CMD_MEMWRITE);
+    spi_transmit_burst(dest);
+    spi_transmit_burst(num);
+
+    uint32_t num_words  = (num + 3U) / 4;
+
+    for (uint32_t wordindex = 0U; wordindex < num_words; wordindex++)
+    {
+        uint32_t calc = 0U;
+        for (uint8_t index = 0U; index < 4U; index++)
+        {
+            uint32_t bytepos = (wordindex * 4U) + index;
+            uint8_t data = 0U;
+
+            if (bytepos < num)
+            {
+                data = p_data[bytepos];
+            }
+
+            calc += ((uint32_t)data) << (index * 8U);
+        }
+        spi_transmit_burst(calc);
+    }
 }
 
 /**
