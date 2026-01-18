@@ -11,7 +11,7 @@ This is missing everything to make this a demo:
 
 */
 
-#include "EVE_target.h"
+#include "EVE.h"
 #include "tft.h"
 
 #if 0
@@ -103,7 +103,7 @@ void SystemClock_Config(void)
 
 volatile uint8_t system_tick = 0;
 
-void SysTick_Handler(void) /* the HAL definition for this is inconsistent across STM32 families, so we roll our own */ 
+void SysTick_Handler(void) /* the HAL definition for this is inconsistent across STM32 families, so we roll our own */
 {
     system_tick = 42;
 }
@@ -118,11 +118,11 @@ int main(void)
 //  SystemClock_Config();
     HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/200U); /*Configure the SysTick to have interrupts in 5ms time basis*/
 
-//  EVE_init_spi();
-//  EVE_init_dma();
+    EVE_init_spi();
+  //EVE_init_dma();
 
     TFT_init();
-    
+
     while(1)
     {
         if(system_tick)

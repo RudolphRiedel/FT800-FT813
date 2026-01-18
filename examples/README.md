@@ -89,11 +89,15 @@ It builds for several STM32 across almost all families:
 |STM32G431|SUCCESS|
 |nucleo_f439zi|SUCCESS|
 |nucleo_h743zi|SUCCESS|
+|STM32F407|SUCCESS|
 
 These all share a single "main.c" with the functions SysTick_Handler() and main().
 It builds the complete EVE code including hardware specific SPI functions due to use
 of the STM32 HAL library in EVE_target.h.
 But it does not initialize any of the controllers, not the clock, not the pins, not the SPI.
+Calls for EVE_init_spi() and the TFT_xx() functions are in main.c and this is how these
+could be used, but again, this merely confirms that it compiles.
+The library code works, I used it from STM32CubeIDE across a number of STM32.
 
 
 ## Examples using Microchip Studio

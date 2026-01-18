@@ -2,14 +2,14 @@
 @file    EVE_target_STM32.h
 @brief   target specific includes, definitions and functions
 @version 5.0
-@date    2025-08-30
+@date    2026-01-18
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2025 Rudolph Riedel
+Copyright (c) 2016-2026 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -39,11 +39,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   the very weird observation that CS was not rising high in between two consecutive
   host commands while sending three host commands was just fine - see issue #136
 - Bugfix: STM32F103 does not use gpio_init.Alternate for HAL_GPIO_Init()
+- added the option to include a custom settings file thru EVE_SPI_CONFIG_H
 
 */
 
-#ifndef EVE_TARGET_STM32_H
-#define EVE_TARGET_STM32_H
+#ifndef EVE_TARGET_STM32_GUARD
+#define EVE_TARGET_STM32_GUARD
 
 #if !defined (ARDUINO)
 #if defined (__GNUC__)
@@ -112,6 +113,17 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "stm32wbxx_hal.h"
 #include "stm32wbxx_ll_spi.h"
 #include "stm32wbxx_ll_gpio.h"
+#endif
+
+/* use this to add a header file with your custom spi configuration */
+/* -DEVE_SPI_CONFIG_H='"..\eve_spi_config.h"' */
+/* -DEVE_SPI_CONFIG_H='"eve_spi_config.h"' */
+#if defined (EVE_SPI_CONFIG_H)
+#   if __has_include(EVE_SPI_CONFIG_H)
+#       include EVE_SPI_CONFIG_H
+#   else
+#       error "EVE_SPI_CONFIG_H defined but file not found"
+#   endif
 #endif
 
 /* you may define these in your build-environment to use different settings */
@@ -394,4 +406,4 @@ static inline uint8_t fetch_flash_byte(const uint8_t *p_data)
 
 #endif /* __GNUC__ */
 #endif /* !Arduino */
-#endif /* EVE_TARGET_STM32_H */
+#endif /* EVE_TARGET_STM32_GUARD */
