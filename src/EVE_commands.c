@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2026-01-10
+@date    2026-04-19
 @author  Rudolph Riedel
 
 @section info
@@ -224,7 +224,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 
 /* define NULL if it not already is */
 #ifndef NULL
-#include <stdio.h>
+#include <stddef.h>
 #endif
 
 static volatile uint8_t cmd_burst = 0U; /* flag to indicate cmd-burst is active */

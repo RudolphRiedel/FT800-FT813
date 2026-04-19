@@ -2,14 +2,14 @@
 @file    EVE_supplemental.h
 @brief   supplemental functions
 @version 5.0
-@date    2026-03-28
+@date    2026-04-19
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2024 Rudolph Riedel
+Copyright (c) 2016-2026 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -46,7 +46,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* define NULL if it not already is */
 #ifndef NULL
-#include <stdio.h>
+#include <stddef.h>
 #endif
 
 #if defined (__AVR__)
