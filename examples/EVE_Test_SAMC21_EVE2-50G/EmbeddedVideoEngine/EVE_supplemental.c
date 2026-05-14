@@ -2,14 +2,14 @@
 @file    EVE_supplemental.h
 @brief   supplemental functions
 @version 5.0
-@date    2024-12-16
+@date    2026-04-19
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2024 Rudolph Riedel
+Copyright (c) 2016-2026 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -38,6 +38,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - added EVE_calibrate_write() and EVE_calibrate_read()
 - replaced several EVE_cmd_dl() calls with calls to dedicated functions
 - added "const" statements for BARR-C:2018 / CERT C compliance
+- fix: EVE_polar_cartesian() sign aware rounding
 
 */
 
@@ -45,7 +46,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* define NULL if it not already is */
 #ifndef NULL
-#include <stdio.h>
+#include <stddef.h>
 #endif
 
 #if defined (__AVR__)
@@ -131,7 +132,8 @@ void EVE_polar_cartesian(const uint16_t length, const uint16_t angle, int16_t * 
     if (p_xc0 != NULL)
     {
         int32_t calc = (int16_t) length;
-        calc = ((calc * (sine_table[anglev])) + 64) / 128;
+        calc = (calc * (int32_t)sine_table[anglev]);
+        calc = (calc >= 0) ? (calc + 63) / 127 : (calc - 63) / 127;
         *p_xc0 = (int16_t) calc;
     }
 
@@ -141,7 +143,8 @@ void EVE_polar_cartesian(const uint16_t length, const uint16_t angle, int16_t * 
         anglev = anglev % 360U;
 
         int32_t calc = (int16_t) length;
-        calc = ((calc * (sine_table[anglev])) + 64) / 128;
+        calc = (calc * (int32_t)sine_table[anglev]);
+        calc = (calc >= 0) ? (calc + 63) / 127 : (calc - 63) / 127;
         *p_yc0 = (int16_t) calc;
     }
 }

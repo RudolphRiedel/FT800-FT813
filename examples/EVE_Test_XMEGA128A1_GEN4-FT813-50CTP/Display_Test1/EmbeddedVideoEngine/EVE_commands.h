@@ -2,14 +2,14 @@
 @file    EVE_commands.h
 @brief   contains FT8xx / BT8xx function prototypes
 @version 5.0
-@date    2024-12-16
+@date    2026-01-10
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2024 Rudolph Riedel
+Copyright (c) 2016-2026 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -137,6 +137,7 @@ EVE_cmd_animstartram_burst()
 - added EVE_vertex_translate_x() / EVE_vertex_translate_x_burst()
 - added EVE_vertex_translate_y() / EVE_vertex_translate_y_burst()
 - added "const" statements for BARR-C:2018 / CERT C compliance
+- implemented EVE_cmd_memwrite() and EVE_cmd_memwrite_burst()
 
 */
 
@@ -273,7 +274,6 @@ void EVE_cmd_sync_burst(void);
 void EVE_cmd_track(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt, const uint16_t tag);
 void EVE_cmd_videoframe(const uint32_t dest, const uint32_t result_ptr);
 void EVE_cmd_videostart(void);
-/*void EVE_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *p_data);*/
 /*uint32_t EVE_cmd_regread(uint32_t ptr);*/
 
 /* ##################################################################
@@ -409,6 +409,8 @@ void EVE_cmd_keys_burst(const int16_t xc0, const int16_t yc0, const uint16_t wid
                         const uint16_t font, const uint16_t options, const char * const p_text);
 void EVE_cmd_loadidentity(void);
 void EVE_cmd_loadidentity_burst(void);
+void EVE_cmd_memwrite(uint32_t dest, uint32_t num, const uint8_t *p_data);
+void EVE_cmd_memwrite_burst(uint32_t dest, uint32_t num, const uint8_t *p_data);
 void EVE_cmd_number(const int16_t xc0, const int16_t yc0, const uint16_t font, const uint16_t options, const int32_t number);
 void EVE_cmd_number_burst(const int16_t xc0, const int16_t yc0, const uint16_t font, const uint16_t options, const int32_t number);
 void EVE_cmd_progress(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
