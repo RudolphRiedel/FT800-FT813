@@ -2,14 +2,14 @@
 @file    EVE.h
 @brief   Contains FT80x/FT81x/BT81x API definitions
 @version 5.0
-@date    2025-06-02
+@date    2026-05-17
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2025 Rudolph Riedel
+Copyright (c) 2016-2026 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -73,6 +73,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - Compliance: fixed BARR-C:2018 Rule 1.8b violations
 - dropped CMD_SYNC a tier from EVE3 to EVE2
 - fixed BITMAP_SOURCE to use 24 bit and therefore allow FLASH sources on BT81x
+- Compliance: fixed linter warnings
 
 */
 
@@ -99,9 +100,9 @@ extern "C"
 #define EVE_RAM_CMD       ((uint32_t) 0x00308000UL)
 
 /* Memory buffer sizes */
-#define EVE_RAM_G_SIZE   ((uint32_t) 1024U*1024UL)
-#define EVE_CMDFIFO_SIZE ((uint32_t) 4U*1024UL)
-#define EVE_RAM_DL_SIZE  ((uint32_t) 8U*1024UL)
+#define EVE_RAM_G_SIZE   ((uint32_t) 1024UL*1024UL)
+#define EVE_CMDFIFO_SIZE ((uint32_t) 4096UL)
+#define EVE_RAM_DL_SIZE  ((uint32_t) 8192UL)
 
 /* diplay list commands, most need OR's arguments */
 #define DL_DISPLAY       ((uint32_t) 0x00000000UL)
@@ -154,68 +155,68 @@ extern "C"
 #define DL_VERTEX2F     ((uint32_t) 0x40000000UL)
 #define DL_VERTEX2II    ((uint32_t) 0x80000000UL)
 
-#define CLR_COL     ((uint8_t) 0x4U)
-#define CLR_STN     ((uint8_t) 0x2U)
-#define CLR_TAG     ((uint8_t) 0x1U)
+#define CLR_COL     ((uint8_t) 0x4)
+#define CLR_STN     ((uint8_t) 0x2)
+#define CLR_TAG     ((uint8_t) 0x1)
 
 /* Host commands */
-#define EVE_ACTIVE       ((uint8_t) 0x00U) /* place EVE in active state */
-#define EVE_STANDBY      ((uint8_t) 0x41U) /* place EVE in Standby (clk running) */
-#define EVE_SLEEP        ((uint8_t) 0x42U) /* place EVE in Sleep (clk off) */
-#define EVE_CLKEXT       ((uint8_t) 0x44U) /* select external clock source */
+#define EVE_ACTIVE       ((uint8_t) 0x00) /* place EVE in active state */
+#define EVE_STANDBY      ((uint8_t) 0x41) /* place EVE in Standby (clk running) */
+#define EVE_SLEEP        ((uint8_t) 0x42) /* place EVE in Sleep (clk off) */
+#define EVE_CLKEXT       ((uint8_t) 0x44) /* select external clock source */
 #if EVE_GEN < 4
 #define EVE_CLKINT       ((uint8_t) 0x48U) /* select internal clock source, not a valid option for BT817 / BT818 */
 #endif
-#define EVE_PWRDOWN      ((uint8_t) 0x50U) /* place EVE in Power Down (core off) */
-#define EVE_CLKSEL       ((uint8_t) 0x61U) /* configure system clock */
-#define EVE_RST_PULSE    ((uint8_t) 0x68U) /* reset core - all registers default and processors reset */
-#define EVE_CORERST      ((uint8_t) 0x68U) /* reset core - all registers default and processors reset */
-#define EVE_PINDRIVE     ((uint8_t) 0x70U) /* setup drive strength for various pins */
-#define EVE_PIN_PD_STATE ((uint8_t) 0x71U) /* setup how pins behave during power down */
+#define EVE_PWRDOWN      ((uint8_t) 0x50) /* place EVE in Power Down (core off) */
+#define EVE_CLKSEL       ((uint8_t) 0x61) /* configure system clock */
+#define EVE_RST_PULSE    ((uint8_t) 0x68) /* reset core - all registers default and processors reset */
+#define EVE_CORERST      ((uint8_t) 0x68) /* reset core - all registers default and processors reset */
+#define EVE_PINDRIVE     ((uint8_t) 0x70) /* setup drive strength for various pins */
+#define EVE_PIN_PD_STATE ((uint8_t) 0x71) /* setup how pins behave during power down */
 
 /* Graphic command defines */
-#define EVE_NEVER      ((uint8_t) 0UL)
-#define EVE_LESS       ((uint8_t) 1UL)
-#define EVE_LEQUAL     ((uint8_t) 2UL)
-#define EVE_GREATER    ((uint8_t) 3UL)
-#define EVE_GEQUAL     ((uint8_t) 4UL)
-#define EVE_EQUAL      ((uint8_t) 5UL)
-#define EVE_NOTEQUAL   ((uint8_t) 6UL)
-#define EVE_ALWAYS     ((uint8_t) 7UL)
+#define EVE_NEVER      ((uint8_t) 0)
+#define EVE_LESS       ((uint8_t) 1)
+#define EVE_LEQUAL     ((uint8_t) 2)
+#define EVE_GREATER    ((uint8_t) 3)
+#define EVE_GEQUAL     ((uint8_t) 4)
+#define EVE_EQUAL      ((uint8_t) 5)
+#define EVE_NOTEQUAL   ((uint8_t) 6)
+#define EVE_ALWAYS     ((uint8_t) 7)
 
 /* Bitmap formats */
-#define EVE_ARGB1555   ((uint8_t) 0UL)
-#define EVE_L1         ((uint8_t) 1UL)
-#define EVE_L4         ((uint8_t) 2UL)
-#define EVE_L8         ((uint8_t) 3UL)
-#define EVE_RGB332     ((uint8_t) 4UL)
-#define EVE_ARGB2      ((uint8_t) 5UL)
-#define EVE_ARGB4      ((uint8_t) 6UL)
-#define EVE_RGB565     ((uint8_t) 7UL)
-#define EVE_PALETTED   ((uint8_t) 8UL)
-#define EVE_TEXT8X8    ((uint8_t) 9UL)
-#define EVE_TEXTVGA    ((uint8_t) 10UL)
-#define EVE_BARGRAPH   ((uint8_t) 11UL)
+#define EVE_ARGB1555   ((uint8_t) 0)
+#define EVE_L1         ((uint8_t) 1)
+#define EVE_L4         ((uint8_t) 2)
+#define EVE_L8         ((uint8_t) 3)
+#define EVE_RGB332     ((uint8_t) 4)
+#define EVE_ARGB2      ((uint8_t) 5)
+#define EVE_ARGB4      ((uint8_t) 6)
+#define EVE_RGB565     ((uint8_t) 7)
+#define EVE_PALETTED   ((uint8_t) 8)
+#define EVE_TEXT8X8    ((uint8_t) 9)
+#define EVE_TEXTVGA    ((uint8_t) 10)
+#define EVE_BARGRAPH   ((uint8_t) 11)
 
 /* Bitmap filter types */
-#define EVE_NEAREST    ((uint8_t) 0UL)
-#define EVE_BILINEAR   ((uint8_t) 1UL)
+#define EVE_NEAREST    ((uint8_t) 0)
+#define EVE_BILINEAR   ((uint8_t) 1)
 
 /* Bitmap wrap types */
-#define EVE_BORDER     ((uint8_t) 0UL)
-#define EVE_REPEAT     ((uint8_t) 1UL)
+#define EVE_BORDER     ((uint8_t) 0)
+#define EVE_REPEAT     ((uint8_t) 1)
 
 /* Stencil defines */
-#define EVE_KEEP       ((uint8_t) 1UL)
-#define EVE_REPLACE    ((uint8_t) 2UL)
-#define EVE_INCR       ((uint8_t) 3UL)
-#define EVE_DECR       ((uint8_t) 4UL)
-#define EVE_INVERT     ((uint8_t) 5UL)
+#define EVE_KEEP       ((uint8_t) 1)
+#define EVE_REPLACE    ((uint8_t) 2)
+#define EVE_INCR       ((uint8_t) 3)
+#define EVE_DECR       ((uint8_t) 4)
+#define EVE_INVERT     ((uint8_t) 5)
 
 /* Graphics display list swap defines */
-#define EVE_DLSWAP_DONE   ((uint8_t) 0UL)
-#define EVE_DLSWAP_LINE   ((uint8_t) 1UL)
-#define EVE_DLSWAP_FRAME  ((uint8_t) 2UL)
+#define EVE_DLSWAP_DONE   ((uint8_t) 0)
+#define EVE_DLSWAP_LINE   ((uint8_t) 1)
+#define EVE_DLSWAP_FRAME  ((uint8_t) 2)
 
 /* Interrupt bits */
 #define EVE_INT_SWAP          ((uint8_t) 0x01)
@@ -228,10 +229,10 @@ extern "C"
 #define EVE_INT_CONVCOMPLETE  ((uint8_t) 0x80)
 
 /* Touch mode */
-#define EVE_TMODE_OFF        ((uint8_t) 0U)
-#define EVE_TMODE_ONESHOT    ((uint8_t) 1U)
-#define EVE_TMODE_FRAME      ((uint8_t) 2U)
-#define EVE_TMODE_CONTINUOUS ((uint8_t) 3U)
+#define EVE_TMODE_OFF        ((uint8_t) 0)
+#define EVE_TMODE_ONESHOT    ((uint8_t) 1)
+#define EVE_TMODE_FRAME      ((uint8_t) 2)
+#define EVE_TMODE_CONTINUOUS ((uint8_t) 3)
 
 /* Alpha blending */
 #define EVE_ZERO                 ((uint32_t) 0UL)
@@ -265,7 +266,7 @@ extern "C"
 #define EVE_OPT_FLAT             ((uint16_t) 256U)
 #define EVE_OPT_CENTERX          ((uint16_t) 512U)
 #define EVE_OPT_CENTERY          ((uint16_t) 1024U)
-#define EVE_OPT_CENTER           (EVE_OPT_CENTERX | EVE_OPT_CENTERY)
+#define EVE_OPT_CENTER           ((uint16_t) (EVE_OPT_CENTERX | EVE_OPT_CENTERY))
 #define EVE_OPT_NOBACK           ((uint16_t) 4096U)
 #define EVE_OPT_NOTICKS          ((uint16_t) 8192U)
 #define EVE_OPT_NOHM             ((uint16_t) 16384U)
@@ -295,36 +296,36 @@ extern "C"
 #define EVE_ADPCM_SAMPLES        ((uint32_t) 2UL) /* 4bit ima adpcm samples */
 
 /* Synthesized sound */
-#define EVE_SILENCE      ((uint8_t) 0x00U)
-#define EVE_SQUAREWAVE   ((uint8_t) 0x01U)
-#define EVE_SINEWAVE     ((uint8_t) 0x02U)
-#define EVE_SAWTOOTH     ((uint8_t) 0x03U)
-#define EVE_TRIANGLE     ((uint8_t) 0x04U)
-#define EVE_BEEPING      ((uint8_t) 0x05U)
-#define EVE_ALARM        ((uint8_t) 0x06U)
-#define EVE_WARBLE       ((uint8_t) 0x07U)
-#define EVE_CAROUSEL     ((uint8_t) 0x08U)
-#define EVE_HARP         ((uint8_t) 0x40U)
-#define EVE_XYLOPHONE    ((uint8_t) 0x41U)
-#define EVE_TUBA         ((uint8_t) 0x42U)
-#define EVE_GLOCKENSPIEL ((uint8_t) 0x43U)
-#define EVE_ORGAN        ((uint8_t) 0x44U)
-#define EVE_TRUMPET      ((uint8_t) 0x45U)
-#define EVE_PIANO        ((uint8_t) 0x46U)
-#define EVE_CHIMES       ((uint8_t) 0x47U)
-#define EVE_MUSICBOX     ((uint8_t) 0x48U)
-#define EVE_BELL         ((uint8_t) 0x49U)
-#define EVE_CLICK        ((uint8_t) 0x50U)
-#define EVE_SWITCH       ((uint8_t) 0x51U)
-#define EVE_COWBELL      ((uint8_t) 0x52U)
-#define EVE_NOTCH        ((uint8_t) 0x53U)
-#define EVE_HIHAT        ((uint8_t) 0x54U)
-#define EVE_KICKDRUM     ((uint8_t) 0x55U)
-#define EVE_POP          ((uint8_t) 0x56U)
-#define EVE_CLACK        ((uint8_t) 0x57U)
-#define EVE_CHACK        ((uint8_t) 0x58U)
-#define EVE_MUTE         ((uint8_t) 0x60U)
-#define EVE_UNMUTE       ((uint8_t) 0x61U)
+#define EVE_SILENCE      ((uint8_t) 0x00)
+#define EVE_SQUAREWAVE   ((uint8_t) 0x01)
+#define EVE_SINEWAVE     ((uint8_t) 0x02)
+#define EVE_SAWTOOTH     ((uint8_t) 0x03)
+#define EVE_TRIANGLE     ((uint8_t) 0x04)
+#define EVE_BEEPING      ((uint8_t) 0x05)
+#define EVE_ALARM        ((uint8_t) 0x06)
+#define EVE_WARBLE       ((uint8_t) 0x07)
+#define EVE_CAROUSEL     ((uint8_t) 0x08)
+#define EVE_HARP         ((uint8_t) 0x40)
+#define EVE_XYLOPHONE    ((uint8_t) 0x41)
+#define EVE_TUBA         ((uint8_t) 0x42)
+#define EVE_GLOCKENSPIEL ((uint8_t) 0x43)
+#define EVE_ORGAN        ((uint8_t) 0x44)
+#define EVE_TRUMPET      ((uint8_t) 0x45)
+#define EVE_PIANO        ((uint8_t) 0x46)
+#define EVE_CHIMES       ((uint8_t) 0x47)
+#define EVE_MUSICBOX     ((uint8_t) 0x48)
+#define EVE_BELL         ((uint8_t) 0x49)
+#define EVE_CLICK        ((uint8_t) 0x50)
+#define EVE_SWITCH       ((uint8_t) 0x51)
+#define EVE_COWBELL      ((uint8_t) 0x52)
+#define EVE_NOTCH        ((uint8_t) 0x53)
+#define EVE_HIHAT        ((uint8_t) 0x54)
+#define EVE_KICKDRUM     ((uint8_t) 0x55)
+#define EVE_POP          ((uint8_t) 0x56)
+#define EVE_CLACK        ((uint8_t) 0x57)
+#define EVE_CHACK        ((uint8_t) 0x58)
+#define EVE_MUTE         ((uint8_t) 0x60)
+#define EVE_UNMUTE       ((uint8_t) 0x61)
 
 //#define EVE_PIPS(n)      ((uint8_t) (0x0FU + (n)))
 /**
@@ -338,103 +339,103 @@ static inline uint8_t EVE_PIPS(const uint8_t num)
 }
 
 /* Synthesized sound frequencies, midi note */
-#define EVE_MIDI_A0   ((uint8_t) 21U)
-#define EVE_MIDI_A_0  ((uint8_t) 22U)
-#define EVE_MIDI_B0   ((uint8_t) 23U)
-#define EVE_MIDI_C1   ((uint8_t) 24U)
-#define EVE_MIDI_C_1  ((uint8_t) 25U)
-#define EVE_MIDI_D1   ((uint8_t) 26U)
-#define EVE_MIDI_D_1  ((uint8_t) 27U)
-#define EVE_MIDI_E1   ((uint8_t) 28U)
-#define EVE_MIDI_F1   ((uint8_t) 29U)
-#define EVE_MIDI_F_1  ((uint8_t) 30U)
-#define EVE_MIDI_G1   ((uint8_t) 31U)
-#define EVE_MIDI_G_1  ((uint8_t) 32U)
-#define EVE_MIDI_A1   ((uint8_t) 33U)
-#define EVE_MIDI_A_1  ((uint8_t) 34U)
-#define EVE_MIDI_B1   ((uint8_t) 35U)
-#define EVE_MIDI_C2   ((uint8_t) 36U)
-#define EVE_MIDI_C_2  ((uint8_t) 37U)
-#define EVE_MIDI_D2   ((uint8_t) 38U)
-#define EVE_MIDI_D_2  ((uint8_t) 39U)
-#define EVE_MIDI_E2   ((uint8_t) 40U)
-#define EVE_MIDI_F2   ((uint8_t) 41U)
-#define EVE_MIDI_F_2  ((uint8_t) 42U)
-#define EVE_MIDI_G2   ((uint8_t) 43U)
-#define EVE_MIDI_G_2  ((uint8_t) 44U)
-#define EVE_MIDI_A2   ((uint8_t) 45U)
-#define EVE_MIDI_A_2  ((uint8_t) 46U)
-#define EVE_MIDI_B2   ((uint8_t) 47U)
-#define EVE_MIDI_C3   ((uint8_t) 48U)
-#define EVE_MIDI_C_3  ((uint8_t) 49U)
-#define EVE_MIDI_D3   ((uint8_t) 50U)
-#define EVE_MIDI_D_3  ((uint8_t) 51U)
-#define EVE_MIDI_E3   ((uint8_t) 52U)
-#define EVE_MIDI_F3   ((uint8_t) 53U)
-#define EVE_MIDI_F_3  ((uint8_t) 54U)
-#define EVE_MIDI_G3   ((uint8_t) 55U)
-#define EVE_MIDI_G_3  ((uint8_t) 56U)
-#define EVE_MIDI_A3   ((uint8_t) 57U)
-#define EVE_MIDI_A_3  ((uint8_t) 58U)
-#define EVE_MIDI_B3   ((uint8_t) 59U)
-#define EVE_MIDI_C4   ((uint8_t) 60U)
-#define EVE_MIDI_C_4  ((uint8_t) 61U)
-#define EVE_MIDI_D4   ((uint8_t) 62U)
-#define EVE_MIDI_D_4  ((uint8_t) 63U)
-#define EVE_MIDI_E4   ((uint8_t) 64U)
-#define EVE_MIDI_F4   ((uint8_t) 65U)
-#define EVE_MIDI_F_4  ((uint8_t) 66U)
-#define EVE_MIDI_G4   ((uint8_t) 67U)
-#define EVE_MIDI_G_4  ((uint8_t) 68U)
-#define EVE_MIDI_A4   ((uint8_t) 69U)
-#define EVE_MIDI_A_4  ((uint8_t) 70U)
-#define EVE_MIDI_B4   ((uint8_t) 71U)
-#define EVE_MIDI_C5   ((uint8_t) 72U)
-#define EVE_MIDI_C_5  ((uint8_t) 73U)
-#define EVE_MIDI_D5   ((uint8_t) 74U)
-#define EVE_MIDI_D_5  ((uint8_t) 75U)
-#define EVE_MIDI_E5   ((uint8_t) 76U)
-#define EVE_MIDI_F5   ((uint8_t) 77U)
-#define EVE_MIDI_F_5  ((uint8_t) 78U)
-#define EVE_MIDI_G5   ((uint8_t) 79U)
-#define EVE_MIDI_G_5  ((uint8_t) 80U)
-#define EVE_MIDI_A5   ((uint8_t) 81U)
-#define EVE_MIDI_A_5  ((uint8_t) 82U)
-#define EVE_MIDI_B5   ((uint8_t) 83U)
-#define EVE_MIDI_C6   ((uint8_t) 84U)
-#define EVE_MIDI_C_6  ((uint8_t) 85U)
-#define EVE_MIDI_D6   ((uint8_t) 86U)
-#define EVE_MIDI_D_6  ((uint8_t) 87U)
-#define EVE_MIDI_E6   ((uint8_t) 88U)
-#define EVE_MIDI_F6   ((uint8_t) 89U)
-#define EVE_MIDI_F_6  ((uint8_t) 90U)
-#define EVE_MIDI_G6   ((uint8_t) 91U)
-#define EVE_MIDI_G_6  ((uint8_t) 92U)
-#define EVE_MIDI_A6   ((uint8_t) 93U)
-#define EVE_MIDI_A_6  ((uint8_t) 94U)
-#define EVE_MIDI_B6   ((uint8_t) 95U)
-#define EVE_MIDI_C7   ((uint8_t) 96U)
-#define EVE_MIDI_C_7  ((uint8_t) 97U)
-#define EVE_MIDI_D7   ((uint8_t) 98U)
-#define EVE_MIDI_D_7  ((uint8_t) 99U)
-#define EVE_MIDI_E7   ((uint8_t) 100U)
-#define EVE_MIDI_F7   ((uint8_t) 101U)
-#define EVE_MIDI_F_7  ((uint8_t) 102U)
-#define EVE_MIDI_G7   ((uint8_t) 103U)
-#define EVE_MIDI_G_7  ((uint8_t) 104U)
-#define EVE_MIDI_A7   ((uint8_t) 105U)
-#define EVE_MIDI_A_7  ((uint8_t) 106U)
-#define EVE_MIDI_B7   ((uint8_t) 107U)
-#define EVE_MIDI_C8   ((uint8_t) 108U)
+#define EVE_MIDI_A0   ((uint8_t) 21)
+#define EVE_MIDI_A_0  ((uint8_t) 22)
+#define EVE_MIDI_B0   ((uint8_t) 23)
+#define EVE_MIDI_C1   ((uint8_t) 24)
+#define EVE_MIDI_C_1  ((uint8_t) 25)
+#define EVE_MIDI_D1   ((uint8_t) 26)
+#define EVE_MIDI_D_1  ((uint8_t) 27)
+#define EVE_MIDI_E1   ((uint8_t) 28)
+#define EVE_MIDI_F1   ((uint8_t) 29)
+#define EVE_MIDI_F_1  ((uint8_t) 30)
+#define EVE_MIDI_G1   ((uint8_t) 31)
+#define EVE_MIDI_G_1  ((uint8_t) 32)
+#define EVE_MIDI_A1   ((uint8_t) 33)
+#define EVE_MIDI_A_1  ((uint8_t) 34)
+#define EVE_MIDI_B1   ((uint8_t) 35)
+#define EVE_MIDI_C2   ((uint8_t) 36)
+#define EVE_MIDI_C_2  ((uint8_t) 37)
+#define EVE_MIDI_D2   ((uint8_t) 38)
+#define EVE_MIDI_D_2  ((uint8_t) 39)
+#define EVE_MIDI_E2   ((uint8_t) 40)
+#define EVE_MIDI_F2   ((uint8_t) 41)
+#define EVE_MIDI_F_2  ((uint8_t) 42)
+#define EVE_MIDI_G2   ((uint8_t) 43)
+#define EVE_MIDI_G_2  ((uint8_t) 44)
+#define EVE_MIDI_A2   ((uint8_t) 45)
+#define EVE_MIDI_A_2  ((uint8_t) 46)
+#define EVE_MIDI_B2   ((uint8_t) 47)
+#define EVE_MIDI_C3   ((uint8_t) 48)
+#define EVE_MIDI_C_3  ((uint8_t) 49)
+#define EVE_MIDI_D3   ((uint8_t) 50)
+#define EVE_MIDI_D_3  ((uint8_t) 51)
+#define EVE_MIDI_E3   ((uint8_t) 52)
+#define EVE_MIDI_F3   ((uint8_t) 53)
+#define EVE_MIDI_F_3  ((uint8_t) 54)
+#define EVE_MIDI_G3   ((uint8_t) 55)
+#define EVE_MIDI_G_3  ((uint8_t) 56)
+#define EVE_MIDI_A3   ((uint8_t) 57)
+#define EVE_MIDI_A_3  ((uint8_t) 58)
+#define EVE_MIDI_B3   ((uint8_t) 59)
+#define EVE_MIDI_C4   ((uint8_t) 60)
+#define EVE_MIDI_C_4  ((uint8_t) 61)
+#define EVE_MIDI_D4   ((uint8_t) 62)
+#define EVE_MIDI_D_4  ((uint8_t) 63)
+#define EVE_MIDI_E4   ((uint8_t) 64)
+#define EVE_MIDI_F4   ((uint8_t) 65)
+#define EVE_MIDI_F_4  ((uint8_t) 66)
+#define EVE_MIDI_G4   ((uint8_t) 67)
+#define EVE_MIDI_G_4  ((uint8_t) 68)
+#define EVE_MIDI_A4   ((uint8_t) 69)
+#define EVE_MIDI_A_4  ((uint8_t) 70)
+#define EVE_MIDI_B4   ((uint8_t) 71)
+#define EVE_MIDI_C5   ((uint8_t) 72)
+#define EVE_MIDI_C_5  ((uint8_t) 73)
+#define EVE_MIDI_D5   ((uint8_t) 74)
+#define EVE_MIDI_D_5  ((uint8_t) 75)
+#define EVE_MIDI_E5   ((uint8_t) 76)
+#define EVE_MIDI_F5   ((uint8_t) 77)
+#define EVE_MIDI_F_5  ((uint8_t) 78)
+#define EVE_MIDI_G5   ((uint8_t) 79)
+#define EVE_MIDI_G_5  ((uint8_t) 80)
+#define EVE_MIDI_A5   ((uint8_t) 81)
+#define EVE_MIDI_A_5  ((uint8_t) 82)
+#define EVE_MIDI_B5   ((uint8_t) 83)
+#define EVE_MIDI_C6   ((uint8_t) 84)
+#define EVE_MIDI_C_6  ((uint8_t) 85)
+#define EVE_MIDI_D6   ((uint8_t) 86)
+#define EVE_MIDI_D_6  ((uint8_t) 87)
+#define EVE_MIDI_E6   ((uint8_t) 88)
+#define EVE_MIDI_F6   ((uint8_t) 89)
+#define EVE_MIDI_F_6  ((uint8_t) 90)
+#define EVE_MIDI_G6   ((uint8_t) 91)
+#define EVE_MIDI_G_6  ((uint8_t) 92)
+#define EVE_MIDI_A6   ((uint8_t) 93)
+#define EVE_MIDI_A_6  ((uint8_t) 94)
+#define EVE_MIDI_B6   ((uint8_t) 95)
+#define EVE_MIDI_C7   ((uint8_t) 96)
+#define EVE_MIDI_C_7  ((uint8_t) 97)
+#define EVE_MIDI_D7   ((uint8_t) 98)
+#define EVE_MIDI_D_7  ((uint8_t) 99)
+#define EVE_MIDI_E7   ((uint8_t) 100)
+#define EVE_MIDI_F7   ((uint8_t) 101)
+#define EVE_MIDI_F_7  ((uint8_t) 102)
+#define EVE_MIDI_G7   ((uint8_t) 103)
+#define EVE_MIDI_G_7  ((uint8_t) 104)
+#define EVE_MIDI_A7   ((uint8_t) 105)
+#define EVE_MIDI_A_7  ((uint8_t) 106)
+#define EVE_MIDI_B7   ((uint8_t) 107)
+#define EVE_MIDI_C8   ((uint8_t) 108)
 
 /* GPIO bits */
-#define EVE_GPIO0  ((uint8_t) 0U)
-#define EVE_GPIO1  ((uint8_t) 1U) /* default gpio pin for audio shutdown, 1 - enable, 0 - disable */
-#define EVE_GPIO7  ((uint8_t) 7U) /* default gpio pin for display enable, 1 - enable, 0 - disable */
+#define EVE_GPIO0  ((uint8_t) 0)
+#define EVE_GPIO1  ((uint8_t) 1) /* default gpio pin for audio shutdown, 1 - enable, 0 - disable */
+#define EVE_GPIO7  ((uint8_t) 7) /* default gpio pin for display enable, 1 - enable, 0 - disable */
 
 /* Display rotation */
-#define EVE_DISPLAY_0   ((uint8_t) 0U) /* 0 degrees rotation */
-#define EVE_DISPLAY_180 ((uint8_t) 1U) /* 180 degrees rotation */
+#define EVE_DISPLAY_0   ((uint8_t) 0) /* 0 degrees rotation */
+#define EVE_DISPLAY_180 ((uint8_t) 1) /* 180 degrees rotation */
 
 /* Commands */
 #define CMD_APPEND       ((uint32_t) 0xFFFFFF1EUL)

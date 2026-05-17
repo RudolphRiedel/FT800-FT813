@@ -2,14 +2,14 @@
 @file    EVE_supplemental.h
 @brief   prototypes for supplemental functions
 @version 5.0
-@date    2024-12-16
+@date    2026-05-17
 @author  Rudolph Riedel
 
 @section LICENSE
 
 MIT License
 
-Copyright (c) 2016-2024 Rudolph Riedel
+Copyright (c) 2016-2026 Rudolph Riedel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -35,14 +35,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - moved EVE_calibrate_manual() over from EVE_commands
 - added EVE_calibrate_write() and EVE_calibrate_read()
 - added "const" statements for BARR-C:2018 / CERT C compliance
+- Compliance: fixed linter warnings
 
 */
 
 #ifndef EVE_SUPPLEMENTAL_H
 #define EVE_SUPPLEMENTAL_H
-
-#include "EVE.h"
-#include "EVE_commands.h"
 
 #ifdef __cplusplus
 extern "C"
