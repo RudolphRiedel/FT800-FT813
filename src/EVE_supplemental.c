@@ -2,7 +2,7 @@
 @file    EVE_supplemental.h
 @brief   supplemental functions
 @version 5.0
-@date    2026-05-17
+@date    2026-05-24
 @author  Rudolph Riedel
 
 @section LICENSE
@@ -40,6 +40,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 - added "const" statements for BARR-C:2018 / CERT C compliance
 - fix: EVE_polar_cartesian() sign aware rounding
 - Compliance: fixed linter warnings
+- removed PROGMEM as the AVR is not a good target for EVE_polar_cartesian() anyways
+   and things only get worse when reading sine_table[] from flash
 
 */
 
@@ -49,12 +51,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* define NULL if it not already is */
 #ifndef NULL
 #include <stddef.h>
-#endif
-
-#if defined (__AVR__)
-#include <avr/pgmspace.h>
-#else
-#define PROGMEM
 #endif
 
 /*
@@ -90,7 +86,7 @@ void EVE_widget_rectangle(const int16_t xc0, const int16_t yc0, const int16_t wi
     EVE_restore_context();
 }
 
-static const int8_t sine_table[360] PROGMEM =
+static const int8_t sine_table[360] =
 {
     0, 2, 4, 7, 9, 11, 13, 15, 18, 20, 22, 24, 26, 29, 31, 33, 35, 37, 39, 41,
     43, 46, 48, 50, 52, 54, 56, 58, 60, 62, 63, 65, 67, 69, 71, 73, 75, 76, 78,
