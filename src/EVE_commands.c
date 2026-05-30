@@ -2,12 +2,12 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2026-05-17
+@date    2026-05-30
 @author  Rudolph Riedel
 
 @section info
 
-At least for Arm Cortex-M0 and Cortex-M4 I have fastest execution with -O2.
+At least for Arm Cortex-M0 and Cortex-M4, the fastest observed execution is with -O2.
 The c-standard is C99.
 
 
@@ -213,6 +213,7 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - implemented EVE_cmd_memwrite() and EVE_cmd_memwrite_burst()
 - split private_string_write() and made the new private_string_write_burst() about 20% faster
 - Compliance: fixed linter warnings
+- mmoved computations out of branches - minor codesize optimization with no performance impact
 
 */
 
@@ -934,7 +935,10 @@ void EVE_cmd_flashspitx(const uint32_t num, const uint8_t * const p_data)
     eve_begin_cmd(CMD_FLASHSPITX);
     spi_transmit_32(num);
     EVE_cs_clear();
-    block_transfer(p_data, num);
+    if (p_data != NULL)
+    {
+        block_transfer(p_data, num);
+    }
 }
 
 /**
@@ -1962,10 +1966,12 @@ static void private_string_write_burst(const char * const p_text)
  */
 void EVE_cmd_animframeram(const int16_t xc0, const int16_t yc0, const uint32_t aoptr, const uint32_t frame)
 {
+    const uint32_t param = i16_i16_to_u32(xc0, yc0);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_ANIMFRAMERAM);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
+        spi_transmit_32(param);
         spi_transmit_32(aoptr);
         spi_transmit_32(frame);
         EVE_cs_clear();
@@ -1973,7 +1979,7 @@ void EVE_cmd_animframeram(const int16_t xc0, const int16_t yc0, const uint32_t a
     else
     {
         spi_transmit_burst(CMD_ANIMFRAMERAM);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
+        spi_transmit_burst(param);
         spi_transmit_burst(aoptr);
         spi_transmit_burst(frame);
     }
@@ -2207,10 +2213,12 @@ void EVE_cmd_animdraw_burst(const int32_t chnl)
  */
 void EVE_cmd_animframe(const int16_t xc0, const int16_t yc0, const uint32_t aoptr, const uint32_t frame)
 {
+    const uint32_t param = i16_i16_to_u32(xc0, yc0);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_ANIMFRAME);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
+        spi_transmit_32(param);
         spi_transmit_32(aoptr);
         spi_transmit_32(frame);
         EVE_cs_clear();
@@ -2218,7 +2226,7 @@ void EVE_cmd_animframe(const int16_t xc0, const int16_t yc0, const uint32_t aopt
     else
     {
         spi_transmit_burst(CMD_ANIMFRAME);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
+        spi_transmit_burst(param);
         spi_transmit_burst(aoptr);
         spi_transmit_burst(frame);
     }
@@ -2300,18 +2308,20 @@ void EVE_cmd_animstop_burst(const int32_t chnl)
  */
 void EVE_cmd_animxy(const int32_t chnl, const int16_t xc0, const int16_t yc0)
 {
+    const uint32_t param = i16_i16_to_u32(xc0, yc0);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_ANIMXY);
         spi_transmit_32(i32_to_u32(chnl));
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
+        spi_transmit_32(param);
         EVE_cs_clear();
     }
     else
     {
         spi_transmit_burst(CMD_ANIMXY);
         spi_transmit_burst(i32_to_u32(chnl));
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
+        spi_transmit_burst(param);
     }
 }
 
@@ -2468,21 +2478,24 @@ void EVE_cmd_fillwidth_burst(const uint32_t pixel)
  */
 void EVE_cmd_gradienta(const int16_t xc0, const int16_t yc0, const uint32_t argb0, const int16_t xc1, const int16_t yc1, const uint32_t argb1)
 {
+    const uint32_t param0 = i16_i16_to_u32(xc0, yc0);
+    const uint32_t param1 = i16_i16_to_u32(xc1, yc1);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_GRADIENTA);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
+        spi_transmit_32(param0);
         spi_transmit_32(argb0);
-        spi_transmit_32(i16_i16_to_u32(xc1, yc1));
+        spi_transmit_32(param1);
         spi_transmit_32(argb1);
         EVE_cs_clear();
     }
     else
     {
         spi_transmit_burst(CMD_GRADIENTA);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
+        spi_transmit_burst(param0);
         spi_transmit_burst(argb0);
-        spi_transmit_burst(i16_i16_to_u32(xc1, yc1));
+        spi_transmit_burst(param1);
         spi_transmit_burst(argb1);
     }
 }
@@ -2504,12 +2517,14 @@ void EVE_cmd_gradienta_burst(const int16_t xc0, const int16_t yc0, const uint32_
  */
 void EVE_cmd_rotatearound(const int32_t xc0, const int32_t yc0, const uint32_t angle, const int32_t scale)
 {
+    const uint32_t param = angle & UINT32_C(0xFFFF);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_ROTATEAROUND);
         spi_transmit_32(i32_to_u32(xc0));
         spi_transmit_32(i32_to_u32(yc0));
-        spi_transmit_32(angle & UINT32_C(0xFFFF));
+        spi_transmit_32(param);
         spi_transmit_32(i32_to_u32(scale));
         EVE_cs_clear();
     }
@@ -2518,7 +2533,7 @@ void EVE_cmd_rotatearound(const int32_t xc0, const int32_t yc0, const uint32_t a
         spi_transmit_burst(CMD_ROTATEAROUND);
         spi_transmit_burst(i32_to_u32(xc0));
         spi_transmit_burst(i32_to_u32(yc0));
-        spi_transmit_burst(angle & UINT32_C(0xFFFF));
+        spi_transmit_burst(param);
         spi_transmit_burst(i32_to_u32(scale));
     }
 }
@@ -2544,12 +2559,16 @@ void EVE_cmd_button_var(const int16_t xc0, const int16_t yc0, const uint16_t wid
                         const uint16_t font, const uint16_t options, const char * const p_text,
                         const uint8_t num_args, const uint32_t * const p_arguments)
 {
+    const uint32_t param0 = i16_i16_to_u32(xc0, yc0);
+    const uint32_t param1 = u16_u16_to_u32(wid, hgt);
+    const uint32_t param2 = u16_u16_to_u32(font, options);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_BUTTON);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_32(u16_u16_to_u32(wid, hgt));
-        spi_transmit_32(u16_u16_to_u32(font, options));
+        spi_transmit_32(param0);
+        spi_transmit_32(param1);
+        spi_transmit_32(param2);
         private_string_write(p_text);
 
         if (((uint16_t) (options & EVE_OPT_FORMAT)) != 0U)
@@ -2567,9 +2586,9 @@ void EVE_cmd_button_var(const int16_t xc0, const int16_t yc0, const uint16_t wid
     else
     {
         spi_transmit_burst(CMD_BUTTON);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_burst(u16_u16_to_u32(wid, hgt));
-        spi_transmit_burst(u16_u16_to_u32(font, options));
+        spi_transmit_burst(param0);
+        spi_transmit_burst(param1);
+        spi_transmit_burst(param2);
         private_string_write_burst(p_text);
 
         if (((uint16_t) (options & EVE_OPT_FORMAT)) != 0U)
@@ -2620,11 +2639,14 @@ void EVE_cmd_button_var_burst(const int16_t xc0, const int16_t yc0, const uint16
 void EVE_cmd_text_var(const int16_t xc0, const int16_t yc0, const uint16_t font, const uint16_t options,
                         const char * const p_text, const uint8_t num_args, const uint32_t * const p_arguments)
 {
+    const uint32_t param0 = i16_i16_to_u32(xc0, yc0);
+    const uint32_t param1 = u16_u16_to_u32(font, options);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_TEXT);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_32(u16_u16_to_u32(font, options));
+        spi_transmit_32(param0);
+        spi_transmit_32(param1);
         private_string_write(p_text);
 
         if (((uint16_t) (options & EVE_OPT_FORMAT)) != 0U)
@@ -2642,8 +2664,8 @@ void EVE_cmd_text_var(const int16_t xc0, const int16_t yc0, const uint16_t font,
     else
     {
         spi_transmit_burst(CMD_TEXT);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_burst(u16_u16_to_u32(font, options));
+        spi_transmit_burst(param0);
+        spi_transmit_burst(param1);
         private_string_write_burst(p_text);
 
         if (((uint16_t) (options & EVE_OPT_FORMAT)) != 0U)
@@ -2694,12 +2716,16 @@ void EVE_cmd_toggle_var(const int16_t xc0, const int16_t yc0, const uint16_t wid
                         const uint16_t options, const uint16_t state, const char * const p_text,
                         const uint8_t num_args, const uint32_t * const p_arguments)
 {
+    const uint32_t param0 = i16_i16_to_u32(xc0, yc0);
+    const uint32_t param1 = u16_u16_to_u32(wid, font);
+    const uint32_t param2 = u16_u16_to_u32(options, state);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_TOGGLE);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_32(u16_u16_to_u32(wid, font));
-        spi_transmit_32(u16_u16_to_u32(options, state));
+        spi_transmit_32(param0);
+        spi_transmit_32(param1);
+        spi_transmit_32(param2);
         private_string_write(p_text);
 
         if (((uint16_t) (options & EVE_OPT_FORMAT)) != 0U)
@@ -2717,9 +2743,9 @@ void EVE_cmd_toggle_var(const int16_t xc0, const int16_t yc0, const uint16_t wid
     else
     {
         spi_transmit_burst(CMD_TOGGLE);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_burst(u16_u16_to_u32(wid, font));
-        spi_transmit_burst(u16_u16_to_u32(options, state));
+        spi_transmit_burst(param0);
+        spi_transmit_burst(param1);
+        spi_transmit_burst(param2);
         private_string_write_burst(p_text);
 
         if (((uint16_t) (options & EVE_OPT_FORMAT)) != 0U)
@@ -2771,14 +2797,16 @@ void EVE_cmd_toggle_var_burst(const int16_t xc0, const int16_t yc0, const uint16
  */
 void EVE_bitmap_ext_format(const uint16_t format)
 {
+    const uint32_t param = BITMAP_EXT_FORMAT(format);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(BITMAP_EXT_FORMAT(format));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(BITMAP_EXT_FORMAT(format));
+        spi_transmit_burst(param);
     }
 }
 
@@ -2795,14 +2823,16 @@ void EVE_bitmap_ext_format_burst(const uint16_t format)
  */
 void EVE_bitmap_swizzle(const uint8_t red, const uint8_t green, const uint8_t blue, const uint8_t alpha)
 {
+    const uint32_t param = BITMAP_SWIZZLE(red, green, blue, alpha);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(BITMAP_SWIZZLE(red, green, blue, alpha));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(BITMAP_SWIZZLE(red, green, blue, alpha));
+        spi_transmit_burst(param);
     }
 }
 
@@ -2883,21 +2913,25 @@ void EVE_cmd_bgcolor_burst(const uint32_t color)
 void EVE_cmd_button(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
                     const uint16_t font, const uint16_t options, const char * const p_text)
 {
+    const uint32_t param0 = i16_i16_to_u32(xc0, yc0);
+    const uint32_t param1 = u16_u16_to_u32(wid, hgt);
+    const uint32_t param2 = u16_u16_to_u32(font, options);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_BUTTON);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_32(u16_u16_to_u32(wid, hgt));
-        spi_transmit_32(u16_u16_to_u32(font, options));
+        spi_transmit_32(param0);
+        spi_transmit_32(param1);
+        spi_transmit_32(param2);
         private_string_write(p_text);
         EVE_cs_clear();
     }
     else
     {
         spi_transmit_burst(CMD_BUTTON);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_burst(u16_u16_to_u32(wid, hgt));
-        spi_transmit_burst(u16_u16_to_u32(font, options));
+        spi_transmit_burst(param0);
+        spi_transmit_burst(param1);
+        spi_transmit_burst(param2);
         private_string_write_burst(p_text);
     }
 }
@@ -2935,22 +2969,27 @@ void EVE_cmd_calibrate(void)
 void EVE_cmd_clock(const int16_t xc0, const int16_t yc0, const uint16_t rad, const uint16_t options,
                     const uint16_t hours, const uint16_t mins, const uint16_t secs, const uint16_t msecs)
 {
+    const uint32_t param0 = i16_i16_to_u32(xc0, yc0);
+    const uint32_t param1 = u16_u16_to_u32(rad, options);
+    const uint32_t param2 = u16_u16_to_u32(hours, mins);
+    const uint32_t param3 = u16_u16_to_u32(secs, msecs);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_CLOCK);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_32(u16_u16_to_u32(rad, options));
-        spi_transmit_32(u16_u16_to_u32(hours, mins));
-        spi_transmit_32(u16_u16_to_u32(secs, msecs));
+        spi_transmit_32(param0);
+        spi_transmit_32(param1);
+        spi_transmit_32(param2);
+        spi_transmit_32(param3);
         EVE_cs_clear();
     }
     else
     {
         spi_transmit_burst(CMD_CLOCK);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_burst(u16_u16_to_u32(rad, options));
-        spi_transmit_burst(u16_u16_to_u32(hours, mins));
-        spi_transmit_burst(u16_u16_to_u32(secs, msecs));
+        spi_transmit_burst(param0);
+        spi_transmit_burst(param1);
+        spi_transmit_burst(param2);
+        spi_transmit_burst(param3);
     }
 }
 
@@ -2972,20 +3011,24 @@ void EVE_cmd_clock_burst(const int16_t xc0, const int16_t yc0, const uint16_t ra
  */
 void EVE_cmd_dial(const int16_t xc0, const int16_t yc0, const uint16_t rad, const uint16_t options, const uint16_t val)
 {
+    const uint32_t param0 = i16_i16_to_u32(xc0, yc0);
+    const uint32_t param1 = u16_u16_to_u32(rad, options);
+    const uint32_t param2 = u16_u16_to_u32(val, (uint16_t) 0x0000U);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_DIAL);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_32(u16_u16_to_u32(rad, options));
-        spi_transmit_32(u16_u16_to_u32(val, (uint16_t) 0x0000U));
+        spi_transmit_32(param0);
+        spi_transmit_32(param1);
+        spi_transmit_32(param2);
         EVE_cs_clear();
     }
     else
     {
         spi_transmit_burst(CMD_DIAL);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_burst(u16_u16_to_u32(rad, options));
-        spi_transmit_burst(u16_u16_to_u32(val, (uint16_t) 0x0000U));
+        spi_transmit_burst(param0);
+        spi_transmit_burst(param1);
+        spi_transmit_burst(param2);
     }
 }
 
@@ -3057,22 +3100,27 @@ void EVE_cmd_fgcolor_burst(const uint32_t color)
 void EVE_cmd_gauge(const int16_t xc0, const int16_t yc0, const uint16_t rad, const uint16_t options,
                     const uint16_t major, const uint16_t minor, const uint16_t val, const uint16_t range)
 {
+    const uint32_t param0 = i16_i16_to_u32(xc0, yc0);
+    const uint32_t param1 = u16_u16_to_u32(rad, options);
+    const uint32_t param2 = u16_u16_to_u32(major, minor);
+    const uint32_t param3 = u16_u16_to_u32(val, range);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_GAUGE);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_32(u16_u16_to_u32(rad, options));
-        spi_transmit_32(u16_u16_to_u32(major, minor));
-        spi_transmit_32(u16_u16_to_u32(val, range));
+        spi_transmit_32(param0);
+        spi_transmit_32(param1);
+        spi_transmit_32(param2);
+        spi_transmit_32(param3);
         EVE_cs_clear();
     }
     else
     {
         spi_transmit_burst(CMD_GAUGE);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_burst(u16_u16_to_u32(rad, options));
-        spi_transmit_burst(u16_u16_to_u32(major, minor));
-        spi_transmit_burst(u16_u16_to_u32(val, range));
+        spi_transmit_burst(param0);
+        spi_transmit_burst(param1);
+        spi_transmit_burst(param2);
+        spi_transmit_burst(param3);
     }
 }
 
@@ -3177,21 +3225,24 @@ void EVE_cmd_gradcolor_burst(const uint32_t color)
  */
 void EVE_cmd_gradient(const int16_t xc0, const int16_t yc0, const uint32_t rgb0, const int16_t xc1, const int16_t yc1, const uint32_t rgb1)
 {
+    const uint32_t param0 = i16_i16_to_u32(xc0, yc0);
+    const uint32_t param1 = i16_i16_to_u32(xc1, yc1);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_GRADIENT);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
+        spi_transmit_32(param0);
         spi_transmit_32(rgb0);
-        spi_transmit_32(i16_i16_to_u32(xc1, yc1));
+        spi_transmit_32(param1);
         spi_transmit_32(rgb1);
         EVE_cs_clear();
     }
     else
     {
         spi_transmit_burst(CMD_GRADIENT);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
+        spi_transmit_burst(param0);
         spi_transmit_burst(rgb0);
-        spi_transmit_burst(i16_i16_to_u32(xc1, yc1));
+        spi_transmit_burst(param1);
         spi_transmit_burst(rgb1);
     }
 }
@@ -3216,21 +3267,25 @@ void EVE_cmd_gradient_burst(const int16_t xc0, const int16_t yc0, const uint32_t
 void EVE_cmd_keys(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
                     const uint16_t font, const uint16_t options, const char * const p_text)
 {
+    const uint32_t param0 = i16_i16_to_u32(xc0, yc0);
+    const uint32_t param1 = u16_u16_to_u32(wid, hgt);
+    const uint32_t param2 = u16_u16_to_u32(font, options);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_KEYS);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_32(u16_u16_to_u32(wid, hgt));
-        spi_transmit_32(u16_u16_to_u32(font, options));
+        spi_transmit_32(param0);
+        spi_transmit_32(param1);
+        spi_transmit_32(param2);
         private_string_write(p_text);
         EVE_cs_clear();
     }
     else
     {
         spi_transmit_burst(CMD_KEYS);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_burst(u16_u16_to_u32(wid, hgt));
-        spi_transmit_burst(u16_u16_to_u32(font, options));
+        spi_transmit_burst(param0);
+        spi_transmit_burst(param1);
+        spi_transmit_burst(param2);
         private_string_write_burst(p_text);
     }
 }
@@ -3361,19 +3416,22 @@ void EVE_cmd_memwrite_burst(const uint32_t dest, const uint32_t num, const uint8
  */
 void EVE_cmd_number(const int16_t xc0, const int16_t yc0, const uint16_t font, const uint16_t options, const int32_t number)
 {
+    const uint32_t param0 = i16_i16_to_u32(xc0, yc0);
+    const uint32_t param1 = u16_u16_to_u32(font, options);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_NUMBER);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_32(u16_u16_to_u32(font, options));
+        spi_transmit_32(param0);
+        spi_transmit_32(param1);
         spi_transmit_32(i32_to_u32(number));
         EVE_cs_clear();
     }
     else
     {
         spi_transmit_burst(CMD_NUMBER);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_burst(u16_u16_to_u32(font, options));
+        spi_transmit_burst(param0);
+        spi_transmit_burst(param1);
         spi_transmit_burst(i32_to_u32(number));
     }
 }
@@ -3395,21 +3453,25 @@ void EVE_cmd_number_burst(const int16_t xc0, const int16_t yc0, const uint16_t f
 void EVE_cmd_progress(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
                         const uint16_t options, const uint16_t val, const uint16_t range)
 {
+    const uint32_t param0 = i16_i16_to_u32(xc0, yc0);
+    const uint32_t param1 = u16_u16_to_u32(wid, hgt);
+    const uint32_t param2 = u16_u16_to_u32(options, val);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_PROGRESS);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_32(u16_u16_to_u32(wid, hgt));
-        spi_transmit_32(u16_u16_to_u32(options, val));
+        spi_transmit_32(param0);
+        spi_transmit_32(param1);
+        spi_transmit_32(param2);
         spi_transmit_32(u16_u16_to_u32(range, (uint16_t) 0x0000U)); /* dummy word for 4-byte alignment */
         EVE_cs_clear();
     }
     else
     {
         spi_transmit_burst(CMD_PROGRESS);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_burst(u16_u16_to_u32(wid, hgt));
-        spi_transmit_burst(u16_u16_to_u32(options, val));
+        spi_transmit_burst(param0);
+        spi_transmit_burst(param1);
+        spi_transmit_burst(param2);
         spi_transmit_burst(u16_u16_to_u32(range, (uint16_t) 0x0000U));
     }
 }
@@ -3465,16 +3527,18 @@ void EVE_cmd_romfont_burst(const uint32_t font, const uint32_t romslot)
  */
 void EVE_cmd_rotate(const uint32_t angle)
 {
+    const uint32_t param = angle & UINT32_C(0xFFFF);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_ROTATE);
-        spi_transmit_32(angle & UINT32_C(0xFFFF));
+        spi_transmit_32(param);
         EVE_cs_clear();
     }
     else
     {
         spi_transmit_burst(CMD_ROTATE);
-        spi_transmit_burst(angle & UINT32_C(0xFFFF));
+        spi_transmit_burst(param);
     }
 }
 
@@ -3547,22 +3611,27 @@ void EVE_cmd_screensaver_burst(void)
 void EVE_cmd_scrollbar(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
                         const uint16_t options, const uint16_t val, const uint16_t size, const uint16_t range)
 {
+    const uint32_t param0 = i16_i16_to_u32(xc0, yc0);
+    const uint32_t param1 = u16_u16_to_u32(wid, hgt);
+    const uint32_t param2 = u16_u16_to_u32(options, val);
+    const uint32_t param3 = u16_u16_to_u32(size, range);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_SCROLLBAR);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_32(u16_u16_to_u32(wid, hgt));
-        spi_transmit_32(u16_u16_to_u32(options, val));
-        spi_transmit_32(u16_u16_to_u32(size, range));
+        spi_transmit_32(param0);
+        spi_transmit_32(param1);
+        spi_transmit_32(param2);
+        spi_transmit_32(param3);
         EVE_cs_clear();
     }
     else
     {
         spi_transmit_burst(CMD_SCROLLBAR);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_burst(u16_u16_to_u32(wid, hgt));
-        spi_transmit_burst(u16_u16_to_u32(options, val));
-        spi_transmit_burst(u16_u16_to_u32(size, range));
+        spi_transmit_burst(param0);
+        spi_transmit_burst(param1);
+        spi_transmit_burst(param2);
+        spi_transmit_burst(param3);
     }
 }
 
@@ -3612,20 +3681,23 @@ void EVE_cmd_setbase_burst(const uint32_t base)
  */
 void EVE_cmd_setbitmap(const uint32_t addr, const uint16_t fmt, const uint16_t width, const uint16_t height)
 {
+    const uint32_t param0 = u16_u16_to_u32(fmt, width);
+    const uint32_t param1 = u16_u16_to_u32(height, (uint16_t) 0x0000U);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_SETBITMAP);
         spi_transmit_32(addr);
-        spi_transmit_32(u16_u16_to_u32(fmt, width));
-        spi_transmit_32(u16_u16_to_u32(height, (uint16_t) 0x0000U));
+        spi_transmit_32(param0);
+        spi_transmit_32(param1);
         EVE_cs_clear();
     }
     else
     {
         spi_transmit_burst(CMD_SETBITMAP);
         spi_transmit_burst(addr);
-        spi_transmit_burst(u16_u16_to_u32(fmt, width));
-        spi_transmit_burst(u16_u16_to_u32(height, (uint16_t) 0x0000U));
+        spi_transmit_burst(param0);
+        spi_transmit_burst(param1);
     }
 }
 
@@ -3765,22 +3837,26 @@ void EVE_cmd_setscratch_burst(const uint32_t handle)
 void EVE_cmd_sketch(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
                     const uint32_t ptr, const uint16_t format)
 {
+    const uint32_t param0 = i16_i16_to_u32(xc0, yc0);
+    const uint32_t param1 = u16_u16_to_u32(wid, hgt);
+    const uint32_t param2 = u16_u16_to_u32(format, (uint16_t) 0x0000U);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_SKETCH);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_32(u16_u16_to_u32(wid, hgt));
+        spi_transmit_32(param0);
+        spi_transmit_32(param1);
         spi_transmit_32(ptr);
-        spi_transmit_32(u16_u16_to_u32(format, (uint16_t) 0x0000U));
+        spi_transmit_32(param2);
         EVE_cs_clear();
     }
     else
     {
         spi_transmit_burst(CMD_SKETCH);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_burst(u16_u16_to_u32(wid, hgt));
+        spi_transmit_burst(param0);
+        spi_transmit_burst(param1);
         spi_transmit_burst(ptr);
-        spi_transmit_burst(u16_u16_to_u32(format, (uint16_t) 0x0000U));
+        spi_transmit_burst(param2);
     }
 }
 
@@ -3803,22 +3879,27 @@ void EVE_cmd_sketch_burst(const int16_t xc0, const int16_t yc0, const uint16_t w
 void EVE_cmd_slider(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t hgt,
                     const uint16_t options, const uint16_t val, const uint16_t range)
 {
+    const uint32_t param0 = i16_i16_to_u32(xc0, yc0);
+    const uint32_t param1 = u16_u16_to_u32(wid, hgt);
+    const uint32_t param2 = u16_u16_to_u32(options, val);
+    const uint32_t param3 = u16_u16_to_u32(range, (uint16_t) 0x0000U);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_SLIDER);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_32(u16_u16_to_u32(wid, hgt));
-        spi_transmit_32(u16_u16_to_u32(options, val));
-        spi_transmit_32(u16_u16_to_u32(range, (uint16_t) 0x0000U));
+        spi_transmit_32(param0);
+        spi_transmit_32(param1);
+        spi_transmit_32(param2);
+        spi_transmit_32(param3);
         EVE_cs_clear();
     }
     else
     {
         spi_transmit_burst(CMD_SLIDER);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_burst(u16_u16_to_u32(wid, hgt));
-        spi_transmit_burst(u16_u16_to_u32(options, val));
-        spi_transmit_burst(u16_u16_to_u32(range, (uint16_t) 0x0000U));
+        spi_transmit_burst(param0);
+        spi_transmit_burst(param1);
+        spi_transmit_burst(param2);
+        spi_transmit_burst(param3);
     }
 }
 
@@ -3840,18 +3921,21 @@ void EVE_cmd_slider_burst(const int16_t xc0, const int16_t yc0, const uint16_t w
  */
 void EVE_cmd_spinner(const int16_t xc0, const int16_t yc0, const uint16_t style, const uint16_t scale)
 {
+    const uint32_t param0 = i16_i16_to_u32(xc0, yc0);
+    const uint32_t param1 = u16_u16_to_u32(style, scale);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_SPINNER);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_32(u16_u16_to_u32(style, scale));
+        spi_transmit_32(param0);
+        spi_transmit_32(param1);
         EVE_cs_clear();
     }
     else
     {
         spi_transmit_burst(CMD_SPINNER);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_burst(u16_u16_to_u32(style, scale));
+        spi_transmit_burst(param0);
+        spi_transmit_burst(param1);
     }
 }
 
@@ -3918,19 +4002,22 @@ void EVE_cmd_swap_burst(void)
  */
 void EVE_cmd_text(const int16_t xc0, const int16_t yc0, const uint16_t font, const uint16_t options, const char * const p_text)
 {
+    const uint32_t param0 = i16_i16_to_u32(xc0, yc0);
+    const uint32_t param1 = u16_u16_to_u32(font, options);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_TEXT);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_32(u16_u16_to_u32(font, options));
+        spi_transmit_32(param0);
+        spi_transmit_32(param1);
         private_string_write(p_text);
         EVE_cs_clear();
     }
     else
     {
         spi_transmit_burst(CMD_TEXT);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_burst(u16_u16_to_u32(font, options));
+        spi_transmit_burst(param0);
+        spi_transmit_burst(param1);
         private_string_write_burst(p_text);
     }
 }
@@ -3952,21 +4039,25 @@ void EVE_cmd_text_burst(const int16_t xc0, const int16_t yc0, const uint16_t fon
 void EVE_cmd_toggle(const int16_t xc0, const int16_t yc0, const uint16_t wid, const uint16_t font,
                     const uint16_t options, const uint16_t state, const char * const p_text)
 {
+    const uint32_t param0 = i16_i16_to_u32(xc0, yc0);
+    const uint32_t param1 = u16_u16_to_u32(wid, font);
+    const uint32_t param2 = u16_u16_to_u32(options, state);
+
     if (0U == cmd_burst)
     {
         eve_begin_cmd(CMD_TOGGLE);
-        spi_transmit_32(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_32(u16_u16_to_u32(wid, font));
-        spi_transmit_32(u16_u16_to_u32(options, state));
+        spi_transmit_32(param0);
+        spi_transmit_32(param1);
+        spi_transmit_32(param2);
         private_string_write(p_text);
         EVE_cs_clear();
     }
     else
     {
         spi_transmit_burst(CMD_TOGGLE);
-        spi_transmit_burst(i16_i16_to_u32(xc0, yc0));
-        spi_transmit_burst(u16_u16_to_u32(wid, font));
-        spi_transmit_burst(u16_u16_to_u32(options, state));
+        spi_transmit_burst(param0);
+        spi_transmit_burst(param1);
+        spi_transmit_burst(param2);
         private_string_write_burst(p_text);
     }
 }
@@ -4053,14 +4144,16 @@ void EVE_cmd_dl_burst(const uint32_t command)
  */
 void EVE_alpha_func(const uint8_t func, const uint8_t ref)
 {
+    const uint32_t param = ALPHA_FUNC(func, ref);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(ALPHA_FUNC(func, ref));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(ALPHA_FUNC(func, ref));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4077,14 +4170,16 @@ void EVE_alpha_func_burst(const uint8_t func, const uint8_t ref)
  */
 void EVE_begin(const uint32_t prim)
 {
+    const uint32_t param = DL_BEGIN | prim;
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(DL_BEGIN | prim);
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(DL_BEGIN | prim);
+        spi_transmit_burst(param);
     }
 }
 
@@ -4101,14 +4196,16 @@ void EVE_begin_burst(const uint32_t prim)
  */
 void EVE_bitmap_handle(const uint8_t handle)
 {
+    const uint32_t param = BITMAP_HANDLE(handle);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(BITMAP_HANDLE(handle));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(BITMAP_HANDLE(handle));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4125,14 +4222,16 @@ void EVE_bitmap_handle_burst(const uint8_t handle)
  */
 void EVE_bitmap_layout(const uint8_t format, const uint16_t linestride, const uint16_t height)
 {
+    const uint32_t param = BITMAP_LAYOUT(format , linestride, height);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(BITMAP_LAYOUT(format , linestride, height));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(BITMAP_LAYOUT(format , linestride, height));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4151,14 +4250,16 @@ void EVE_bitmap_layout_burst(const uint8_t format, const uint16_t linestride, co
  */
 void EVE_bitmap_layout_h(const uint16_t linestride, const uint16_t height)
 {
+    const uint32_t param = BITMAP_LAYOUT_H(linestride, height);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(BITMAP_LAYOUT_H(linestride, height));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(BITMAP_LAYOUT_H(linestride, height));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4175,14 +4276,16 @@ void EVE_bitmap_layout_h_burst(const uint16_t linestride, const uint16_t height)
  */
 void EVE_bitmap_size(const uint8_t filter, const uint8_t wrapx, const uint8_t wrapy, const uint16_t width, const uint16_t height)
 {
+    const uint32_t param = BITMAP_SIZE(filter, wrapx, wrapy, width, height);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(BITMAP_SIZE(filter, wrapx, wrapy, width, height));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(BITMAP_SIZE(filter, wrapx, wrapy, width, height));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4200,14 +4303,16 @@ void EVE_bitmap_size_burst(const uint8_t filter, const uint8_t wrapx, const uint
  */
 void EVE_bitmap_size_h(const uint16_t width, const uint16_t height)
 {
+    const uint32_t param = BITMAP_SIZE_H(width, height);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(BITMAP_SIZE_H(width, height));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(BITMAP_SIZE_H(width, height));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4225,14 +4330,16 @@ void EVE_bitmap_size_h_burst(const uint16_t width, const uint16_t height)
  */
 void EVE_bitmap_source(const uint32_t addr)
 {
+    const uint32_t param = BITMAP_SOURCE(addr);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(BITMAP_SOURCE(addr));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(BITMAP_SOURCE(addr));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4249,14 +4356,16 @@ void EVE_bitmap_source_burst(const uint32_t addr)
  */
 void EVE_blend_func(const uint8_t src, const uint8_t dst)
 {
+    const uint32_t param = BLEND_FUNC(src, dst);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(BLEND_FUNC(src, dst));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(BLEND_FUNC(src, dst));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4274,14 +4383,16 @@ void EVE_blend_func_burst(const uint8_t src, const uint8_t dst)
  */
 void EVE_call(const uint16_t dest)
 {
+    const uint32_t param = CALL(dest);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(CALL(dest));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(CALL(dest));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4299,14 +4410,16 @@ void EVE_call_burst(const uint16_t dest)
  */
 void EVE_cell(const uint8_t cell)
 {
+    const uint32_t param = CELL(cell);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(CELL(cell));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(CELL(cell));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4323,14 +4436,16 @@ void EVE_cell_burst(const uint8_t cell)
  */
 void EVE_clear(const uint8_t color, const uint8_t stencil, const uint8_t tag)
 {
+    const uint32_t param = CLEAR(color, stencil, tag);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(CLEAR(color, stencil, tag));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(CLEAR(color, stencil, tag));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4347,14 +4462,16 @@ void EVE_clear_burst(const uint8_t color, const uint8_t stencil, const uint8_t t
  */
 void EVE_clear_color_a(const uint8_t alpha)
 {
+    const uint32_t param = CLEAR_COLOR_A(alpha);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(CLEAR_COLOR_A(alpha));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(CLEAR_COLOR_A(alpha));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4371,14 +4488,16 @@ void EVE_clear_color_a_burst(const uint8_t alpha)
  */
 void EVE_clear_color_rgb(const uint32_t color)
 {
+    const uint32_t param = DL_CLEAR_COLOR_RGB | (color & UINT32_C(0xFFFFFF));
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(DL_CLEAR_COLOR_RGB | (color & UINT32_C(0xFFFFFF)));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(DL_CLEAR_COLOR_RGB | (color & UINT32_C(0xFFFFFF)));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4395,14 +4514,16 @@ void EVE_clear_color_rgb_burst(const uint32_t color)
  */
 void EVE_clear_stencil(const uint8_t val)
 {
+    const uint32_t param = CLEAR_STENCIL(val);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(CLEAR_STENCIL(val));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(CLEAR_STENCIL(val));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4419,14 +4540,16 @@ void EVE_clear_stencil_burst(const uint8_t val)
  */
 void EVE_clear_tag(const uint8_t val)
 {
+    const uint32_t param = CLEAR_TAG(val);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(CLEAR_TAG(val));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(CLEAR_TAG(val));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4444,14 +4567,16 @@ void EVE_clear_tag_burst(const uint8_t val)
  */
 void EVE_color_rgb(const uint32_t color)
 {
+    const uint32_t param = DL_COLOR_RGB | (color & UINT32_C(0xFFFFFF));
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(DL_COLOR_RGB | (color & UINT32_C(0xFFFFFF)));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(DL_COLOR_RGB | (color & UINT32_C(0xFFFFFF)));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4468,14 +4593,16 @@ void EVE_color_rgb_burst(const uint32_t color)
  */
 void EVE_color_a(const uint8_t alpha)
 {
+    const uint32_t param = DL_COLOR_A | ((uint32_t) alpha);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(DL_COLOR_A | ((uint32_t) alpha));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(DL_COLOR_A | ((uint32_t) alpha));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4492,14 +4619,16 @@ void EVE_color_a_burst(const uint8_t alpha)
  */
 void EVE_color_mask(const uint8_t red, const uint8_t green, const uint8_t blue, const uint8_t alpha)
 {
+    const uint32_t param = COLOR_MASK(red, green, blue, alpha);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(COLOR_MASK(red, green, blue, alpha));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(COLOR_MASK(red, green, blue, alpha));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4565,14 +4694,16 @@ void EVE_end_burst(void)
  */
 void EVE_jump(const uint16_t dest)
 {
+    const uint32_t param = JUMP(dest);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(JUMP(dest));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(JUMP(dest));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4590,14 +4721,16 @@ void EVE_jump_burst(const uint16_t dest)
  */
 void EVE_line_width(const uint16_t width)
 {
+    const uint32_t param = LINE_WIDTH(width);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(LINE_WIDTH(width));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(LINE_WIDTH(width));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4615,14 +4748,16 @@ void EVE_line_width_burst(const uint16_t width)
  */
 void EVE_macro(const uint8_t macro)
 {
+    const uint32_t param = MACRO(macro);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(MACRO(macro));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(MACRO(macro));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4666,14 +4801,16 @@ void EVE_nop_burst(void)
  */
 void EVE_palette_source(const uint32_t addr)
 {
+    const uint32_t param = PALETTE_SOURCE(addr);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(PALETTE_SOURCE(addr));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(PALETTE_SOURCE(addr));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4690,14 +4827,16 @@ void EVE_palette_source_burst(const uint32_t addr)
  */
 void EVE_point_size(const uint16_t size)
 {
+    const uint32_t param = POINT_SIZE(size);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(POINT_SIZE(size));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(POINT_SIZE(size));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4787,14 +4926,16 @@ void EVE_save_context_burst(void)
  */
 void EVE_scissor_size(const uint16_t width, const uint16_t height)
 {
+    const uint32_t param = SCISSOR_SIZE(width, height);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(SCISSOR_SIZE(width, height));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(SCISSOR_SIZE(width, height));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4812,14 +4953,16 @@ void EVE_scissor_size_burst(const uint16_t width, const uint16_t height)
  */
 void EVE_scissor_xy(const uint16_t xc0, const uint16_t yc0)
 {
+    const uint32_t param = SCISSOR_XY(xc0, yc0);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(SCISSOR_XY(xc0, yc0));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(SCISSOR_XY(xc0, yc0));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4836,14 +4979,16 @@ void EVE_scissor_xy_burst(const uint16_t xc0, const uint16_t yc0)
  */
 void EVE_stencil_func(const uint8_t func, const uint8_t ref, const uint8_t mask)
 {
+    const uint32_t param = STENCIL_FUNC(func, ref, mask);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(STENCIL_FUNC(func, ref, mask));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(STENCIL_FUNC(func, ref, mask));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4860,14 +5005,16 @@ void EVE_stencil_func_burst(const uint8_t func, const uint8_t ref, const uint8_t
  */
 void EVE_stencil_mask(const uint8_t mask)
 {
+    const uint32_t param = STENCIL_MASK(mask);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(STENCIL_MASK(mask));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(STENCIL_MASK(mask));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4884,14 +5031,16 @@ void EVE_stencil_mask_burst(const uint8_t mask)
  */
 void EVE_stencil_op(const uint8_t sfail, const uint8_t spass)
 {
+    const uint32_t param = STENCIL_OP(sfail, spass);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(STENCIL_OP(sfail, spass));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(STENCIL_OP(sfail, spass));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4908,14 +5057,16 @@ void EVE_stencil_op_burst(const uint8_t sfail, const uint8_t spass)
  */
 void EVE_tag(const uint8_t tag)
 {
+    const uint32_t param = DL_TAG | tag;
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(DL_TAG | tag);
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(DL_TAG | tag);
+        spi_transmit_burst(param);
     }
 }
 
@@ -4932,14 +5083,16 @@ void EVE_tag_burst(const uint8_t tag)
  */
 void EVE_tag_mask(const uint8_t mask)
 {
+    const uint32_t param = TAG_MASK(mask);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(TAG_MASK(mask));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(TAG_MASK(mask));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4956,14 +5109,16 @@ void EVE_tag_mask_burst(const uint8_t mask)
  */
 void EVE_vertex2f(const int16_t xc0, const int16_t yc0)
 {
+    const uint32_t param = VERTEX2F(xc0, yc0);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(VERTEX2F(xc0, yc0));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(VERTEX2F(xc0, yc0));
+        spi_transmit_burst(param);
     }
 }
 
@@ -4980,14 +5135,16 @@ void EVE_vertex2f_burst(const int16_t xc0, const int16_t yc0)
  */
 void EVE_vertex2ii(const uint16_t xc0, const uint16_t yc0, const uint8_t handle, const uint8_t cell)
 {
+    const uint32_t param = VERTEX2II(xc0, yc0, handle, cell);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(VERTEX2II(xc0, yc0, handle, cell));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(VERTEX2II(xc0, yc0, handle, cell));
+        spi_transmit_burst(param);
     }
 }
 
@@ -5004,14 +5161,16 @@ void EVE_vertex2ii_burst(const uint16_t xc0, const uint16_t yc0, const uint8_t h
  */
 void EVE_vertex_format(const uint8_t frac)
 {
+    const uint32_t param = VERTEX_FORMAT(frac);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(VERTEX_FORMAT(frac));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(VERTEX_FORMAT(frac));
+        spi_transmit_burst(param);
     }
 }
 
@@ -5028,14 +5187,16 @@ void EVE_vertex_format_burst(const uint8_t frac)
  */
 void EVE_vertex_translate_x(const int32_t xco)
 {
+    const uint32_t param = VERTEX_TRANSLATE_X(xco);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(VERTEX_TRANSLATE_X(xco));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(VERTEX_TRANSLATE_X(xco));
+        spi_transmit_burst(param);
     }
 }
 
@@ -5052,14 +5213,16 @@ void EVE_vertex_translate_x_burst(const int32_t xco)
  */
 void EVE_vertex_translate_y(const int32_t yco)
 {
+    const uint32_t param = VERTEX_TRANSLATE_Y(yco);
+
     if (0U == cmd_burst)
     {
-        eve_begin_cmd(VERTEX_TRANSLATE_Y(yco));
+        eve_begin_cmd(param);
         EVE_cs_clear();
     }
     else
     {
-        spi_transmit_burst(VERTEX_TRANSLATE_Y(yco));
+        spi_transmit_burst(param);
     }
 }
 
