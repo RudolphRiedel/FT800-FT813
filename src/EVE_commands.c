@@ -213,7 +213,8 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - implemented EVE_cmd_memwrite() and EVE_cmd_memwrite_burst()
 - split private_string_write() and made the new private_string_write_burst() about 20% faster
 - Compliance: fixed linter warnings
-- mmoved computations out of branches - minor codesize optimization with no performance impact
+- moved computations out of branches - minor codesize optimization with no performance impact
+- Bugfix: turns out that the previous fix to the PLL range for BT81x was a mistake, 0x46 is the correct value, not 0x86
 
 */
 
@@ -1771,7 +1772,7 @@ uint8_t EVE_init(void)
 #endif
 
 #if EVE_GEN > 2
-    EVE_cmdWrite(EVE_CLKSEL, (uint8_t) 0x86U); /* set clock to 72 MHz */
+    EVE_cmdWrite(EVE_CLKSEL, (uint8_t) 0x46U); /* set clock to 72 MHz */
 #endif
 
     EVE_cmdWrite(EVE_ACTIVE, (uint8_t) 0U); /* start EVE */
