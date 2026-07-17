@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2026-05-30
+@date    2026-07-17
 @author  Rudolph Riedel
 
 @section info
