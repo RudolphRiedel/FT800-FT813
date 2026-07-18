@@ -2,7 +2,7 @@
 @file    EVE_commands.c
 @brief   contains FT8xx / BT8xx functions
 @version 5.0
-@date    2026-07-17
+@date    2026-07-18
 @author  Rudolph Riedel
 
 @section info
@@ -215,6 +215,8 @@ without the traling _burst in the name when exceution speed is not an issue - e.
 - Compliance: fixed linter warnings
 - moved computations out of branches - minor codesize optimization with no performance impact
 - Bugfix: turns out that the previous fix to the PLL range for BT81x was a mistake, 0x46 is the correct value, not 0x86
+- Fix: increased the initial delay after ACTIVATE to 60ms thanks to @ZigmundRat for pointing out the issue with his module
+- added optional EVE_CUSTOM_MS_DELAY after the initial delay after ACTIVATE in EVE_init()
 
 */
 
@@ -1751,6 +1753,7 @@ static void enable_pixel_clock(void)
  * @note - EVE_BACKLIGHT_FREQ - configure the backlight frequency, default is not writing it which results in 250Hz.
  * @note - EVE_BACKLIGHT_PWM - configure the backlight pwm, defaults to 0x20 / 25%.
  * @note - EVE_SOFT_RESET - if defined the host command RST_PULSE is send
+ * @note - EVE_CUSTOM_MS_DELAY - is used for an extra DELAY_MS() as option if the panel in use requires more time to start
  */
 uint8_t EVE_init(void)
 {
@@ -1776,7 +1779,12 @@ uint8_t EVE_init(void)
 #endif
 
     EVE_cmdWrite(EVE_ACTIVE, (uint8_t) 0U); /* start EVE */
-    DELAY_MS((uint16_t) 40U); /* give EVE a moment of silence to power up */
+    DELAY_MS((uint16_t) 60U); /* give EVE a moment of silence to power up */
+
+/* optional extra startup delay in milliseconds if there are timing issues with the panel in use */
+#if defined (EVE_CUSTOM_MS_DELAY)
+    DELAY_MS(EVE_CUSTOM_MS_DELAY);
+#endif
 
     ret = wait_regid();
     if (E_OK == ret)
